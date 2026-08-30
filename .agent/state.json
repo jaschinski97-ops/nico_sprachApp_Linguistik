@@ -2,9 +2,9 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-08-30",
-  "currentPhase": 3,
-  "currentPhaseName": "Lern-UI",
-  "currentPhaseStatus": "browser-verified-awaiting-device-check",
+  "currentPhase": 4,
+  "currentPhaseName": "Content-Generator Sprachsituationen + Lernstatistik",
+  "currentPhaseStatus": "pipeline-verified-awaiting-real-key-run",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -142,6 +142,55 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "187 Tests in 6 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 4,
+      "criterion": "Lernstatistik-Screen zeigt echte Daten statt Platzhalter",
+      "done": true,
+      "verifiedHow": "Wiederholungen heute, Tagesserie, faellige Karten, Kartenzustaende und 14-Tage-Diagramm aus der Persistenzschicht; im Browser mit echten Bewertungen geprueft."
+    },
+    {
+      "phase": 4,
+      "criterion": "Einschraenkung der Statistik-Methode dokumentiert",
+      "done": true,
+      "verifiedHow": "AE-9; Hinweis steht im UI selbst ('Protokolliert seit ... Fruehere Sitzungen sind nicht enthalten')."
+    },
+    {
+      "phase": 4,
+      "criterion": "Teilausfall-Verhalten nachweislich getestet",
+      "done": true,
+      "verifiedHow": "Tests: Fehler mitten im Lauf (14 ok / 2 fehlgeschlagen, alle 16 angefasst), drei Fehler zu Beginn (13 bleiben gespeichert), Fortsetzen (12 uebersprungen), Abbruch (5 bleiben). Zusaetzlich echter Lauf mit ungueltigem Dummy-Schluessel: 16 Fehlschlaege, Batch lief durch, 0 gespeichert."
+    },
+    {
+      "phase": 4,
+      "criterion": "CORS-Header im Web-Build",
+      "done": true,
+      "verifiedHow": "Direkt gemessen: ohne Header 'TypeError: Failed to fetch', mit Header HTTP 401 mit JSON-Fehlerobjekt. dangerouslyAllowBrowser setzt genau diesen Header (im SDK-Quelltext nachgesehen)."
+    },
+    {
+      "phase": 4,
+      "criterion": "Key-Speicherung plattformgerecht geloest und begruendet",
+      "done": true,
+      "verifiedHow": "AE-10: expo-secure-store hat auf Web die Implementierung 'export default {}'. Nativ Keychain, Web nur Arbeitsspeicher fuer die Sitzung; Weiche ueber isAvailableAsync() zur Laufzeit."
+    },
+    {
+      "phase": 4,
+      "criterion": "Situationen offline abspielbar (Neustart-Test)",
+      "done": true,
+      "verifiedHow": "Zwei Situationen im Schema eingespielt, Gespraech-Screen zeigt sie vollstaendig; nach komplettem Neuladen unveraendert vorhanden, ohne Schluessel und ohne Netzanfrage."
+    },
+    {
+      "phase": 4,
+      "criterion": "Testlauf mit echtem Schluessel (10-20 Situationen)",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-3 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein."
+    },
+    {
+      "phase": 4,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "229 Tests in 8 Suites gruen; npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -184,28 +233,76 @@
       "id": "AE-8",
       "title": "Silbenfarben an der Umschrift; Thai-Schrift nur bei einheitlichem Ton eingefaerbt",
       "rationale": "Die Daten kennen Toene je Silbe, aber keine verlaessliche Silbengrenze in der Thai-Schrift (keine Trennzeichen). ผลไม้ zeigt, dass naives Aufteilen scheitert: die mittlere Silbe entsteht aus einem geteilten Bindekonsonanten. Einfaerben nach dem Ton der ersten Silbe waere bei สวัสดี ueber zwei Drittel des Wortes falsch."
+    },
+    {
+      "id": "AE-9",
+      "title": "Tagesprotokoll (reviewLog) statt Naeherung aus lastReview",
+      "rationale": "lastReview haelt nur den letzten Zeitpunkt je Karte; eine Historie laesst sich daraus nicht rekonstruieren. Ein Dokument je Kalendertag haelt den Speicher beschraenkt und reicht fuer die Tagesauswertung. Einschraenkung: Historie beginnt mit Einfuehrung des Protokolls - steht im UI."
+    },
+    {
+      "id": "AE-10",
+      "title": "API-Schluessel: Keychain nativ, nur Arbeitsspeicher im Browser",
+      "rationale": "expo-secure-store@57.0.2 hat auf Web die Implementierung 'export default {}'; isAvailableAsync() liefert false. localStorage verworfen, weil fuer jedes Skript derselben Herkunft lesbar und dauerhaft - schlechter Tausch fuer einen Schluessel, der Geld ausgibt."
+    },
+    {
+      "id": "AE-11",
+      "title": "direction benennt die aktiv produzierte Sprache; zwei getrennte Situationssaetze",
+      "rationale": "Ein gespiegelter Dialogsatz waere fuer eine der beiden Zielgruppen unpassend, und vor allem sind die Korrektur-Hinweise richtungsspezifisch (Toene/Klassifikatoren gegen Artikel/Kasus/Verbstellung). Ein Satz koennte hoechstens eine der beiden Hinweismengen tragen."
+    },
+    {
+      "id": "AE-12",
+      "title": "Offizieller Anthropic-SDK mit angepasster Metro-Aufloesung",
+      "rationale": "Ohne metro.config.js bricht der Web-Build mit 'Unable to resolve module ./lib/credentials/types.js' ab - die exports-Map des SDK fuehrt fuer ./lib/* kein default. Mit unstable_enablePackageExports und passenden Bedingungsnamen buendelt der SDK sauber; dangerouslyAllowBrowser setzt genau den CORS-Header."
     }
   ],
   "openBlockers": [
     {
       "id": "B-2",
-      "title": "Geraetecheck der Lern-UI in Expo Go steht aus",
+      "title": "Geraetecheck in Expo Go steht aus",
       "affectsPhases": [
-        3
+        3,
+        4
       ],
       "needsUser": true,
-      "steps": "npx expo start -> QR mit Expo Go -> beide Richtungen durchspielen; bei สวัสดี muessen die drei Silben zwei verschiedene Farben haben; 'Thai anhoeren' pruefen (stumm = fehlende Thai-Stimme im System, kein App-Fehler)."
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher.",
+      "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
+    },
+    {
+      "id": "B-3",
+      "title": "Probelauf des Generators mit gueltigem API-Schluessel",
+      "affectsPhases": [
+        4
+      ],
+      "needsUser": true,
+      "note": "Fremde API-Schluessel gebe ich nicht ein. Alles davor ist geprueft (CORS, Header, SDK, Batch, Fehlerverhalten, Offline-Wiedergabe).",
+      "steps": "Einstellungen -> Schluessel eintragen -> Probelauf -> Start. Erwartung 16/16 erzeugt, 0 fehlgeschlagen; danach unter Gespraech sichtbar und nach Neuladen offline vorhanden."
     }
   ],
   "nextUp": {
-    "phase": 4,
-    "name": "Content-Generator: Sprachsituationen",
+    "phase": 5,
+    "name": "Content-Generator: Bilder",
     "tasks": [
-      "Einstellungs-Screen mit API-Key-Feld (SecureStore nativ), Start-Knopf, Fortschrittsbalken",
-      "Batch-Generierung von Konversationssituationen, persistent in der Sammlung 'situations'",
-      "Web-Build: Header anthropic-dangerous-direct-browser-access beachten (CORS)",
-      "Nach dem Lauf vollstaendig offline nutzbar, ohne Key",
-      "Audio-Aufloeser ueber registerAudioAssetResolver einhaengen - die Screens bleiben unveraendert (siehe src/lib/audio.ts)"
+      "Eigenes Schluesselfeld, Start, Fortschritt - Aufbau aus Phase 4 wiederverwenden (plan.ts / batch.ts sind nicht an Sprachsituationen gebunden)",
+      "Nur fuer Eintraege mit isConcrete true (25 der 84 Vokabeln)",
+      "Bilder persistent ablegen und offline abrufbar machen",
+      "Audio-Aufloeser registerAudioAssetResolver einhaengen, sobald es Clips gibt"
     ]
+  },
+  "situations": {
+    "generated": 0,
+    "planTestRun": 16,
+    "planFullRun": 512,
+    "topics": [
+      "greeting",
+      "market",
+      "restaurant",
+      "travel"
+    ],
+    "levels": [
+      "A1",
+      "A2"
+    ],
+    "model": "claude-opus-5",
+    "note": "Zwei Situationen wurden zum Pruefen der Offline-Wiedergabe von Hand eingespielt und danach wieder entfernt."
   }
 }

@@ -8,6 +8,8 @@
 
 import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
+import { ConversationSituation } from './conversation/types';
+
 import { createCardState, reviewCard } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
 import { recordReview } from './review-log';
@@ -115,6 +117,31 @@ export async function loadCardStatesForDirection(
 ): Promise<FSRSCardState[]> {
   const all = await loadAllCardStates(store);
   return all.filter((card) => card.direction === direction);
+}
+
+/* ---------- Sprachsituationen ---------- */
+
+export async function loadSituations(store?: DataStore): Promise<ConversationSituation[]> {
+  const db = store ?? (await getStore());
+  const situations = await db.getAll<ConversationSituation>('situations');
+  return situations.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export async function loadSituation(
+  id: string,
+  store?: DataStore
+): Promise<ConversationSituation | null> {
+  const db = store ?? (await getStore());
+  return db.get<ConversationSituation>('situations', id);
+}
+
+export async function countSituations(store?: DataStore): Promise<number> {
+  return (await loadSituations(store)).length;
+}
+
+export async function clearSituations(store?: DataStore): Promise<void> {
+  const db = store ?? (await getStore());
+  await db.clear('situations');
 }
 
 /* ---------- Einstellungen / Lernprofil ---------- */

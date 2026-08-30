@@ -160,6 +160,83 @@ Wer die Thai-Schrift später doch silbenweise färben will, braucht ein
 zusätzliches, **geprüftes** Feld mit den Schriftsilben — nicht eine Heuristik
 zur Laufzeit.
 
+### AE-9 — Tagesprotokoll statt Näherung aus `lastReview`
+
+**Entscheidung:** Neue Sammlung `reviewLog` mit **einem Dokument je
+Kalendertag** (nicht je Ereignis), fortgeschrieben von `rateCard`.
+
+**Begründung:** `FSRSCardState` hält nur `lastReview` — den *letzten*
+Zeitpunkt je Karte. Wer eine Karte heute zum zehnten Mal wiederholt,
+überschreibt jede Spur der neun vorherigen Male. Eine „Wiederholungen pro
+Tag"-Statistik aus `lastReview` wäre deshalb keine Historie, sondern nur eine
+Momentaufnahme — und würde als Historie gelesen. Ein Dokument je Tag hält den
+Speicher beschränkt (365 im Jahr statt beliebig vieler Ereignisse) und reicht
+für die Auswertung nach Tagen genau aus. Einzelereignisse mit Zeitstempel
+gehen verloren; für eine Tagesauswertung ist das kein Verlust.
+
+**Einschränkung, die im UI steht und nicht nur hier:** Die Historie beginnt
+mit der Einführung des Protokolls. Frühere Wiederholungen fehlen, weil sie nie
+festgehalten wurden. Beim Testen war das direkt zu sehen — 8 bewertete Karten,
+aber nur 5 protokolliert; die drei anderen stammten aus Phase-3-Tests.
+
+Tagesschlüssel bewusst in **lokaler** Zeit: mit `toISOString()` läge der
+Tageswechsel in Thailand (UTC+7) mitten am Abend.
+
+### AE-10 — API-Schlüssel: Keychain nativ, nur Arbeitsspeicher im Browser
+
+**Entscheidung:** Nativ über `expo-secure-store`; im Web wird der Schlüssel
+**nur für die laufende Sitzung im Arbeitsspeicher** gehalten und nach dem
+Neuladen erneut abgefragt. Die Weiche stellt `isAvailableAsync()` zur
+Laufzeit, nicht `Platform.OS`.
+
+**Begründung — im Paket nachgesehen, nicht angenommen:** Die Web-Variante von
+`expo-secure-store@57.0.2` ist `src/ExpoSecureStore.web.ts` mit dem
+vollständigen Inhalt `export default {}`. Es gibt dort also **keinerlei**
+Implementierung; `isAvailableAsync()` prüft `!!ExpoSecureStore.getValueWithKeyAsync`
+und liefert im Browser `false`, ein `setItemAsync` liefe in „is not a
+function". Die naheliegende Notlösung `localStorage` wurde verworfen: sie wäre
+für jedes Skript derselben Herkunft lesbar und bliebe dauerhaft liegen — für
+einen Schlüssel, der echtes Geld ausgibt, ein schlechter Tausch gegen etwas
+Bequemlichkeit, und beim späteren WordPress-Einbau (Phase 8) noch schlechter.
+Erneutes Eintippen bei Bedarf ist zumutbar: der Schlüssel wird nur für
+Generierungsläufe gebraucht, nicht zum Lernen.
+
+### AE-11 — `direction` benennt die Sprache, die aktiv produziert wird
+
+**Entscheidung:** `direction` einer `ConversationSituation` sagt, welche
+Sprache die lernende Person **hervorbringt** — deckungsgleich mit der schon
+etablierten `Direction` aus dem FSRS-Modul (`de_to_th` = Deutsch verstehen,
+Thai produzieren). Es gibt daher **zwei getrennte Sätze** von Situationen, je
+Richtung eigene. Innerhalb eines Dialogs markiert `speaker: 'learner'` die zu
+übenden Zeilen, `partner` die vorgegebene Gegenseite.
+
+**Begründung:** Die Alternative — ein Satz Dialoge, bei dem je nach Richtung
+die andere Seite verdeckt wird — spart Generierungskosten und macht das
+Material für eine der beiden Zielgruppen unbrauchbar. Ein Deutscher, der Thai
+lernt, übt auf einem Markt in Bangkok; ein Thailänder, der Deutsch lernt, übt
+beim Bäcker oder auf dem Amt. Vor allem aber sind die **Korrektur-Hinweise**
+richtungsspezifisch: Töne, Vokallänge und Klassifikatoren auf der einen Seite,
+Artikel, Kasus und Verbstellung auf der anderen. Ein gespiegelter Dialog
+könnte höchstens einen der beiden Sätze Hinweise tragen — der andere fiele weg
+oder wäre falsch. Das ist dieselbe Überlegung wie in Phase 6 des Plans:
+Bidirektionalität ist kein Karten-Flip.
+
+### AE-12 — Offizieller Anthropic-SDK statt eigenem `fetch`, mit angepasster Metro-Auflösung
+
+**Entscheidung:** `@anthropic-ai/sdk` mit `dangerouslyAllowBrowser: true`,
+dazu eine `metro.config.js`, die `unstable_enablePackageExports` und die
+Bedingungsnamen `require`/`import`/`default`/`browser` setzt.
+
+**Begründung:** Ohne diese Konfiguration bricht der Web-Build mit
+`Unable to resolve module ./lib/credentials/types.js` ab — die `exports`-Map
+des SDK führt für `./lib/*` nur die Bedingungen `import` und `require`, kein
+`default`, und Metros Standardauflösung greift daneben. Die Datei existiert
+sehr wohl; es war reines Auflösungsverhalten. Mit der Anpassung bündelt der
+SDK sauber, was einen handgeschriebenen HTTP-Client überflüssig macht.
+`dangerouslyAllowBrowser: true` setzt dabei **genau** den Header
+`anthropic-dangerous-direct-browser-access: true` — im SDK-Quelltext
+nachgesehen (`client.js`), nicht angenommen.
+
 ---
 
 ## Protokoll
@@ -467,6 +544,99 @@ dass geprüfte Einträge gar kein `verificationNote` haben.
   eine **Thai-Stimme** installiert ist; ohne sie bleibt „Thai anhören" stumm,
   was kein Fehler der App ist, sondern eine Systemeinstellung.
 
+### 2026-08-30 — Zusatz: Lernstatistik (Nachtrag aus Phase 3)
+
+Der Fortschritt-Tab war noch Platzhalter. Er zeigt jetzt echte Daten:
+Wiederholungen heute, Tage in Folge, fällige Karten, Kartenzustände als
+gestapelter Balken und ein Diagramm der letzten 14 Tage. Datenmodell-Frage
+geklärt → **AE-9** (Tagesprotokoll statt Näherung), Einschränkung im UI
+benannt. Lücken im Diagramm werden mit Nullen aufgefüllt statt
+zusammengeschoben; die Tagesserie bricht nicht ab, nur weil heute noch nichts
+gelernt wurde. 19 neue Tests für Tagesschlüssel, Protokollierung, Lücken,
+Serienberechnung und Aggregation.
+
+### 2026-08-30 — Phase 4: Content-Generator für Sprachsituationen
+
+**Gemacht**
+
+- `src/lib/conversation/` — `types.ts` (Schema, Themen, Niveaus), `plan.ts`
+  (deterministischer Bauplan), `generator.ts` (Prompt, API-Aufruf, strenge
+  Prüfung der Antwort), `batch.ts` (robuster Lauf).
+- `src/lib/api-key.ts` — Ablage nach AE-10.
+- Einstellungs-Screen: Schlüsselfeld, Umfangwahl (Probelauf 16 /
+  vollständiger Lauf 512), Start und Anhalten, Fortschrittsbalken mit
+  **getrennten** Zählern, aufklappbare Fehlerliste, Löschen des Bestands.
+- Gespräch-Screen: Filter nach Richtung, aufklappbare Situationen mit
+  Szenenbeschreibung, Zügen (Thai / Umschrift / Deutsch), Sprechtaste je Zug
+  und Korrektur-Hinweisen. Eigene Zeilen sind farbig markiert.
+- `metro.config.js` ergänzt → AE-12.
+
+**Kein Live-Chat** — bewusst. Die Dialoge entstehen einmalig als
+`scriptTurns`, danach braucht das Üben weder Netz noch Schlüssel.
+
+**Robustheit (Pflicht 2), nachweislich geprüft**
+
+Sofort speichern statt am Ende sammeln; Fehler zählen und weitermachen statt
+abbrechen; Vorhandenes überspringen; abbrechbar. Belegt durch Tests *und*
+einen echten Lauf gegen die API:
+
+- Fehler mitten im Lauf → 14 erzeugt, 2 fehlgeschlagen, alle 16 angefasst.
+- Drei Fehler gleich zu Beginn → die übrigen 13 sind trotzdem gespeichert.
+- Zweiter Lauf → 12 übersprungen, nur die 4 fehlenden angefragt.
+- Dritter Lauf → gar kein API-Aufruf mehr.
+- Abbruch nach 5 → die 5 bleiben erhalten.
+- Unbrauchbare Antwort → gilt als Fehlschlag, nichts Halbes wird gespeichert.
+
+**CORS (Pflicht 4) — empirisch belegt, nicht angenommen**
+
+Aus dem laufenden Web-Build heraus gegen `api.anthropic.com` geprüft:
+
+| Anfrage | Ergebnis |
+| --- | --- |
+| **ohne** `anthropic-dangerous-direct-browser-access` | `TypeError: Failed to fetch` — CORS blockt |
+| **mit** dem Header | HTTP 401 mit sauberem JSON `authentication_error` |
+
+Der Header ist also tatsächlich nötig, und mit ihm ist der Netzwerkweg frei.
+
+**Durchlauf durch den echten SDK**
+
+Mit einem absichtlich ungültigen Dummy-Schlüssel im Web-Build gestartet:
+16/16 verarbeitet, 0 erzeugt, 16 fehlgeschlagen, jeder Fehlschlag mit ID und
+Grund (`401 authentication_error`), **0 Einträge gespeichert**. Damit sind
+Bündelung, Header, Anfrageform, Fehlerbehandlung und Batch-Verhalten unter
+echten Netzwerkbedingungen belegt — nur die Gültigkeit des Schlüssels fehlte.
+
+**Offline-Wiedergabe geprüft**
+
+Zwei Situationen im Schema eingespielt, Gespräch-Screen zeigt sie mit allen
+Zügen und Hinweisen; nach vollständigem Neuladen unverändert vorhanden
+(„2 Situationen — offline nutzbar"), ohne Schlüssel und ohne Netzanfrage. Die
+Testdaten wurden danach wieder entfernt.
+
+**Antwortformat**
+
+JSON im Prompt verlangt und streng geprüft, statt `output_config.format` zu
+verwenden. Grund: ohne echten Schlüssel ließ sich das hier nicht gegen die API
+testen. Ein Fehler im Schema-Parameter hätte **jeden** Aufruf zum Scheitern
+gebracht; eine unerwartete Antwortform zeigt sich dagegen als *ein*
+fehlgeschlagener Eintrag, den der Batch übersteht. Strukturierte Ausgaben sind
+die natürliche Verbesserung, sobald ein echter Lauf die Basis bestätigt.
+
+**Verifiziert**
+
+- `npm test` → **229 Tests grün** in 8 Suites (vorher 187).
+- `npx tsc --noEmit` fehlerfrei.
+- Layout bei 375 px und im breiten Fenster geprüft.
+
+**Offen**
+
+- Ein Lauf mit **gültigem** Schlüssel steht aus — ich kann und darf keinen
+  fremden API-Schlüssel eingeben. Das ist Blocker **B-3**; alles davor ist
+  geprüft, sodass der Lauf nur noch am Schlüssel hängt.
+- Gerätecheck in Expo Go (**B-2**) bleibt offen, weil der Apple-Signierweg dem
+  Nutzer zu aufwendig ist. Damit sind Phase 3 und 4 auf dem Gerät unbestätigt;
+  im Web-Build ist beides geprüft.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -538,17 +708,24 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 
 ## TODO — priorisiert
 
-1. **Gerätecheck durch den Nutzer (Blocker B-2, blockiert den Abschluss von Phase 3):**
-   `npx expo start`, QR-Code mit **Expo Go** scannen und prüfen:
-   (a) Übersicht zeigt beide Richtungen mit eigener Fälligkeitszahl,
-   (b) eine Sitzung in **beiden** Richtungen durchspielen — aufdecken,
-   bewerten, nächste Karte,
-   (c) bei สวัสดี sind die drei Silben in zwei verschiedenen Farben,
-   (d) „Thai anhören" antippen. Bleibt es stumm, fehlt dem Gerät eine
-   **Thai-Stimme** — das ist eine Systemeinstellung, kein Fehler der App.
-   Ergebnis hier eintragen.
-2. **Phase 4 — Generator Sprachsituationen** (API-Key-Feld, Batch, Offline-Persistenz).
-3. **Phase 5 — Generator Bilder** (nur `isConcrete`).
+1. **Probelauf mit gültigem Schlüssel (Blocker B-3, schließt Phase 4 ab):**
+   `npx expo start` → `w`, Reiter **Einstellungen**, eigenen Anthropic-Schlüssel
+   eintragen, **Probelauf** wählen, **Start**. Erwartung: 16 von 16 erzeugt,
+   0 fehlgeschlagen. Danach Reiter **Gespräch** — die Situationen sind da;
+   Seite neu laden und noch einmal schauen, sie müssen ohne Schlüssel bleiben.
+   Was der Lauf kostet, ist überschaubar (16 kurze Anfragen), aber es ist
+   echtes Geld. Ergebnis hier eintragen.
+   *Warum ich das nicht selbst gemacht habe:* Ich gebe keine fremden
+   API-Schlüssel ein. Alles davor ist geprüft — CORS, Header, SDK, Batch,
+   Fehlerverhalten, Offline-Wiedergabe —, es hängt nur noch am Schlüssel.
+2. **Gerätecheck in Expo Go (Blocker B-2, offen, vom Nutzer zurückgestellt):**
+   Betrifft Phase 3 und 4 auf iOS/Android; der Apple-Signierweg ist dem Nutzer
+   derzeit zu aufwendig. Im Web-Build ist beides geprüft. Auf **Android** wäre
+   der Weg über Expo Go deutlich einfacher, falls das später relevant wird.
+3. **Phase 5 — Generator Bilder** (nur `isConcrete`). Der Aufbau aus Phase 4
+   ist dafür gedacht: `plan.ts` / `batch.ts` sind nicht an Sprachsituationen
+   gebunden, und der Audio-Auflöser (`registerAudioAssetResolver`) wartet
+   schon auf vorproduzierte Clips.
 4. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
 5. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
 6. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
