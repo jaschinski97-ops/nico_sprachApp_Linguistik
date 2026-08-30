@@ -190,7 +190,13 @@
       "phase": 4,
       "criterion": "Tests und tsc gruen",
       "done": true,
-      "verifiedHow": "229 Tests in 8 Suites gruen; npx tsc --noEmit fehlerfrei."
+      "verifiedHow": "237 Tests in 9 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 4,
+      "criterion": "Prompt-Vertrag geprueft (Antwortform passt zum Parser)",
+      "done": true,
+      "verifiedHow": "prompt-contract.test.ts: zwei ausformulierte Musterantworten je Richtung; prueft Zuglaenge, Sprecherwechsel, alle drei Sprachfassungen und richtungsspezifische Korrektur-Hinweise. Schliesst die einzige Luecke, die der Lauf mit ungueltigem Schluessel offenliess."
     }
   ],
   "architectureDecisions": [
@@ -274,7 +280,7 @@
         4
       ],
       "needsUser": true,
-      "note": "Fremde API-Schluessel gebe ich nicht ein. Alles davor ist geprueft (CORS, Header, SDK, Batch, Fehlerverhalten, Offline-Wiedergabe).",
+      "note": "Auf dem Rechner sind keine Zugangsdaten hinterlegt (kein ANTHROPIC_API_KEY, kein ANTHROPIC_AUTH_TOKEN, kein ant-CLI, kein Profilverzeichnis) - nachgesehen. Fremde API-Schluessel gebe ich nicht ein. Alles davor ist geprueft: CORS empirisch, SDK-Buendelung, Anfrageform, Fehlerverhalten, Batch-Robustheit, Offline-Wiedergabe, Prompt-Vertrag.",
       "steps": "Einstellungen -> Schluessel eintragen -> Probelauf -> Start. Erwartung 16/16 erzeugt, 0 fehlgeschlagen; danach unter Gespraech sichtbar und nach Neuladen offline vorhanden."
     }
   ],
@@ -304,5 +310,10 @@
     ],
     "model": "claude-opus-5",
     "note": "Zwei Situationen wurden zum Pruefen der Offline-Wiedergabe von Hand eingespielt und danach wieder entfernt."
+  },
+  "generatorSettings": {
+    "model": "claude-opus-5",
+    "effort": "low",
+    "effortRationale": "Kurzer A1/A2-Dialog in vorgegebenem JSON ist eine einfache Aufgabe; bei 512 Aufrufen schlaegt der Aufwand auf Kosten und Dauer durch."
   }
 }

@@ -624,15 +624,38 @@ die natürliche Verbesserung, sobald ein echter Lauf die Basis bestätigt.
 
 **Verifiziert**
 
-- `npm test` → **229 Tests grün** in 8 Suites (vorher 187).
+- `npm test` → **237 Tests grün** in 9 Suites (vorher 187).
 - `npx tsc --noEmit` fehlerfrei.
 - Layout bei 375 px und im breiten Fenster geprüft.
 
+**Nachtrag: die letzte Lücke so weit wie möglich geschlossen**
+
+Auf dem Rechner sind keine Zugangsdaten hinterlegt (weder
+`ANTHROPIC_API_KEY` noch `ANTHROPIC_AUTH_TOKEN`, kein `ant`-CLI, kein
+Profilverzeichnis) — nachgesehen, nicht vermutet. B-3 lässt sich hier also
+nicht schließen. Zwei Dinge, die stattdessen gemacht wurden:
+
+1. **Prompt-Vertrag getestet** (`prompt-contract.test.ts`). Der Lauf mit
+   ungültigem Schlüssel konnte alles prüfen außer einem: ob eine Antwort, die
+   genau der im Prompt verlangten Form folgt, auch durch die Prüfung kommt.
+   Zwei ausformulierte Musterantworten — eine je Richtung — decken das jetzt
+   ab, inklusive Zuglänge, Sprecherwechsel, Vollständigkeit der drei
+   Sprachfassungen und **richtungsspezifischer** Korrektur-Hinweise (Töne und
+   Klassifikatoren gegen Artikel, Kasus, Verbstellung — der Kern von AE-11).
+   Das ersetzt keinen echten Lauf, fängt aber genau den Fehler ab, der sonst
+   erst beim ersten bezahlten Aufruf aufgefallen wäre: dass Prompt und Parser
+   auseinandergelaufen sind.
+2. **`output_config: { effort: 'low' }`** ergänzt. Ein kurzer A1/A2-Dialog in
+   vorgegebenem JSON ist eine einfache Aufgabe; bei 512 Aufrufen im vollen
+   Lauf schlägt der Unterschied im Aufwand spürbar auf Kosten und Dauer durch.
+
 **Offen**
 
-- Ein Lauf mit **gültigem** Schlüssel steht aus — ich kann und darf keinen
-  fremden API-Schlüssel eingeben. Das ist Blocker **B-3**; alles davor ist
-  geprüft, sodass der Lauf nur noch am Schlüssel hängt.
+- Ein Lauf mit **gültigem** Schlüssel steht aus. Das ist Blocker **B-3** und
+  bleibt beim Nutzer: fremde API-Schlüssel gebe ich nicht ein, und auf diesem
+  Rechner sind keine hinterlegt. Alles davor ist geprüft — CORS empirisch,
+  SDK-Bündelung, Anfrageform, Fehlerverhalten, Batch-Robustheit,
+  Offline-Wiedergabe und jetzt auch der Prompt-Vertrag.
 - Gerätecheck in Expo Go (**B-2**) bleibt offen, weil der Apple-Signierweg dem
   Nutzer zu aufwendig ist. Damit sind Phase 3 und 4 auf dem Gerät unbestätigt;
   im Web-Build ist beides geprüft.

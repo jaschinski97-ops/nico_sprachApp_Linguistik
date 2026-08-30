@@ -176,6 +176,11 @@ export function createAnthropicClient(apiKey: string): GenerationClient {
       const response = await anthropic.messages.create({
         model: GENERATOR_MODEL,
         max_tokens: 16000,
+        // Ein kurzer A1/A2-Dialog in vorgegebenem JSON ist eine einfache
+        // Aufgabe. Bei 512 Aufrufen im vollen Lauf schlägt der Unterschied
+        // zwischen niedrigem und hohem Aufwand spürbar auf Kosten und Dauer
+        // durch, ohne dass das Ergebnis darunter litte.
+        output_config: { effort: 'low' },
         system: systemPrompt(),
         messages: [{ role: 'user', content: userPrompt(spec) }],
       });
