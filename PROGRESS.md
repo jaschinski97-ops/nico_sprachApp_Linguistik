@@ -157,26 +157,91 @@ TTS-Fallback.
 
 - Siehe TODO-Liste am Ende.
 
+### 2026-08-30 — Phase 1: FSRS-Engine & Persistenzschicht
+
+**Gemacht**
+
+- `src/lib/fsrs/` — Typen (`Direction`, `Rating`, `CardState`, `FSRSCardState`)
+  und Engine als reine Funktionen: `createCardState`, `retrievability`,
+  `nextIntervalDays`, `reviewCard`, `isDue`, `dueCards`. Formeln unverändert
+  aus dem Referenzprototyp; der Modulkommentar hält ausdrücklich fest, dass
+  `DEFAULT_WEIGHTS` eine **Näherung** an veröffentlichte FSRS-Gewichte ist und
+  keine zertifizierte Kopie.
+- `src/lib/storage/` — Persistenz-Abstraktion nach AE-3, umgesetzt als
+  Dokumentspeicher (`Sammlung` + `ID` + JSON-Wert) über fünf Sammlungen:
+  `vocab`, `cards`, `situations`, `exam`, `meta`. Damit sind alle Datentypen
+  des Projekts abgedeckt, auch die aus Phase 4, 5 und 7.
+  - `backend.ts` (nativ) → eine SQLite-Tabelle, `putMany` in einer Transaktion.
+  - `backend.web.ts` (Web) → ein JSON-Blob je Sammlung in AsyncStorage.
+  - `memory-store.ts` → für Tests und als Notnagel.
+  - `index.ts` → `getStore()` als Singleton. Schlägt die Initialisierung des
+    Plattform-Backends fehl, fällt die App auf den Memory-Store zurück und
+    startet trotzdem; `getActiveBackend()` sagt, was wirklich läuft.
+- `src/lib/repository.ts` — typisierte Zugriffe (`loadOrCreateCardState`,
+  `saveCardState`, `loadCardStatesForDirection`, `readMeta`/`writeMeta`), damit
+  die Screens weder Sammlungsnamen noch Schlüsselformate kennen müssen.
+- Jest eingerichtet (`jest-expo`), `@types/jest` über `types` in der
+  `tsconfig.json` aktiviert.
+- Auf dem Screen „Lernen" eine Persistenz-Prüfung ergänzt: eine echte
+  FSRS-Karte (ไก่ *gài*), Bewertungsknöpfe, alle Kennzahlen und die Anzeige des
+  aktiven Speicher-Backends. Phase 3 ersetzt das durch den richtigen
+  Karteikarten-Flow.
+
+**Verifiziert**
+
+- `npm test` → **49 Tests grün** in 2 Suites.
+  - `fsrs.test.ts` prüft die Retrievability-Kurve gegen die Formel selbst,
+    Monotonie über die Zeit, das Verhalten bei `t < 0`, die Zielretention am
+    Fälligkeitszeitpunkt, `S = W[rating-1]` bei Erstbewertung, die Ordnung
+    Leicht > Gut > Schwer, Lapse-Zählung, die Grenzen 1..10 für Difficulty auch
+    nach 50 Lapses, Unveränderlichkeit der Eingabekarte und den Abstandseffekt
+    (späte Wiederholung bringt mehr Stabilität als sofortige).
+  - `storage.test.ts` fährt **dieselbe Vertragsprüfung gegen beide
+    Backends** (Memory und AsyncStorage-Web), damit sich die Plattformen nicht
+    auseinanderentwickeln — inklusive Trennung der Sammlungen, `putMany`,
+    Kopiersemantik beim Lesen und Neustart-Persistenz. Ein beschädigter
+    JSON-Blob führt zu einer leeren Sammlung statt zu einem Absturz.
+- `npx tsc --noEmit` fehlerfrei.
+- **Web-Persistenz am laufenden Gerät geprüft:** Karte im Browser zweimal
+  bewertet (Gut, Leicht) → `reps 2`, `Stabilität 2.40`, `Difficulty 4.07`;
+  danach die Seite vollständig neu geladen → identische Werte. Anzeige des
+  Backends: `async-storage`, wie nach AE-3 erwartet. Keine Konsolenfehler.
+
+**Beobachtung, die keine Fehlfunktion ist**
+
+Zweimal direkt hintereinander bewerten lässt die Stabilität *nicht* steigen
+(hier: 2.40 nach „Gut", danach unverändert 2.40 nach „Leicht"). Das ist so
+gewollt: bei Retrievability 1 ist der Wachstumsterm
+`exp(W[10] * (1 - R)) - 1` gleich null. Massiertes Wiederholen ohne zeitlichen
+Abstand bringt keinen Lernzuwachs — genau der Abstandseffekt, den FSRS abbildet.
+
+**Offen**
+
+- Persistenz **in Expo Go auf dem Handy** (SQLite-Pfad) ist noch nicht
+  bestätigt — das kann nur der Nutzer auf seinem Gerät prüfen. Der
+  SQLite-Pfad ist deshalb bislang nur typgeprüft, nicht am Gerät verifiziert.
+
 ---
 
 ## TODO — priorisiert
 
-1. **Phase 0 abschließen:** Dev-Server im Browser gegenprüfen (alle fünf Tabs
-   klickbar), Stand vom Nutzer in Expo Go auf dem Handy bestätigen lassen,
-   erster Git-Commit.
-2. **Phase 1 — FSRS-Engine & Persistenzschicht:** FSRS-Modul in TypeScript
-   (Formeln siehe unten), Persistenz-Abstraktion nach AE-3, Unit-Tests für
-   Retrievability und Review-Update.
-3. **Phase 2 — Vokabular-Grundstock:** 50–100 handverifizierte Einträge,
+1. **Gerätecheck durch den Nutzer (blockiert den Abschluss von Phase 0 und 1):**
+   `npx expo start`, QR-Code mit **Expo Go** scannen und prüfen:
+   (a) alle fünf Tabs sind da und klickbar,
+   (b) auf „Lernen" die Karte bewerten, Expo Go **ganz schließen**, neu öffnen —
+   bleiben `Wiederholungen`, `Stabilität` und `Difficulty` stehen, ist der
+   SQLite-Pfad bestätigt. Unter „Speicher:" muss dort `expo-sqlite` stehen
+   (im Browser dagegen `async-storage`). Ergebnis hier eintragen.
+2. **Phase 2 — Vokabular-Grundstock:** 50–100 handverifizierte Einträge,
    bidirektional, `sourceVerified`. Skalierungspfad auf 1000 dokumentieren.
-4. **Phase 3 — Lern-UI:** Karteikarten-Flow, Tonfarblegende, Audio-Fallback,
+3. **Phase 3 — Lern-UI:** Karteikarten-Flow, Tonfarblegende, Audio-Fallback,
    Dashboard mit fälligen Karten je Richtung.
-5. **Phase 4 — Generator Sprachsituationen** (API-Key-Feld, Batch, Offline-Persistenz).
-6. **Phase 5 — Generator Bilder** (nur `isConcrete`).
-7. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
-8. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
-9. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
-10. **Phase 9 — QA & Abschluss.**
+4. **Phase 4 — Generator Sprachsituationen** (API-Key-Feld, Batch, Offline-Persistenz).
+5. **Phase 5 — Generator Bilder** (nur `isConcrete`).
+6. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
+7. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
+8. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
+9. **Phase 9 — QA & Abschluss.**
 
 ---
 

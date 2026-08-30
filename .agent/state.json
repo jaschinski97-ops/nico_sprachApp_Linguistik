@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-08-30",
-  "currentPhase": 0,
-  "currentPhaseName": "Setup",
+  "currentPhase": 1,
+  "currentPhaseName": "FSRS-Engine & Persistenzschicht",
   "currentPhaseStatus": "web-verified-awaiting-device-check",
   "stack": {
     "framework": "expo",
@@ -11,14 +11,15 @@
     "language": "typescript",
     "router": "expo-router",
     "react": "19.2.3",
-    "reactNative": "0.86.3"
+    "reactNative": "0.86.3",
+    "testRunner": "jest + jest-expo"
   },
   "acceptanceCriteria": [
     {
       "phase": 0,
       "criterion": "npx expo start liefert klickbare Navigation zwischen Platzhalter-Screens im Browser",
       "done": true,
-      "verifiedHow": "Dev-Server auf Port 8081 gestartet, alle fuenf Routen (/, /review, /conversation, /progress, /settings) im Browser angeklickt und gerendert; zusaetzlich bei 375px Breite geprueft."
+      "verifiedHow": "Dev-Server auf Port 8081; alle fuenf Routen (/, /review, /conversation, /progress, /settings) angeklickt und gerendert; zusaetzlich bei 375px Breite geprueft (Nav-Leiste bricht um)."
     },
     {
       "phase": 0,
@@ -31,7 +32,32 @@
       "phase": 0,
       "criterion": "Git-Repo und PROGRESS.md angelegt",
       "done": true,
-      "verifiedHow": "PROGRESS.md und .agent/state.json im Projekt-Root, erster Commit gesetzt."
+      "verifiedHow": "PROGRESS.md und .agent/state.json im Projekt-Root, Commits auf Branch main."
+    },
+    {
+      "phase": 1,
+      "criterion": "Unit-Tests fuer Retrievability und Review-Update gruen",
+      "done": true,
+      "verifiedHow": "npm test -> 49 Tests in 2 Suites gruen. fsrs.test.ts prueft die Formel selbst, Monotonie, Grenzen 1..10, Lapse-Zaehlung, Abstandseffekt; storage.test.ts fuehrt dieselbe Vertragspruefung gegen Memory- und AsyncStorage-Backend."
+    },
+    {
+      "phase": 1,
+      "criterion": "Persistenz-Abstraktion fuer alle Datentypen",
+      "done": true,
+      "verifiedHow": "DataStore-Interface ueber die Sammlungen vocab, cards, situations, exam, meta; Backends backend.ts (SQLite), backend.web.ts (AsyncStorage), memory-store.ts."
+    },
+    {
+      "phase": 1,
+      "criterion": "Kartenzustand uebersteht App-Neustart auf Web",
+      "done": true,
+      "verifiedHow": "Demo-Karte im Browser zweimal bewertet (reps 2, stability 2.40, difficulty 4.07), Seite vollstaendig neu geladen, Werte unveraendert. Backend-Anzeige: async-storage."
+    },
+    {
+      "phase": 1,
+      "criterion": "Kartenzustand uebersteht App-Neustart in Expo Go (SQLite-Pfad)",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "Braucht das Geraet des Nutzers. Erwartung: unter 'Speicher:' steht dort expo-sqlite statt async-storage."
     }
   ],
   "architectureDecisions": [
@@ -59,17 +85,31 @@
       "id": "AE-5",
       "title": "expo-audio statt expo-av",
       "rationale": "expo-av ist zugunsten expo-audio/expo-video abgeloest; expo install liefert unter SDK 57 expo-audio 57.0.4."
+    },
+    {
+      "id": "AE-6",
+      "title": "Dokumentspeicher (Sammlung + ID + JSON) statt relationalem Schema",
+      "rationale": "Dieselbe schmale Schnittstelle laesst sich verlustfrei auf eine SQLite-Tabelle UND auf JSON-Blobs in AsyncStorage abbilden. Eine gemeinsame Vertragspruefung laeuft gegen beide Backends, damit sie sich nicht auseinanderentwickeln."
     }
   ],
-  "openBlockers": [],
+  "openBlockers": [
+    {
+      "id": "B-1",
+      "title": "Geraetecheck in Expo Go steht aus",
+      "affectsPhases": [0, 1],
+      "needsUser": true,
+      "steps": "npx expo start -> QR-Code mit Expo Go scannen -> alle fuenf Tabs pruefen; auf 'Lernen' die Karte bewerten, Expo Go ganz schliessen und neu oeffnen; Werte muessen stehen bleiben, 'Speicher:' muss expo-sqlite anzeigen."
+    }
+  ],
   "nextUp": {
-    "phase": 1,
-    "name": "FSRS-Engine & Persistenzschicht",
+    "phase": 2,
+    "name": "Vokabular-Grundstock",
     "tasks": [
-      "FSRS-Modul in TypeScript (Formeln aus geprueftem Referenzprototyp)",
-      "Persistenz-Abstraktion nach AE-3 (SQLite nativ / AsyncStorage web)",
-      "Unit-Tests fuer Retrievability und Review-Update",
-      "Kartenzustand ueberlebt App-Neustart auf Web UND in Expo Go"
+      "VocabEntry-Modell nach Datenmodell-Skizze (inkl. isConcrete und sourceVerified)",
+      "50-100 handverifizierte Eintraege, Tonangaben gegen verlaessliche Quelle geprueft",
+      "Bidirektional von Anfang an (de_to_th und th_to_de)",
+      "Skalierungspfad auf 1000 Eintraege in PROGRESS.md dokumentieren - keine 1000 ungeprueften Eintraege am Stueck generieren",
+      "15 bereits handverifizierte Eintraege aus dem Referenzprototyp als Startmenge uebernehmen"
     ]
   }
 }
