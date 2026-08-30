@@ -1,0 +1,61 @@
+import { ReactNode } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ThemedText } from './themed-text';
+
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+
+type Props = {
+  title: string;
+  subtitle?: string;
+  children?: ReactNode;
+};
+
+/**
+ * Shared page frame. Centres content and caps its width so the same screens
+ * read well on a phone and in a wide desktop browser window (see PROGRESS.md,
+ * Phase 0 responsive requirement) instead of stretching edge to edge.
+ */
+export function ScreenScaffold({ title, subtitle, children }: Props) {
+  return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.column}>
+          <View style={styles.header}>
+            <ThemedText type="subtitle">{title}</ThemedText>
+            {subtitle ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {subtitle}
+              </ThemedText>
+            ) : null}
+          </View>
+          {children}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+  },
+  scroll: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.three,
+    paddingTop: Spacing.five,
+    paddingBottom: BottomTabInset + Spacing.six,
+  },
+  column: {
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    gap: Spacing.four,
+  },
+  header: {
+    gap: Spacing.one,
+  },
+});

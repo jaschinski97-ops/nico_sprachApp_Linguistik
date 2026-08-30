@@ -1,0 +1,75 @@
+{
+  "project": "Thai <-> Deutsch Lernbegleiter",
+  "protocolVersion": 1,
+  "lastUpdated": "2026-08-30",
+  "currentPhase": 0,
+  "currentPhaseName": "Setup",
+  "currentPhaseStatus": "web-verified-awaiting-device-check",
+  "stack": {
+    "framework": "expo",
+    "expoSdk": "57",
+    "language": "typescript",
+    "router": "expo-router",
+    "react": "19.2.3",
+    "reactNative": "0.86.3"
+  },
+  "acceptanceCriteria": [
+    {
+      "phase": 0,
+      "criterion": "npx expo start liefert klickbare Navigation zwischen Platzhalter-Screens im Browser",
+      "done": true,
+      "verifiedHow": "Dev-Server auf Port 8081 gestartet, alle fuenf Routen (/, /review, /conversation, /progress, /settings) im Browser angeklickt und gerendert; zusaetzlich bei 375px Breite geprueft."
+    },
+    {
+      "phase": 0,
+      "criterion": "Gleiche Navigation in Expo Go auf dem Handy sichtbar",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "Kann nur der Nutzer selbst bestaetigen - QR-Code aus 'npx expo start' mit Expo Go scannen."
+    },
+    {
+      "phase": 0,
+      "criterion": "Git-Repo und PROGRESS.md angelegt",
+      "done": true,
+      "verifiedHow": "PROGRESS.md und .agent/state.json im Projekt-Root, erster Commit gesetzt."
+    }
+  ],
+  "architectureDecisions": [
+    {
+      "id": "AE-1",
+      "title": "Expo (React Native) + TypeScript",
+      "rationale": "Eine Codebasis fuer Web/iOS/Android, Entwicklung unter Windows, iOS-Build spaeter via EAS ohne eigenen Mac."
+    },
+    {
+      "id": "AE-2",
+      "title": "Vorhandenes Git-Repo aus my-app/ in den Projekt-Root gehoben",
+      "rationale": "Abgebrochener create-expo-app-Lauf ohne Commits und ohne Dateien; kein Arbeitsverlust, vermeidet verschachteltes zweites Repo."
+    },
+    {
+      "id": "AE-3",
+      "title": "expo-sqlite auf Web unzuverlaessig -> Persistenz-Abstraktion mit AsyncStorage-Fallback",
+      "rationale": "Web-Pfad von expo-sqlite@57.0.2 nutzt SharedArrayBuffer + Atomics in web/WorkerChannel.ts; das setzt Cross-Origin-Isolation (COOP/COEP) voraus, die weder expo start --web noch ein statischer Export auf fremdem Hosting liefert."
+    },
+    {
+      "id": "AE-4",
+      "title": "Navigation als Plattform-Split (Bottom-Tabs nativ, Top-Nav web)",
+      "rationale": "Phase-3-Vorgabe: kein reines Phone-Layout im breiten Browser-Fenster. Nativ vom unstable NativeTabs auf stabiles Tabs gewechselt."
+    },
+    {
+      "id": "AE-5",
+      "title": "expo-audio statt expo-av",
+      "rationale": "expo-av ist zugunsten expo-audio/expo-video abgeloest; expo install liefert unter SDK 57 expo-audio 57.0.4."
+    }
+  ],
+  "openBlockers": [],
+  "nextUp": {
+    "phase": 1,
+    "name": "FSRS-Engine & Persistenzschicht",
+    "tasks": [
+      "FSRS-Modul in TypeScript (Formeln aus geprueftem Referenzprototyp)",
+      "Persistenz-Abstraktion nach AE-3 (SQLite nativ / AsyncStorage web)",
+      "Unit-Tests fuer Retrievability und Review-Update",
+      "Kartenzustand ueberlebt App-Neustart auf Web UND in Expo Go"
+    ]
+  }
+}
