@@ -1,0 +1,231 @@
+import { Pressable, StyleSheet, View } from 'react-native';
+
+import { ThaiWord } from './thai-word';
+import { ThemedText } from './themed-text';
+import { ThemedView } from './themed-view';
+import { VerificationBadge } from './verification-badge';
+
+import { Spacing } from '@/constants/theme';
+import { VocabEntry } from '@/data/vocabulary';
+import { playPronunciation } from '@/lib/audio';
+import { Direction } from '@/lib/fsrs/types';
+
+/**
+ * Karteikarte.
+ *
+ * Vorder- und Rückseite tauschen mit der Lernrichtung:
+ *   th_to_de — vorne die Thai-Schrift (noch ohne Tonfarben, das ist ja die
+ *              Leseaufgabe), hinten Umschrift mit Silbenfarben und Bedeutung.
+ *   de_to_th — vorne das deutsche Wort samt Grammatik, hinten das thailändische
+ *              Wort mit Tonfarben.
+ *
+ * Die Tonfarben erscheinen bewusst erst beim Aufdecken: vorher wären sie die
+ * halbe Antwort.
+ */
+
+type Props = {
+  entry: VocabEntry;
+  direction: Direction;
+  revealed: boolean;
+};
+
+export function Flashcard({ entry, direction, revealed }: Props) {
+  const thaiFirst = direction === 'th_to_de';
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.card}>
+      {thaiFirst ? (
+        <>
+          {revealed ? (
+            <ThaiWord entry={entry} />
+          ) : (
+            <View style={styles.frontThai}>
+              <ThemedText style={styles.thaiPlain}>{entry.thai}</ThemedText>
+            </View>
+          )}
+          <SpeakButton
+            label="Thai anhören"
+            text={entry.thai}
+            language="th"
+            assetId={entry.audioAssetId}
+          />
+          {revealed ? <GermanBlock entry={entry} /> : null}
+        </>
+      ) : (
+        <>
+          <GermanBlock entry={entry} headline />
+          {revealed ? (
+            <>
+              <ThaiWord entry={entry} />
+              <SpeakButton
+                label="Thai anhören"
+                text={entry.thai}
+                language="th"
+                assetId={entry.audioAssetId}
+              />
+            </>
+          ) : (
+            <SpeakButton label="Deutsch anhören" text={entry.german} language="de" />
+          )}
+        </>
+      )}
+
+      {revealed ? <ExampleBlock entry={entry} /> : null}
+      {revealed ? <VerificationBadge entry={entry} /> : null}
+    </ThemedView>
+  );
+}
+
+function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?: boolean }) {
+  const chips: string[] = [];
+  if (entry.germanNoun) {
+    chips.push(`Plural: ${entry.germanNoun.plural}`);
+  }
+  if (entry.germanVerb) {
+    chips.push(
+      `${entry.germanVerb.thirdPerson} · ${entry.germanVerb.praeteritum} · ${entry.germanVerb.perfekt}`
+    );
+  }
+  if (entry.germanAdjective) {
+    chips.push(
+      `${entry.germanAdjective.comparative} · ${entry.germanAdjective.superlative}`
+    );
+  }
+
+  return (
+    <View style={styles.germanBlock}>
+      <ThemedText style={headline ? styles.germanLarge : styles.germanMedium}>
+        {entry.german}
+      </ThemedText>
+      {chips.map((chip) => (
+        <ThemedText key={chip} type="small" themeColor="textSecondary" style={styles.center}>
+          {chip}
+        </ThemedText>
+      ))}
+      {entry.note ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
+          {entry.note}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+}
+
+function ExampleBlock({ entry }: { entry: VocabEntry }) {
+  return (
+    <ThemedView type="backgroundSelected" style={styles.example}>
+      <View style={styles.exampleRow}>
+        <View style={styles.exampleText}>
+          <ThemedText type="small">{entry.exampleThai}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {entry.exampleRoman}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {entry.exampleGerman}
+          </ThemedText>
+        </View>
+        <SpeakButton label="▶" text={entry.exampleThai} language="th" compact />
+      </View>
+    </ThemedView>
+  );
+}
+
+function SpeakButton({
+  label,
+  text,
+  language,
+  assetId,
+  compact = false,
+}: {
+  label: string;
+  text: string;
+  language: 'th' | 'de';
+  assetId?: string;
+  compact?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={() => {
+        // Absichtlich ohne await: die Karte soll nicht auf die Sprachausgabe
+        // warten. Fehler (z. B. keine Thai-Stimme installiert) dürfen den
+        // Lernfluss nicht unterbrechen.
+        playPronunciation({ text, language, audioAssetId: assetId }).catch(() => {});
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${text}`}
+      style={({ pressed }) => pressed && styles.pressed}>
+      <ThemedView
+        type="backgroundSelected"
+        style={compact ? styles.speakCompact : styles.speakButton}>
+        <ThemedText type="small" themeColor="textSecondary">
+          {compact ? label : `🔊 ${label}`}
+        </ThemedText>
+      </ThemedView>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: Spacing.three,
+    padding: Spacing.four,
+    gap: Spacing.three,
+    alignItems: 'center',
+  },
+  frontThai: {
+    paddingVertical: Spacing.three,
+  },
+  thaiPlain: {
+    fontSize: 56,
+    lineHeight: 78,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  germanBlock: {
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  germanLarge: {
+    fontSize: 34,
+    lineHeight: 46,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  germanMedium: {
+    fontSize: 24,
+    lineHeight: 34,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  center: {
+    textAlign: 'center',
+  },
+  example: {
+    width: '100%',
+    borderRadius: Spacing.two,
+    padding: Spacing.two,
+  },
+  exampleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  exampleText: {
+    flexShrink: 1,
+    flexGrow: 1,
+    gap: 2,
+  },
+  speakButton: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
+  },
+  speakCompact: {
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
+    borderRadius: Spacing.two,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+});

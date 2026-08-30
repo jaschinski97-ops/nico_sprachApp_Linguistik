@@ -140,6 +140,26 @@ genau die Farbcodierung ist ein Kernversprechen der App. Die Struktur der
 Skizze bleibt gewahrt, sie wird nur dort präzisiert, wo sie die Sprache nicht
 abbildet.
 
+### AE-8 — Silbenfarben stehen an der Umschrift, die Thai-Schrift wird nur einfarbig gefärbt
+
+**Entscheidung:** Jede Silbe der **Umschrift** bekommt die Farbe ihres eigenen
+Tons plus die passende Konturglyphe. Die **Thai-Schrift** wird nur dann
+eingefärbt, wenn alle Silben denselben Ton haben; sonst bleibt sie in der
+normalen Textfarbe.
+
+**Begründung:** Die Daten kennen den Ton je Silbe, aber keine verlässliche
+**Silbengrenze in der Thai-Schrift** — Thai setzt zwischen Silben keine
+Trennzeichen. Ein naives Aufteilen wäre geraten, und ผลไม้ (`pǒn-lá-máai`)
+zeigt, warum das schiefgeht: das Wort hat drei Silben, aber die mittlere
+entsteht aus einem Bindekonsonanten, den beide Nachbarn teilen — eine
+Zeichenkette lässt sich hier gar nicht in drei saubere Stücke schneiden. Eine
+Einfärbung der Thai-Schrift nach dem Ton der ersten Silbe würde bei สวัสดี über
+zwei Drittel des Wortes die Unwahrheit sagen. Lieber neutral als falsch.
+
+Wer die Thai-Schrift später doch silbenweise färben will, braucht ein
+zusätzliches, **geprüftes** Feld mit den Schriftsilben — nicht eine Heuristik
+zur Laufzeit.
+
 ---
 
 ## Protokoll
@@ -356,6 +376,97 @@ für „nicht" oder „ครับ" gar nicht erst anlaufen.
 - Im Browser gegengeprüft: Übersicht zeigt „84 Einträge · 82 von 84
   quellengeprüft · 25 bildfähig", geladen über die Persistenzschicht.
 
+### 2026-08-30 — Phase 3: Lern-UI
+
+**Gemacht**
+
+- `src/lib/audio.ts` — Aussprache-Abstraktion. Aufrufer sagen nur *was* und *in
+  welcher Sprache*; das Modul entscheidet: vorproduzierter Clip, falls sich
+  `audioAssetId` auflösen lässt, sonst `expo-speech` (`th-TH` bzw. `de-DE`,
+  Thai langsamer). Der Content-Schritt hängt später nur einen Auflöser über
+  `registerAudioAssetResolver` ein — **kein Umbau an den Screens**. Genau das
+  ist als Test abgesichert.
+- `src/lib/review-session.ts` — Sitzungslogik: `ensureCardStates` (legt fehlende
+  Karten in **einem** `putMany` an), `buildReviewQueue` (fällige Karten über
+  `dueCards`, aufsteigend nach Retrievability), `summarizeDirection`.
+- `rateCard` in der Repository-Schicht ergänzt: verbindet das bestehende
+  `reviewCard` mit der Persistenz. Die Screens fassen weder Formeln noch
+  Speicher direkt an.
+- Komponenten: `ToneContour` (SVG-Konturglyphen aus dem Referenzprototyp),
+  `ToneLegend`, `ThaiWord` (silbenweise Tonfarben), `VerificationBadge`,
+  `Flashcard`, `DirectionDashboard`.
+- `src/data/vocab-helpers.ts` — `syllablesOf`, `uniformTone`, `isMultiSyllable`.
+- `react-native-svg` ergänzt (SDK-passend über `npx expo install`).
+
+**Pflicht 1 — silbenweise Tonfarben**
+
+`ThaiWord` wertet `syllables[]` aus. Das Feld `tone` wird **nur** benutzt, wenn
+`syllables` fehlt oder leer ist (Altdatensätze vor AE-7); ein Test hält
+ausdrücklich fest, dass der Normalfall nicht über `tone` läuft.
+Im Browser gegengeprüft und im DOM nachgemessen: bei สวัสดี hat `sà` die Farbe
+`rgb(79,96,118)` (tief), `wàt` dieselbe, `dii` dagegen `rgb(111,138,106)`
+(mittel) — tief-tief-mittel, wie gefordert. Alle fünf Konturpfade rendern mit
+ihren eigenen Farben.
+Zur Grenze bei der Thai-Schrift siehe **AE-8**.
+
+**Pflicht 2 — Bidirektionalität**
+
+Das Dashboard zeigt zwei getrennte Karten mit eigener Fälligkeitszahl,
+Gesamtzahl, „neu" und „gemeistert" — keine gemeinsame Summe. Ohne gewählte
+Richtung startet keine Sitzung (`/review` zeigt sonst die Richtungsauswahl).
+Vorder- und Rückseite tauschen: bei `th_to_de` vorne die Thai-Schrift, bei
+`de_to_th` vorne das deutsche Wort samt Grammatik. Ein Test belegt, dass
+Bewertungen in einer Richtung die andere unberührt lassen.
+
+Die Tonfarben erscheinen bewusst erst beim Aufdecken — vorher wären sie bei
+`th_to_de` die halbe Antwort.
+
+**Pflicht 3 — unverifizierte Einträge**
+
+`VerificationBadge` erscheint ausschließlich bei `sourceVerified: false` und
+zeigt „⚠ Bedeutung nicht quellengeprüft"; Antippen klappt die
+`verificationNote` auf. Geprüfte Karten bekommen **kein** Abzeichen — sonst
+wäre es überall und würde nichts mehr unterscheiden. Im Browser mit นอน
+durchgespielt.
+
+**Nebenbei aufgeräumt**
+
+In Phase 2 trug `verificationNote` zweierlei: Grammatikhinweise **und**
+benannte Unsicherheiten. Das ist jetzt getrennt — `note` für Lernhinweise,
+`verificationNote` nur noch für ungeprüfte Einträge. Ein Test stellt sicher,
+dass geprüfte Einträge gar kein `verificationNote` haben.
+
+**Zwei echte Fehler beim Testen gefunden und behoben**
+
+1. *Layout:* Die beiden Richtungskarten waren unterschiedlich breit (im DOM
+   gemessen: Container 343 px, Karten 306 px und 290 px). Ursache: `Link asChild`
+   macht aus dem `Pressable` ein `<a>`, und das wuchs im Web-Build nicht auf die
+   Spaltenbreite, sondern blieb bei seiner Inhaltsbreite. Die Flex-Größe hängt
+   jetzt an einem neutralen `View` als Flex-Kind.
+2. *Test-Umgebung:* `expo-audio` ließ sich im Jest-Prozess gar nicht
+   importieren (natives Modul). Es wird jetzt erst **im** `playAsset`-Zweig
+   dynamisch geladen — der bis zum Content-Schritt ohnehin nie betreten wird.
+
+**Verifiziert**
+
+- `npm test` → **187 Tests grün** in 6 Suites (vorher 155). Neu:
+  `vocab-helpers.test.ts` (Silbenauswertung inkl. Fallback-Verhalten),
+  `review-session.test.ts` (Kartenanlage, Richtungstrennung,
+  Retrievability-Sortierung, Fälligkeit), `audio.test.ts` (Locale je Sprache,
+  Abbruch vor neuer Ausgabe, Umschalten auf Clips ohne Screen-Änderung).
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Browser durchgespielt:** vollständige Sitzung in **beiden** Richtungen —
+  aufdecken, bewerten, Karte wechselt weiter (Karte 1 → 2), Sitzungsabschluss.
+  Bei **1280 px** stehen die Richtungskarten in zwei gleich breiten Spalten,
+  bei **375 px** untereinander und die Bewertungsknöpfe brechen auf 2×2 um.
+
+**Offen**
+
+- Der Durchlauf **in Expo Go am Gerät** ist noch nicht bestätigt — das kann nur
+  der Nutzer prüfen (Blocker **B-2**). Besonders zu beachten: ob auf dem Gerät
+  eine **Thai-Stimme** installiert ist; ohne sie bleibt „Thai anhören" stumm,
+  was kein Fehler der App ist, sondern eine Systemeinstellung.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -427,12 +538,15 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 
 ## TODO — priorisiert
 
-1. **Phase 3 — Lern-UI:** Karteikarten-Flow, Tonfarblegende, Audio-Fallback,
-   Dashboard mit fälligen Karten je Richtung. Die Tonfarben müssen `syllables`
-   auswerten (AE-7), nicht das Feld `tone` — sonst bekommen mehrsilbige Wörter
-   wie สวัสดี durchgehend eine falsche Farbe.
-   Die beiden Einträge mit `sourceVerified: false` (ร้าน, นอน) sollen im
-   Lernbetrieb sichtbar gekennzeichnet werden oder vorerst draußen bleiben.
+1. **Gerätecheck durch den Nutzer (Blocker B-2, blockiert den Abschluss von Phase 3):**
+   `npx expo start`, QR-Code mit **Expo Go** scannen und prüfen:
+   (a) Übersicht zeigt beide Richtungen mit eigener Fälligkeitszahl,
+   (b) eine Sitzung in **beiden** Richtungen durchspielen — aufdecken,
+   bewerten, nächste Karte,
+   (c) bei สวัสดี sind die drei Silben in zwei verschiedenen Farben,
+   (d) „Thai anhören" antippen. Bleibt es stumm, fehlt dem Gerät eine
+   **Thai-Stimme** — das ist eine Systemeinstellung, kein Fehler der App.
+   Ergebnis hier eintragen.
 2. **Phase 4 — Generator Sprachsituationen** (API-Key-Feld, Batch, Offline-Persistenz).
 3. **Phase 5 — Generator Bilder** (nur `isConcrete`).
 4. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**

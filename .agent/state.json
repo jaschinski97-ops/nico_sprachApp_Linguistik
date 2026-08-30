@@ -2,9 +2,9 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-08-30",
-  "currentPhase": 2,
-  "currentPhaseName": "Vokabular-Grundstock",
-  "currentPhaseStatus": "abgeschlossen",
+  "currentPhase": 3,
+  "currentPhaseName": "Lern-UI",
+  "currentPhaseStatus": "browser-verified-awaiting-device-check",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -99,6 +99,49 @@
       "criterion": "Tests und tsc weiterhin gruen",
       "done": true,
       "verifiedHow": "154 Tests in 3 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 3,
+      "criterion": "Vollstaendige Review-Session in beide Richtungen durchspielbar (Browser)",
+      "done": true,
+      "verifiedHow": "Im Browser beide Richtungen durchgespielt: aufdecken, bewerten, Karte wechselt weiter, Sitzungsabschluss."
+    },
+    {
+      "phase": 3,
+      "criterion": "Vollstaendige Review-Session am Geraet in Expo Go",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-2 - braucht das Geraet des Nutzers."
+    },
+    {
+      "phase": 3,
+      "criterion": "Mehrsilbige Woerter zeigen unterschiedliche Tonfarben je Silbe",
+      "done": true,
+      "verifiedHow": "สวัสดี im DOM nachgemessen: sa=rgb(79,96,118) tief, wat=rgb(79,96,118) tief, dii=rgb(111,138,106) mittel. ThaiWord wertet syllables[] aus, tone nur als Fallback (per Test abgesichert)."
+    },
+    {
+      "phase": 3,
+      "criterion": "Unverifizierte Eintraege sind erkennbar gekennzeichnet",
+      "done": true,
+      "verifiedHow": "VerificationBadge nur bei sourceVerified:false; im Browser mit นอน geprueft, Antippen klappt die verificationNote auf."
+    },
+    {
+      "phase": 3,
+      "criterion": "Dashboard zeigt beide Richtungen getrennt",
+      "done": true,
+      "verifiedHow": "Zwei Karten mit eigener Faelligkeitszahl; Test belegt, dass Bewertungen einer Richtung die andere nicht beeinflussen."
+    },
+    {
+      "phase": 3,
+      "criterion": "Layout auf Handy UND breitem Browser geprueft",
+      "done": true,
+      "verifiedHow": "1280px: zwei gleich breite Spalten. 375px: untereinander, Bewertungsknoepfe brechen auf 2x2 um. Ungleiche Kartenbreiten (306/290 statt 343) gefunden und behoben."
+    },
+    {
+      "phase": 3,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "187 Tests in 6 Suites gruen; npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -136,19 +179,33 @@
       "id": "AE-7",
       "title": "syllables ergaenzt, tone bleibt der Ton der ersten Silbe",
       "rationale": "Thai vergibt Toene je Silbe. Ein einzelnes tone-Feld ist bei mehrsilbigen Woertern zwangslaeufig falsch - Beleg: สวัสดี ist tief-tief-mittel, der Referenzprototyp fuehrte es als 'mid'. Die Tonfarben in Phase 3 muessen syllables auswerten."
+    },
+    {
+      "id": "AE-8",
+      "title": "Silbenfarben an der Umschrift; Thai-Schrift nur bei einheitlichem Ton eingefaerbt",
+      "rationale": "Die Daten kennen Toene je Silbe, aber keine verlaessliche Silbengrenze in der Thai-Schrift (keine Trennzeichen). ผลไม้ zeigt, dass naives Aufteilen scheitert: die mittlere Silbe entsteht aus einem geteilten Bindekonsonanten. Einfaerben nach dem Ton der ersten Silbe waere bei สวัสดี ueber zwei Drittel des Wortes falsch."
     }
   ],
-  "openBlockers": [],
+  "openBlockers": [
+    {
+      "id": "B-2",
+      "title": "Geraetecheck der Lern-UI in Expo Go steht aus",
+      "affectsPhases": [
+        3
+      ],
+      "needsUser": true,
+      "steps": "npx expo start -> QR mit Expo Go -> beide Richtungen durchspielen; bei สวัสดี muessen die drei Silben zwei verschiedene Farben haben; 'Thai anhoeren' pruefen (stumm = fehlende Thai-Stimme im System, kein App-Fehler)."
+    }
+  ],
   "nextUp": {
-    "phase": 3,
-    "name": "Lern-UI",
+    "phase": 4,
+    "name": "Content-Generator: Sprachsituationen",
     "tasks": [
-      "Karteikarten-Flow ueber den Grundstock, beide Richtungen",
-      "Tonfarben je Silbe aus VocabEntry.syllables (NICHT aus tone - siehe AE-7)",
-      "Audio-Wiedergabe mit expo-speech als Fallback",
-      "Dashboard mit faelligen Karten je Richtung",
-      "Responsive: Handy UND breites Browser-Fenster",
-      "Die zwei Eintraege mit sourceVerified:false (raan, noon) kennzeichnen oder vorerst ausschliessen"
+      "Einstellungs-Screen mit API-Key-Feld (SecureStore nativ), Start-Knopf, Fortschrittsbalken",
+      "Batch-Generierung von Konversationssituationen, persistent in der Sammlung 'situations'",
+      "Web-Build: Header anthropic-dangerous-direct-browser-access beachten (CORS)",
+      "Nach dem Lauf vollstaendig offline nutzbar, ohne Key",
+      "Audio-Aufloeser ueber registerAudioAssetResolver einhaengen - die Screens bleiben unveraendert (siehe src/lib/audio.ts)"
     ]
   }
 }

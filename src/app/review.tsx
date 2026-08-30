@@ -1,244 +1,259 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { PlaceholderCard } from '@/components/placeholder-card';
+import { Flashcard } from '@/components/flashcard';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { ToneLegend } from '@/components/tone-legend';
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
-import { createCardState, DAY_MS, retrievability, reviewCard } from '@/lib/fsrs/fsrs';
-import { FSRSCardState, Rating, RATING_LABELS } from '@/lib/fsrs/types';
-import { loadOrCreateCardState, saveCardState } from '@/lib/repository';
-import { getActiveBackend, getStore } from '@/lib/storage';
-
-/**
- * Phase-1-Nachweis: eine einzelne echte FSRS-Karte, deren Zustand den
- * App-Neustart übersteht. Phase 3 ersetzt das durch den richtigen
- * Karteikarten-Flow über den Vokabel-Grundstock.
- */
-const DEMO = {
-  id: 'gai',
-  thai: 'ไก่',
-  roman: 'gài',
-  tone: 'low' as const,
-  german: 'Huhn',
-};
+import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
+import { rateCard } from '@/lib/repository';
+import {
+  buildReviewQueue,
+  DIRECTION_LABELS,
+  DIRECTION_PROMPTS,
+  DIRECTIONS,
+  ReviewItem,
+} from '@/lib/review-session';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
-function formatDue(due: number, now: number): string {
-  const diffDays = (due - now) / DAY_MS;
-  if (diffDays <= 0) return 'jetzt fällig';
-  if (diffDays < 1) return `in ${Math.round(diffDays * 24)} h`;
-  return `in ${Math.round(diffDays)} Tagen`;
-}
-
-function formatNumber(value: number | null, digits = 2): string {
-  return value === null ? '—' : value.toFixed(digits);
+function isDirection(value: unknown): value is Direction {
+  return value === 'de_to_th' || value === 'th_to_de';
 }
 
 export default function ReviewScreen() {
-  const [card, setCard] = useState<FSRSCardState | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(() => Date.now());
+  const params = useLocalSearchParams<{ direction?: string }>();
+  const router = useRouter();
 
-  useEffect(() => {
-    let cancelled = false;
-    loadOrCreateCardState(DEMO.id, 'th_to_de').then((loaded) => {
-      if (!cancelled) {
-        setCard(loaded);
-        setNow(Date.now());
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const direction = isDirection(params.direction) ? params.direction : null;
 
-  const rate = useCallback(
-    async (rating: Rating) => {
-      if (!card || busy) return;
-      setBusy(true);
-      const at = Date.now();
-      const next = reviewCard(card, rating, at);
-      setCard(next);
-      setNow(at);
-      await saveCardState(next);
-      setBusy(false);
-    },
-    [card, busy]
-  );
+  if (!direction) {
+    return <DirectionPicker onPick={(d) => router.setParams({ direction: d })} />;
+  }
+  return <ReviewSession direction={direction} key={direction} />;
+}
 
-  const reset = useCallback(async () => {
-    if (busy) return;
-    setBusy(true);
-    const at = Date.now();
-    const fresh = createCardState(DEMO.id, 'th_to_de', at);
-    setCard(fresh);
-    setNow(at);
-    await saveCardState(fresh);
-    setBusy(false);
-  }, [busy]);
-
-  const [backend, setBackend] = useState<string>('…');
-  useEffect(() => {
-    getStore().then(() => setBackend(getActiveBackend()));
-  }, []);
-
-  const tone = TONES[DEMO.tone];
-
+/**
+ * Ohne gewählte Richtung wird nicht gelernt. Die beiden Richtungen sind
+ * unterschiedliche Aufgaben und werden nie in einer Sitzung vermischt.
+ */
+function DirectionPicker({ onPick }: { onPick: (direction: Direction) => void }) {
   return (
-    <ScreenScaffold title="Lernen" subtitle="Karteikarten mit FSRS-Wiederholungsplanung">
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <View style={styles.rowBetween}>
-          <ThemedText type="smallBold">Persistenz-Prüfung</ThemedText>
-          <ThemedView type="backgroundSelected" style={styles.badge}>
+    <ScreenScaffold title="Lernen" subtitle="Welche Richtung möchtest du üben?">
+      {DIRECTIONS.map((direction) => (
+        <Pressable
+          key={direction}
+          onPress={() => onPick(direction)}
+          accessibilityRole="button"
+          style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedView type="backgroundElement" style={styles.pickerCard}>
+            <ThemedText type="smallBold">{DIRECTION_LABELS[direction]}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              Phase 1
+              {DIRECTION_PROMPTS[direction]}
             </ThemedText>
           </ThemedView>
-        </View>
-        <ThemedText type="small" themeColor="textSecondary">
-          Bewerte die Karte, lade die Seite neu (bzw. schließe die App in Expo Go
-          ganz und öffne sie wieder). Bleiben die Werte stehen, ist die
-          Persistenz in Ordnung.
-        </ThemedText>
-
-        <View style={styles.word}>
-          <ThemedText style={[styles.thai, { color: tone.color }]}>{DEMO.thai}</ThemedText>
-          <View>
-            <ThemedText>
-              {DEMO.roman} — {DEMO.german}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {tone.adjective} Ton · {tone.mark}
-            </ThemedText>
-          </View>
-        </View>
-
-        {card ? (
-          <>
-            <View style={styles.stats}>
-              <Stat label="Zustand" value={card.state} />
-              <Stat label="Wiederholungen" value={String(card.reps)} />
-              <Stat label="Lapses" value={String(card.lapses)} />
-              <Stat label="Stabilität (Tage)" value={formatNumber(card.stability)} />
-              <Stat label="Difficulty" value={formatNumber(card.difficulty)} />
-              <Stat label="Retrievability" value={retrievability(card, now).toFixed(3)} />
-              <Stat label="Nächste Fälligkeit" value={formatDue(card.due, now)} />
-            </View>
-
-            <View style={styles.buttons}>
-              {RATINGS.map((rating) => (
-                <Pressable
-                  key={rating}
-                  onPress={() => rate(rating)}
-                  disabled={busy}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Bewertung ${RATING_LABELS[rating]}`}
-                  style={({ pressed }) => [styles.buttonWrap, pressed && styles.pressed]}>
-                  <ThemedView type="backgroundSelected" style={styles.button}>
-                    <ThemedText type="small">{RATING_LABELS[rating]}</ThemedText>
-                  </ThemedView>
-                </Pressable>
-              ))}
-            </View>
-
-            <Pressable
-              onPress={reset}
-              disabled={busy}
-              accessibilityRole="button"
-              accessibilityLabel="Karte zurücksetzen"
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedText type="small" themeColor="textSecondary">
-                Karte zurücksetzen
-              </ThemedText>
-            </Pressable>
-
-            <ThemedText type="small" themeColor="textSecondary">
-              Speicher: {backend}
-            </ThemedText>
-          </>
-        ) : (
-          <ThemedText type="small" themeColor="textSecondary">
-            Lade Kartenzustand …
-          </ThemedText>
-        )}
-      </ThemedView>
-
-      <PlaceholderCard
-        phase="Phase 3"
-        heading="Karteikarten-Flow"
-        body="Aufdecken, bewerten, Tonfarben und Audio-Wiedergabe über den gesamten Vokabel-Grundstock statt nur einer Demo-Karte."
-      />
+        </Pressable>
+      ))}
+      <ToneLegend />
     </ScreenScaffold>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function ReviewSession({ direction }: { direction: Direction }) {
+  const router = useRouter();
+
+  const [queue, setQueue] = useState<ReviewItem[] | null>(null);
+  const [index, setIndex] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [rated, setRated] = useState(0);
+  const [again, setAgain] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    buildReviewQueue(direction).then((items) => {
+      if (!cancelled) setQueue(items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [direction]);
+
+  const rate = useCallback(
+    async (rating: Rating) => {
+      if (busy || !queue) return;
+      const item = queue[index];
+      if (!item) return;
+
+      setBusy(true);
+      await rateCard(item.card, rating);
+      setRated((value) => value + 1);
+      if (rating === 1) setAgain((value) => value + 1);
+      setIndex((value) => value + 1);
+      setRevealed(false);
+      setBusy(false);
+    },
+    [busy, queue, index]
+  );
+
+  const restart = useCallback(() => {
+    setQueue(null);
+    setIndex(0);
+    setRevealed(false);
+    buildReviewQueue(direction).then(setQueue);
+  }, [direction]);
+
+  if (!queue) {
+    return (
+      <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
+        <ThemedText type="small" themeColor="textSecondary">
+          Sitzung wird zusammengestellt …
+        </ThemedText>
+      </ScreenScaffold>
+    );
+  }
+
+  const item = queue[index];
+
+  if (!item) {
+    return (
+      <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
+        <ThemedView type="backgroundElement" style={styles.summary}>
+          <ThemedText type="smallBold">
+            {rated > 0 ? 'Sitzung beendet' : 'Nichts fällig'}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {rated > 0
+              ? `${rated} Karten bewertet, davon ${again}× „Nochmal".`
+              : 'In dieser Richtung ist gerade keine Karte fällig. Schau später wieder rein.'}
+          </ThemedText>
+          <View style={styles.actions}>
+            <ActionButton label="Erneut prüfen" onPress={restart} />
+            <ActionButton
+              label="Richtung wechseln"
+              onPress={() => router.setParams({ direction: undefined })}
+            />
+          </View>
+        </ThemedView>
+        <ToneLegend compact />
+      </ScreenScaffold>
+    );
+  }
+
   return (
-    <View style={styles.stat}>
-      <ThemedText type="small" themeColor="textSecondary">
-        {label}
-      </ThemedText>
-      <ThemedText type="smallBold">{value}</ThemedText>
-    </View>
+    <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
+      <View style={styles.progressRow}>
+        <ThemedText type="small" themeColor="textSecondary">
+          Karte {index + 1} von {queue.length}
+        </ThemedText>
+        <Pressable
+          onPress={() => router.setParams({ direction: undefined })}
+          accessibilityRole="button"
+          style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedText type="small" themeColor="textSecondary">
+            Richtung wechseln
+          </ThemedText>
+        </Pressable>
+      </View>
+
+      <Flashcard entry={item.entry} direction={direction} revealed={revealed} />
+
+      {revealed ? (
+        <View style={styles.ratings}>
+          {RATINGS.map((rating) => (
+            <Pressable
+              key={rating}
+              onPress={() => rate(rating)}
+              disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel={`Bewertung ${RATING_LABELS[rating]}`}
+              style={({ pressed }) => [styles.ratingWrap, pressed && styles.pressed]}>
+              <ThemedView type="backgroundSelected" style={styles.ratingButton}>
+                <ThemedText type="small">{RATING_LABELS[rating]}</ThemedText>
+              </ThemedView>
+            </Pressable>
+          ))}
+        </View>
+      ) : (
+        <Pressable
+          onPress={() => setRevealed(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Antwort aufdecken"
+          style={({ pressed }) => pressed && styles.pressed}>
+          <ThemedView type="backgroundSelected" style={styles.revealButton}>
+            <ThemedText type="smallBold">Aufdecken</ThemedText>
+          </ThemedView>
+        </Pressable>
+      )}
+
+      <ToneLegend compact />
+    </ScreenScaffold>
+  );
+}
+
+function ActionButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      style={({ pressed }) => pressed && styles.pressed}>
+      <ThemedView type="backgroundSelected" style={styles.actionButton}>
+        <ThemedText type="small">{label}</ThemedText>
+      </ThemedView>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  pickerCard: {
     borderRadius: Spacing.three,
     padding: Spacing.three,
-    gap: Spacing.two,
+    gap: Spacing.one,
   },
-  rowBetween: {
+  progressRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  badge: {
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.half,
-    borderRadius: Spacing.two,
-  },
-  word: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  thai: {
-    fontSize: 44,
-    lineHeight: 60,
-    fontWeight: '600',
-  },
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.three,
-    marginTop: Spacing.one,
-  },
-  stat: {
-    minWidth: 120,
-  },
-  buttons: {
+  ratings: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-    marginTop: Spacing.two,
   },
-  buttonWrap: {
+  ratingWrap: {
     flexGrow: 1,
-    flexBasis: 100,
+    flexBasis: 110,
   },
-  button: {
-    paddingVertical: Spacing.two,
+  ratingButton: {
+    paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.two,
     alignItems: 'center',
+  },
+  revealButton: {
+    paddingVertical: Spacing.three,
+    borderRadius: Spacing.two,
+    alignItems: 'center',
+  },
+  summary: {
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+    marginTop: Spacing.one,
+  },
+  actionButton: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.two,
   },
   pressed: {
     opacity: 0.7,

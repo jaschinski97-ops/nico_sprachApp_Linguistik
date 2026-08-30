@@ -8,8 +8,8 @@
 
 import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
-import { createCardState } from './fsrs/fsrs';
-import { cardKey, Direction, FSRSCardState } from './fsrs/types';
+import { createCardState, reviewCard } from './fsrs/fsrs';
+import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
 import { DataStore, getStore } from './storage';
 
 /* ---------- Vokabeln ---------- */
@@ -85,6 +85,24 @@ export async function saveCardState(card: FSRSCardState, store?: DataStore): Pro
 export async function loadAllCardStates(store?: DataStore): Promise<FSRSCardState[]> {
   const db = store ?? (await getStore());
   return db.getAll<FSRSCardState>('cards');
+}
+
+/**
+ * Wendet eine Bewertung an und schreibt das Ergebnis fort.
+ *
+ * Die Rechnung selbst macht `reviewCard` aus dem FSRS-Modul — hier wird sie
+ * nur mit der Persistenz verbunden, damit die Screens weder die Formeln noch
+ * den Speicher direkt anfassen.
+ */
+export async function rateCard(
+  card: FSRSCardState,
+  rating: Rating,
+  store?: DataStore,
+  now: number = Date.now()
+): Promise<FSRSCardState> {
+  const updated = reviewCard(card, rating, now);
+  await saveCardState(updated, store);
+  return updated;
 }
 
 export async function loadCardStatesForDirection(

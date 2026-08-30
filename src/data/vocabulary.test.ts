@@ -99,11 +99,14 @@ describe('Vokabel-Grundstock: deutsche Seite', () => {
     });
   });
 
-  it('begruendet jede unregelmaessige Form mit einem Hinweis', () => {
+  it('begruendet jede unregelmaessige Form mit einem Lernhinweis', () => {
     VOCABULARY.filter(
       (e) => e.germanVerb?.irregular || e.germanAdjective?.irregular
     ).forEach((entry) => {
-      expect(entry.verificationNote ?? '').not.toBe('');
+      // `note` traegt Grammatikhinweise, `verificationNote` nur benannte
+      // Unsicherheiten - die zwei ungeprueften Eintraege fuehren beides in
+      // einem Text.
+      expect(entry.note ?? entry.verificationNote ?? '').not.toBe('');
     });
   });
 });
@@ -148,6 +151,14 @@ describe('Vokabel-Grundstock: Quellenlage', () => {
     VOCABULARY.filter((e) => !e.sourceVerified).forEach((entry) => {
       expect(entry.verificationNote ?? '').not.toBe('');
       expect(entry.verificationNote!.length).toBeGreaterThan(30);
+    });
+  });
+
+  it('setzt verificationNote ausschliesslich bei ungepruefsten Eintraegen', () => {
+    // Sonst wuerde das Warnabzeichen in der Lernansicht auch bei geprueften
+    // Karten auftauchen und damit bedeutungslos werden.
+    VOCABULARY.filter((e) => e.sourceVerified).forEach((entry) => {
+      expect(entry.verificationNote).toBeUndefined();
     });
   });
 

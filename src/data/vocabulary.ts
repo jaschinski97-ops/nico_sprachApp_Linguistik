@@ -77,8 +77,13 @@ export type VocabEntry = {
   /** true nur, wenn die Quelle Ton, Umschrift UND Bedeutung deckt. */
   sourceVerified: boolean;
   source?: string;
-  /** Benannte Unsicherheit oder Lernhinweis. */
+  /**
+   * Benannte Unsicherheit - nur bei `sourceVerified: false` gesetzt und in der
+   * Lernansicht als Warnhinweis sichtbar.
+   */
   verificationNote?: string;
+  /** Lernhinweis zur Grammatik (Genus, Stammformen, Steigerung, Homonyme). */
+  note?: string;
 };
 
 export const VOCABULARY: VocabEntry[] = [
@@ -97,7 +102,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Hallo. (männlicher Sprecher)',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/สวัสดี',
-    verificationNote: 'Wiktionary fuehrt daneben gehobene/archaische Bedeutungen (Wohlergehen, Segen); die Gruss-Bedeutung ist als Interjektion belegt.',
+    note: 'Wiktionary fuehrt daneben gehobene/archaische Bedeutungen (Wohlergehen, Segen); die Gruss-Bedeutung ist als Interjektion belegt.',
   },
   {
     id: 'khoopkhun',
@@ -115,7 +120,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Vielen Dank.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ขอบคุณ',
-    verificationNote: 'Deutsch: danken + Dativ (jemandem danken).',
+    note: 'Deutsch: danken + Dativ (jemandem danken).',
   },
   {
     id: 'khoothoot',
@@ -181,7 +186,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ja, richtig.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ใช่',
-    verificationNote: 'Umgangssprachlich Zustimmung. Es gibt daneben eine literarisch-veraltete Verneinungsbedeutung - nicht verwechseln.',
+    note: 'Umgangssprachlich Zustimmung. Es gibt daneben eine literarisch-veraltete Verneinungsbedeutung - nicht verwechseln.',
   },
   {
     id: 'mai_neg',
@@ -214,7 +219,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich mag Kaffee.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ผม',
-    verificationNote: 'Gleichlautendes Substantiv ผม = Kopfhaar.',
+    note: 'Gleichlautendes Substantiv ผม = Kopfhaar.',
   },
   {
     id: 'chan',
@@ -231,7 +236,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich gehe zum Markt.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ฉัน',
-    verificationNote: 'Wiktionary: von jeder Person gegenueber Gleich- oder Rangniedrigeren verwendet - NICHT rein weiblich, auch wenn es umgangssprachlich als weiblich gilt.',
+    note: 'Wiktionary: von jeder Person gegenueber Gleich- oder Rangniedrigeren verwendet - NICHT rein weiblich, auch wenn es umgangssprachlich als weiblich gilt.',
   },
   {
     id: 'khun',
@@ -248,7 +253,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Was isst du?',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/คุณ',
-    verificationNote: 'Auch Anrede vor Namen (etwa Herr/Frau). Gleichlautendes Substantiv คุณ = Eigenschaft, Tugend.',
+    note: 'Auch Anrede vor Namen (etwa Herr/Frau). Gleichlautendes Substantiv คุณ = Eigenschaft, Tugend.',
   },
   {
     id: 'rao',
@@ -265,7 +270,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Wir gehen zur Schule.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เรา',
-    verificationNote: 'Kann umgangssprachlich auch \'ich\' heissen.',
+    note: 'Kann umgangssprachlich auch \'ich\' heissen.',
   },
   {
     id: 'arai',
@@ -507,7 +512,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich esse Reis.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/กิน',
-    verificationNote: 'Starkes Verb mit Vokalwechsel e -> i: du isst, er isst. Partizip unregelmaessig: gegessen.',
+    note: 'Starkes Verb mit Vokalwechsel e -> i: du isst, er isst. Partizip unregelmaessig: gegessen.',
   },
   {
     id: 'bpai',
@@ -525,7 +530,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich gehe nach Hause.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ไป',
-    verificationNote: 'Perfekt mit \'sein\', nicht mit \'haben\'.',
+    note: 'Perfekt mit \'sein\', nicht mit \'haben\'.',
   },
   {
     id: 'maa_come',
@@ -543,7 +548,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Der Lehrer kommt.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/มา',
-    verificationNote: 'Perfekt mit \'sein\'.',
+    note: 'Perfekt mit \'sein\'.',
   },
   {
     id: 'tham',
@@ -578,7 +583,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Was sagst du?',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/พูด',
-    verificationNote: 'Vokalwechsel e -> i in der 2./3. Person Singular: du sprichst, er spricht.',
+    note: 'Vokalwechsel e -> i in der 2./3. Person Singular: du sprichst, er spricht.',
   },
   {
     id: 'duu',
@@ -613,7 +618,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich höre dem Lehrer zu.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ฟัง',
-    verificationNote: 'Trennbares Verb: \'Ich höre zu\'. Dativ: jemandem zuhören.',
+    note: 'Trennbares Verb: \'Ich höre zu\'. Dativ: jemandem zuhören.',
   },
   {
     id: 'aan',
@@ -631,7 +636,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich lese ein Buch.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/อ่าน',
-    verificationNote: 'Vokalwechsel e -> ie: du liest, er liest.',
+    note: 'Vokalwechsel e -> ie: du liest, er liest.',
   },
   {
     id: 'khian',
@@ -649,7 +654,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich schreibe ein Buch.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เขียน',
-    verificationNote: 'Starkes Verb der Ablautreihe ei - ie - ie: schreiben - schrieb - geschrieben.',
+    note: 'Starkes Verb der Ablautreihe ei - ie - ie: schreiben - schrieb - geschrieben.',
   },
   {
     id: 'noon',
@@ -719,7 +724,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich mag Katzen.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ชอบ',
-    verificationNote: 'Modalverb-Formen: ich mag, du magst, er mag - kein -t in der 3. Person.',
+    note: 'Modalverb-Formen: ich mag, du magst, er mag - kein -t in der 3. Person.',
   },
   {
     id: 'rak',
@@ -754,7 +759,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich weiß nicht.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/รู้',
-    verificationNote: 'Unregelmaessig: ich weiß, du weißt, er weiß - kein -t in der 3. Person.',
+    note: 'Unregelmaessig: ich weiß, du weißt, er weiß - kein -t in der 3. Person.',
   },
   {
     id: 'khaochai',
@@ -772,7 +777,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich verstehe nicht.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เข้าใจ',
-    verificationNote: 'Untrennbares Praefix ver-: das Partizip hat KEIN ge- (verstanden, nicht geverstanden).',
+    note: 'Untrennbares Praefix ver-: das Partizip hat KEIN ge- (verstanden, nicht geverstanden).',
   },
   {
     id: 'yaak',
@@ -790,7 +795,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich möchte Reis essen.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/อยาก',
-    verificationNote: 'Modalverb: ich möchte, du möchtest, er möchte. Vergangenheit wird ueber \'wollen\' gebildet.',
+    note: 'Modalverb: ich möchte, du möchtest, er möchte. Vergangenheit wird ueber \'wollen\' gebildet.',
   },
   {
     id: 'hai',
@@ -808,7 +813,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Der Lehrer gibt ein Buch.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ให้',
-    verificationNote: 'Vokalwechsel e -> i: du gibst, er gibt. Dativ + Akkusativ: jemandem etwas geben.',
+    note: 'Vokalwechsel e -> i: du gibst, er gibt. Dativ + Akkusativ: jemandem etwas geben.',
   },
   {
     id: 'nam',
@@ -826,7 +831,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'kaltes Wasser',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/น้ำ',
-    verificationNote: 'Plural \'Wässer\' nur fuer Wassersorten; normalerweise ohne Plural.',
+    note: 'Plural \'Wässer\' nur fuer Wassersorten; normalerweise ohne Plural.',
   },
   {
     id: 'khaao',
@@ -844,7 +849,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Der Reis ist lecker.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ข้าว',
-    verificationNote: 'Kein Plural. Thai ข้าว steht umgangssprachlich auch fuer \'Essen, Mahlzeit\'.',
+    note: 'Kein Plural. Thai ข้าว steht umgangssprachlich auch fuer \'Essen, Mahlzeit\'.',
   },
   {
     id: 'aahaan',
@@ -879,7 +884,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein großes Haus',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/บ้าน',
-    verificationNote: 'Umlaut im Plural.',
+    note: 'Umlaut im Plural.',
   },
   {
     id: 'rot',
@@ -897,7 +902,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein neues Auto',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/รถ',
-    verificationNote: 'Thai รถ ist allgemeiner: jedes Radfahrzeug.',
+    note: 'Thai รถ ist allgemeiner: jedes Radfahrzeug.',
   },
   {
     id: 'talaat',
@@ -915,7 +920,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich gehe zum Markt.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ตลาด',
-    verificationNote: 'Umlaut im Plural.',
+    note: 'Umlaut im Plural.',
   },
   {
     id: 'rongrian',
@@ -968,7 +973,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein guter Mensch',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/คน',
-    verificationNote: 'N-Deklination: den/dem/des Menschen - in ALLEN Faellen ausser Nominativ Singular ein -en.',
+    note: 'N-Deklination: den/dem/des Menschen - in ALLEN Faellen ausser Nominativ Singular ein -en.',
   },
   {
     id: 'phuean',
@@ -986,7 +991,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein guter Freund',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เพื่อน',
-    verificationNote: 'Weibliche Form: die Freundin, die Freundinnen.',
+    note: 'Weibliche Form: die Freundin, die Freundinnen.',
   },
   {
     id: 'khruu',
@@ -1004,7 +1009,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein guter Lehrer',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ครู',
-    verificationNote: 'Plural gleich dem Singular. Weiblich: die Lehrerin, die Lehrerinnen.',
+    note: 'Plural gleich dem Singular. Weiblich: die Lehrerin, die Lehrerinnen.',
   },
   {
     id: 'moo_doctor',
@@ -1022,7 +1027,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein guter Arzt',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/หมอ',
-    verificationNote: 'Umlaut im Plural. Weiblich: die Ärztin. Thai หมอ ist breiter: Fachmann/Spezialist, umgangssprachlich der Arzt.',
+    note: 'Umlaut im Plural. Weiblich: die Ärztin. Thai หมอ ist breiter: Fachmann/Spezialist, umgangssprachlich der Arzt.',
   },
   {
     id: 'maew',
@@ -1057,7 +1062,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein großer Hund',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/หมา',
-    verificationNote: 'Thai หมา gilt teils als derb; hoeflicher ist สุนัข.',
+    note: 'Thai หมา gilt teils als derb; hoeflicher ist สุนัข.',
   },
   {
     id: 'maa_horse',
@@ -1092,7 +1097,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Das Huhn ist lecker.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ไก่',
-    verificationNote: 'Umlaut + -er im Plural.',
+    note: 'Umlaut + -er im Plural.',
   },
   {
     id: 'khai',
@@ -1110,7 +1115,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich esse ein Ei.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ไข่',
-    verificationNote: 'Achtung Ton: ไข่ kài (Ei) gegen ไก่ gài (Huhn) - gleicher Ton, anderer Anlaut.',
+    note: 'Achtung Ton: ไข่ kài (Ei) gegen ไก่ gài (Huhn) - gleicher Ton, anderer Anlaut.',
   },
   {
     id: 'bplaa',
@@ -1162,7 +1167,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Ich esse Gemüse.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ผัก',
-    verificationNote: 'Im Deutschen normalerweise ohne Plural.',
+    note: 'Im Deutschen normalerweise ohne Plural.',
   },
   {
     id: 'phonlamai',
@@ -1180,7 +1185,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Das Obst ist teuer.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ผลไม้',
-    verificationNote: 'Kein Plural - anders als \'die Frucht, die Früchte\'.',
+    note: 'Kein Plural - anders als \'die Frucht, die Früchte\'.',
   },
   {
     id: 'kaafae',
@@ -1232,7 +1237,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'viel Geld',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เงิน',
-    verificationNote: 'Plural \'Gelder\' nur fuer Geldbetraege/Mittel. Thai เงิน heisst auch \'Silber\'.',
+    note: 'Plural \'Gelder\' nur fuer Geldbetraege/Mittel. Thai เงิน heisst auch \'Silber\'.',
   },
   {
     id: 'welaa',
@@ -1284,7 +1289,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'sechs Monate',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เดือน',
-    verificationNote: 'Thai เดือน heisst gehoben auch \'Mond\'.',
+    note: 'Thai เดือน heisst gehoben auch \'Mond\'.',
   },
   {
     id: 'bpii',
@@ -1319,7 +1324,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein neues Buch',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/หนังสือ',
-    verificationNote: 'Umlaut + -er im Plural. Thai หนังสือ heisst auch \'Schrift, Schriftstueck\'.',
+    note: 'Umlaut + -er im Plural. Thai หนังสือ heisst auch \'Schrift, Schriftstueck\'.',
   },
   {
     id: 'dii',
@@ -1337,7 +1342,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Das Essen ist gut.',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ดี',
-    verificationNote: 'Unregelmaessige Steigerung: gut - besser - am besten.',
+    note: 'Unregelmaessige Steigerung: gut - besser - am besten.',
   },
   {
     id: 'suay',
@@ -1372,7 +1377,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein großer Markt',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/ใหญ่',
-    verificationNote: 'Umlaut in der Steigerung.',
+    note: 'Umlaut in der Steigerung.',
   },
   {
     id: 'lek',
@@ -1424,7 +1429,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'Eiskaffee',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เย็น',
-    verificationNote: 'Thai เย็น ist auch das Substantiv \'frueher Abend\'.',
+    note: 'Thai เย็น ist auch das Substantiv \'frueher Abend\'.',
   },
   {
     id: 'aroi',
@@ -1459,7 +1464,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein teures Auto',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/แพง',
-    verificationNote: 'Das -e- faellt weg: teuer -> teurer, ein teures Auto.',
+    note: 'Das -e- faellt weg: teuer -> teurer, ein teures Auto.',
   },
   {
     id: 'mai_new',
@@ -1494,7 +1499,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'ein altes Auto',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/เก่า',
-    verificationNote: 'Umlaut in der Steigerung. Thai เก่า nur fuer Sachen; fuer das Alter von Menschen steht แก่.',
+    note: 'Umlaut in der Steigerung. Thai เก่า nur fuer Sachen; fuer das Alter von Menschen steht แก่.',
   },
   {
     id: 'maak',
@@ -1512,7 +1517,7 @@ export const VOCABULARY: VocabEntry[] = [
     exampleGerman: 'sehr lecker',
     sourceVerified: true,
     source: 'https://en.wiktionary.org/wiki/มาก',
-    verificationNote: 'Unregelmaessige Steigerung: viel - mehr - am meisten.',
+    note: 'Unregelmaessige Steigerung: viel - mehr - am meisten.',
   },
   {
     id: 'noi',
