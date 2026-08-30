@@ -4,6 +4,7 @@ import { PlaceholderCard } from '@/components/placeholder-card';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { VocabSummary } from '@/components/vocab-summary';
 import { Spacing } from '@/constants/theme';
 import { TONES, TONE_KEYS } from '@/constants/tones';
 
@@ -11,7 +12,7 @@ export default function DashboardScreen() {
   return (
     <ScreenScaffold
       title="Übersicht"
-      subtitle="Thai ↔ Deutsch Lernbegleiter — Gerüst (Phase 0)">
+      subtitle="Thai ↔ Deutsch Lernbegleiter">
       <ThemedView type="backgroundElement" style={styles.legend}>
         <ThemedText type="smallBold">Tonfarben</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
@@ -32,6 +33,8 @@ export default function DashboardScreen() {
           ))}
         </View>
       </ThemedView>
+
+      <VocabSummary />
 
       <PlaceholderCard
         phase="Phase 3"

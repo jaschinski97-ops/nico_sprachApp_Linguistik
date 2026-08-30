@@ -6,9 +6,45 @@
  * Plattform SQLite oder AsyncStorage (AE-3).
  */
 
+import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+
 import { createCardState } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState } from './fsrs/types';
 import { DataStore, getStore } from './storage';
+
+/* ---------- Vokabeln ---------- */
+
+/**
+ * Schreibt den mitgelieferten Grundstock in den Speicher.
+ *
+ * Bewusst idempotent und ueberschreibend: der Grundstock ist Teil der App,
+ * nicht Nutzerdaten. Nutzerfortschritt liegt in der Sammlung `cards` und wird
+ * hiervon nicht angefasst.
+ */
+export async function seedVocabulary(
+  store?: DataStore,
+  entries: VocabEntry[] = VOCABULARY
+): Promise<number> {
+  const db = store ?? (await getStore());
+  await db.putMany(
+    'vocab',
+    entries.map((entry) => ({ id: entry.id, value: entry }))
+  );
+  return entries.length;
+}
+
+export async function loadVocabulary(store?: DataStore): Promise<VocabEntry[]> {
+  const db = store ?? (await getStore());
+  return db.getAll<VocabEntry>('vocab');
+}
+
+export async function loadVocabEntry(
+  id: string,
+  store?: DataStore
+): Promise<VocabEntry | null> {
+  const db = store ?? (await getStore());
+  return db.get<VocabEntry>('vocab', id);
+}
 
 /* ---------- Kartenzustände ---------- */
 

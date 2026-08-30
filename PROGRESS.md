@@ -114,6 +114,32 @@ als *unstable* markiert) auf das stabile `Tabs` gewechselt.
 passende Version (57.0.4). `expo-speech` bleibt der plattformübergreifende
 TTS-Fallback.
 
+### AE-6 — Dokumentspeicher statt relationalem Schema
+
+**Entscheidung:** Die Persistenz-Abstraktion arbeitet mit `Sammlung + ID +
+JSON-Wert` statt mit Tabellen je Datentyp.
+
+**Begründung:** Dieselbe schmale Schnittstelle lässt sich verlustfrei auf eine
+SQLite-Tabelle **und** auf JSON-Blobs in AsyncStorage abbilden. Eine gemeinsame
+Vertragsprüfung läuft gegen beide Backends, damit sie sich nicht
+auseinanderentwickeln.
+
+### AE-7 — `syllables` ergänzt, weil ein einzelnes `tone`-Feld mehrsilbige Wörter nicht abbildet
+
+**Entscheidung:** `VocabEntry` bekommt zusätzlich
+`syllables: { roman: string; tone: Tone }[]`. Das Feld `tone` aus der
+Datenmodell-Skizze bleibt erhalten und trägt den Ton der **ersten** Silbe — bei
+einsilbigen Wörtern also den Ton des Wortes.
+
+**Begründung:** Thai vergibt den Ton **je Silbe**, nicht je Wort. Ein einzelnes
+`tone`-Feld zwingt bei mehrsilbigen Wörtern zu einer Angabe, die schlicht falsch
+ist. สวัสดี ist der Beleg: der Referenzprototyp führte es pauschal als „mid",
+tatsächlich ist es `sà-wàt-dii` — **tief-tief-mittel**. Ohne `syllables` könnte
+die Tonfarbcodierung in Phase 3 mehrsilbige Wörter nur falsch einfärben, und
+genau die Farbcodierung ist ein Kernversprechen der App. Die Struktur der
+Skizze bleibt gewahrt, sie wird nur dort präzisiert, wo sie die Sprache nicht
+abbildet.
+
 ---
 
 ## Protokoll
@@ -221,27 +247,198 @@ Abstand bringt keinen Lernzuwachs — genau der Abstandseffekt, den FSRS abbilde
   bestätigt — das kann nur der Nutzer auf seinem Gerät prüfen. Der
   SQLite-Pfad ist deshalb bislang nur typgeprüft, nicht am Gerät verifiziert.
 
+### 2026-08-30 — Blocker B-1 erledigt
+
+Der Nutzer hat den Gerätecheck in Expo Go durchgeführt und bestätigt: alle
+fünf Tabs sichtbar, Kartenwerte bleiben nach vollständigem Schließen und
+Neuöffnen der App stehen, unter „Speicher:" steht `expo-sqlite`. Damit sind
+die beiden offenen Abnahmekriterien aus Phase 0 (Navigation in Expo Go) und
+Phase 1 (Kartenzustand übersteht Neustart nativ) erfüllt; **B-1 ist
+geschlossen**. Der SQLite-Pfad ist damit nicht mehr nur typgeprüft, sondern am
+Gerät verifiziert.
+
+### 2026-08-30 — Phase 2: Vokabular-Grundstock
+
+**Gemacht**
+
+- `src/data/vocabulary.ts` — **84 Einträge**, bidirektional vollständig, nach
+  dem `VocabEntry`-Schema.
+- `src/lib/repository.ts` um `seedVocabulary`, `loadVocabulary` und
+  `loadVocabEntry` erweitert. Das Einspielen ist idempotent und fasst die
+  Sammlung `cards` (Nutzerfortschritt) nicht an.
+- Auf der Übersicht eine Zusammenfassung ergänzt, die den Grundstock **über
+  die Persistenzschicht** lädt — die angezeigten Zahlen kommen also aus dem
+  Speicher, nicht direkt aus dem Modul.
+
+**Quelle und Prüfverfahren (Thai-Seite)**
+
+- Geplant war thai-language.com. Die Seite ist über HTTPS **nicht abrufbar**
+  (selbstsigniertes Zertifikat), also wurde auf das **englische Wiktionary**
+  ausgewichen — pro Eintrag als `source` verlinkt.
+- Abgefragt wurde nicht die ganze Seite, sondern über die Sections-API gezielt
+  der **Abschnitt „Thai"**. Das war nötig: ein erster Durchlauf, der nur am
+  Stichwort „Paiboon" verankert war, hatte bei ดี die IPA eines
+  fremdsprachigen Eintrags (`/di/`, „crossbow") gegriffen und bei ไป
+  Nordthai-Inhalt eingeblendet. Nach der Umstellung stimmten alle Töne des
+  ersten Laufs bis auf น้ำ (`náam` statt `nám`).
+- **Töne wurden nicht aus Tonbezeichnungen im Fließtext übernommen**, sondern
+  aus der IPA-Tonkontur abgeleitet:
+  `˧` mid · `˨˩` low · `˥˩` falling · `˦˥` high · `˩˩˦` rising.
+  Das war keine Förmlichkeit: eine Fließtext-Zusammenfassung bezeichnete
+  `/kaj˨˩/` (ไก่) fälschlich als „falling" — richtig ist **tief**. Die
+  abgeleiteten Töne decken sich mit den Tonregeln, etwa ร้อน (tiefe
+  Konsonantenklasse + mai tho → **hoch**, nicht fallend).
+- Für alle 84 Einträge stimmt die Silbenzahl der Paiboon-Umschrift mit der der
+  IPA überein; daraus entstand das Feld `syllables` (Umschrift + Ton je Silbe).
+
+**Abweichung vom Datenmodell, bewusst — siehe AE-7**
+
+Das skizzierte `tone`-Feld ist nur für einsilbige Wörter eindeutig. Ergänzt
+wurde deshalb `syllables: { roman, tone }[]`; `tone` bleibt als Ton der ersten
+Silbe erhalten. สวัสดี ist dafür das Musterbeispiel: der Referenzprototyp führte
+es pauschal als „mid", tatsächlich ist es **tief-tief-mittel**.
+
+**Zwei Einträge bewusst NICHT als geprüft markiert**
+
+| Eintrag | Warum `sourceVerified: false` |
+| --- | --- |
+| ร้าน `ráan` | Der Thai-Abschnitt belegt nur „Stand, Bude, Plattform". Die Alltagsbedeutung „Laden, Geschäft" steht dort ausschließlich im Khmer/Lao-Vergleich der Etymologie. |
+| นอน `nɔɔn` | Die Thai-Definition lautet nur „to lie or lay down". „schlafen" erscheint bloß in der Proto-Tai-Etymologie; eindeutig „schlafen" ist นอนหลับ. |
+
+Beide tragen den Grund in `verificationNote` und sind damit im Lernbetrieb
+erkennbar. Der Rest (82 von 84) ist in Ton, Umschrift **und** Bedeutung
+gedeckt.
+
+**Deutsche Seite**
+
+Weil die App auch Thailändern Deutsch beibringt, trägt jeder Eintrag die
+Angaben, an denen Thai-Muttersprachler scheitern:
+
+- **Substantive:** Genus und Plural (`germanNoun`), das Genus zusätzlich im
+  Stichwort („das Haus"). Hinweise dort, wo es weh tut — n-Deklination bei
+  „der Mensch" (den/dem/des Menschen), Umlautplurale, fehlender Plural bei
+  „das Obst".
+- **Verben:** 3. Person Singular, Präteritum und Perfekt **mit Hilfsverb**
+  (`hat`/`ist`) — ein Test erzwingt das, weil „haben" gegen „sein" eine eigene
+  Fehlerquelle ist. Vokalwechsel und untrennbare Präfixe stehen als Hinweis
+  (z. B. „verstehen" hat kein `ge-` im Partizip).
+- **Adjektive:** Steigerung, unregelmäßige ausdrücklich begründet
+  (gut/besser, viel/mehr, groß/größer, teuer → teurer).
+
+**Beispielsätze**
+
+Zusammengesetzt ausschließlich aus Wörtern, die in derselben Datei verifiziert
+sind — jede Silbe der Beispiel-Umschrift stammt also aus einem geprüften
+Eintrag. Die Sätze folgen einfachen Mustern (Subjekt-Verb-Objekt, Substantiv
+mit nachgestelltem Adjektiv), sind als **ganze Sätze aber nicht einzeln
+gegen eine Quelle geprüft**. Das steht auch im Kopfkommentar der Datendatei.
+
+**`isConcrete`**
+
+25 Einträge sind konkret, ausnahmslos Substantive. Tests stellen sicher, dass
+Partikel, Pronomen, Zahlwörter, Adverbien, Interjektionen, Adjektive und
+Verben **nie** als konkret markiert werden — die Bild-Pipeline in Phase 5 soll
+für „nicht" oder „ครับ" gar nicht erst anlaufen.
+
+**Verifiziert**
+
+- `npm test` → **154 Tests grün** in 3 Suites (vorher 49).
+  `vocabulary.test.ts` prüft Anzahl (50–100), eindeutige IDs und Thai-Formen,
+  Schema-Konformität jedes Eintrags einzeln, Übereinstimmung von `tone` mit
+  `syllables[0]`, verlustfreie Silbenzerlegung, die deutschen Pflichtangaben je
+  Wortart, Bidirektionalität, dass jedes Beispiel sein Stichwort enthält, die
+  `isConcrete`-Regeln, sowie Round-Trip und Idempotenz über die
+  Persistenzschicht.
+- Eine Prüfung schlägt bewusst Alarm, wenn **alles** als `sourceVerified: true`
+  markiert wäre (Quote muss `>= 0.9` und `< 1` sein) — pauschales Abhaken wäre
+  ein Zeichen dafür, dass gar nicht geprüft wurde.
+- `npx tsc --noEmit` fehlerfrei.
+- Im Browser gegengeprüft: Übersicht zeigt „84 Einträge · 82 von 84
+  quellengeprüft · 25 bildfähig", geladen über die Persistenzschicht.
+
+---
+
+## Skalierungsplan auf ~1000 Einträge
+
+Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
+wie sie ablaufen soll.
+
+### Quelle für die Wortauswahl
+
+Basis ist eine **Frequenzliste**, nicht freies Erfinden. In dieser Reihenfolge:
+
+1. **Thai National Corpus** (Chulalongkorn-Universität) bzw. offene
+   Frequenzlisten auf Basis von OpenSubtitles/Wikipedia für Thai. Liefert
+   Rangfolge nach Häufigkeit — genau die Reihenfolge, in der Vokabeln für
+   Lernende wertvoll sind.
+2. Abgleich mit dem **CEFR-Wortschatz A1–B1**, damit Prüfungsrelevanz (Phase 7)
+   und Alltagstauglichkeit zusammenpassen.
+3. Für die Gegenrichtung „Deutsch für Thailänder": **Goethe-Zertifikat-Wortlisten
+   A1/A2/B1**, die das Goethe-Institut selbst veröffentlicht.
+
+Die Frequenzliste liefert **nur die Wortauswahl** — nie Ton, Umschrift oder
+Bedeutung. Die kommen ausschließlich aus dem Prüfschritt unten.
+
+### Prüfschritt vor Übernahme (unverändert für jeden Eintrag)
+
+Das in Phase 2 gebaute Skript ist der Weg dorthin und bleibt bestehen:
+
+1. Thai-Abschnitt des Wiktionary-Eintrags über die Sections-API laden.
+2. Paiboon-Umschrift, Royal-Institute-Umschrift und IPA extrahieren.
+3. Ton **aus der IPA-Tonkontur** ableiten, nie aus Prosa.
+4. Silbenzahl von Umschrift und IPA gegeneinander prüfen — stimmt sie nicht,
+   geht der Eintrag in die manuelle Sichtung.
+5. Bedeutung gegen die Definition des Thai-Abschnitts abgleichen. Deckt sie den
+   gewünschten Sinn nicht (wie bei ร้าน und นอน), dann `sourceVerified: false`
+   **mit benanntem Grund** — nicht raten, nicht stillschweigend übernehmen.
+6. Deutsche Seite von Hand ergänzen: Genus, Plural, Stammformen mit Hilfsverb,
+   Steigerung, Kasus bei Präpositionen.
+7. Die bestehenden Tests laufen über den gesamten Bestand und blockieren
+   Einträge, die das Schema verletzen.
+
+**Durchsatz und Portionierung:** in Blöcken von 50–100 Wörtern arbeiten, je
+Block ein eigener Commit mit Nennung der Quelle und der Zahl der
+unverifizierten Einträge. Ein Block, dessen Verifikationsquote unter 90 %
+liegt, wird nicht übernommen, sondern zurück in die Sichtung gegeben.
+
+### Verhältnis zum Content-Generator aus Phase 4/5 — bewusst getrennt
+
+Der Vokabel-Grundstock läuft **nicht** über das API-Key-plus-Start-Prinzip der
+Phasen 4 und 5. Begründung:
+
+- Die Vokabeln sind das **Fundament**. Ein falscher Ton pflanzt sich über die
+  FSRS-Wiederholungen monatelang fort und wird eingeschliffen — genau das, was
+  Spaced Repetition so wirksam macht, macht einen Fehler hier so teuer. Ein
+  Sprachmodell, das Töne aus dem Gedächtnis erzeugt, ist dafür die falsche
+  Quelle; ein Wörterbuch-Abgleich ist die richtige.
+- Der Grundstock wird **mit der App ausgeliefert** und muss ohne Schlüssel und
+  ohne Internet vollständig da sein (Gesamt-Abschlusskriterium). Generierte
+  Inhalte sind dagegen ausdrücklich optional.
+- Sprachsituationen (Phase 4) und Bilder (Phase 5) sind **Ausschmückung um
+  geprüfte Vokabeln herum**: Ein misslungener Dialog ist ärgerlich, ein
+  falscher Ton ist schädlich. Deshalb dürfen die Generatoren auf dem
+  Grundstock aufsetzen, ihn aber nie erweitern oder verändern.
+
+Ein Sprachmodell darf im Skalierungsprozess an genau einer Stelle helfen:
+beim **Vorschlagen von Kandidatenwörtern und deutschen Übersetzungen**. Ton und
+Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–7.
+
 ---
 
 ## TODO — priorisiert
 
-1. **Gerätecheck durch den Nutzer (blockiert den Abschluss von Phase 0 und 1):**
-   `npx expo start`, QR-Code mit **Expo Go** scannen und prüfen:
-   (a) alle fünf Tabs sind da und klickbar,
-   (b) auf „Lernen" die Karte bewerten, Expo Go **ganz schließen**, neu öffnen —
-   bleiben `Wiederholungen`, `Stabilität` und `Difficulty` stehen, ist der
-   SQLite-Pfad bestätigt. Unter „Speicher:" muss dort `expo-sqlite` stehen
-   (im Browser dagegen `async-storage`). Ergebnis hier eintragen.
-2. **Phase 2 — Vokabular-Grundstock:** 50–100 handverifizierte Einträge,
-   bidirektional, `sourceVerified`. Skalierungspfad auf 1000 dokumentieren.
-3. **Phase 3 — Lern-UI:** Karteikarten-Flow, Tonfarblegende, Audio-Fallback,
-   Dashboard mit fälligen Karten je Richtung.
-4. **Phase 4 — Generator Sprachsituationen** (API-Key-Feld, Batch, Offline-Persistenz).
-5. **Phase 5 — Generator Bilder** (nur `isConcrete`).
-6. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
-7. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
-8. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
-9. **Phase 9 — QA & Abschluss.**
+1. **Phase 3 — Lern-UI:** Karteikarten-Flow, Tonfarblegende, Audio-Fallback,
+   Dashboard mit fälligen Karten je Richtung. Die Tonfarben müssen `syllables`
+   auswerten (AE-7), nicht das Feld `tone` — sonst bekommen mehrsilbige Wörter
+   wie สวัสดี durchgehend eine falsche Farbe.
+   Die beiden Einträge mit `sourceVerified: false` (ร้าน, นอน) sollen im
+   Lernbetrieb sichtbar gekennzeichnet werden oder vorerst draußen bleiben.
+2. **Phase 4 — Generator Sprachsituationen** (API-Key-Feld, Batch, Offline-Persistenz).
+3. **Phase 5 — Generator Bilder** (nur `isConcrete`).
+4. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
+5. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
+6. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
+7. **Phase 9 — QA & Abschluss.**
 
 ---
 
