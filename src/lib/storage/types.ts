@@ -21,10 +21,19 @@ export type CollectionName =
   | 'situations'
   /** ExamModule — Prüfungsvorbereitung (Phase 7). */
   | 'exam'
+  /** ReviewDayLog — ein Dokument je Kalendertag mit Wiederholungszahlen (Phase 4). */
+  | 'reviewLog'
   /** Einstellungen, Lernprofil, Zähler. */
   | 'meta';
 
-export const COLLECTIONS: CollectionName[] = ['vocab', 'cards', 'situations', 'exam', 'meta'];
+export const COLLECTIONS: CollectionName[] = [
+  'vocab',
+  'cards',
+  'situations',
+  'exam',
+  'reviewLog',
+  'meta',
+];
 
 export interface DataStore {
   /** Muss vor dem ersten Zugriff genau einmal aufgerufen werden. */

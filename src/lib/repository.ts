@@ -10,6 +10,7 @@ import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { createCardState, reviewCard } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
+import { recordReview } from './review-log';
 import { DataStore, getStore } from './storage';
 
 /* ---------- Vokabeln ---------- */
@@ -102,6 +103,9 @@ export async function rateCard(
 ): Promise<FSRSCardState> {
   const updated = reviewCard(card, rating, now);
   await saveCardState(updated, store);
+  // Einziger Ort, an dem bewertet wird - deshalb auch der einzige Ort, an dem
+  // das Tagesprotokoll fortgeschrieben werden muss.
+  await recordReview(card.direction, rating, now, store);
   return updated;
 }
 
