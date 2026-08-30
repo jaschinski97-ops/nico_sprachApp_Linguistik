@@ -7,9 +7,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { TONES } from '@/constants/tones';
-import { DAY_MS, retrievability, reviewCard } from '@/lib/fsrs/fsrs';
+import { createCardState, DAY_MS, retrievability, reviewCard } from '@/lib/fsrs/fsrs';
 import { FSRSCardState, Rating, RATING_LABELS } from '@/lib/fsrs/types';
-import { createCardState } from '@/lib/fsrs/fsrs';
 import { loadOrCreateCardState, saveCardState } from '@/lib/repository';
 import { getActiveBackend, getStore } from '@/lib/storage';
 
