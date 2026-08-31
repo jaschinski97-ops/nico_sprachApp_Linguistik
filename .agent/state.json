@@ -202,7 +202,7 @@
       "phase": 5,
       "criterion": "Bild-Pipeline nutzt die Batch-Infrastruktur aus Phase 4 statt einer Kopie",
       "done": true,
-      "verifiedHow": "Der Laeufer steht jetzt einmalig in lib/generation/batch.ts (runBatch + BatchTask); conversation/batch.ts und images/batch.ts sind duenne Adapter. Alle 24 Tests aus Phase 4 laufen unveraendert weiter. Anmerkung: das Protokoll fuehrte plan.ts/batch.ts frueher als generisch - sie waren es nicht, sie sind es jetzt."
+      "verifiedHow": "Der Laeufer steht jetzt einmalig in lib/generation/batch.ts (runBatch + BatchTask); conversation/batch.ts und images/batch.ts sind duenne Adapter. Alle 23 Tests aus Phase 4 laufen unveraendert weiter. Anmerkung: das Protokoll fuehrte plan.ts/batch.ts frueher als generisch - sie waren es nicht, sie sind es jetzt."
     },
     {
       "phase": 5,

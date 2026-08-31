@@ -871,7 +871,7 @@ nicht an Sprachsituationen gebunden". Beim Nachsehen stimmte das nicht:
 wirklich generisch — die vier Robustheitsregeln stehen einmalig in
 `lib/generation/batch.ts`, und was ein Eintrag ist, wann er als vorhanden gilt
 und wie er abgelegt wird, steckt im `BatchTask`. `conversation/batch.ts` ist
-zum dünnen Adapter geschrumpft; **alle 24 Tests aus Phase 4 laufen unverändert
+zum dünnen Adapter geschrumpft; **alle 23 Tests aus Phase 4 laufen unverändert
 weiter**, was zugleich belegt, dass sich das Verhalten nicht verschoben hat.
 `plan.ts` blieb getrennt: Situationen sind ein Kreuzprodukt, Bilder eine
 Auswahl aus dem Grundstock — das ist zweierlei Inhalt, keine Doppelung.
