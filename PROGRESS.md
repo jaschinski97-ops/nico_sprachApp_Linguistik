@@ -408,6 +408,84 @@ Skalierungsplan festgehalten. Ein Test hält beide Seiten zusammen: jede
 konkrete Vokabel braucht ein Motiv, und ein Motiv ohne passende Vokabel fliegt
 auf.
 
+### AE-16 — Übungen laufen **nicht** durch FSRS, wählen ihre Aufgaben aber daraus
+
+**Entscheidung:** Die Übungstypen aus Phase 6 legen **keine** eigenen
+FSRS-Karten an und schreiben **keine** Bewertung zurück. Sie sind ein
+Übungsmodus ohne Wiederholungsplanung. Aber sie sind auch nicht blind: welche
+Vokabeln drankommen, entscheidet der **vorhandene** FSRS-Zustand derselben
+Richtung — am schwächsten Sitzendes zuerst, dieselbe Sortierung, die auch
+`buildReviewQueue` benutzt. Beantwortete Aufgaben werden im Tagesprotokoll
+**getrennt** mitgezählt (`drills`, `drillsCorrect`).
+
+**Begründung — drei Gründe, der zweite ist der wichtigste:**
+
+1. **FSRS modelliert eine Erinnerungsspur je Item.** Der Artikel von „das
+   Haus" ist keine eigene Erinnerung neben der Vokabel — er steht schon auf
+   der `th_to_de`-Karte im deutschen Stichwort. Zwei getrennte Zeitpläne für
+   dieselbe Tatsache anzulegen, hieße dieselbe Sache zweimal mit
+   auseinanderlaufenden Intervallen abzufragen. Genau das will Spaced
+   Repetition vermeiden.
+2. **Die Bewertungsskala passt nicht zum Aufgabentyp.** „Nochmal / Schwer /
+   Gut / Leicht" ist eine **Selbsteinschätzung des Abrufs**. Eine
+   Auswahlübung liefert nur richtig/falsch — und dazu eine Ratequote von 33 %
+   (drei Artikel) bzw. 20 % (fünf Töne). Ein geratenes Richtig als „Gut" in die
+   Stabilitätsformel zu geben, verlängert das Intervall für etwas, das gar
+   nicht abgerufen wurde. Der Schaden wäre unsichtbar und würde sich über
+   Monate aufbauen — dieselbe Überlegung, aus der in Phase 2 ein falscher Ton
+   als „teuer" eingestuft wurde.
+3. **Der Kartenschlüssel ist `vocabId:direction`.** Ein dritter Schlüsselteil
+   für den Übungstyp würde `cardKey`, `loadCardStatesForDirection`, das
+   Dashboard und die Statistik anfassen. Im Dashboard stünde dann „252 Karten
+   fällig", ohne dass erkennbar wäre, was davon Vokabeln sind.
+
+**Was die Übungen dafür sehr wohl tun:** Sie ziehen aus einem **Fenster** der
+schwächsten Kandidaten (dreimal so groß wie die Runde) zufällig. Stur die
+schwächsten zu nehmen ginge nicht, denn eine Übungsantwort ändert den
+Kartenzustand ja bewusst nicht — bei jedem Start käme dieselbe Liste heraus.
+So bleibt der Schwerpunkt auf dem Wackligen, ohne dass sich die Sitzung
+wörtlich wiederholt.
+
+**Folge für die Statistik:** Übungen zählen **nicht** in `total` — das Feld
+heißt im UI „Wiederholungen", und eine Auswahlübung ist keine. Das Diagramm
+stapelt beide Reihen in zwei Farben mit Legende. Für die **Lernserie** zählen
+Übungen dagegen mit: Wer einen Abend lang Töne gehört hat, hat gelernt; die
+Serie über eine Rechenentscheidung zur Wiederholungsplanung zerbrechen zu
+lassen, wäre nicht nachvollziehbar.
+
+**Wenn sich das ändern soll:** Der saubere Weg wäre nicht ein zweiter
+Kartensatz, sondern ein Aufgabentyp mit **freier Eingabe** statt Auswahl (Wort
+tippen, Artikel schreiben). Dann gäbe es kein Rateproblem, und die Antwort
+wäre ein echter Abruf. Das ist eine eigene Entscheidung für später, keine
+Nachlässigkeit hier.
+
+### AE-17 — Standard-Lernrichtung im Profil, ausdrücklich gesetzt und jederzeit änderbar
+
+**Entscheidung:** Es gibt eine Standard-Lernrichtung im Lernprofil (Sammlung
+`meta`, Dokument `profile`). Sie wird **nur auf ausdrückliche Anweisung**
+gesetzt („☆ Als Standard merken" im Lernen-Reiter, oder in den Einstellungen),
+ist überall sichtbar, wo sie wirkt, und lässt sich an derselben Stelle wieder
+aufheben. Ohne Standard fragt die App wie bisher bei jeder Sitzung.
+
+**Begründung:** Die App bedient zwei getrennte Zielgruppen. Für die meisten
+Menschen ist die Lernrichtung eine Eigenschaft der Person und keine
+Entscheidung je Sitzung — wer Thai lernt, lernt beim nächsten Mal wieder Thai.
+Jedes Mal neu zu wählen ist Reibung mit vorhersehbarer Antwort.
+
+**Warum nicht automatisch aus der letzten Wahl:** Bidirektionalität ist ein
+Kernversprechen (AE-11) — dieselbe Person kann beide Richtungen lernen, und
+ein Gerät kann von zwei Menschen geteilt werden. Die zuletzt gewählte Richtung
+still festzuschreiben, würde die App nach einem einzigen Tippen festlegen,
+ohne dass jemand das gewollt hätte, und wäre für den Betroffenen kaum als
+Ursache erkennbar. Die Auswahl bleibt deshalb auch mit gesetztem Standard über
+„Richtung wechseln" erreichbar — sonst wäre der Standard eine Einbahnstraße;
+dafür sorgt ein eigener Parameter, nicht das bloße Fehlen der Richtung.
+
+Die Sammlung `meta` ist seit Phase 1 genau dafür vorgesehen („Einstellungen,
+Lernprofil, Zähler") und war bis jetzt ungenutzt. Ein Profil aus einer älteren
+Version wird nachsichtig gelesen: ein unbekannter Wert ergibt „immer fragen"
+statt eines Absturzes oder einer Sperre.
+
 ---
 
 ## Protokoll
@@ -949,6 +1027,112 @@ die vier laufen durch, der fünfte wird nicht angefragt.
 - Gerätecheck in Expo Go (**B-2**) bleibt offen; damit ist auch der native
   Bildpfad (`expo-file-system`) bislang nur typgeprüft, nicht am Gerät gelaufen.
 
+### 2026-08-31 — Phase 6: Bidirektionalität & Curriculum-Differenzierung
+
+**Ausgangslage, ehrlich benannt**
+
+Ein großer Teil dieser Phase war schon da, ohne dass sie je so hieß: getrennte
+Situationssätze je Richtung mit richtungsspezifischen Korrektur-Hinweisen
+(AE-11), deutsche Grammatikdaten an jeder Vokabel (Phase 2), richtungsabhängige
+Bildanzeige (Phase 5). Die tatsächliche Lücke war eine andere: es gab **nur
+Karteikarten**. Die beiden Zielgruppen scheitern an ganz verschiedenen Stellen,
+aber geübt wurde für beide dasselbe.
+
+**Gemacht**
+
+- `src/lib/drills/` — `types.ts` (Übungstypen, Zuordnung zur Richtung),
+  `questions.ts` (die drei Aufgabenbauer), `session.ts` (Runde
+  zusammenstellen, auswerten), `random.ts` (aussaatbarer Zufall).
+- `src/lib/profile.ts` — Lernprofil nach AE-17.
+- `components/drill-runner.tsx` — die Übungsrunde.
+- Lernen-Reiter umgebaut: Umschalter zwischen Karteikarten und den Übungen der
+  jeweiligen Richtung, Standard-Richtung setzen und aufheben an Ort und Stelle.
+- Einstellungen: Karte „Standard-Lernrichtung".
+- Fortschritt: eigene Kachel „Heute geübt", gestapeltes Diagramm mit Legende,
+  Übungen in der Gesamtbilanz.
+- `review-log.ts` um `drills`/`drillsCorrect` und `dayIsActive` erweitert;
+  `audio.ts` um `isLanguageAvailable`.
+
+**Die drei Übungen — je Richtung eine andere Schwachstelle**
+
+| Richtung | Übung | Woher die Daten | Warum gerade das |
+| --- | --- | --- | --- |
+| `de_to_th` | **Töne hören** | `syllables[0].tone` | Der Ton trägt Bedeutung und ist im Deutschen kein Merkmal. Wer ihn nicht hört, kann ihn nicht sprechen. |
+| `th_to_de` | **Artikel** | `germanNoun.article` | Thai hat keine Artikel. Das Genus ist im Deutschen nicht ableitbar, sondern gehört zum Wort. |
+| `th_to_de` | **Stammformen** | `germanVerb` | Thai konjugiert nicht. „haben" gegen „sein" im Perfekt ist eine eigene Fehlerquelle. |
+
+Nichts davon braucht neue Inhalte: 69 der 84 Einträge sind einsilbig (alle fünf
+Töne kommen vor), 29 sind Substantive, 20 sind Verben.
+
+**Drei Entscheidungen im Detail, die leicht anders hätten ausfallen können**
+
+1. **Die Ton-Übung nimmt nur einsilbige Wörter.** Bei สวัสดี hätte die Frage
+   „welchen Ton?" gar keine richtige Antwort — das Wort ist tief-tief-mittel.
+   Und nach einer *einzelnen* Silbe zu fragen geht auch nicht, weil sich die
+   Silbengrenze in der Thai-Schrift nicht verlässlich bestimmen lässt (AE-8).
+   Ein Test hält fest, dass mehrsilbige Wörter gar nicht erst angeboten werden.
+2. **Vor der Antwort ist bei der Ton-Übung nichts zu sehen** — weder die
+   Thai-Schrift (sie trägt das Tonzeichen) noch die Bedeutung (dann ließe sich
+   die Antwort aus dem Gedächtnis holen, statt sie zu hören). Nur Ton, und
+   beliebig oft wiederholbar.
+3. **Kein Ablenker ist erfunden.** Jede falsche Antwort ist eine echte Form aus
+   derselben geprüften Datei oder eine mechanische Ableitung, die garantiert
+   falsch ist (vertauschtes Hilfsverb). Ein ausgedachtes Partizip wäre dasselbe
+   Problem wie ein ausgedachter Ton: Lernende sehen es, und Falsches prägt sich
+   mit ein. Ein Test prüft das für **jedes** Verb im Bestand.
+   Das vertauschte Hilfsverb ist dabei immer dabei, weil man die Aufgabe sonst
+   lösen könnte, ohne je über „hat" gegen „ist" nachzudenken.
+
+**Fehlende Thai-Stimme: benannt statt stumm**
+
+Die Ton-Übung hängt an der Sprachausgabe des Geräts. `isLanguageAvailable`
+liefert deshalb **drei** Antworten, nicht zwei: ja, nein und **„weiß ich
+nicht"**. Manche Plattformen geben eine leere Stimmenliste zurück, obwohl TTS
+läuft; daraus „keine Thai-Stimme" zu schließen, würde die Übung auf Geräten
+sperren, auf denen sie funktioniert. Gewarnt wird nur bei einem eindeutigen
+Nein. Im Testbrowser war genau das der Fall — drei Stimmen, alle `de-DE` —, und
+der Hinweis erschien korrekt. Sobald der Content-Schritt echte Clips liefert,
+verbessert sich die Übung von selbst: `playPronunciation` bevorzugt Clips vor
+TTS, ohne dass an der Übung etwas geändert werden muss.
+
+**Die beiden offenen Fragen, entschieden**
+
+- **FSRS?** Nein, bewusst nicht — Begründung in **AE-16**. Die Übungen wählen
+  ihre Aufgaben aber über den vorhandenen FSRS-Zustand aus und werden im
+  Tagesprotokoll getrennt gezählt.
+- **Standard-Richtung im Profil?** Ja, aber nur ausdrücklich gesetzt und
+  jederzeit widerrufbar — Begründung in **AE-17**.
+
+**Verifiziert**
+
+- `npm test` → **322 Tests grün** in 11 Suites (vorher 275). `npx tsc --noEmit`
+  fehlerfrei.
+- **Im Browser durchgespielt:** Ton-Übung (Antwort „Tief" auf สี่ → „✓ Richtig",
+  Auflösung `สี่ · sìi — vier`, „Tiefer Ton."), Artikel-Übung mit falscher
+  Antwort (`___ Kaffee`, „die" gewählt → „✗ Nicht ganz", richtige Antwort grün
+  umrandet, „der Kaffee · Plural: die Kaffees"), Stammformen (`machen` mit den
+  Antworten „ist gemacht", „ist gekommen", „hat gemacht", „hat zugehört").
+- **Standard-Richtung:** gesetzt, danach vollständig neu geladen → `/review`
+  startet direkt in der gemerkten Richtung; „Richtung wechseln" führt trotzdem
+  zur Auswahl, die den Standard als solchen markiert; in den Einstellungen
+  steht dieselbe Wahl.
+- **Fortschritt nach zwei Übungsaufgaben:** „Heute wiederholt 0 · Heute geübt 2
+  · Tage in Folge 1", Diagramm mit getrennter Übungsfarbe, Bilanz „0
+  Wiederholungen und 2 Übungsaufgaben, davon 1 richtig". Der Tag zählt als
+  Lerntag, obwohl keine einzige Karte bewertet wurde — genau die Folge aus
+  AE-16.
+- Layout bei 375 px geprüft (die fünf Tonknöpfe brechen auf 2+2+1 um).
+- Die Abnahmedaten wurden danach wieder entfernt.
+
+**Offen**
+
+- **B-2** (Gerätecheck in Expo Go) und **B-4** (Bilder-Probelauf mit gültigem
+  Stability-Schlüssel) sind beide weiterhin offen — vom Nutzer bestätigt.
+  Für Phase 6 kommt hinzu: Die Ton-Übung ist **im Browser** nur insoweit
+  geprüft, wie es dort geht — dieser Browser hat keine Thai-Stimme, es war also
+  der Warnpfad, der lief, nicht der Hörpfad. Ob eine Thai-TTS-Stimme die Töne
+  brauchbar wiedergibt, lässt sich erst am Gerät beurteilen und gehört zu B-2.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -1046,10 +1230,18 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
    Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft.
 3. **Restliche 20 Bilder**, sobald der Probelauf sitzt: „Alle konkreten
    Vokabeln" statt „Probelauf". Der Lauf überspringt, was schon da ist.
-4. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
-5. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
-6. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
-7. **Phase 9 — QA & Abschluss.**
+4. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
+5. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
+6. **Phase 9 — QA & Abschluss.**
+
+**Naheliegende Fortsetzungen aus Phase 6, bewusst nicht mitgemacht:**
+
+- Ein Übungstyp mit **freier Eingabe** statt Auswahl. Damit fiele das
+  Rateproblem weg, das in AE-16 gegen eine FSRS-Anbindung spricht — und erst
+  dann wäre die Frage „Übungen durch FSRS?" überhaupt neu zu stellen.
+- Weitere Übungen aus schon vorhandenen Daten: Pluralformen und Steigerung von
+  Adjektiven (`germanAdjective`, 12 Einträge) für `th_to_de`, Tonzeichen-Lesen
+  für `de_to_th`.
 
 ---
 

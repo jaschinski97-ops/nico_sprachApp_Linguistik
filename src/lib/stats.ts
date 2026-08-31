@@ -1,5 +1,5 @@
 import { CardState } from './fsrs/types';
-import { lastDays, loadReviewLog, ReviewDayLog } from './review-log';
+import { dayIsActive, drillCount, lastDays, loadReviewLog, ReviewDayLog } from './review-log';
 import { DirectionSummary, ensureCardStates, summarizeAllDirections } from './review-session';
 import { DataStore, getStore } from './storage';
 
@@ -42,8 +42,14 @@ export type LearningStats = {
    * wurde. Vor diesem Tag gibt es keine Historie — siehe AE-9.
    */
   loggedSince: string | null;
-  /** Aufeinanderfolgende Tage bis heute mit mindestens einer Wiederholung. */
+  /** Aufeinanderfolgende Tage bis heute, an denen gelernt ODER geübt wurde. */
   streak: number;
+  /** Beantwortete Übungsaufgaben heute (Phase 6) — getrennt von `reviewsToday`. */
+  drillsToday: number;
+  /** Alle jemals protokollierten Übungsaufgaben. */
+  totalDrills: number;
+  /** Davon richtig beantwortet. */
+  totalDrillsCorrect: number;
 };
 
 function emptyStateCounts(): Record<CardState, number> {
@@ -55,11 +61,16 @@ function emptyStateCounts(): Record<CardState, number> {
  *
  * Ein heute noch leerer Tag beendet die Serie nicht — sonst stünde jeden
  * Morgen „0", obwohl gestern gelernt wurde.
+ *
+ * Übungen zählen mit (`dayIsActive`), obwohl sie bewusst nicht durch FSRS
+ * laufen (AE-16): Wer einen Abend lang Töne gehört hat, hat gelernt. Die
+ * Serie über eine Rechenentscheidung zur Wiederholungsplanung zerbrechen zu
+ * lassen, wäre für die lernende Person schlicht nicht nachvollziehbar.
  */
 export function computeStreak(days: ReviewDayLog[]): number {
   let streak = 0;
   for (let i = days.length - 1; i >= 0; i--) {
-    if (days[i].total > 0) {
+    if (dayIsActive(days[i])) {
       streak++;
     } else if (i === days.length - 1) {
       continue;
@@ -92,6 +103,7 @@ export async function loadLearningStats(
   const log = await loadReviewLog(db);
   const days = lastDays(log, windowDays, now);
   const todayKey = days[days.length - 1]?.date;
+  const today = log.find((entry) => entry.date === todayKey);
 
   return {
     perDirection,
@@ -100,8 +112,11 @@ export async function loadLearningStats(
     totalDue: perDirection.reduce((sum, s) => sum + s.due, 0),
     days,
     totalReviews: log.reduce((sum, entry) => sum + entry.total, 0),
-    reviewsToday: log.find((entry) => entry.date === todayKey)?.total ?? 0,
+    reviewsToday: today?.total ?? 0,
     loggedSince: log.length > 0 ? log[0].date : null,
     streak: computeStreak(days),
+    drillsToday: today ? drillCount(today) : 0,
+    totalDrills: log.reduce((sum, entry) => sum + drillCount(entry), 0),
+    totalDrillsCorrect: log.reduce((sum, entry) => sum + (entry.drillsCorrect ?? 0), 0),
   };
 }

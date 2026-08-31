@@ -54,6 +54,8 @@ export type PronunciationBackend = {
   playAsset(uri: string): Promise<void>;
   speak(text: string, locale: string, rate: number): Promise<void>;
   stop(): Promise<void>;
+  /** Sprachkennungen der installierten Stimmen, z. B. `['de-DE', 'en-US']`. */
+  availableLocales(): Promise<string[]>;
 };
 
 const defaultBackend: PronunciationBackend = {
@@ -71,6 +73,10 @@ const defaultBackend: PronunciationBackend = {
   },
   async stop() {
     await Speech.stop();
+  },
+  async availableLocales() {
+    const voices = await Speech.getAvailableVoicesAsync();
+    return voices.map((voice) => voice.language);
   },
 };
 
@@ -107,4 +113,32 @@ export async function playPronunciation(
 
 export async function stopPronunciation(): Promise<void> {
   await backend.stop().catch(() => {});
+}
+
+/**
+ * Gibt es auf diesem Gerät eine Stimme für diese Sprache?
+ *
+ * Drei Antworten, nicht zwei: `true`, `false` und **`null` für „weiß ich
+ * nicht"**. Das ist keine Bequemlichkeit, sondern nötig — manche Plattformen
+ * liefern eine leere Stimmenliste, obwohl die Sprachausgabe funktioniert. Aus
+ * einer leeren Liste „keine Thai-Stimme" zu schließen, würde die Ton-Übung
+ * auf Geräten sperren, auf denen sie läuft. Gewarnt wird deshalb nur bei einem
+ * eindeutigen `false`: die Liste ist da, aber die Sprache fehlt darin.
+ *
+ * Der Hinweis ist wichtig, weil eine fehlende Thai-Stimme keine Fehlfunktion
+ * der App ist, sondern eine Systemeinstellung — ohne Erklärung bliebe die
+ * Ton-Übung einfach stumm und wirkte kaputt.
+ */
+export async function isLanguageAvailable(
+  language: SpeechLanguage
+): Promise<boolean | null> {
+  let locales: string[];
+  try {
+    locales = await backend.availableLocales();
+  } catch {
+    return null;
+  }
+  if (locales.length === 0) return null;
+  const prefix = language.toLowerCase();
+  return locales.some((locale) => locale.toLowerCase().startsWith(prefix));
 }

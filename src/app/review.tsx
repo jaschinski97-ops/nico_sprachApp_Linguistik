@@ -2,13 +2,17 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { DrillRunner } from '@/components/drill-runner';
 import { Flashcard } from '@/components/flashcard';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ToneLegend } from '@/components/tone-legend';
 import { Spacing } from '@/constants/theme';
+import { TONES } from '@/constants/tones';
+import { DRILL_META, DrillId, DRILLS_BY_DIRECTION } from '@/lib/drills/types';
 import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
+import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
 import { rateCard } from '@/lib/repository';
 import {
   buildReviewQueue,
@@ -20,27 +24,106 @@ import {
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
+/** Karteikarten oder eine der richtungseigenen Übungen. */
+type Mode = 'cards' | DrillId;
+
 function isDirection(value: unknown): value is Direction {
   return value === 'de_to_th' || value === 'th_to_de';
 }
 
+function parseMode(value: unknown, direction: Direction): Mode {
+  const drills: string[] = DRILLS_BY_DIRECTION[direction];
+  return typeof value === 'string' && drills.includes(value) ? (value as Mode) : 'cards';
+}
+
 export default function ReviewScreen() {
-  const params = useLocalSearchParams<{ direction?: string }>();
+  const params = useLocalSearchParams<{ direction?: string; mode?: string; waehlen?: string }>();
   const router = useRouter();
 
-  const direction = isDirection(params.direction) ? params.direction : null;
+  const [profile, setProfile] = useState<LearnerProfile | null>(null);
+
+  useEffect(() => {
+    loadProfile().then(setProfile);
+  }, []);
+
+  const remember = useCallback(async (direction: Direction | null) => {
+    setProfile(await setDefaultDirection(direction));
+  }, []);
+
+  if (!profile) {
+    return (
+      <ScreenScaffold title="Lernen" subtitle="Lernrichtung">
+        <ThemedText type="small" themeColor="textSecondary">
+          Lade Lernprofil …
+        </ThemedText>
+      </ScreenScaffold>
+    );
+  }
+
+  const explicit = isDirection(params.direction) ? params.direction : null;
+  // `waehlen=1` setzt der Wechsel-Knopf: die Auswahl muss auch dann erreichbar
+  // bleiben, wenn eine Standard-Richtung hinterlegt ist - sonst waere der
+  // Standard eine Einbahnstrasse.
+  const direction = params.waehlen === '1' ? null : (explicit ?? profile.defaultDirection);
 
   if (!direction) {
-    return <DirectionPicker onPick={(d) => router.setParams({ direction: d })} />;
+    return (
+      <DirectionPicker
+        profile={profile}
+        onPick={(picked) => router.setParams({ direction: picked, waehlen: undefined })}
+      />
+    );
   }
-  return <ReviewSession direction={direction} key={direction} />;
+
+  const mode = parseMode(params.mode, direction);
+
+  return (
+    <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
+      <ModeBar
+        direction={direction}
+        mode={mode}
+        onPick={(picked) =>
+          router.setParams({
+            direction,
+            mode: picked === 'cards' ? undefined : picked,
+            waehlen: undefined,
+          })
+        }
+      />
+
+      <DirectionBar
+        direction={direction}
+        profile={profile}
+        onSwitch={() => router.setParams({ direction: undefined, mode: undefined, waehlen: '1' })}
+        onRemember={remember}
+      />
+
+      {mode === 'cards' ? (
+        <CardSession direction={direction} key={direction} />
+      ) : (
+        <DrillRunner
+          drill={mode}
+          key={`${direction}:${mode}`}
+          onExit={() => router.setParams({ direction, mode: undefined })}
+        />
+      )}
+
+      <ToneLegend compact />
+    </ScreenScaffold>
+  );
 }
 
 /**
  * Ohne gewählte Richtung wird nicht gelernt. Die beiden Richtungen sind
  * unterschiedliche Aufgaben und werden nie in einer Sitzung vermischt.
  */
-function DirectionPicker({ onPick }: { onPick: (direction: Direction) => void }) {
+function DirectionPicker({
+  profile,
+  onPick,
+}: {
+  profile: LearnerProfile;
+  onPick: (direction: Direction) => void;
+}) {
   return (
     <ScreenScaffold title="Lernen" subtitle="Welche Richtung möchtest du üben?">
       {DIRECTIONS.map((direction) => (
@@ -50,9 +133,16 @@ function DirectionPicker({ onPick }: { onPick: (direction: Direction) => void })
           accessibilityRole="button"
           style={({ pressed }) => pressed && styles.pressed}>
           <ThemedView type="backgroundElement" style={styles.pickerCard}>
-            <ThemedText type="smallBold">{DIRECTION_LABELS[direction]}</ThemedText>
+            <ThemedText type="smallBold">
+              {DIRECTION_LABELS[direction]}
+              {profile.defaultDirection === direction ? ' · Standard' : ''}
+            </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {DIRECTION_PROMPTS[direction]}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Karteikarten ·{' '}
+              {DRILLS_BY_DIRECTION[direction].map((drill) => DRILL_META[drill].label).join(' · ')}
             </ThemedText>
           </ThemedView>
         </Pressable>
@@ -62,9 +152,87 @@ function DirectionPicker({ onPick }: { onPick: (direction: Direction) => void })
   );
 }
 
-function ReviewSession({ direction }: { direction: Direction }) {
-  const router = useRouter();
+/** Umschalter zwischen Karteikarten und den Übungen dieser Richtung. */
+function ModeBar({
+  direction,
+  mode,
+  onPick,
+}: {
+  direction: Direction;
+  mode: Mode;
+  onPick: (mode: Mode) => void;
+}) {
+  const modes: Mode[] = ['cards', ...DRILLS_BY_DIRECTION[direction]];
 
+  return (
+    <View style={styles.modeBar}>
+      {modes.map((candidate) => {
+        const label = candidate === 'cards' ? 'Karteikarten' : DRILL_META[candidate].label;
+        const selected = candidate === mode;
+        return (
+          <Pressable
+            key={candidate}
+            onPress={() => onPick(candidate)}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityState={{ selected }}
+            style={({ pressed }) => pressed && styles.pressed}>
+            <ThemedView
+              type={selected ? 'backgroundSelected' : 'backgroundElement'}
+              style={[styles.modeButton, selected && styles.modeButtonSelected]}>
+              <ThemedText type="small">{label}</ThemedText>
+            </ThemedView>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * Richtung wechseln und den Standard setzen — an derselben Stelle.
+ *
+ * Der Standard wird nur gesetzt, wenn er ausdrücklich gesetzt wird, und er ist
+ * dort sichtbar, wo er wirkt (AE-17). Eine still aus der letzten Wahl
+ * abgeleitete Voreinstellung würde die App nach einem einzigen Tippen
+ * festlegen, ohne dass jemand das gewollt hätte.
+ */
+function DirectionBar({
+  direction,
+  profile,
+  onSwitch,
+  onRemember,
+}: {
+  direction: Direction;
+  profile: LearnerProfile;
+  onSwitch: () => void;
+  onRemember: (direction: Direction | null) => void;
+}) {
+  const isDefault = profile.defaultDirection === direction;
+
+  return (
+    <View style={styles.directionBar}>
+      <Pressable
+        onPress={onSwitch}
+        accessibilityRole="button"
+        style={({ pressed }) => pressed && styles.pressed}>
+        <ThemedText type="small" themeColor="textSecondary">
+          Richtung wechseln
+        </ThemedText>
+      </Pressable>
+      <Pressable
+        onPress={() => onRemember(isDefault ? null : direction)}
+        accessibilityRole="button"
+        style={({ pressed }) => pressed && styles.pressed}>
+        <ThemedText type="small" themeColor="textSecondary">
+          {isDefault ? '★ Standard — aufheben' : '☆ Als Standard merken'}
+        </ThemedText>
+      </Pressable>
+    </View>
+  );
+}
+
+function CardSession({ direction }: { direction: Direction }) {
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -108,11 +276,9 @@ function ReviewSession({ direction }: { direction: Direction }) {
 
   if (!queue) {
     return (
-      <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
-        <ThemedText type="small" themeColor="textSecondary">
-          Sitzung wird zusammengestellt …
-        </ThemedText>
-      </ScreenScaffold>
+      <ThemedText type="small" themeColor="textSecondary">
+        Sitzung wird zusammengestellt …
+      </ThemedText>
     );
   }
 
@@ -120,44 +286,25 @@ function ReviewSession({ direction }: { direction: Direction }) {
 
   if (!item) {
     return (
-      <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
-        <ThemedView type="backgroundElement" style={styles.summary}>
-          <ThemedText type="smallBold">
-            {rated > 0 ? 'Sitzung beendet' : 'Nichts fällig'}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {rated > 0
-              ? `${rated} Karten bewertet, davon ${again}× „Nochmal".`
-              : 'In dieser Richtung ist gerade keine Karte fällig. Schau später wieder rein.'}
-          </ThemedText>
-          <View style={styles.actions}>
-            <ActionButton label="Erneut prüfen" onPress={restart} />
-            <ActionButton
-              label="Richtung wechseln"
-              onPress={() => router.setParams({ direction: undefined })}
-            />
-          </View>
-        </ThemedView>
-        <ToneLegend compact />
-      </ScreenScaffold>
+      <ThemedView type="backgroundElement" style={styles.summary}>
+        <ThemedText type="smallBold">{rated > 0 ? 'Sitzung beendet' : 'Nichts fällig'}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          {rated > 0
+            ? `${rated} Karten bewertet, davon ${again}× „Nochmal".`
+            : 'In dieser Richtung ist gerade keine Karte fällig. Die Übungen oben gehen trotzdem — sie brauchen keine Fälligkeit.'}
+        </ThemedText>
+        <View style={styles.actions}>
+          <ActionButton label="Erneut prüfen" onPress={restart} />
+        </View>
+      </ThemedView>
     );
   }
 
   return (
-    <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
-      <View style={styles.progressRow}>
-        <ThemedText type="small" themeColor="textSecondary">
-          Karte {index + 1} von {queue.length}
-        </ThemedText>
-        <Pressable
-          onPress={() => router.setParams({ direction: undefined })}
-          accessibilityRole="button"
-          style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedText type="small" themeColor="textSecondary">
-            Richtung wechseln
-          </ThemedText>
-        </Pressable>
-      </View>
+    <>
+      <ThemedText type="small" themeColor="textSecondary">
+        Karte {index + 1} von {queue.length}
+      </ThemedText>
 
       <Flashcard entry={item.entry} direction={direction} revealed={revealed} />
 
@@ -188,9 +335,7 @@ function ReviewSession({ direction }: { direction: Direction }) {
           </ThemedView>
         </Pressable>
       )}
-
-      <ToneLegend compact />
-    </ScreenScaffold>
+    </>
   );
 }
 
@@ -213,10 +358,26 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.one,
   },
-  progressRow: {
+  modeBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  modeButton: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.two,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  modeButtonSelected: {
+    borderColor: TONES.mid.color,
+  },
+  directionBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   ratings: {

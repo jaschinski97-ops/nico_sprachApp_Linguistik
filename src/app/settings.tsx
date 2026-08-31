@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 
-import { GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
+import { Button, GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
+import { ThemedView } from '@/components/themed-view';
+import { Spacing } from '@/constants/theme';
 import { runGenerationBatch } from '@/lib/conversation/batch';
 import { createAnthropicClient, GENERATOR_MODEL } from '@/lib/conversation/generator';
 import { FULL_RUN, planSituations } from '@/lib/conversation/plan';
@@ -10,7 +13,10 @@ import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store
 import { runImageBatch } from '@/lib/images/batch';
 import { createStabilityImageClient, IMAGE_MODEL } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
+import { Direction } from '@/lib/fsrs/types';
+import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
 import { clearSituations, clearVocabImages, countSituations, countVocabImages } from '@/lib/repository';
+import { DIRECTION_LABELS, DIRECTIONS } from '@/lib/review-session';
 
 /**
  * Beide Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`) und
@@ -50,6 +56,7 @@ export default function SettingsScreen() {
   const [situations, setSituations] = useState<number | null>(null);
   const [images, setImages] = useState<number | null>(null);
   const [blobBackend, setBlobBackend] = useState<string | null>(null);
+  const [profile, setProfile] = useState<LearnerProfile | null>(null);
 
   const refreshSituations = useCallback(async () => {
     setSituations(await countSituations());
@@ -65,7 +72,12 @@ export default function SettingsScreen() {
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
     getImageBlobStore().then(() => setBlobBackend(getActiveBlobBackend()));
+    loadProfile().then(setProfile);
   }, [refreshSituations, refreshImages]);
+
+  const chooseDefaultDirection = useCallback(async (direction: Direction | null) => {
+    setProfile(await setDefaultDirection(direction));
+  }, []);
 
   const startSituations = useCallback(async ({ optionId, apiKey, onProgress, shouldCancel }: StartArgs) => {
     const specs = planSituations(optionId === 'full' ? FULL_RUN : { variantsPerCombo: 1 });
@@ -94,7 +106,34 @@ export default function SettingsScreen() {
   }, []);
 
   return (
-    <ScreenScaffold title="Einstellungen" subtitle="Inhalte erzeugen, API-Schlüssel">
+    <ScreenScaffold title="Einstellungen" subtitle="Lernprofil, Inhalte erzeugen, API-Schlüssel">
+      <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedText type="smallBold">Standard-Lernrichtung</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Womit der Reiter „Lernen" startet. „Immer fragen" zeigt jedes Mal die
+          Auswahl — sinnvoll, wenn zwei Menschen dasselbe Gerät benutzen oder
+          wenn du beide Richtungen lernst. Die jeweils andere Richtung bleibt
+          immer über „Richtung wechseln" erreichbar.
+        </ThemedText>
+        <View style={styles.buttonRow}>
+          <Button
+            label="Immer fragen"
+            onPress={() => chooseDefaultDirection(null)}
+            selected={profile !== null && profile.defaultDirection === null}
+            disabled={profile === null}
+          />
+          {DIRECTIONS.map((direction) => (
+            <Button
+              key={direction}
+              label={DIRECTION_LABELS[direction]}
+              onPress={() => chooseDefaultDirection(direction)}
+              selected={profile?.defaultDirection === direction}
+              disabled={profile === null}
+            />
+          ))}
+        </View>
+      </ThemedView>
+
       <GeneratorCard
         heading="Generator: Sprachsituationen"
         description="Dialoge werden einmalig erzeugt und lokal gespeichert. Danach funktioniert das Üben ohne Internet und ohne Schlüssel — es gibt bewusst keinen Live-Chat."
@@ -132,3 +171,16 @@ export default function SettingsScreen() {
     </ScreenScaffold>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: Spacing.three,
+    padding: Spacing.three,
+    gap: Spacing.three,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+});

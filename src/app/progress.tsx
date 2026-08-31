@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { TONES } from '@/constants/tones';
+import { drillCount } from '@/lib/review-log';
 import { DIRECTION_LABELS } from '@/lib/review-session';
 import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
@@ -59,6 +60,7 @@ export default function ProgressScreen() {
     <ScreenScaffold title="Fortschritt" subtitle="Lernverlauf und Prüfungsvorbereitung">
       <View style={styles.grid}>
         <Tile label="Heute wiederholt" value={String(stats.reviewsToday)} />
+        <Tile label="Heute geübt" value={String(stats.drillsToday)} hint="Aufgaben" />
         <Tile
           label="Tage in Folge"
           value={String(stats.streak)}
@@ -111,19 +113,38 @@ function Tile({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 function ReviewChart({ stats }: { stats: LearningStats }) {
-  const max = Math.max(1, ...stats.days.map((day) => day.total));
+  // Wiederholungen und Uebungen werden gestapelt, nicht summiert dargestellt:
+  // beides ist Lernzeit, aber nur die Wiederholungen laufen durch FSRS
+  // (AE-16). Eine gemeinsame Saeule ohne Trennung wuerde die Beschriftung
+  // "Wiederholungen" zur Unwahrheit machen.
+  const max = Math.max(1, ...stats.days.map((day) => day.total + drillCount(day)));
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Wiederholungen pro Tag</ThemedText>
+      <ThemedText type="smallBold">Pro Tag</ThemedText>
+      <View style={styles.legend}>
+        <LegendDot color={TONES.mid.color} label="Wiederholungen" />
+        <LegendDot color={TONES.high.color} label="Übungen" />
+      </View>
 
       <View style={styles.chart}>
         {stats.days.map((day) => (
           <View key={day.date} style={styles.barColumn}>
             <ThemedText type="small" themeColor="textSecondary" style={styles.barValue}>
-              {day.total > 0 ? day.total : ''}
+              {day.total + drillCount(day) > 0 ? day.total + drillCount(day) : ''}
             </ThemedText>
             <View style={styles.barTrack}>
+              {drillCount(day) > 0 ? (
+                <View
+                  style={[
+                    styles.barFill,
+                    {
+                      height: `${(drillCount(day) / max) * 100}%`,
+                      backgroundColor: TONES.high.color,
+                    },
+                  ]}
+                />
+              ) : null}
               <View
                 style={[
                   styles.barFill,
@@ -148,10 +169,25 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
       */}
       <ThemedText type="small" themeColor="textSecondary">
         {stats.loggedSince
-          ? `Protokolliert seit ${stats.loggedSince} · insgesamt ${stats.totalReviews} Wiederholungen. Frühere Sitzungen sind nicht enthalten — das Tagesprotokoll wurde erst mit dieser Version eingeführt.`
+          ? `Protokolliert seit ${stats.loggedSince} · insgesamt ${stats.totalReviews} Wiederholungen${
+              stats.totalDrills > 0
+                ? ` und ${stats.totalDrills} Übungsaufgaben, davon ${stats.totalDrillsCorrect} richtig`
+                : ''
+            }. Frühere Sitzungen sind nicht enthalten — das Tagesprotokoll wurde erst mit dieser Version eingeführt.`
           : 'Noch keine Wiederholungen protokolliert. Die Historie beginnt mit der ersten bewerteten Karte; frühere Sitzungen sind nicht enthalten.'}
       </ThemedText>
     </ThemedView>
+  );
+}
+
+function LegendDot({ color, label }: { color: string; label: string }) {
+  return (
+    <View style={styles.legendItem}>
+      <View style={[styles.swatch, { backgroundColor: color }]} />
+      <ThemedText type="small" themeColor="textSecondary">
+        {label}
+      </ThemedText>
+    </View>
   );
 }
 

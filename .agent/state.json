@@ -2,9 +2,9 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-08-31",
-  "currentPhase": 5,
-  "currentPhaseName": "Content-Generator: Bilder",
-  "currentPhaseStatus": "pipeline-verified-awaiting-real-key-run",
+  "currentPhase": 6,
+  "currentPhaseName": "Bidirektionalitaet & Curriculum-Differenzierung",
+  "currentPhaseStatus": "done-in-web-build",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -258,6 +258,60 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "275 Tests in 10 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 6,
+      "criterion": "Je Richtung mindestens ein eigener Uebungstyp aus vorhandenen Daten",
+      "done": true,
+      "verifiedHow": "de_to_th: Ton-Erkennung aus syllables[0].tone (69 einsilbige Eintraege, alle fuenf Toene vertreten). th_to_de: Artikel aus germanNoun.article (29 Substantive) und Stammformen aus germanVerb (20 Verben). Keine neue Content-Generierung noetig."
+    },
+    {
+      "phase": 6,
+      "criterion": "Uebungen im Browser spielbar",
+      "done": true,
+      "verifiedHow": "Alle drei durchgespielt: Ton (Antwort 'Tief' auf สี่ -> richtig, Aufloesung 'sìi - vier'), Artikel (falsche Antwort -> richtige Option gruen umrandet, Plural in der Erklaerung), Stammformen ('machen' mit vertauschtem Hilfsverb und zwei echten Fremdformen als Ablenker)."
+    },
+    {
+      "phase": 6,
+      "criterion": "Kein erfundener Ablenker",
+      "done": true,
+      "verifiedHow": "Test prueft fuer JEDES Verb im Bestand, dass jede falsche Antwort entweder eine echte Perfektform aus der Vokabeldatei oder die Form mit vertauschtem Hilfsverb ist."
+    },
+    {
+      "phase": 6,
+      "criterion": "Ton-Uebung nur fuer einsilbige Woerter",
+      "done": true,
+      "verifiedHow": "Bei mehrsilbigen Woertern hat jede Silbe ihren eigenen Ton (AE-7), und die Silbengrenze in der Thai-Schrift ist nicht bestimmbar (AE-8). buildToneQuestion wirft; Test deckt alle mehrsilbigen Eintraege ab."
+    },
+    {
+      "phase": 6,
+      "criterion": "FSRS-Integrationsfrage entschieden und begruendet",
+      "done": true,
+      "verifiedHow": "AE-16: Uebungen laufen NICHT durch FSRS (eine Erinnerungsspur je Item; Ratequote 20-33 % passt nicht zur Selbsteinschaetzungs-Skala; Kartenschluessel ist vocabId:direction). Sie waehlen ihre Aufgaben aber ueber den vorhandenen FSRS-Zustand und werden im Tagesprotokoll getrennt gezaehlt. Tests belegen, dass keine Karte angelegt oder veraendert wird."
+    },
+    {
+      "phase": 6,
+      "criterion": "Nutzerprofil-Frage entschieden und begruendet",
+      "done": true,
+      "verifiedHow": "AE-17: Standard-Lernrichtung im meta-Dokument 'profile', nur ausdruecklich gesetzt, jederzeit aufhebbar, Auswahl bleibt ueber 'Richtung wechseln' erreichbar. Im Browser geprueft: gesetzt, neu geladen, startet direkt in der Richtung; Auswahl weiterhin erreichbar und markiert den Standard."
+    },
+    {
+      "phase": 6,
+      "criterion": "Fehlende Thai-Stimme wird benannt statt stumm zu bleiben",
+      "done": true,
+      "verifiedHow": "isLanguageAvailable liefert ja/nein/weiss-nicht; gewarnt wird nur bei eindeutigem Nein, weil manche Plattformen eine leere Stimmenliste liefern. Im Testbrowser: drei Stimmen, alle de-DE, kein Thai - der Hinweis erschien korrekt."
+    },
+    {
+      "phase": 6,
+      "criterion": "Uebungen in der Statistik sichtbar, ohne die Wiederholungszahl zu verfaelschen",
+      "done": true,
+      "verifiedHow": "Eigene Zaehler drills/drillsCorrect, eigene Kachel, gestapeltes Diagramm mit Legende. Im Browser nach zwei Aufgaben: 'Heute wiederholt 0 - Heute geuebt 2 - Tage in Folge 1'. Ein Tag mit nur Uebungen zaehlt fuer die Serie mit."
+    },
+    {
+      "phase": 6,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "322 Tests in 11 Suites gruen; npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -335,6 +389,16 @@
       "id": "AE-15",
       "title": "isConcrete-Tor dreifach, plus Literaltyp und Motivliste",
       "rationale": "Ein Bild nuetzt nur, wenn es den Begriff trifft; fuer Partikeln und Funktionswoerter gibt es keins, und was ein Modell dazu malt, waere eine falsche Merkhilfe neben geprueften Vokabeln. Sperren in imageSpecFor, im Batch vor dem Netzaufruf und im Client; isConcrete: true als Literaltyp im Auftragstyp. Die englische Motivliste liegt beim Generator, nicht im Grundstock, und legt Mehrdeutigkeiten fest (gai = das Tier, nicht das Gericht; bplaa = Fisch im Wasser; raan = Strassenstand, passend zur Quelle)."
+    },
+    {
+      "id": "AE-16",
+      "title": "Uebungen laufen nicht durch FSRS, waehlen ihre Aufgaben aber daraus",
+      "rationale": "FSRS modelliert eine Erinnerungsspur je Item - der Artikel steht schon auf der th_to_de-Karte, ein zweiter Zeitplan fuer dieselbe Tatsache waere genau das, was Spaced Repetition vermeiden will. Die Skala Nochmal/Schwer/Gut/Leicht ist eine Selbsteinschaetzung des Abrufs; eine Auswahl mit 20-33 % Ratequote liefert nur richtig/falsch, und ein geratenes Richtig als 'Gut' verlaengert das Intervall fuer etwas, das nicht abgerufen wurde. Der Kartenschluessel vocabId:direction muesste um eine dritte Dimension wachsen und wuerde Dashboard und Statistik vermischen. Stattdessen: Auswahl der Aufgaben aus einem Fenster der schwaechsten Karten, getrennte Zaehler im Tagesprotokoll, Uebungen zaehlen fuer die Lernserie mit."
+    },
+    {
+      "id": "AE-17",
+      "title": "Standard-Lernrichtung im Profil, ausdruecklich gesetzt und jederzeit aenderbar",
+      "rationale": "Zwei getrennte Zielgruppen; fuer die meisten ist die Richtung eine Eigenschaft der Person, nicht eine Entscheidung je Sitzung. Nicht automatisch aus der letzten Wahl abgeleitet, weil Bidirektionalitaet ein Kernversprechen ist (AE-11) und ein Geraet geteilt werden kann - ein einzelnes Tippen duerfte die App nicht festlegen. Auswahl bleibt ueber 'Richtung wechseln' erreichbar (eigener Parameter, nicht das blosse Fehlen der Richtung). Abgelegt in der seit Phase 1 dafuer vorgesehenen, bis dahin ungenutzten Sammlung meta."
     }
   ],
   "openBlockers": [
@@ -344,10 +408,11 @@
       "affectsPhases": [
         3,
         4,
-        5
+        5,
+        6
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft.",
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen.",
       "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
     },
     {
@@ -362,12 +427,13 @@
     }
   ],
   "nextUp": {
-    "phase": 6,
-    "name": "Bidirektionalitaet & Curriculum-Differenzierung",
+    "phase": 7,
+    "name": "Pruefungsmodul",
     "tasks": [
       "Zuerst B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel, danach die restlichen 20 Bilder",
-      "Eigene grammatikspezifische Uebungstypen je Richtung",
-      "Audio-Aufloeser registerAudioAssetResolver einhaengen, sobald es Clips gibt"
+      "Goethe-Modulstruktur aus den Originalseiten erheben, nicht raten",
+      "Moegliche Fortsetzung aus Phase 6: Uebungstyp mit freier Eingabe statt Auswahl - erst damit waere die FSRS-Frage aus AE-16 neu zu stellen",
+      "Weitere Uebungen aus vorhandenen Daten: Plural und Steigerung (germanAdjective), Tonzeichen-Lesen"
     ]
   },
   "situations": {
@@ -407,5 +473,27 @@
       "bytes": "nativ expo-file-system (Datei je Bild unter Paths.document), Web IndexedDB"
     },
     "note": "Fuenf Ersatzbilder wurden zum Pruefen von Ablage, Offline-Abruf und Anzeige eingespielt und danach wieder entfernt."
+  },
+  "drills": {
+    "de_to_th": [
+      "tone"
+    ],
+    "th_to_de": [
+      "article",
+      "verbForms"
+    ],
+    "sessionSize": 10,
+    "candidates": {
+      "tone": 69,
+      "article": 29,
+      "verbForms": 20
+    },
+    "fsrs": "bewusst nicht angebunden - siehe AE-16; Aufgabenauswahl nutzt aber den vorhandenen Kartenzustand",
+    "logging": "eigene Zaehler drills/drillsCorrect im Tagesprotokoll, getrennt von total"
+  },
+  "profile": {
+    "defaultDirection": "nur ausdruecklich gesetzt; ohne Angabe fragt die App bei jeder Sitzung",
+    "storedIn": "meta/profile",
+    "decision": "AE-17"
   }
 }

@@ -30,6 +30,19 @@ export type ReviewDayLog = {
   byDirection: Record<Direction, number>;
   /** Schlüssel sind die Bewertungen 1..4 als Zeichenkette. */
   byRating: Record<string, number>;
+  /**
+   * Beantwortete Übungsaufgaben (Phase 6) — **getrennt** von `total`.
+   *
+   * Bewusst ein eigener Zähler: `total` heißt im UI „Wiederholungen", und
+   * eine Auswahlübung ist keine Wiederholung im Sinne von FSRS (AE-16).
+   * Beides in eine Zahl zu werfen, würde die Beschriftung zur Unwahrheit
+   * machen und die Lernkurve schöner aussehen lassen, als sie ist.
+   *
+   * Optional, weil Dokumente aus früheren Versionen die Felder nicht haben.
+   * Jeder Leser muss `?? 0` rechnen.
+   */
+  drills?: number;
+  drillsCorrect?: number;
 };
 
 /**
@@ -53,7 +66,25 @@ function emptyDay(date: string): ReviewDayLog {
     total: 0,
     byDirection: { de_to_th: 0, th_to_de: 0 },
     byRating: { '1': 0, '2': 0, '3': 0, '4': 0 },
+    drills: 0,
+    drillsCorrect: 0,
   };
+}
+
+/** Übungsaufgaben eines Tages, auch bei Dokumenten ohne die Felder. */
+export function drillCount(entry: ReviewDayLog): number {
+  return entry.drills ?? 0;
+}
+
+/**
+ * Wurde an diesem Tag überhaupt gelernt?
+ *
+ * Zählt Wiederholungen **und** Übungen. Ein Tag, an dem nur geübt wurde, ist
+ * kein leerer Tag — die Serie darf daran nicht zerbrechen, nur weil die
+ * Übungen aus guten Gründen nicht durch FSRS laufen (AE-16).
+ */
+export function dayIsActive(entry: ReviewDayLog): boolean {
+  return entry.total > 0 || drillCount(entry) > 0;
 }
 
 /** Zählt eine Wiederholung im Tagesdokument mit. */
@@ -72,6 +103,31 @@ export async function recordReview(
   entry.total += 1;
   entry.byDirection[direction] = (entry.byDirection[direction] ?? 0) + 1;
   entry.byRating[String(rating)] = (entry.byRating[String(rating)] ?? 0) + 1;
+
+  await db.put('reviewLog', date, entry);
+  return entry;
+}
+
+/**
+ * Zählt eine beantwortete Übungsaufgabe im Tagesdokument mit.
+ *
+ * `direction` steht bewusst NICHT in `byDirection`: dieses Feld zählt
+ * Wiederholungen, und die Übung ist keine. Die Richtung ist der Aufgabe
+ * ohnehin anzusehen — es gibt je Richtung eigene Übungstypen.
+ */
+export async function recordDrill(
+  correct: boolean,
+  at: number,
+  store?: DataStore
+): Promise<ReviewDayLog> {
+  const db = store ?? (await getStore());
+  const date = dayKey(at);
+
+  const existing = await db.get<ReviewDayLog>('reviewLog', date);
+  const entry = existing ?? emptyDay(date);
+
+  entry.drills = (entry.drills ?? 0) + 1;
+  entry.drillsCorrect = (entry.drillsCorrect ?? 0) + (correct ? 1 : 0);
 
   await db.put('reviewLog', date, entry);
   return entry;

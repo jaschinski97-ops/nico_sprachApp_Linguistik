@@ -1,4 +1,5 @@
 import {
+  isLanguageAvailable,
   playPronunciation,
   PronunciationBackend,
   registerAudioAssetResolver,
@@ -21,6 +22,10 @@ function recordingBackend(): { backend: PronunciationBackend; calls: Call[] } {
       },
       async stop() {
         calls.push({ kind: 'stop', args: [] });
+      },
+      async availableLocales() {
+        calls.push({ kind: 'availableLocales', args: [] });
+        return ['th-TH', 'de-DE'];
       },
     },
   };
@@ -106,6 +111,9 @@ describe('playPronunciation', () => {
       async stop() {
         throw new Error('nichts lief');
       },
+      async availableLocales() {
+        return [];
+      },
     });
 
     await expect(playPronunciation({ text: 'ไก่', language: 'th' })).resolves.toBe('tts');
@@ -121,8 +129,51 @@ describe('stopPronunciation', () => {
       async stop() {
         throw new Error('kaputt');
       },
+      async availableLocales() {
+        return [];
+      },
     });
     await expect(stopPronunciation()).resolves.toBeUndefined();
     setPronunciationBackend(null);
+  });
+});
+
+describe('isLanguageAvailable', () => {
+  function withLocales(locales: string[] | Error) {
+    setPronunciationBackend({
+      async playAsset() {},
+      async speak() {},
+      async stop() {},
+      async availableLocales() {
+        if (locales instanceof Error) throw locales;
+        return locales;
+      },
+    });
+  }
+
+  afterEach(() => setPronunciationBackend(null));
+
+  it('findet eine vorhandene Stimme ueber das Sprachpraefix', async () => {
+    withLocales(['th-TH', 'de-DE', 'en-US']);
+    expect(await isLanguageAvailable('th')).toBe(true);
+    expect(await isLanguageAvailable('de')).toBe(true);
+  });
+
+  it('meldet eine fehlende Sprache als false', async () => {
+    withLocales(['de-DE', 'en-US']);
+    expect(await isLanguageAvailable('th')).toBe(false);
+  });
+
+  it('sagt bei leerer Stimmenliste "weiss nicht" statt "nein"', async () => {
+    // Manche Plattformen liefern gar keine Liste, obwohl die Sprachausgabe
+    // laeuft. Daraus "keine Thai-Stimme" zu schliessen, wuerde die Ton-Uebung
+    // auf Geraeten sperren, auf denen sie funktioniert.
+    withLocales([]);
+    expect(await isLanguageAvailable('th')).toBeNull();
+  });
+
+  it('sagt auch bei einem Fehler "weiss nicht"', async () => {
+    withLocales(new Error('nicht unterstuetzt'));
+    expect(await isLanguageAvailable('th')).toBeNull();
   });
 });
