@@ -4,6 +4,7 @@ import { ThaiWord } from './thai-word';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { VerificationBadge } from './verification-badge';
+import { VocabImageView } from './vocab-image';
 
 import { Spacing } from '@/constants/theme';
 import { VocabEntry } from '@/data/vocabulary';
@@ -21,6 +22,15 @@ import { Direction } from '@/lib/fsrs/types';
  *
  * Die Tonfarben erscheinen bewusst erst beim Aufdecken: vorher wären sie die
  * halbe Antwort.
+ *
+ * Das Bild (Phase 5) steht je nach Richtung an anderer Stelle, und zwar aus
+ * demselben Grund:
+ *   th_to_de — erst beim Aufdecken. Gefragt ist die Bedeutung, und ein Bild
+ *              des Gegenstands IST die Bedeutung; vorne wäre es die Lösung.
+ *   de_to_th — schon vorne, neben dem deutschen Wort. Gefragt ist hier die
+ *              thailändische Form, die das Bild nicht verrät. Es verstärkt nur
+ *              den Begriff, von dem aus abgerufen wird — genau der
+ *              Dual-Coding-Effekt, wegen dem die Bilder überhaupt entstehen.
  */
 
 type Props = {
@@ -49,10 +59,16 @@ export function Flashcard({ entry, direction, revealed }: Props) {
             language="th"
             assetId={entry.audioAssetId}
           />
-          {revealed ? <GermanBlock entry={entry} /> : null}
+          {revealed ? (
+            <>
+              <VocabImageView entry={entry} />
+              <GermanBlock entry={entry} />
+            </>
+          ) : null}
         </>
       ) : (
         <>
+          <VocabImageView entry={entry} />
           <GermanBlock entry={entry} headline />
           {revealed ? (
             <>

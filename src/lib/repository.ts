@@ -9,6 +9,8 @@
 import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { ConversationSituation } from './conversation/types';
+import { getImageBlobStore } from './images/blob-store';
+import { ImageBlobStore, VocabImage } from './images/types';
 
 import { createCardState, reviewCard } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
@@ -142,6 +144,63 @@ export async function countSituations(store?: DataStore): Promise<number> {
 export async function clearSituations(store?: DataStore): Promise<void> {
   const db = store ?? (await getStore());
   await db.clear('situations');
+}
+
+/* ---------- Vokabelbilder (Phase 5) ---------- */
+
+/**
+ * Die Bilder liegen zweigeteilt: Metadaten in der Sammlung `images`, die
+ * Bilddaten im Blob-Speicher (AE-14). Die Screens sollen davon nichts wissen
+ * und fragen hier nach einer fertigen `uri`.
+ */
+
+export async function loadVocabImage(
+  vocabId: string,
+  store?: DataStore
+): Promise<VocabImage | null> {
+  const db = store ?? (await getStore());
+  return db.get<VocabImage>('images', vocabId);
+}
+
+export async function loadVocabImages(store?: DataStore): Promise<VocabImage[]> {
+  const db = store ?? (await getStore());
+  const images = await db.getAll<VocabImage>('images');
+  return images.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export async function countVocabImages(store?: DataStore): Promise<number> {
+  return (await loadVocabImages(store)).length;
+}
+
+/**
+ * Anzeigbare Quelle für das Bild einer Vokabel, oder `null`.
+ *
+ * `null` heißt hier ausdrücklich auch: Metadaten vorhanden, Datei aber weg.
+ * Dann zeigt die Karte einfach kein Bild, statt eine leere Fläche zu
+ * reservieren — und der nächste Generierungslauf holt das Bild nach.
+ */
+export async function loadVocabImageUri(
+  vocabId: string,
+  store?: DataStore,
+  blobStore?: ImageBlobStore
+): Promise<string | null> {
+  const doc = await loadVocabImage(vocabId, store);
+  if (!doc) return null;
+  const blobs = blobStore ?? (await getImageBlobStore());
+  return blobs.uri(doc.blobKey);
+}
+
+export async function clearVocabImages(
+  store?: DataStore,
+  blobStore?: ImageBlobStore
+): Promise<void> {
+  const db = store ?? (await getStore());
+  const blobs = blobStore ?? (await getImageBlobStore());
+  // Erst die Dateien, dann die Dokumente: bricht es dazwischen ab, bleiben
+  // Dokumente ohne Datei zurueck - die gelten als "fehlt" und werden neu
+  // erzeugt. Andersherum blieben Dateien liegen, von denen niemand mehr weiss.
+  await blobs.clear();
+  await db.clear('images');
 }
 
 /* ---------- Einstellungen / Lernprofil ---------- */

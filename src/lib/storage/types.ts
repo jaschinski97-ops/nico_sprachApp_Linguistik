@@ -19,6 +19,12 @@ export type CollectionName =
   | 'cards'
   /** ConversationSituation — vorproduzierte Dialoge (Phase 4). */
   | 'situations'
+  /**
+   * VocabImage — Metadaten zu den Vokabelbildern (Phase 5). Die Bilddaten
+   * selbst liegen NICHT hier, sondern im Blob-Speicher (`lib/images`) —
+   * Begründung in AE-14.
+   */
+  | 'images'
   /** ExamModule — Prüfungsvorbereitung (Phase 7). */
   | 'exam'
   /** ReviewDayLog — ein Dokument je Kalendertag mit Wiederholungszahlen (Phase 4). */
@@ -30,6 +36,7 @@ export const COLLECTIONS: CollectionName[] = [
   'vocab',
   'cards',
   'situations',
+  'images',
   'exam',
   'reviewLog',
   'meta',

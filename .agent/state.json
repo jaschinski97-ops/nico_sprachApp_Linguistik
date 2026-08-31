@@ -1,9 +1,9 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-08-30",
-  "currentPhase": 4,
-  "currentPhaseName": "Content-Generator Sprachsituationen + Lernstatistik",
+  "lastUpdated": "2026-08-31",
+  "currentPhase": 5,
+  "currentPhaseName": "Content-Generator: Bilder",
   "currentPhaseStatus": "pipeline-verified-awaiting-real-key-run",
   "stack": {
     "framework": "expo",
@@ -111,7 +111,7 @@
       "criterion": "Vollstaendige Review-Session am Geraet in Expo Go",
       "done": false,
       "verifiedHow": null,
-      "blocker": "B-2 - braucht das Geraet des Nutzers."
+      "blocker": "B-2 - braucht das Geraet des Nutzers; betrifft jetzt auch Phase 5 (nativer Bildpfad)."
     },
     {
       "phase": 3,
@@ -182,9 +182,9 @@
     {
       "phase": 4,
       "criterion": "Testlauf mit echtem Schluessel (10-20 Situationen)",
-      "done": false,
-      "verifiedHow": null,
-      "blocker": "B-3 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein."
+      "done": true,
+      "verifiedHow": "Vom Nutzer mit gueltigem Anthropic-Schluessel durchgefuehrt und bestaetigt (2026-08-31); die Zahlen des Laufs liegen nicht vor.",
+      "blocker": null
     },
     {
       "phase": 4,
@@ -197,6 +197,67 @@
       "criterion": "Prompt-Vertrag geprueft (Antwortform passt zum Parser)",
       "done": true,
       "verifiedHow": "prompt-contract.test.ts: zwei ausformulierte Musterantworten je Richtung; prueft Zuglaenge, Sprecherwechsel, alle drei Sprachfassungen und richtungsspezifische Korrektur-Hinweise. Schliesst die einzige Luecke, die der Lauf mit ungueltigem Schluessel offenliess."
+    },
+    {
+      "phase": 5,
+      "criterion": "Bild-Pipeline nutzt die Batch-Infrastruktur aus Phase 4 statt einer Kopie",
+      "done": true,
+      "verifiedHow": "Der Laeufer steht jetzt einmalig in lib/generation/batch.ts (runBatch + BatchTask); conversation/batch.ts und images/batch.ts sind duenne Adapter. Alle 24 Tests aus Phase 4 laufen unveraendert weiter. Anmerkung: das Protokoll fuehrte plan.ts/batch.ts frueher als generisch - sie waren es nicht, sie sind es jetzt."
+    },
+    {
+      "phase": 5,
+      "criterion": "Anbieter gewaehlt und Browser-/CORS-Verhalten empirisch belegt",
+      "done": true,
+      "verifiedHow": "AE-13. Gemessen: POST an api.openai.com wird von CORS geblockt (GET nicht), POST an api.stability.ai kommt durch (401). Kontrollmessung an api.anthropic.com mit/ohne Header wie in Phase 4. dangerouslyAllowBrowser des openai-SDK setzt keinen Header - im Paket nachgesehen."
+    },
+    {
+      "phase": 5,
+      "criterion": "Anfrageform gegen die laufende API belegt, nicht geraten",
+      "done": true,
+      "verifiedHow": "Stability prueft Pflichtfelder und Enums vor der Authentifizierung; die API nannte die erlaubten Werte fuer output_format, aspect_ratio, seed und prompt selbst. Die vollstaendige gueltige Anfrage lief bis 401 durch, ein falscher Pfad gibt 404."
+    },
+    {
+      "phase": 5,
+      "criterion": "Speicherformat fuer Bilder begruendet geloest",
+      "done": true,
+      "verifiedHow": "AE-14: Metadaten in der Sammlung images, Bytes in eigener Ablage (nativ expo-file-system, Web IndexedDB). Grund nachgesehen: AsyncStorage-Web ist window.localStorage (~5 MB fuer alle Sammlungen zusammen); expo-file-system hat auf Web keine Umsetzung."
+    },
+    {
+      "phase": 5,
+      "criterion": "isConcrete-Gate testgesichert - Pipeline laeuft fuer abstrakte Eintraege gar nicht erst an",
+      "done": true,
+      "verifiedHow": "AE-15: drei Sperren plus Literaltyp isConcrete: true. Ein Test faehrt einen gefaelschten Auftrag durch den echten Batch: 0 Client-Aufrufe, 0 gespeichert, 1 Fehlschlag mit Begruendung. Ein zweiter mischt ihn unter vier echte - die vier laufen durch."
+    },
+    {
+      "phase": 5,
+      "criterion": "Kleiner Testlauf erfolgreich, danach offline abrufbar ohne Schluessel",
+      "done": true,
+      "verifiedHow": "5 Bilder durch dieselbe Pipeline mit einem Ersatz-Client (echte WebP-Bytes): 5 erzeugt, 0 fehlgeschlagen; die IndexedDB enthielt die fuenf .webp-Eintraege, localStorage blieb bei 78 KB. Danach Dev-Server neu gestartet und Seite neu geladen: '5 von 25 Bildern', Schluesselfelder leer, Bilder auf den Karteikarten sichtbar."
+    },
+    {
+      "phase": 5,
+      "criterion": "Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel)",
+      "done": true,
+      "verifiedHow": "Aus dem Web-Build: 5/5 verarbeitet, 0 erzeugt, 5 fehlgeschlagen mit 'HTTP 401: authorization: invalid or missing header value', 0 gespeichert."
+    },
+    {
+      "phase": 5,
+      "criterion": "Bild auf der Karteikarte, richtungsabhaengig",
+      "done": true,
+      "verifiedHow": "de_to_th: Bild schon auf der Vorderseite (verraet die thailaendische Form nicht). th_to_de: erst nach dem Aufdecken (waere sonst die Antwort). Eine abstrakte Karte zeigt kein Bild und keinen Platzhalter. Bei 375 px und im breiten Fenster geprueft."
+    },
+    {
+      "phase": 5,
+      "criterion": "Testlauf mit gueltigem Stability-Schluessel",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-4 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein."
+    },
+    {
+      "phase": 5,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "275 Tests in 10 Suites gruen; npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -259,6 +320,21 @@
       "id": "AE-12",
       "title": "Offizieller Anthropic-SDK mit angepasster Metro-Aufloesung",
       "rationale": "Ohne metro.config.js bricht der Web-Build mit 'Unable to resolve module ./lib/credentials/types.js' ab - die exports-Map des SDK fuehrt fuer ./lib/* kein default. Mit unstable_enablePackageExports und passenden Bedingungsnamen buendelt der SDK sauber; dangerouslyAllowBrowser setzt genau den CORS-Header."
+    },
+    {
+      "id": "AE-13",
+      "title": "Bildanbieter Stability AI statt OpenAI, mit fetch statt SDK",
+      "rationale": "Gemessen: api.openai.com laesst Browsern GET durch, aber kein POST (CORS, 'No Access-Control-Allow-Origin'); der dangerouslyAllowBrowser-Schalter des openai-SDK setzt anders als bei Anthropic keinen Header, sondern hebt nur eine Selbstsperre auf. Stability kommt durch und laesst sich ohne Schluessel vollstaendig festklopfen, weil Pflichtfelder und Enums vor der Authentifizierung geprueft werden. Google kam ebenfalls durch, unterscheidet aber nicht zwischen falschem Modell und falschem Schluessel. Fuer Stability gibt es keinen offiziellen JS-SDK - deshalb ein eigener fetch."
+    },
+    {
+      "id": "AE-14",
+      "title": "Bilder zweigeteilt: Metadaten im Dokumentspeicher, Bytes in eigener Ablage",
+      "rationale": "AsyncStorage-Web ist window.localStorage (im Paket nachgesehen) mit rund 5 MB fuer ALLE Sammlungen zusammen; Base64 im JSON-Wert sprengt das schon bei 25 Bildern und serialisiert die Sammlung bei jedem Schreibvorgang neu. Nativ eine Datei je Bild (Paths.document, write mit encoding base64), im Web IndexedDB - expo-file-system hat auf Web keine Umsetzung. Schreibreihenfolge Datei-dann-Dokument, damit kein Dokument ohne Datei zurueckbleibt; exists prueft beides."
+    },
+    {
+      "id": "AE-15",
+      "title": "isConcrete-Tor dreifach, plus Literaltyp und Motivliste",
+      "rationale": "Ein Bild nuetzt nur, wenn es den Begriff trifft; fuer Partikeln und Funktionswoerter gibt es keins, und was ein Modell dazu malt, waere eine falsche Merkhilfe neben geprueften Vokabeln. Sperren in imageSpecFor, im Batch vor dem Netzaufruf und im Client; isConcrete: true als Literaltyp im Auftragstyp. Die englische Motivliste liegt beim Generator, nicht im Grundstock, und legt Mehrdeutigkeiten fest (gai = das Tier, nicht das Gericht; bplaa = Fisch im Wasser; raan = Strassenstand, passend zur Quelle)."
     }
   ],
   "openBlockers": [
@@ -267,30 +343,30 @@
       "title": "Geraetecheck in Expo Go steht aus",
       "affectsPhases": [
         3,
-        4
+        4,
+        5
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher.",
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft.",
       "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
     },
     {
-      "id": "B-3",
-      "title": "Probelauf des Generators mit gueltigem API-Schluessel",
+      "id": "B-4",
+      "title": "Probelauf des Bildgenerators mit gueltigem Stability-Schluessel",
       "affectsPhases": [
-        4
+        5
       ],
       "needsUser": true,
-      "note": "Auf dem Rechner sind keine Zugangsdaten hinterlegt (kein ANTHROPIC_API_KEY, kein ANTHROPIC_AUTH_TOKEN, kein ant-CLI, kein Profilverzeichnis) - nachgesehen. Fremde API-Schluessel gebe ich nicht ein. Alles davor ist geprueft: CORS empirisch, SDK-Buendelung, Anfrageform, Fehlerverhalten, Batch-Robustheit, Offline-Wiedergabe, Prompt-Vertrag.",
-      "steps": "Einstellungen -> Schluessel eintragen -> Probelauf -> Start. Erwartung 16/16 erzeugt, 0 fehlgeschlagen; danach unter Gespraech sichtbar und nach Neuladen offline vorhanden."
+      "note": "Fremde API-Schluessel gebe ich nicht ein. Alles davor ist geprueft: CORS empirisch, Anfrageform gegen die laufende API, Fehlerverhalten, Batch-Robustheit, Ablage, Offline-Abruf und Anzeige. Nicht pruefbar war allein die ANTWORTform - der Parser nennt im Fehlerfall die gelieferten Feldnamen.",
+      "steps": "Einstellungen -> Karte 'Generator: Bilder' -> Stability-Schluessel eintragen -> Probelauf (5) -> Start. Erwartung 5/5 erzeugt; danach '5 von 25 Bildern' und Bilder im Reiter Lernen, nach dem Neuladen ohne Schluessel weiterhin da."
     }
   ],
   "nextUp": {
-    "phase": 5,
-    "name": "Content-Generator: Bilder",
+    "phase": 6,
+    "name": "Bidirektionalitaet & Curriculum-Differenzierung",
     "tasks": [
-      "Eigenes Schluesselfeld, Start, Fortschritt - Aufbau aus Phase 4 wiederverwenden (plan.ts / batch.ts sind nicht an Sprachsituationen gebunden)",
-      "Nur fuer Eintraege mit isConcrete true (25 der 84 Vokabeln)",
-      "Bilder persistent ablegen und offline abrufbar machen",
+      "Zuerst B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel, danach die restlichen 20 Bilder",
+      "Eigene grammatikspezifische Uebungstypen je Richtung",
       "Audio-Aufloeser registerAudioAssetResolver einhaengen, sobald es Clips gibt"
     ]
   },
@@ -315,5 +391,21 @@
     "model": "claude-opus-5",
     "effort": "low",
     "effortRationale": "Kurzer A1/A2-Dialog in vorgegebenem JSON ist eine einfache Aufgabe; bei 512 Aufrufen schlaegt der Aufwand auf Kosten und Dauer durch."
+  },
+  "images": {
+    "generated": 0,
+    "candidates": 25,
+    "testRun": 5,
+    "provider": "stability-ai",
+    "endpoint": "https://api.stability.ai/v2beta/stable-image/generate/core",
+    "model": "stable-image-core",
+    "format": "webp",
+    "aspectRatio": "1:1",
+    "stylePreset": "digital-art",
+    "storage": {
+      "metadata": "Dokumentspeicher, Sammlung 'images'",
+      "bytes": "nativ expo-file-system (Datei je Bild unter Paths.document), Web IndexedDB"
+    },
+    "note": "Fuenf Ersatzbilder wurden zum Pruefen von Ablage, Offline-Abruf und Anzeige eingespielt und danach wieder entfernt."
   }
 }

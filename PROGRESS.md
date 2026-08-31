@@ -237,6 +237,177 @@ SDK sauber, was einen handgeschriebenen HTTP-Client überflüssig macht.
 `anthropic-dangerous-direct-browser-access: true` — im SDK-Quelltext
 nachgesehen (`client.js`), nicht angenommen.
 
+### AE-13 — Bildanbieter: Stability AI, weil OpenAI im Browser gar nicht erst antwortet
+
+**Entscheidung:** Bilder kommen von **Stability AI**
+(`POST https://api.stability.ai/v2beta/stable-image/generate/core`), angesprochen
+mit einem selbst geschriebenen `fetch` statt mit einem SDK.
+
+**Begründung — im Browser gemessen, nicht angenommen:** Die Anthropic-API aus
+Phase 4 erzeugt keine Bilder, es musste also ein zweiter Anbieter her. Gesetzt
+war zuerst OpenAI Images, dem Muster von AE-12 folgend: offizieller SDK,
+`dangerouslyAllowBrowser: true`. Im installierten Paket `openai@7.8.0` zeigte
+sich der entscheidende Unterschied — dieser Schalter setzt **keinen Header**.
+In `client.js` steht nur
+
+```js
+if (!options.dangerouslyAllowBrowser && isRunningInBrowserOrBrowserWorker())
+    throw new Errors.OpenAIError("It looks like you're running in a browser…")
+```
+
+Es ist also eine reine Selbstsperre des SDK, keine Gegenstelle wie
+`anthropic-dangerous-direct-browser-access`. Ob der Browser durchkommt,
+entscheidet damit allein CORS auf Anbieterseite. Aus dem laufenden Web-Build
+gemessen:
+
+| Anfrage | Ergebnis |
+| --- | --- |
+| `GET api.openai.com/v1/models` | HTTP 401, lesbar |
+| `POST api.openai.com/v1/images/generations` | `TypeError: Failed to fetch` |
+| `POST api.openai.com/v1/chat/completions` | `TypeError: Failed to fetch` |
+| `POST api.stability.ai/v2beta/stable-image/generate/core` | HTTP 401, lesbar |
+| `POST generativelanguage.googleapis.com/…:generateContent` | HTTP 400, lesbar |
+
+Die Konsole nennt den Grund beim Namen: *„blocked by CORS policy: No
+'Access-Control-Allow-Origin' header is present on the requested resource."*
+Zur Kontrolle lief in derselben Sitzung die Messung aus Phase 4 noch einmal:
+`api.anthropic.com` antwortete **mit** dem Header aus AE-12 mit 401 und **ohne**
+ihn mit „Failed to fetch". Das Netz war also offen und die Messung
+aussagekräftig; OpenAI lässt Browsern **GET** durch, **POST** nicht. Damit ist
+OpenAI Images für den Web-Build unbrauchbar — und der Web-Build ist derzeit die
+einzige Umgebung, in der überhaupt geprüft werden kann, weil der Gerätecheck
+(B-2) aussteht.
+
+**Warum Stability und nicht Google:** Beide kommen durch CORS. Der Unterschied
+liegt darin, was sich **ohne gültigen Schlüssel** noch belegen lässt. Google
+antwortet auf ein erfundenes Modell mit derselben Meldung wie auf einen
+falschen Schlüssel (`API key not valid`) — ob der Modellname stimmt, bliebe
+also bis zum ersten bezahlten Aufruf offen. Genau dieses Risiko hat Phase 4
+beim Antwortformat bewusst vermieden. Stability prüft dagegen Pflichtfelder und
+Aufzählungswerte **vor** der Authentifizierung und verrät die erlaubten Werte
+selbst:
+
+| Gesendet | Antwort der API |
+| --- | --- |
+| `output_format: "tiff"` | 400 — „Expected 'png' \| 'jpeg' \| 'webp'" |
+| `aspect_ratio: "3:7"` | 400 — „Expected '21:9' \| '16:9' \| '3:2' \| '5:4' \| '1:1' \| …" |
+| ohne `prompt` | 400 — „prompt: required" |
+| `seed: "abc"` | 400 — „expected number, received string" |
+| vollständige, gültige Anfrage | 401 — „authorization: invalid or missing header value" |
+| falscher Pfad | 404 |
+
+Die Anfrageform steht damit vollständig fest, und das 401 belegt zugleich, dass
+es den Endpunkt gibt. Offen bleibt allein der Schlüssel — dieselbe Lage wie am
+Ende von Phase 4.
+
+**Warum kein SDK, anders als in AE-12:** Für Stability gibt es **keinen**
+offiziellen JavaScript-SDK — nachgesehen: `stability-sdk` ist Python, auf npm
+findet sich nur ein Paket eines Einzelentwicklers von 2024. Eine
+multipart-Anfrage von zwanzig Zeilen selbst zu schreiben ist die kleinere
+Abhängigkeit als ein fremdgepflegter Node-SDK im Browser-Bundle. Der zunächst
+installierte `openai`-SDK wurde wieder entfernt.
+
+**Was sich nicht ohne Schlüssel belegen ließ:** die **Antwort**form. Der Parser
+verlangt deshalb streng ein Feld `image` und nennt im Fehlerfall die
+tatsächlich gelieferten Feldnamen — heißt das Feld eines Tages anders, steht
+das sofort in der Fehlerliste des Laufs, statt als Rätsel zu enden.
+
+**Schlüsselablage** folgt unverändert AE-10: nativ Keychain, im Web nur
+Arbeitsspeicher für die Sitzung. Neu ist lediglich, dass `api-key.ts` jetzt
+**zwei** Schlüssel getrennt hält (`anthropic`, `stability`) — die beiden Läufe
+sind unabhängig, und niemand soll einen Schlüssel eintippen, den er nicht
+braucht.
+
+### AE-14 — Bilder: Metadaten in den Dokumentspeicher, Bytes in eine eigene Ablage
+
+**Entscheidung:** Der Dokumentspeicher aus AE-6 bekommt eine neue Sammlung
+`images`, die aber **nur Metadaten** trägt (Format, Größe, Modell, Prompt,
+Zeitpunkt, `blobKey`). Die Bilddaten liegen in einer eigenen, ebenfalls
+plattformgeteilten Ablage: nativ eine Datei je Bild über `expo-file-system`,
+im Web ein Eintrag je Bild in **IndexedDB**.
+
+**Begründung — in den installierten Paketen nachgesehen:**
+
+Base64 im JSON-Wert wäre der einfachere Weg gewesen und scheitert an einer
+harten Grenze. Das Web-Backend des Dokumentspeichers schreibt über
+`@react-native-async-storage/async-storage`, und dessen Web-Umsetzung ist
+`window.localStorage` — in `lib/module/AsyncStorage.js` steht wörtlich
+`window.localStorage.setItem(key, value)`. localStorage hat je Herkunft rund
+**5 MB, und zwar für alle Sammlungen zusammen**: Vokabeln, Kartenzustände,
+Sprachsituationen, Tagesprotokoll. Ein einziges Bild wiegt selbst als
+komprimiertes WebP oft über 50 KB, als Base64 ein Drittel mehr. 25 Bilder
+sprengen das Budget, die später geplanten ~1000 Vokabeln erst recht. Dazu
+kommt: eine Sammlung wird bei jedem Schreibvorgang **komplett** neu
+serialisiert, und `getAll('images')` würde jedes Bild in den Speicher holen,
+nur um sie zu zählen.
+
+Auf der nativen Seite war die Wahl ähnlich klar: eine SQLite-Zeile je Bild
+ginge, aber eine Datei ist das natürliche Format für Bilddaten, und `file.uri`
+lässt sich direkt an `<Image>` reichen, ohne dass Base64 durch den
+JavaScript-Thread muss. `File.write(inhalt, { encoding: 'base64' })` nimmt die
+Antwort der API unverändert entgegen und dekodiert nativ — ein eigener
+Base64-Dekodierer in JavaScript ist damit überflüssig. Abgelegt wird unter
+`Paths.document`, nicht `Paths.cache`: erzeugte Bilder kosten Geld und gehören
+nicht in ein Verzeichnis, das das System bei Speichermangel leeren darf.
+
+**Warum trotzdem eine eigene Abstraktion und nicht einfach `expo-file-system`
+überall:** `expo-file-system@57.0.6` hat auf Web **keine** Umsetzung. Die Datei
+`src/ExpoFileSystem.web.ts` besteht aus Klassen, deren Konstruktor
+`console.warn('expo-file-system is not supported on web')` ruft und die
+ansonsten leere Werte liefern; die Expo-Dokumentation zu SDK 57 nennt als
+Plattformen nur „Android, iOS, tvOS". Also dasselbe Muster wie bei AE-3: eine
+schmale Schnittstelle (`ImageBlobStore`), je Plattform eine Umsetzung, dazu
+eine im Arbeitsspeicher für Tests und als Notnagel. Im Web gemessen: die
+Anzeige nennt `Ablage indexeddb`, die fünf Testbilder lagen als `nam.webp`,
+`khaao.webp`, … in der IndexedDB, und `localStorage` blieb dabei bei 78 KB —
+die Bilder landen also nachweislich nicht dort.
+
+Im Web wird der **Base64-String** abgelegt, nicht ein `Blob`: `<Image>` nimmt
+eine `data:`-URL direkt entgegen, während ein Objekt-URL wieder freigegeben
+werden müsste und ein vergessenes `revokeObjectURL` die Daten für die ganze
+Sitzung im Speicher hielte.
+
+**Reihenfolge beim Schreiben, mit Absicht:** erst die Bilddatei, dann das
+Metadaten-Dokument. Bricht es dazwischen ab, fehlt das Dokument, der Eintrag
+gilt als „nicht vorhanden" und wird sauber neu erzeugt. Andersherum entstünde
+eine Karteileiche: ein Dokument ohne Datei, das jeder weitere Lauf überspringen
+würde, während die Karte für immer leer bliebe. Deshalb prüft `exists` auch
+**beides** — Dokument *und* Datei. Beim Löschen gilt die umgekehrte
+Reihenfolge, aus demselben Grund.
+
+### AE-15 — Das isConcrete-Tor ist dreifach, nicht einfach
+
+**Entscheidung:** Ob eine Vokabel ein Bild bekommt, wird an drei Stellen
+geprüft: beim Bauen des Auftrags (`imageSpecFor`), im Batch-Lauf vor dem
+Netzaufruf (`imageTask.produce`) und im API-Client selbst
+(`createStabilityImageClient`). Dazu ist `isConcrete` im Auftragstyp ein
+**Literaltyp** (`isConcrete: true`), sodass schon der Übersetzer keinen Auftrag
+aus einem abstrakten Eintrag bauen lässt.
+
+**Begründung:** Der Nutzen von Bildern beim Vokabellernen (Dual-Coding,
+Picture-Superiority) hängt daran, dass das Bild den Begriff **trifft**. Für
+„nicht", „ครับ" oder „vielleicht" gibt es kein solches Bild; was ein Modell
+dazu malt, ist bestenfalls Dekoration und schlimmstenfalls eine falsche
+Merkhilfe neben sorgfältig geprüften Vokabeln. Eine einzelne Sperre wird
+irgendwann durch einen neuen Aufrufer umgangen — deshalb liegt sie auch
+unmittelbar vor dem Aufruf, der Geld kostet. Der Laufzeitcheck holt sich den
+Eintrag dabei **neu aus dem Grundstock**, weil ein Auftrag aus dem Speicher
+oder aus altem Code seinen Literaltyp längst verloren hat.
+
+**Dazu gehört die Motivliste:** `src/lib/images/motifs.ts` hält je konkreter
+Vokabel eine **englische** Motivbeschreibung. Zwei Gründe. Erstens die Sprache:
+Bildmodelle sind auf englischen Bildunterschriften trainiert, „das Huhn" als
+Prompt wäre ein Glücksspiel. Zweitens — und wichtiger — die Eindeutigkeit: ไก่
+ist das *Tier* Huhn, ein Teller Brathähnchen würde als „Hühnerfleisch"
+gemerkt; ปลา ist der Fisch im Wasser, nicht das Filet; ร้าน ist laut Quelle
+„Stand, Bude" (der Eintrag trägt deshalb `sourceVerified: false`), also ein
+Straßenstand und kein Ladengeschäft. Solche Festlegungen gehören ausformuliert
+und nachlesbar, nicht in einen Prompt hineingeraten. Die Liste liegt beim
+Generator und **nicht** im Vokabel-Grundstock — der bleibt unangetastet, wie im
+Skalierungsplan festgehalten. Ein Test hält beide Seiten zusammen: jede
+konkrete Vokabel braucht ein Motiv, und ein Motiv ohne passende Vokabel fliegt
+auf.
+
 ---
 
 ## Protokoll
@@ -660,6 +831,124 @@ nicht schließen. Zwei Dinge, die stattdessen gemacht wurden:
   Nutzer zu aufwendig ist. Damit sind Phase 3 und 4 auf dem Gerät unbestätigt;
   im Web-Build ist beides geprüft.
 
+### 2026-08-31 — Blocker B-3 erledigt
+
+Der Nutzer hat den Probelauf des Sprachsituationen-Generators mit einem
+gültigen Anthropic-Schlüssel durchgeführt und bestätigt. Damit ist das letzte
+offene Abnahmekriterium aus Phase 4 erfüllt; **B-3 ist geschlossen**. Die
+genauen Zahlen des Laufs liegen mir nicht vor — falls sie hier stehen sollen,
+bitte nachtragen.
+
+### 2026-08-31 — Phase 5: Content-Generator für Bilder
+
+**Gemacht**
+
+- `src/lib/generation/` — der Batch-Läufer, jetzt tatsächlich anbieter- und
+  inhaltsunabhängig: `batch.ts` (`runBatch`, `missingFrom`, `BatchProgress`),
+  `types.ts` (`GenerationSpec`, `BatchTask`), `plan.ts` (`limitPlan`,
+  `assertUniqueIds`).
+- `src/lib/images/` — `types.ts` (Schema, Blob-Schnittstelle), `motifs.ts`
+  (25 Motive), `plan.ts` (Bauplan + isConcrete-Tor), `generator.ts` (Prompt,
+  API-Aufruf, strenge Antwortprüfung), `batch.ts` (Ablage), `blob-backend.ts`
+  / `blob-backend.web.ts` / `blob-memory.ts` / `blob-store.ts`.
+- `api-key.ts` hält zwei Schlüssel getrennt (AE-13).
+- Sammlung `images` im Dokumentspeicher (AE-14); Repository-Zugriffe
+  `loadVocabImage`, `loadVocabImageUri`, `countVocabImages`,
+  `clearVocabImages`.
+- `components/generator-card.tsx` — die Generator-Karte (Schlüsselfeld,
+  Umfang, Start/Anhalten, Fortschritt, Fehlerliste, Löschen) einmal gebaut,
+  zweimal benutzt. Der Einstellungs-Screen ist dadurch kürzer als vorher, statt
+  eine zweite Kopie derselben Bedienung zu tragen.
+- `components/vocab-image.tsx` — das Bild auf der Karteikarte.
+
+**Pflicht 1 — Bestehende Infrastruktur wiederverwendet, und dabei eine
+Selbstkorrektur**
+
+Das Protokoll führte `plan.ts` / `batch.ts` aus Phase 4 als „bewusst generisch,
+nicht an Sprachsituationen gebunden". Beim Nachsehen stimmte das nicht:
+`runGenerationBatch` war fest mit der Sammlung `situations`, dem Typ
+`ConversationSituation` und dem Dialog-Client verdrahtet. Der Läufer ist jetzt
+wirklich generisch — die vier Robustheitsregeln stehen einmalig in
+`lib/generation/batch.ts`, und was ein Eintrag ist, wann er als vorhanden gilt
+und wie er abgelegt wird, steckt im `BatchTask`. `conversation/batch.ts` ist
+zum dünnen Adapter geschrumpft; **alle 24 Tests aus Phase 4 laufen unverändert
+weiter**, was zugleich belegt, dass sich das Verhalten nicht verschoben hat.
+`plan.ts` blieb getrennt: Situationen sind ein Kreuzprodukt, Bilder eine
+Auswahl aus dem Grundstock — das ist zweierlei Inhalt, keine Doppelung.
+Gemeinsam sind nur `limitPlan` und `assertUniqueIds`.
+
+**Pflicht 2 — Anbieter: gemessen statt angenommen → AE-13**
+
+Kurzfassung: OpenAI Images fiel durch, weil `api.openai.com` Browsern zwar GET,
+aber **kein POST** erlaubt (`Failed to fetch`, in der Konsole als CORS-Blockade
+benannt) und der `dangerouslyAllowBrowser`-Schalter des OpenAI-SDK — anders als
+bei Anthropic — gar keinen Header setzt, sondern nur eine Selbstsperre aufhebt.
+Stability AI kommt durch und lässt sich zudem ohne Schlüssel vollständig
+festklopfen, weil die API Pflichtfelder und Aufzählungswerte vor der
+Authentifizierung prüft. Der zunächst installierte `openai`-SDK wurde wieder
+entfernt. Volle Messtabellen in AE-13.
+
+**Pflicht 3 — Speicherformat → AE-14**
+
+Metadaten in den Dokumentspeicher, Bilddaten in eine eigene Ablage. Der Grund
+ist nachgesehen und nicht geschätzt: das Web-Backend des Dokumentspeichers
+landet in `window.localStorage` mit rund 5 MB für **alle** Sammlungen
+zusammen. Nativ eine Datei je Bild, im Web IndexedDB — `expo-file-system` hat
+auf Web keine Umsetzung.
+
+**Pflicht 4 — isConcrete-Tor, testgesichert → AE-15**
+
+Drei Sperren plus ein Literaltyp. Die Tests decken jede Ebene ab, und der
+entscheidende Test fährt einen **gefälschten** Auftrag für einen abstrakten
+Eintrag durch den echten Batch-Lauf: der Client wird **kein einziges Mal**
+aufgerufen, es wird nichts gespeichert, und der Lauf zählt einen Fehlschlag mit
+Begründung. Ein zweiter Test mischt einen gefälschten Auftrag unter vier echte:
+die vier laufen durch, der fünfte wird nicht angefragt.
+
+**Verifiziert**
+
+- `npm test` → **275 Tests grün** in 10 Suites (vorher 237). `npx tsc --noEmit`
+  fehlerfrei.
+- **Echter Lauf durch den echten Netzwerkpfad**, aus dem Web-Build heraus, mit
+  absichtlich ungültigem Schlüssel: 5 von 5 verarbeitet, 0 erzeugt, 5
+  fehlgeschlagen, jeder Fehlschlag mit ID und Grund
+  (`HTTP 401: authorization: invalid or missing header value`), **0 Einträge
+  gespeichert**. Damit sind Anfrageform, Header, Fehlerbehandlung und
+  Batch-Verhalten unter echten Netzwerkbedingungen belegt — nur die Gültigkeit
+  des Schlüssels fehlte. Dieselbe Lage wie am Ende von Phase 4.
+- **Kleiner Testlauf über die Ablage:** 5 Bilder durch dieselbe Pipeline, mit
+  einem Ersatz-Client, der echte WebP-Bytes liefert. Ergebnis: 5 erzeugt, 0
+  fehlgeschlagen; in der IndexedDB lagen `aahaan.webp`, `baan.webp`,
+  `khaao.webp`, `nam.webp`, `rot.webp`, im Dokumentspeicher fünf Metadaten;
+  `localStorage` blieb bei 78 KB.
+- **Offline abrufbar ohne Schlüssel:** danach den Dev-Server neu gestartet und
+  die Seite vollständig neu geladen. Anzeige: „Im Speicher: 5 von 25 Bildern ·
+  Modell stable-image-core · Ablage indexeddb", beide Schlüsselfelder leer (wie
+  nach AE-10 erwartet). Die Bilder erschienen auf den Karteikarten ohne
+  Schlüssel und ohne Netzanfrage.
+- **Anzeige in beiden Richtungen geprüft:** bei `de_to_th` steht das Bild schon
+  auf der Vorderseite (es verrät die gesuchte thailändische Form nicht),
+  bei `th_to_de` erst nach dem Aufdecken (vorher wäre es die Antwort). Bei
+  einer abstrakten Karte („hallo, guten Tag") erscheint kein Bild und auch kein
+  Platzhalter.
+- Layout bei 375 px und im breiten Fenster geprüft.
+- Die Abnahmedaten (fünf Ersatzbilder, verschobene Kartenzustände) wurden
+  danach wieder entfernt.
+
+**Offen**
+
+- Ein Lauf mit **gültigem Stability-Schlüssel** steht aus — Blocker **B-4**.
+  Fremde API-Schlüssel gebe ich nicht ein, und auf diesem Rechner sind keine
+  hinterlegt. Alles davor ist geprüft: CORS empirisch, Anfrageform gegen die
+  laufende API, Fehlerverhalten, Batch-Robustheit, Ablage, Offline-Abruf und
+  Anzeige.
+- Was sich ohne Schlüssel nicht prüfen ließ, ist die **Antwortform** (heißt das
+  Feld wirklich `image`?). Der Parser nennt deshalb im Fehlerfall die
+  gelieferten Feldnamen, damit ein Namenswechsel sofort sichtbar wird statt zu
+  rätseln.
+- Gerätecheck in Expo Go (**B-2**) bleibt offen; damit ist auch der native
+  Bildpfad (`expo-file-system`) bislang nur typgeprüft, nicht am Gerät gelaufen.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -731,24 +1020,32 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 
 ## TODO — priorisiert
 
-1. **Probelauf mit gültigem Schlüssel (Blocker B-3, schließt Phase 4 ab):**
-   `npx expo start` → `w`, Reiter **Einstellungen**, eigenen Anthropic-Schlüssel
-   eintragen, **Probelauf** wählen, **Start**. Erwartung: 16 von 16 erzeugt,
-   0 fehlgeschlagen. Danach Reiter **Gespräch** — die Situationen sind da;
-   Seite neu laden und noch einmal schauen, sie müssen ohne Schlüssel bleiben.
-   Was der Lauf kostet, ist überschaubar (16 kurze Anfragen), aber es ist
-   echtes Geld. Ergebnis hier eintragen.
+1. **Bilder-Probelauf mit gültigem Schlüssel (Blocker B-4, schließt Phase 5 ab):**
+   `npx expo start` → `w`, Reiter **Einstellungen**, Karte **Generator:
+   Bilder**, einen Stability-AI-Schlüssel eintragen, **Probelauf** wählen (5
+   Bilder), **Start**. Erwartung: 5 von 5 erzeugt, 0 fehlgeschlagen; danach
+   zeigt die Statuszeile „5 von 25 Bildern", und die Bilder erscheinen im
+   Reiter **Lernen** auf den Karten zu Wasser, Reis, Essen, Haus und Auto.
+   Seite neu laden und noch einmal schauen — sie müssen ohne Schlüssel
+   dableiben. Ein Bild kostet bei Stable Image Core wenige Cent, fünf also
+   Kleingeld, aber es ist echtes Geld.
+   *Falls Fehlschläge kommen:* die Fehlerliste unter dem Fortschrittsbalken
+   aufklappen. Steht dort „Antwort enthielt kein Feld ,image'", hat der
+   Anbieter die Antwortform geändert — die gelieferten Feldnamen stehen in
+   derselben Meldung, `parseImageResponse` in
+   `src/lib/images/generator.ts` ist dann die einzige anzupassende Stelle.
    *Warum ich das nicht selbst gemacht habe:* Ich gebe keine fremden
-   API-Schlüssel ein. Alles davor ist geprüft — CORS, Header, SDK, Batch,
-   Fehlerverhalten, Offline-Wiedergabe —, es hängt nur noch am Schlüssel.
+   API-Schlüssel ein. Alles davor ist geprüft — CORS empirisch, Anfrageform
+   gegen die laufende API, Fehlerverhalten, Batch, Ablage, Offline-Abruf und
+   Anzeige.
 2. **Gerätecheck in Expo Go (Blocker B-2, offen, vom Nutzer zurückgestellt):**
-   Betrifft Phase 3 und 4 auf iOS/Android; der Apple-Signierweg ist dem Nutzer
-   derzeit zu aufwendig. Im Web-Build ist beides geprüft. Auf **Android** wäre
-   der Weg über Expo Go deutlich einfacher, falls das später relevant wird.
-3. **Phase 5 — Generator Bilder** (nur `isConcrete`). Der Aufbau aus Phase 4
-   ist dafür gedacht: `plan.ts` / `batch.ts` sind nicht an Sprachsituationen
-   gebunden, und der Audio-Auflöser (`registerAudioAssetResolver`) wartet
-   schon auf vorproduzierte Clips.
+   Betrifft Phase 3, 4 und 5 auf iOS/Android; der Apple-Signierweg ist dem
+   Nutzer derzeit zu aufwendig. Im Web-Build ist alles geprüft. Auf **Android**
+   wäre der Weg über Expo Go deutlich einfacher, falls das später relevant
+   wird. Für Phase 5 kommt dazu: der native Bildpfad (`expo-file-system`,
+   Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft.
+3. **Restliche 20 Bilder**, sobald der Probelauf sitzt: „Alle konkreten
+   Vokabeln" statt „Probelauf". Der Lauf überspringt, was schon da ist.
 4. **Phase 6 — Bidirektionalität & Curriculum-Differenzierung.**
 5. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
 6. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).

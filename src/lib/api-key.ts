@@ -1,7 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 /**
- * Ablage des API-Schlüssels.
+ * Ablage der API-Schlüssel.
  *
  * NACHGEPRÜFT, NICHT ANGENOMMEN (AE-10): `expo-secure-store@57.0.2` hat auf
  * Web **gar keine** Implementierung — `src/ExpoSecureStore.web.ts` besteht
@@ -22,12 +22,27 @@ import * as SecureStore from 'expo-secure-store';
  * Die Weiche stellt `isAvailableAsync()` zur Laufzeit, nicht `Platform.OS` —
  * so verhält sich der Code richtig, falls eine Plattform die sichere Ablage
  * unerwartet nicht anbietet.
+ *
+ * SEIT PHASE 5 ZWEI ANBIETER: Anthropic erzeugt die Sprachsituationen,
+ * Stability AI die Bilder (AE-13). Beide Schlüssel liegen getrennt und nach genau
+ * demselben Muster — ein gemeinsamer Schlüssel wäre schon deshalb falsch,
+ * weil die beiden Läufe unabhängig voneinander gestartet werden können und
+ * niemand einen Schlüssel eintippen soll, den er gar nicht braucht.
  */
 
-const KEY_NAME = 'anthropic-api-key';
+export const PROVIDERS = ['anthropic', 'stability'] as const;
+export type Provider = (typeof PROVIDERS)[number];
+
+const KEY_NAMES: Record<Provider, string> = {
+  anthropic: 'anthropic-api-key',
+  stability: 'stability-api-key',
+};
 
 /** Nur für die laufende Sitzung, wenn keine sichere Ablage vorhanden ist. */
-let sessionOnlyKey: string | null = null;
+const sessionOnlyKeys: Record<Provider, string | null> = {
+  anthropic: null,
+  stability: null,
+};
 
 export type KeyStorageMode = 'secure-store' | 'session-only';
 
@@ -45,35 +60,38 @@ export async function getKeyStorageMode(): Promise<KeyStorageMode> {
   return cachedMode;
 }
 
-export async function loadApiKey(): Promise<string | null> {
+export async function loadApiKey(provider: Provider = 'anthropic'): Promise<string | null> {
   if ((await getKeyStorageMode()) === 'session-only') {
-    return sessionOnlyKey;
+    return sessionOnlyKeys[provider];
   }
   try {
-    return await SecureStore.getItemAsync(KEY_NAME);
+    return await SecureStore.getItemAsync(KEY_NAMES[provider]);
   } catch {
     return null;
   }
 }
 
-export async function saveApiKey(key: string): Promise<void> {
+export async function saveApiKey(
+  key: string,
+  provider: Provider = 'anthropic'
+): Promise<void> {
   const trimmed = key.trim();
   if ((await getKeyStorageMode()) === 'session-only') {
-    sessionOnlyKey = trimmed || null;
+    sessionOnlyKeys[provider] = trimmed || null;
     return;
   }
   if (!trimmed) {
-    await clearApiKey();
+    await clearApiKey(provider);
     return;
   }
-  await SecureStore.setItemAsync(KEY_NAME, trimmed);
+  await SecureStore.setItemAsync(KEY_NAMES[provider], trimmed);
 }
 
-export async function clearApiKey(): Promise<void> {
-  sessionOnlyKey = null;
+export async function clearApiKey(provider: Provider = 'anthropic'): Promise<void> {
+  sessionOnlyKeys[provider] = null;
   if ((await getKeyStorageMode()) === 'session-only') return;
   try {
-    await SecureStore.deleteItemAsync(KEY_NAME);
+    await SecureStore.deleteItemAsync(KEY_NAMES[provider]);
   } catch {
     // Nichts gespeichert - kein Fehler.
   }
@@ -81,7 +99,7 @@ export async function clearApiKey(): Promise<void> {
 
 /** Nur für Tests. */
 export function resetKeyStorageForTests(): void {
-  sessionOnlyKey = null;
+  for (const provider of PROVIDERS) sessionOnlyKeys[provider] = null;
   cachedMode = null;
 }
 
