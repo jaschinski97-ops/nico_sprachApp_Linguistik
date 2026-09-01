@@ -1526,13 +1526,81 @@ Das braucht **kein** Apple-Konto (AE-22), liefert aber ein Simulator-Abbild,
 das nur auf einem Mac mit Xcode läuft. Ein Build fürs echte iPhone braucht das
 Apple Developer Program.
 
+**Vorab-Prüfung statt Warten — und sie hat zwei echte Fehler gefunden**
+
+Ein Build ließ sich nicht anstoßen, aber die Konfiguration **prüfen** ging sehr
+wohl, und zwar ohne jedes Konto. Zuerst wurde erwogen, lokal zu bauen
+(`expo prebuild` + Gradle braucht kein EAS): auf diesem Rechner ist aber weder
+ein JDK noch das Android-SDK installiert (`java: command not found`,
+`ANDROID_HOME` nicht gesetzt), und mehrere Gigabyte Werkzeugkette ungefragt
+nachzuinstallieren ist keine Nebensache dieser Phase. Stattdessen zwei
+Prüfungen, die beide ohne Konto und ohne SDK laufen:
+
+**1. `npx expo-doctor` — 20 von 21 Prüfungen bestanden.** Die eine, die fiel:
+
+```
+✖ Check that required peer dependencies are installed
+Missing peer dependency: expo-asset — Required by: expo-audio
+Your app may crash outside of Expo Go without this dependency.
+```
+
+Das ist genau der Fehler, den ein erster Build gekostet hätte: „outside of Expo
+Go" ist die native App, also alles, was diese Phase baut. `expo-asset` ist jetzt
+installiert, `expo-doctor` meldet **21 von 21**.
+
+**2. `npx expo prebuild --platform android` — das native Projekt erzeugt sich
+sauber.** Damit ließ sich nachsehen, was ein Build tatsächlich enthalten würde:
+`applicationId 'com.thailernbegleiter.app'` sitzt richtig, und die
+Schlüsselablage aus AE-10 ist nativ verdrahtet
+(`android:fullBackupContent="@xml/secure_store_backup_rules"`).
+
+Dabei fiel das Zweite auf: **die App hätte die Mikrofon-Berechtigung verlangt.**
+Im Manifest standen `RECORD_AUDIO`, `FOREGROUND_SERVICE` und
+`FOREGROUND_SERVICE_MEDIA_PLAYBACK` — alle drei von `expo-audio`, das sie
+standardmäßig setzt. Diese App **nimmt nie etwas auf**; sie spricht nur Wörter
+vor. Eine Vokabel-App, die beim Start nach dem Mikrofon fragt, ist für Nutzer
+ein Warnsignal und für eine Store-Prüfung eine Rückfrage. Im Plugin
+nachgesehen (`node_modules/expo-audio/plugin/build/withAudio.js`) gibt es genau
+die passenden Schalter; in `app.json` gesetzt:
+
+```json
+["expo-audio", {
+  "recordAudioAndroid": false,
+  "microphonePermission": false,
+  "enableBackgroundPlayback": false
+}]
+```
+
+Danach sind alle drei aus dem Manifest verschwunden. `enableBackgroundPlayback`
+ist mit abgeschaltet, weil die App ein Wort vorspricht, während man die Karte
+ansieht — sie ist kein Musikspieler, der im Hintergrund weiterlaufen muss. Ein
+Schalter, falls sich das je ändert.
+
+**Was übrig bleibt, und woher es kommt** (nachverfolgt, nicht geraten):
+
+| Berechtigung | Herkunft | Bewertung |
+| --- | --- | --- |
+| `INTERNET` | expo-file-system | nötig — Generatorläufe |
+| `MODIFY_AUDIO_SETTINGS` | expo-audio | nötig fürs Vorlesen |
+| `READ/WRITE_EXTERNAL_STORAGE` | expo-file-system (Bildablage, AE-14) | trägt `android:maxSdkVersion="32"`, wird ab Android 13 gar nicht mehr angefragt |
+| `VIBRATE` | Expo-Vorlage | harmlos |
+| `SYSTEM_ALERT_WINDOW` | Expo-Vorlage (`main`-Manifest) | vor einer Store-Einreichung anzusehen |
+
+Das erzeugte `android/`-Verzeichnis wurde danach wieder **entfernt** und
+`/android` und `/ios` in `.gitignore` aufgenommen: EAS erzeugt sie im Build
+selbst, und der Managed-Workflow soll die Wahrheit bleiben statt eines
+eingecheckten Zwischenstands. Die zwei Skripte, die `prebuild` in `package.json`
+auf `expo run:*` umgestellt hatte, sind zurückgesetzt.
+
 **Verifiziert**
 
+- `npx expo-doctor` → **21 von 21** Prüfungen bestanden.
 - `npm test` → **365 Tests grün** in 12 Suites, `npx tsc --noEmit` fehlerfrei
   (Phase 8 hat keine Geschäftslogik angefasst).
 - `eas.json` ist gültiges JSON; gegen die EAS-CLI prüfen ließ es sich nicht,
   weil dafür ein Konto nötig ist (siehe oben).
-- Web-Export erzeugt, aus statischem Server ausgeliefert, App lief fehlerfrei.
+- Web-Export nach allen Konfigurationsänderungen erneut erzeugt, aus statischem
+  Server ausgeliefert, App lief fehlerfrei.
 
 **Offen**
 

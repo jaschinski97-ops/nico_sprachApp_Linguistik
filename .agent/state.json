@@ -434,6 +434,18 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. Phase 8 hat keine Geschaeftslogik angefasst."
+    },
+    {
+      "phase": 8,
+      "criterion": "Build-Konfiguration vorab validiert, ohne Konto",
+      "done": true,
+      "verifiedHow": "expo-doctor fand eine fehlende Peer-Abhaengigkeit (expo-asset, gebraucht von expo-audio, 'Your app may crash outside of Expo Go without this dependency') - nachinstalliert, jetzt 21/21 Pruefungen. expo prebuild erzeugte das native Projekt sauber; applicationId und die Keychain-Backup-Regeln aus AE-10 sitzen richtig. Ein lokaler Gradle-Build schied aus: kein JDK und kein Android-SDK auf dem Rechner."
+    },
+    {
+      "phase": 8,
+      "criterion": "Keine ueberfluessigen Android-Berechtigungen",
+      "done": true,
+      "verifiedHow": "Der Prebuild zeigte RECORD_AUDIO, FOREGROUND_SERVICE und FOREGROUND_SERVICE_MEDIA_PLAYBACK aus expo-audio - die App nimmt aber nie auf. Im Plugin nachgesehen und in app.json abgeschaltet (recordAudioAndroid false, microphonePermission false, enableBackgroundPlayback false); danach aus dem Manifest verschwunden. Rest nachverfolgt: READ/WRITE_EXTERNAL_STORAGE kommen von expo-file-system und tragen maxSdkVersion 32; SYSTEM_ALERT_WINDOW stammt aus der Expo-Vorlage und ist vor einer Store-Einreichung anzusehen."
     }
   ],
   "architectureDecisions": [
@@ -718,6 +730,9 @@
     },
     "easPricingChecked": "2026-09-01",
     "easFreeTier": "15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Updates an 1K MAUs",
-    "placeholders": "App-Symbol und Splash sind noch die Expo-Template-Platzhalter"
+    "placeholders": "App-Symbol und Splash sind noch die Expo-Template-Platzhalter",
+    "doctor": "21/21 Pruefungen bestanden (nach Nachinstallation von expo-asset)",
+    "androidPermissions": "INTERNET, MODIFY_AUDIO_SETTINGS, READ/WRITE_EXTERNAL_STORAGE (maxSdkVersion 32), VIBRATE, SYSTEM_ALERT_WINDOW; RECORD_AUDIO bewusst abgeschaltet",
+    "nativeDirs": "android/ und ios/ sind gitignoriert - EAS erzeugt sie im Build selbst"
   }
 }
