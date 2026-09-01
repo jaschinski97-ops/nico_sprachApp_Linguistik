@@ -733,6 +733,6 @@
     "placeholders": "App-Symbol und Splash sind noch die Expo-Template-Platzhalter",
     "doctor": "21/21 Pruefungen bestanden (nach Nachinstallation von expo-asset)",
     "androidPermissions": "INTERNET, MODIFY_AUDIO_SETTINGS, READ/WRITE_EXTERNAL_STORAGE (maxSdkVersion 32), VIBRATE, SYSTEM_ALERT_WINDOW; RECORD_AUDIO bewusst abgeschaltet",
-    "nativeDirs": "android/ und ios/ sind gitignoriert - EAS erzeugt sie im Build selbst"
+    "nativeDirs": "android/ und ios/ sind gitignoriert (schon seit Phase 0, Expo-Vorlage) - EAS erzeugt sie im Build selbst"
   }
 }

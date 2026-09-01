@@ -1586,11 +1586,13 @@ Schalter, falls sich das je ändert.
 | `VIBRATE` | Expo-Vorlage | harmlos |
 | `SYSTEM_ALERT_WINDOW` | Expo-Vorlage (`main`-Manifest) | vor einer Store-Einreichung anzusehen |
 
-Das erzeugte `android/`-Verzeichnis wurde danach wieder **entfernt** und
-`/android` und `/ios` in `.gitignore` aufgenommen: EAS erzeugt sie im Build
-selbst, und der Managed-Workflow soll die Wahrheit bleiben statt eines
-eingecheckten Zwischenstands. Die zwei Skripte, die `prebuild` in `package.json`
-auf `expo run:*` umgestellt hatte, sind zurückgesetzt.
+Das erzeugte `android/`-Verzeichnis wurde danach wieder **entfernt**: EAS
+erzeugt es im Build selbst, und der Managed-Workflow soll die Wahrheit bleiben
+statt eines eingecheckten Zwischenstands. `/android` und `/ios` standen dafür
+schon seit Phase 0 in `.gitignore` (Block „generated native folders" aus der
+Expo-Vorlage) — es war also nichts zu ergänzen. Die zwei Skripte, die
+`prebuild` in `package.json` auf `expo run:*` umgestellt hatte, sind
+zurückgesetzt.
 
 **Verifiziert**
 
