@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ToneLegend } from '@/components/tone-legend';
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { DRILL_META, DrillId, DRILLS_BY_DIRECTION } from '@/lib/drills/types';
 import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
 import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
@@ -163,6 +163,7 @@ function ModeBar({
   onPick: (mode: Mode) => void;
 }) {
   const modes: Mode[] = ['cards', ...DRILLS_BY_DIRECTION[direction]];
+  const toneColor = useToneColor();
 
   return (
     <View style={styles.modeBar}>
@@ -179,7 +180,7 @@ function ModeBar({
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView
               type={selected ? 'backgroundSelected' : 'backgroundElement'}
-              style={[styles.modeButton, selected && styles.modeButtonSelected]}>
+              style={[styles.modeButton, selected && { borderColor: toneColor('mid') }]}>
               <ThemedText type="small">{label}</ThemedText>
             </ThemedView>
           </Pressable>
@@ -215,7 +216,8 @@ function DirectionBar({
       <Pressable
         onPress={onSwitch}
         accessibilityRole="button"
-        style={({ pressed }) => pressed && styles.pressed}>
+        accessibilityLabel="Lernrichtung wechseln"
+        style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
         <ThemedText type="small" themeColor="textSecondary">
           Richtung wechseln
         </ThemedText>
@@ -223,7 +225,13 @@ function DirectionBar({
       <Pressable
         onPress={() => onRemember(isDefault ? null : direction)}
         accessibilityRole="button"
-        style={({ pressed }) => pressed && styles.pressed}>
+        accessibilityLabel={
+          isDefault
+            ? 'Diese Richtung nicht mehr als Standard verwenden'
+            : 'Diese Richtung als Standard merken'
+        }
+        accessibilityState={{ selected: isDefault }}
+        style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
         <ThemedText type="small" themeColor="textSecondary">
           {isDefault ? '★ Standard — aufheben' : '☆ Als Standard merken'}
         </ThemedText>
@@ -353,6 +361,16 @@ function ActionButton({ label, onPress }: { label: string; onPress: () => void }
 }
 
 const styles = StyleSheet.create({
+  /**
+   * Mindestgroesse eines Tippziels. WCAG 2.2 verlangt in 2.5.8 (AA) 24x24
+   * CSS-Pixel; Apple und Google empfehlen 44 bzw. 48. Gemessen wurde im
+   * Web-Build, dass reine Textknoepfe nur 20 Pixel hoch waren - also unter der
+   * Norm. 44 ist der bequeme Wert und kostet hier nichts.
+   */
+  tapTarget: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   pickerCard: {
     borderRadius: Spacing.three,
     padding: Spacing.three,
@@ -370,9 +388,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  modeButtonSelected: {
-    borderColor: TONES.mid.color,
-  },
+  modeButtonSelected: {},
   directionBar: {
     flexDirection: 'row',
     alignItems: 'center',

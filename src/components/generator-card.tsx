@@ -5,8 +5,8 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Colors, Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
-import { useTheme } from '@/hooks/use-theme';
+
+import { useTheme, useToneColor } from '@/hooks/use-theme';
 import {
   clearApiKey,
   getKeyStorageMode,
@@ -226,7 +226,9 @@ export function GeneratorCard({
           <Pressable
             onPress={() => setShowErrors((visible) => !visible)}
             accessibilityRole="button"
-            style={({ pressed }) => pressed && styles.pressed}>
+            accessibilityLabel={`${progress.errors.length} Fehlschläge anzeigen`}
+            accessibilityState={{ expanded: showErrors }}
+            style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
             <ThemedText type="small" themeColor="textSecondary">
               {showErrors ? '▲' : '▼'} {progress.errors.length} Fehlschläge anzeigen
             </ThemedText>
@@ -261,6 +263,7 @@ export function GeneratorCard({
 }
 
 function ProgressPanel({ progress }: { progress: BatchProgress }) {
+  const toneColor = useToneColor();
   const pct = progress.total === 0 ? 0 : Math.round((progress.processed / progress.total) * 100);
 
   return (
@@ -271,15 +274,15 @@ function ProgressPanel({ progress }: { progress: BatchProgress }) {
       </ThemedText>
 
       <View style={styles.track}>
-        <View style={[styles.fill, { width: `${pct}%`, backgroundColor: TONES.mid.color }]} />
+        <View style={[styles.fill, { width: `${pct}%`, backgroundColor: toneColor('mid') }]} />
       </View>
 
       {/* Erfolge und Fehler bewusst getrennt: eine Gesamtzahl würde einen
           teilweise misslungenen Lauf wie einen gelungenen aussehen lassen. */}
       <View style={styles.counters}>
-        <Counter label="Erzeugt" value={progress.ok} color={TONES.mid.color} />
-        <Counter label="Fehlgeschlagen" value={progress.failed} color={TONES.falling.color} />
-        <Counter label="Übersprungen" value={progress.skipped} color={TONES.low.color} />
+        <Counter label="Erzeugt" value={progress.ok} color={toneColor('mid')} />
+        <Counter label="Fehlgeschlagen" value={progress.failed} color={toneColor('falling')} />
+        <Counter label="Übersprungen" value={progress.skipped} color={toneColor('low')} />
       </View>
 
       {progress.current ? (
@@ -314,6 +317,8 @@ export function Button({
   disabled?: boolean;
   selected?: boolean;
 }) {
+  const toneColor = useToneColor();
+
   return (
     <Pressable
       onPress={onPress}
@@ -324,7 +329,11 @@ export function Button({
       style={({ pressed }) => [pressed && styles.pressed, disabled && styles.disabled]}>
       <ThemedView
         type={selected ? 'backgroundSelected' : 'backgroundElement'}
-        style={[styles.button, selected && styles.buttonSelected]}>
+        style={[
+          styles.button,
+          selected && styles.buttonSelected,
+          selected && { borderColor: toneColor('mid') },
+        ]}>
         <ThemedText type="small">{label}</ThemedText>
       </ThemedView>
     </Pressable>
@@ -332,6 +341,16 @@ export function Button({
 }
 
 const styles = StyleSheet.create({
+  /**
+   * Mindestgroesse eines Tippziels. WCAG 2.2 verlangt in 2.5.8 (AA) 24x24
+   * CSS-Pixel; Apple und Google empfehlen 44 bzw. 48. Gemessen wurde im
+   * Web-Build, dass reine Textknoepfe nur 20 Pixel hoch waren - also unter der
+   * Norm. 44 ist der bequeme Wert und kostet hier nichts.
+   */
+  tapTarget: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.three,
@@ -359,7 +378,6 @@ const styles = StyleSheet.create({
   },
   buttonSelected: {
     borderWidth: 1,
-    borderColor: TONES.mid.color,
   },
   track: {
     height: 10,

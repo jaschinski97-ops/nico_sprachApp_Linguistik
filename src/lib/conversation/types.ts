@@ -82,3 +82,40 @@ export function situationId(
 ): string {
   return `${topic}-${level}-${direction}-${String(variant).padStart(3, '0')}`;
 }
+
+/**
+ * Prüft eine Situation aus dem Speicher, bevor der Gespräch-Screen sie
+ * anzeigt.
+ *
+ * Dieselbe Lücke wie bei den Prüfungsaufgaben (Phase 9): Der Generator prüft
+ * beim Schreiben streng, das Lesen vertraute blind. Ein Dokument ohne
+ * `scriptTurns` ließ den Reiter abstürzen, statt einfach zu fehlen.
+ */
+export function isValidSituation(value: unknown): value is ConversationSituation {
+  if (typeof value !== 'object' || value === null) return false;
+  const s = value as Record<string, unknown>;
+
+  if (typeof s.id !== 'string' || s.id === '') return false;
+  if (typeof s.title !== 'string' || typeof s.setting !== 'string') return false;
+  if (s.direction !== 'de_to_th' && s.direction !== 'th_to_de') return false;
+  if (!Array.isArray(s.scriptTurns) || s.scriptTurns.length === 0) return false;
+
+  const zuegeOk = s.scriptTurns.every((raw) => {
+    const turn = raw as Record<string, unknown>;
+    return (
+      (turn?.speaker === 'learner' || turn?.speaker === 'partner') &&
+      typeof turn.thai === 'string' &&
+      typeof turn.roman === 'string' &&
+      typeof turn.german === 'string'
+    );
+  });
+  if (!zuegeOk) return false;
+
+  return (
+    Array.isArray(s.corrections) &&
+    s.corrections.every((raw) => {
+      const hint = raw as Record<string, unknown>;
+      return typeof hint?.issue === 'string' && typeof hint.explanation === 'string';
+    })
+  );
+}

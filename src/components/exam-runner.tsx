@@ -5,7 +5,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { playPronunciation } from '@/lib/audio';
 import { scoreExamModule } from '@/lib/exam/session';
 import { ExamModule, isGradable, SKILL_LABELS, TASK_TYPE_LABELS } from '@/lib/exam/types';
@@ -29,6 +29,7 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
     isGradable(module) ? module.items.map(() => null) : []
   );
   const [checked, setChecked] = useState(false);
+  const toneColor = useToneColor();
   const [showModel, setShowModel] = useState(false);
 
   const score = useMemo(
@@ -65,7 +66,8 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
         <Pressable
           onPress={onExit}
           accessibilityRole="button"
-          style={({ pressed }) => pressed && styles.pressed}>
+          accessibilityLabel="Zurück zur Aufgabenübersicht"
+          style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
           <ThemedText type="small" themeColor="textSecondary">
             Zurück zur Übersicht
           </ThemedText>
@@ -94,12 +96,12 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
                   const correct = optionIndex === item.correctIndex;
                   const border = checked
                     ? correct
-                      ? TONES.mid.color
+                      ? toneColor('mid')
                       : chosen
-                        ? TONES.falling.color
+                        ? toneColor('falling')
                         : undefined
                     : chosen
-                      ? TONES.high.color
+                      ? toneColor('high')
                       : undefined;
 
                   return (
@@ -320,6 +322,16 @@ function Button({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  /**
+   * Mindestgroesse eines Tippziels. WCAG 2.2 verlangt in 2.5.8 (AA) 24x24
+   * CSS-Pixel; Apple und Google empfehlen 44 bzw. 48. Gemessen wurde im
+   * Web-Build, dass reine Textknoepfe nur 20 Pixel hoch waren - also unter der
+   * Norm. 44 ist der bequeme Wert und kostet hier nichts.
+   */
+  tapTarget: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

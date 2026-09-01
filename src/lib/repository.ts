@@ -10,8 +10,8 @@ import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
 
-import { ConversationSituation } from './conversation/types';
-import { ExamModule } from './exam/types';
+import { ConversationSituation, isValidSituation } from './conversation/types';
+import { ExamModule, isValidExamModule } from './exam/types';
 import { getImageBlobStore } from './images/blob-store';
 import { ImageBlobStore, VocabImage } from './images/types';
 
@@ -19,6 +19,23 @@ import { createCardState, reviewCard } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
 import { recordReview } from './review-log';
 import { DataStore, getStore } from './storage';
+
+/**
+ * Beim Lesen aussortierte Dokumente einmal melden.
+ *
+ * Sie werden bewusst nur ausgelassen und nicht geloescht: Vielleicht kann eine
+ * spaetere Version mehr damit anfangen, und stilles Loeschen von Nutzerdaten
+ * ist die schlechtere Voreinstellung. Die Meldung sorgt dafuer, dass ein
+ * Schema-Bruch nicht voellig unbemerkt bleibt.
+ */
+function meldeAussortierte(was: string, roh: number, gueltig: number): void {
+  if (roh !== gueltig) {
+    console.warn(
+      `[repository] ${roh - gueltig} von ${roh} ${was} sind unbrauchbar und werden ` +
+        'beim Anzeigen ausgelassen (vermutlich aus einer aelteren Version).'
+    );
+  }
+}
 
 /* ---------- Vokabeln ---------- */
 
@@ -128,7 +145,9 @@ export async function loadCardStatesForDirection(
 
 export async function loadSituations(store?: DataStore): Promise<ConversationSituation[]> {
   const db = store ?? (await getStore());
-  const situations = await db.getAll<ConversationSituation>('situations');
+  const roh = await db.getAll<unknown>('situations');
+  const situations = roh.filter(isValidSituation);
+  meldeAussortierte('Sprachsituationen', roh.length, situations.length);
   return situations.sort((a, b) => a.id.localeCompare(b.id));
 }
 
@@ -229,7 +248,9 @@ export async function seedExamModules(
 
 export async function loadExamModules(store?: DataStore): Promise<ExamModule[]> {
   const db = store ?? (await getStore());
-  let modules = await db.getAll<ExamModule>('exam');
+  const roh = await db.getAll<unknown>('exam');
+  let modules = roh.filter(isValidExamModule);
+  meldeAussortierte('Pruefungsaufgaben', roh.length, modules.length);
 
   // Geprueft wird, ob die MITGELIEFERTEN Aufgaben da sind - nicht, ob die
   // Sammlung leer ist. Der Unterschied ist keine Feinheit: wer auf einem
@@ -239,7 +260,7 @@ export async function loadExamModules(store?: DataStore): Promise<ExamModule[]> 
   const fehlt = BUILTIN_EXAM_MODULES.some((module) => !vorhanden.has(module.id));
   if (fehlt) {
     await seedExamModules(db);
-    modules = await db.getAll<ExamModule>('exam');
+    modules = (await db.getAll<unknown>('exam')).filter(isValidExamModule);
   }
 
   return modules.sort((a, b) => a.id.localeCompare(b.id));

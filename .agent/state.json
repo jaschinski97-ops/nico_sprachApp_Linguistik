@@ -2,9 +2,9 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-01",
-  "currentPhase": 8,
-  "currentPhaseName": "Build & Distribution",
-  "currentPhaseStatus": "closed-with-two-criteria-open-by-user-decision",
+  "currentPhase": 9,
+  "currentPhaseName": "QA & Abschluss",
+  "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -446,6 +446,60 @@
       "criterion": "Keine ueberfluessigen Android-Berechtigungen",
       "done": true,
       "verifiedHow": "Der Prebuild zeigte RECORD_AUDIO, FOREGROUND_SERVICE und FOREGROUND_SERVICE_MEDIA_PLAYBACK aus expo-audio - die App nimmt aber nie auf. Im Plugin nachgesehen und in app.json abgeschaltet (recordAudioAndroid false, microphonePermission false, enableBackgroundPlayback false); danach aus dem Manifest verschwunden. Rest nachverfolgt: READ/WRITE_EXTERNAL_STORAGE kommen von expo-file-system und tragen maxSdkVersion 32; SYSTEM_ALERT_WINDOW stammt aus der Expo-Vorlage und ist vor einer Store-Einreichung anzusehen."
+    },
+    {
+      "phase": 9,
+      "criterion": "Kontrastwerte tatsaechlich berechnet, nicht geschaetzt",
+      "done": true,
+      "verifiedHow": "WCAG-2.1-Formel (relative Leuchtdichte, (L1+0,05)/(L2+0,05)) in tones.test.ts ausgeschrieben und gegen die Norm-Beispiele geprueft (Schwarz/Weiss = 21:1, #767676 auf Weiss >= 4,5). Ergebnis der Erstmessung: die einzelne Farbe je Ton aus dem Referenzprototyp verfehlte AA in BEIDEN Modi - hell fielen mid (3,35), high (2,81) und rising (3,95) durch, dunkel low (2,47), falling (2,81) und rising (3,54)."
+    },
+    {
+      "phase": 9,
+      "criterion": "Tonfarben erreichen WCAG AA auf jedem Untergrund",
+      "done": true,
+      "verifiedHow": "AE-24: je Ton eine helle und eine dunkle Fassung, Farbton erhalten, Helligkeit geloest. Alle fuenf Toene erreichen in beiden Modi >= 4,5:1 gegen background, backgroundElement und backgroundSelected. tones.test.ts rechnet das bei jedem Testlauf nach und prueft zusaetzlich, dass der Farbton zwischen den Modi gleich bleibt."
+    },
+    {
+      "phase": 9,
+      "criterion": "Screenreader-Labels fuer alle Icon-only-Interaktionen",
+      "done": true,
+      "verifiedHow": "Audit ueber alle 30 Pressables. Einziger echter Icon-only-Knopf war die kompakte Vorlesetaste des Beispielsatzes; ihr Label lautete '▶: <Text>' und begann also mit dem Zeichen selbst. Jetzt 'Beispielsatz anhoeren: ...' - im Browser nachgemessen. Auf den geprueften Screens hat kein Bedienelement mehr weder Label noch Text."
+    },
+    {
+      "phase": 9,
+      "criterion": "Tippziele mindestens 24x24 (WCAG 2.2 AA 2.5.8)",
+      "done": true,
+      "verifiedHow": "Im Web-Build gemessen: drei reine Textknoepfe waren nur 20 Pixel hoch ('Richtung wechseln', 'Als Standard merken', 'Uebung verlassen'). Auf 44 gesetzt; Nachmessung ergibt kein Element mehr unter 24. Die kompakte Vorlesetaste misst jetzt 44x44."
+    },
+    {
+      "phase": 9,
+      "criterion": "Tastaturbedienbarkeit im Web-Build geprueft",
+      "done": true,
+      "verifiedHow": "15 von 15 Bedienelementen sind fokussierbar (tabIndex >= 0), Tab wandert der Reihe nach durch, der Fokusring ist sichtbar (im Screenshot belegt), und sie rendern als native <button> mit funktionierendem Klickpfad. Die AUSLOESUNG per Enter liess sich mit dem Automatisierungswerkzeug nicht nachweisen - ein Kontrollversuch mit einem selbst eingefuegten, ganz gewoehnlichen HTML-Knopf schlug genauso fehl. Die Grenze liegt also im Werkzeug, nicht in der App; als Fehler gemeldet wird das ausdruecklich NICHT."
+    },
+    {
+      "phase": 9,
+      "criterion": "Fehlerbehandlung ausserhalb der Batch-Pfade geschlossen",
+      "done": true,
+      "verifiedHow": "AE-25: Beim Schreiben wurde streng geprueft, beim LESEN blind vertraut. Ein leeres oder veraltetes Dokument liess Pruefungs- und Gespraech-Screen mit 'Cannot read properties of undefined (reading map)' abstuerzen - vorher im Kleinen nachgestellt. Jetzt filtern isValidExamModule und isValidSituation an der Lesegrenze; 18 neue Tests decken die Faelle ab, inklusive: Beschaedigtes wird ausgelassen, aber NICHT geloescht."
+    },
+    {
+      "phase": 9,
+      "criterion": "Konsolidierte Abnahme gegen den JETZIGEN Repo-Zustand",
+      "done": true,
+      "verifiedHow": "Tabelle in PROGRESS.md, aus .agent/state.json erzeugt statt abgetippt. Der Quergriff, den Phase 9 selbst gefaehrdet hat, wurde eigens nachgemessen: das Phase-3-Kriterium zu den Silbenfarben war mit den ALTEN Farben geprueft. Neu gemessen zeigt สวัสดี jetzt rgb(138,155,177) / rgb(138,155,177) / rgb(136,160,131) - tief-tief-mittel gilt weiterhin, mit den Dunkelmodus-Fassungen."
+    },
+    {
+      "phase": 9,
+      "criterion": "Toter Code aus der Vorlage entfernt",
+      "done": true,
+      "verifiedHow": "Collapsible aus dem Expo-Template war nirgends eingebunden und das einzige Bedienelement ganz ohne accessibilityRole. Entfernt; damit wurde expo-symbols unbenutzt und ist ebenfalls raus. expo-doctor weiterhin 21/21."
+    },
+    {
+      "phase": 9,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "392 Tests in 14 Suites gruen; npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -563,6 +617,16 @@
       "id": "AE-23",
       "title": "Web-Export bleibt an der Wurzel; WordPress-Einbettung bewusst nicht gebaut",
       "rationale": "Im Export nachgemessen: Buendel werden absolut referenziert (/_expo/static/..., /favicon.ico). In einem Unterverzeichnis wuerde der Browser sie an der Wurzel suchen. Der Hebel dafuer ist experiments.baseUrl in app.json, wirkt aber zur Exportzeit - ohne bekannten Zielpfad gesetzt, macht er den Export ueberall sonst kaputt. Die Hosting-Entscheidung gehoert dem Nutzer; die Umstellung ist spaeter eine Zeile plus erneuter Export."
+    },
+    {
+      "id": "AE-24",
+      "title": "Tonfarben je Anzeigemodus statt einer Farbe je Ton",
+      "rationale": "Nachgerechnet nach WCAG 2.1 verfehlte die einzelne Farbe je Ton aus dem Referenzprototyp die Stufe AA in beiden Modi - im hellen fielen mid, high und rising durch, im dunklen low, falling und rising. Die Umschrift ist normaler Text, es gilt also 4,5:1, und sie steht auf drei verschiedenen Untergruenden. Farbton und Saettigung bleiben, nur die Helligkeit ist je Modus geloest; damit bleibt die Tonlegende im Kopf gueltig. Das Feld heisst jetzt colors {light, dark} statt color - so gibt es keine Stelle mehr, an der sich 'die' Tonfarbe ohne Modus abgreifen laesst. Ein Test rechnet die Werte bei jedem Lauf nach, damit die Zahlen nicht still altern."
+    },
+    {
+      "id": "AE-25",
+      "title": "Dokumente werden auch beim LESEN geprueft, nicht nur beim Schreiben",
+      "rationale": "Die Batch-Laeufe pruefen die Antwort des Modells streng, bevor sie speichern. Beim Lesen wurde dagegen blind vertraut - eine Annahme, die nur bis zur zweiten Version der App haelt. Ein Dokument aus einem aelteren Schema oder ein halb geschriebener Eintrag liess den Pruefungs- und den Gespraech-Screen abstuerzen, und zwar mit einer weissen Seite statt einer Meldung. isValidExamModule und isValidSituation filtern jetzt an der Lesegrenze. Beschaedigtes wird ausgelassen, aber nicht geloescht: vielleicht kann eine spaetere Version mehr damit anfangen, und stilles Loeschen von Nutzerdaten ist die schlechtere Voreinstellung."
     }
   ],
   "openBlockers": [
@@ -601,12 +665,13 @@
     }
   ],
   "nextUp": {
-    "phase": 9,
-    "name": "QA & Abschluss",
+    "phase": null,
+    "name": "Der urspruengliche Plan ist abgearbeitet",
     "tasks": [
-      "Zuerst B-5: EAS-Konto, Android-APK bauen und installieren (schliesst B-2 fuer Android mit)",
+      "B-5: EAS-Konto, dann Android-APK bauen (schliesst B-2 fuer Android mit)",
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
-      "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen"
+      "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen",
+      "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen"
     ]
   },
   "situations": {
@@ -735,5 +800,13 @@
     "androidPermissions": "INTERNET, MODIFY_AUDIO_SETTINGS, READ/WRITE_EXTERNAL_STORAGE (maxSdkVersion 32), VIBRATE, SYSTEM_ALERT_WINDOW; RECORD_AUDIO bewusst abgeschaltet",
     "nativeDirs": "android/ und ios/ sind gitignoriert (schon seit Phase 0, Expo-Vorlage) - EAS erzeugt sie im Build selbst"
   },
-  "phase8Note": "Phase 8 gilt als abgeschlossen, aber ZWEI von sechs Abnahmekriterien sind offen: der installierbare Android-Build und ein iOS-Durchlauf. Beide brauchen ein Expo-Konto (B-5). Vorbereitung, Vorab-Validierung und Web-Export sind fertig und geprueft."
+  "phase8Note": "Phase 8 gilt als abgeschlossen, aber ZWEI von sechs Abnahmekriterien sind offen: der installierbare Android-Build und ein iOS-Durchlauf. Beide brauchen ein Expo-Konto (B-5). Vorbereitung, Vorab-Validierung und Web-Export sind fertig und geprueft.",
+  "accessibility": {
+    "standard": "WCAG 2.1 AA (1.4.3, 1.4.11), Tippziele nach WCAG 2.2 AA 2.5.8",
+    "kontrastGeprueftAm": "2026-09-01",
+    "kontrastMinimum": "alle Tonfarben >= 4,5:1 gegen background, backgroundElement und backgroundSelected in beiden Modi",
+    "enforcedBy": "src/constants/tones.test.ts",
+    "tippziele": "kein Bedienelement unter 24x24; Vorlesetasten 44x44",
+    "tastatur": "alle Bedienelemente fokussierbar, Tab-Reihenfolge und Fokusring geprueft; Ausloesung per Enter mit dem Automatisierungswerkzeug nicht nachweisbar (Kontrollversuch mit gewoehnlichem HTML-Knopf schlug ebenso fehl)"
+  }
 }

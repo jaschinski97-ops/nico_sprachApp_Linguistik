@@ -5,7 +5,7 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { playPronunciation } from '@/lib/audio';
 import { ConversationSituation, TOPIC_LABELS } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
@@ -105,6 +105,8 @@ function SituationCard({
   open: boolean;
   onToggle: () => void;
 }) {
+  const toneColor = useToneColor();
+
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <Pressable
@@ -134,7 +136,10 @@ function SituationCard({
           {situation.scriptTurns.map((turn, index) => (
             <View
               key={index}
-              style={[styles.turn, turn.speaker === 'learner' && styles.turnLearner]}>
+              style={[
+                styles.turn,
+                turn.speaker === 'learner' && { borderLeftColor: toneColor('mid') },
+              ]}>
               <View style={styles.turnHeader}>
                 <ThemedText type="small" themeColor="textSecondary">
                   {turn.speaker === 'learner' ? 'Du' : 'Gegenüber'}
@@ -213,8 +218,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   turnLearner: {
-    // Die eigenen Zeilen sind die zu übenden - sie bekommen die Markierung.
-    borderLeftColor: TONES.mid.color,
+    // Die eigenen Zeilen sind die zu uebenden - sie bekommen die Markierung.
+    // Die Farbe kommt zur Laufzeit aus dem Anzeigemodus (AE-24).
   },
   turnHeader: {
     flexDirection: 'row',

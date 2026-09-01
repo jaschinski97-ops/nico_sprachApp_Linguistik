@@ -6,7 +6,7 @@ import { ThemedView } from './themed-view';
 import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { isLanguageAvailable, playPronunciation } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
@@ -28,6 +28,7 @@ import { recordDrill } from '@/lib/review-log';
 
 export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => void }) {
   const meta = DRILL_META[drill];
+  const toneColor = useToneColor();
 
   const [session, setSession] = useState<DrillSession | null>(null);
   const [round, setRound] = useState(0);
@@ -148,7 +149,8 @@ export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => v
         <Pressable
           onPress={onExit}
           accessibilityRole="button"
-          style={({ pressed }) => pressed && styles.pressed}>
+          accessibilityLabel="Übung verlassen"
+          style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
           <ThemedText type="small" themeColor="textSecondary">
             Übung verlassen
           </ThemedText>
@@ -180,9 +182,9 @@ export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => v
             const answered = chosen !== null;
             const border =
               answered && isCorrect
-                ? TONES.mid.color
+                ? toneColor('mid')
                 : answered && isChosen
-                  ? TONES.falling.color
+                  ? toneColor('falling')
                   : undefined;
 
             return (
@@ -303,6 +305,16 @@ function Button({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  /**
+   * Mindestgroesse eines Tippziels. WCAG 2.2 verlangt in 2.5.8 (AA) 24x24
+   * CSS-Pixel; Apple und Google empfehlen 44 bzw. 48. Gemessen wurde im
+   * Web-Build, dass reine Textknoepfe nur 20 Pixel hoch waren - also unter der
+   * Norm. 44 ist der bequeme Wert und kostet hier nichts.
+   */
+  tapTarget: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -4,11 +4,24 @@
  */
 
 import { Colors } from '@/constants/theme';
+import { ColorScheme, Tone, toneColor } from '@/constants/tones';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
-export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
+function activeScheme(scheme: ReturnType<typeof useColorScheme>): ColorScheme {
+  return scheme === 'dark' ? 'dark' : 'light';
+}
 
-  return Colors[theme];
+export function useTheme() {
+  return Colors[activeScheme(useColorScheme())];
+}
+
+/**
+ * Die Tonfarben des aktuellen Anzeigemodus.
+ *
+ * Seit Phase 9 hat jeder Ton zwei Farben (AE-24). Wer eine braucht, holt sie
+ * hier — dann kann sie nicht mehr aus dem falschen Modus stammen.
+ */
+export function useToneColor(): (tone: Tone) => string {
+  const scheme = activeScheme(useColorScheme());
+  return (tone: Tone) => toneColor(tone, scheme);
 }

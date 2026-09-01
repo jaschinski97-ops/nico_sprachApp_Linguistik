@@ -305,3 +305,55 @@ export function isGradable(
 ): module is Extract<ExamModule, { items: ExamItem[] }> {
   return module.taskType !== 'production';
 }
+
+/**
+ * Prüft ein Dokument aus dem Speicher, bevor die Oberfläche es anfasst.
+ *
+ * WARUM DAS NÖTIG IST (Phase 9): Beim **Schreiben** prüft der Generator streng
+ * (`parseExamModule`). Beim **Lesen** wurde bisher blind vertraut — und das ist
+ * die falsche Annahme, sobald es eine zweite Version der App gibt. Ein
+ * Dokument aus einem älteren Schema, ein von Hand eingespielter Testdatensatz
+ * oder ein halb geschriebener Eintrag ließ den Prüfungs-Screen mit
+ * „Cannot read properties of undefined (reading 'map')" abstürzen — nicht mit
+ * einer Fehlermeldung, sondern mit einem weißen Bildschirm.
+ *
+ * Wer hier durchfällt, wird beim Laden ausgelassen. Eine fehlende Aufgabe ist
+ * ärgerlich, ein abgestürzter Reiter macht die App unbenutzbar.
+ */
+export function isValidExamModule(value: unknown): value is ExamModule {
+  if (typeof value !== 'object' || value === null) return false;
+  const m = value as Record<string, unknown>;
+
+  if (typeof m.id !== 'string' || m.id === '') return false;
+  if (!EXAM_LEVELS.includes(m.level as ExamLevel)) return false;
+  if (!EXAM_SKILLS.includes(m.skill as ExamSkill)) return false;
+  if (!EXAM_TASK_TYPES.includes(m.taskType as ExamTaskType)) return false;
+  if (typeof m.title !== 'string' || typeof m.instruction !== 'string') return false;
+
+  if (m.taskType === 'production') {
+    const p = m.production as Record<string, unknown> | undefined;
+    return (
+      typeof p === 'object' &&
+      p !== null &&
+      typeof p.task === 'string' &&
+      Array.isArray(p.bullets) &&
+      typeof p.modelAnswer === 'string' &&
+      Array.isArray(p.checklist)
+    );
+  }
+
+  if (!Array.isArray(m.items) || m.items.length === 0) return false;
+  return m.items.every((raw) => {
+    const item = raw as Record<string, unknown>;
+    return (
+      typeof item?.prompt === 'string' &&
+      Array.isArray(item.options) &&
+      item.options.length >= 2 &&
+      item.options.every((option: unknown) => typeof option === 'string') &&
+      typeof item.correctIndex === 'number' &&
+      Number.isInteger(item.correctIndex) &&
+      item.correctIndex >= 0 &&
+      item.correctIndex < item.options.length
+    );
+  });
+}

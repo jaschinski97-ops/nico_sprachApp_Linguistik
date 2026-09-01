@@ -6,6 +6,7 @@ import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
 import { TONE_KEYS, TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 
 /**
  * Die fünf Grundtöne mit Kontur, Farbe und Tonzeichen.
@@ -14,6 +15,8 @@ import { TONE_KEYS, TONES } from '@/constants/tones';
  * nur als Erinnerung dient.
  */
 export function ToneLegend({ compact = false }: { compact?: boolean }) {
+  const toneColor = useToneColor();
+
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedText type="smallBold">Tonfarben</ThemedText>
@@ -29,7 +32,7 @@ export function ToneLegend({ compact = false }: { compact?: boolean }) {
           <View key={tone} style={styles.item}>
             <ToneContour tone={tone} height={13} />
             <View>
-              <ThemedText type="small" style={{ color: TONES[tone].color }}>
+              <ThemedText type="small" style={{ color: toneColor(tone) }}>
                 {TONES[tone].label}
               </ThemedText>
               {!compact ? (

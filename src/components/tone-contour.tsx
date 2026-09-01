@@ -1,6 +1,7 @@
 import Svg, { Path } from 'react-native-svg';
 
 import { Tone, TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 
 /**
  * Tonkontur als kleine Glyphe: flach-mittel, flach-tief, fallend, flach-hoch,
@@ -19,12 +20,13 @@ export function ToneContour({
   height?: number;
   color?: string;
 }) {
+  const toneColor = useToneColor();
   const width = (height * 34) / 21;
   return (
     <Svg width={width} height={height} viewBox="0 0 34 21">
       <Path
         d={TONES[tone].path}
-        stroke={color ?? TONES[tone].color}
+        stroke={color ?? toneColor(tone)}
         strokeWidth={3}
         strokeLinecap="round"
         fill="none"

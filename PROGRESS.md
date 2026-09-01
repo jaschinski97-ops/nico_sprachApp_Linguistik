@@ -637,6 +637,75 @@ statischen Server ausgeliefert (kein Dev-Server, kein Metro) und die App lief
 vollständig — inklusive Prüfungsmodul und Artikel-Übung, ohne einen einzigen
 Konsolenfehler.
 
+### AE-24 — Tonfarben je Anzeigemodus statt einer Farbe je Ton
+
+**Entscheidung:** Jeder Ton hat zwei Farben — eine für den hellen, eine für
+den dunklen Modus. Das Feld heißt `colors: { light, dark }` statt `color`, und
+die Farbe kommt über `useToneColor()` aus dem aktiven Modus.
+
+**Begründung — gerechnet, nicht geschätzt:** Die einzelne Farbe je Ton stammte
+aus dem Referenzprototyp. Nach WCAG 2.1 nachgerechnet verfehlt sie die Stufe AA
+**in beiden Modi**:
+
+| Ton | hell: bg / element / selected | dunkel: bg / element / selected |
+| --- | --- | --- |
+| mittel | 3,80 / 3,35 / 2,91 ✗ | 5,52 / 4,18 / 3,43 ✗ |
+| tief | 6,43 / 5,65 / 4,92 ✓ | 3,27 / 2,47 / 2,03 ✗ |
+| fallend | 5,67 / 4,98 / 4,34 ✗ | 3,71 / 2,81 / 2,31 ✗ |
+| hoch | 3,20 / 2,81 / 2,45 ✗ | 6,56 / 4,97 / 4,09 ✗ |
+| steigend | 4,49 / 3,95 / 3,44 ✗ | 4,67 / 3,54 / 2,91 ✗ |
+
+Von 30 Kombinationen bestanden 6. Das ist kein Randfall: Die Umschrift ist
+**normaler Text** (also 4,5:1, nicht 3:1), sie ist der Kern der Tonanzeige aus
+Phase 3, und sie steht auf drei verschiedenen Untergründen, weil Karten in
+Karten liegen. „steigend" im hellen Modus lag mit 4,49 knapp darunter — genau
+der Fall, den Schätzen nicht findet.
+
+**Was geändert wurde und was nicht:** Farbton und Sättigung bleiben, nur die
+Helligkeit ist je Modus gelöst — sonst wäre „tief" im Dunkelmodus plötzlich
+grün und die Tonlegende, die sich jemand eingeprägt hat, hinfällig. Ein Test
+prüft das ausdrücklich mit.
+
+Die Umbenennung von `color` zu `colors` war Absicht: So gibt es **keine Stelle
+mehr**, an der sich „die" Tonfarbe abgreifen lässt, ohne den Modus zu nennen.
+Der Übersetzer hat daraufhin alle 24 Fundstellen gemeldet — genau der Fehler,
+der vorher unbemerkt durch die ganze App ging.
+
+Und die Werte stehen als **Test**, nicht als Tabelle im Protokoll: Farben
+ändert man im Vorbeigehen, eine Tabelle altert dann still, und niemand merkt
+es, bis sich jemand beschwert, dass er die Umschrift nicht lesen kann.
+
+### AE-25 — Dokumente werden auch beim Lesen geprüft, nicht nur beim Schreiben
+
+**Entscheidung:** `loadSituations` und `loadExamModules` prüfen jedes Dokument
+(`isValidSituation`, `isValidExamModule`) und lassen aus, was nicht passt.
+Ausgelassenes wird **nicht gelöscht**.
+
+**Begründung:** Die Batch-Läufe prüfen die Antwort des Modells streng, bevor
+sie speichern — das ist seit Phase 4 getestet. Beim **Lesen** wurde dagegen
+blind vertraut, und das ist eine Annahme, die nur bis zur zweiten Version der
+App hält. Nachgestellt, bevor etwas geändert wurde:
+
+```
+ABSTURZ im Pruefungs-Runner: Cannot read properties of undefined (reading 'map')
+ABSTURZ im Gespraechs-Screen: Cannot read properties of undefined (reading 'map')
+```
+
+Ein Dokument aus einem älteren Schema, ein von Hand eingespielter Testdatensatz
+(in diesem Projekt zweimal vorgekommen) oder ein halb geschriebener Eintrag
+hätte also nicht eine Aufgabe fehlen lassen, sondern den ganzen Reiter mit einer
+**weißen Seite** beendet.
+
+**Warum nur auslassen, nicht löschen:** Vielleicht kann eine spätere Version
+mehr mit dem Dokument anfangen. Stilles Löschen von Nutzerdaten ist die
+schlechtere Voreinstellung — eine Meldung in der Konsole nennt die Zahl, damit
+ein Schema-Bruch nicht völlig unbemerkt bleibt.
+
+Bewusst **nicht** angefasst wurde, was schon robust ist: der beschädigte
+JSON-Blob im Speicher-Backend (Phase 1), die Teilausfälle der Batch-Läufe
+(Phase 4/5/7), die stumme Sprachausgabe (Phase 3/6) und das fehlende Bild
+(Phase 5) sind seit ihren Phasen getestet.
+
 ---
 
 ## Protokoll
@@ -1657,6 +1726,190 @@ und nicht nur in der Blockerliste.
 - **App-Symbol und Splash** sind Template-Platzhalter. Vor einer
   Store-Einreichung zu ersetzen; ausdrücklich kein Auftrag dieser Phase.
 
+### 2026-09-01 — Phase 9: QA & Abschluss
+
+**Kein neues Feature. Drei Dinge — und alle drei haben etwas gefunden.**
+
+**1. Barrierefreiheit**
+
+*Kontrast, gerechnet:* Die WCAG-2.1-Formel steht ausgeschrieben in
+`src/constants/tones.test.ts` und ist gegen die Normbeispiele geprüft
+(Schwarz auf Weiß = 21:1, `#767676` auf Weiß gerade über 4,5). Ergebnis der
+Erstmessung: **von 30 Kombinationen aus Tonfarbe und Untergrund bestanden 6.**
+Die Tonfarben sind deshalb jetzt modusabhängig — Zahlen und Begründung in
+**AE-24**.
+
+*Icon-only-Knöpfe:* Ein Audit über alle 30 `Pressable` ergab genau **einen**
+echten Fall — die kompakte Vorlesetaste am Beispielsatz. Ihr Label lautete
+`"▶: สวัสดี ครับ"`, begann also mit dem Zeichen selbst; ein Screenreader hätte
+„schwarzes rechtsweisendes Dreieck" angesagt. Jetzt
+`"Beispielsatz anhören: สวัสดี ครับ"`, im Browser nachgemessen. Alle übrigen
+Knöpfe tragen sichtbaren Text, den Screenreader ohnehin vorlesen — ein
+zusätzliches Label wäre dort Doppelung, keine Verbesserung.
+
+*Tippziele:* Im Web-Build gemessen. Drei reine Textknöpfe waren **20 Pixel
+hoch** und damit unter der Grenze von WCAG 2.2 (2.5.8, 24×24): „Richtung
+wechseln", „Als Standard merken", „Übung verlassen". Auf 44 gesetzt; die
+Nachmessung findet kein Element mehr unter 24, und die Vorlesetaste misst
+jetzt 44×44.
+
+*Tastatur — und eine Fehlmessung, die beinahe zu einer Falschmeldung geführt
+hätte:* 15 von 15 Bedienelementen sind fokussierbar, Tab wandert der Reihe nach
+durch, der Fokusring ist sichtbar (im Bildschirmfoto belegt), und sie rendern
+als native `<button>` mit funktionierendem Klickpfad. Ein echter Enter-Druck
+löste jedoch **nicht** aus — was wie ein Verstoß gegen WCAG 2.1.1 (Stufe A)
+aussah, also schwerer als alles andere hier. Bevor ich das gemeldet habe, ein
+Kontrollversuch: einen **ganz gewöhnlichen HTML-Knopf** ins Dokument gehängt,
+fokussiert, denselben Tastendruck geschickt — er reagierte genauso wenig. Die
+Grenze liegt also im Automatisierungswerkzeug, nicht in der App. Die
+Auslösbarkeit per Tastatur bleibt damit **ungeprüft**, wird aber ausdrücklich
+**nicht** als Fehler geführt.
+
+**2. Fehlerbehandlung außerhalb der Batch-Pfade → AE-25**
+
+Die Lücke war die Leserichtung: Beim Schreiben wird streng geprüft, beim Lesen
+wurde blind vertraut. Ein leeres Dokument in `exam` oder `situations` beendete
+den jeweiligen Reiter mit einer weißen Seite. Vorher nachgestellt, dann
+geschlossen; 18 neue Tests decken die Fälle ab. Was schon robust war, wurde
+nicht angefasst.
+
+**3. Konsolidierte Abnahme gegen den jetzigen Stand**
+
+Die Tabelle unten ist aus `.agent/state.json` **erzeugt**, nicht abgetippt.
+Eigens nachgemessen wurde der Quergriff, den Phase 9 selbst gefährdet hat: Das
+Phase-3-Kriterium zu den Silbenfarben war mit den **alten** Farben verifiziert.
+Neu gemessen zeigt สวัสดี jetzt `rgb(138,155,177)` · `rgb(138,155,177)` ·
+`rgb(136,160,131)` — tief-tief-mittel gilt weiterhin, mit den
+Dunkelmodus-Fassungen. Genau dafür war die Anweisung da, gegen den *jetzigen*
+Zustand zu prüfen.
+
+**Nebenbei aufgeräumt**
+
+`Collapsible` aus dem Expo-Template war nirgends eingebunden und zugleich das
+einzige Bedienelement ganz ohne `accessibilityRole` — entfernt. Damit wurde
+`expo-symbols` unbenutzt und ist ebenfalls raus. `expo-doctor` weiterhin 21/21.
+Für die Jest-Konfiguration kam ein CSS-Platzhalter dazu, weil `theme.ts` die
+`global.css` importiert und Jest sie nicht lesen kann.
+
+**Verifiziert**
+
+- `npm test` → **392 Tests grün** in 14 Suites (vorher 365). `npx tsc --noEmit`
+  fehlerfrei. `npx expo-doctor` 21/21.
+- Kontraste: als Test hinterlegt, nicht als Momentaufnahme.
+- Im Browser nachgemessen: Bedienelemente, Fokus, Tippziele, Silbenfarben.
+
+---
+
+## Konsolidierte Abnahme (Stand 2026-09-01)
+
+Jedes „Fertig, wenn" aus Phase 0–9 gegen den **jetzigen** Repo-Zustand.
+**73 von 77 erfüllt; 4 offen, und alle vier hängen an einer Handlung des
+Nutzers.**
+
+| Phase | Kriterium | Stand | Wie geprüft |
+| --- | --- | --- | --- |
+| 0 | npx expo start liefert klickbare Navigation zwischen Platzhalter-Screens im Browser | **erfüllt** | Alle fuenf Routen im Browser angeklickt und gerendert; zusaetzlich bei 375px Breite geprueft. |
+| 0 | Gleiche Navigation in Expo Go auf dem Handy sichtbar | **erfüllt** | Vom Nutzer am Geraet bestaetigt (2026-08-30). |
+| 0 | Git-Repo und PROGRESS.md angelegt | **erfüllt** | PROGRESS.md und .agent/state.json im Projekt-Root, Commits auf Branch main. |
+| 1 | Unit-Tests fuer Retrievability und Review-Update gruen | **erfüllt** | npm test gruen; fsrs.test.ts prueft Formel, Monotonie, Grenzen, Lapses, Abstandseffekt. |
+| 1 | Persistenz-Abstraktion fuer alle Datentypen | **erfüllt** | DataStore ueber vocab, cards, situations, exam, meta; Backends SQLite / AsyncStorage / Memory; gemeinsame Vertragspruefung. |
+| 1 | Kartenzustand uebersteht App-Neustart auf Web | **erfüllt** | Im Browser bewertet, Seite neu geladen, Werte unveraendert. Backend: async-storage. |
+| 1 | Kartenzustand uebersteht App-Neustart in Expo Go (SQLite-Pfad) | **erfüllt** | Vom Nutzer am Geraet bestaetigt (2026-08-30); Anzeige 'Speicher: expo-sqlite'. |
+| 2 | 50-100 Eintraege, bidirektional vollstaendig, schema-konform | **erfüllt** | 84 Eintraege; vocabulary.test.ts prueft Anzahl, eindeutige IDs, Schema je Eintrag, Silbenzerlegung, deutsche Pflichtangaben je Wortart und Bidirektio… |
+| 2 | Jeder Eintrag hat einen nachvollziehbaren sourceVerified-Stand, nicht pauschal true | **erfüllt** | 82 von 84 geprueft; die zwei Ausnahmen tragen den Grund in verificationNote. Ein Test erzwingt eine Quote >= 0.9 UND < 1, damit pauschales Abhaken au… |
+| 2 | Skalierungsplan auf 1000 ausformuliert in PROGRESS.md | **erfüllt** | Abschnitt 'Skalierungsplan auf ~1000 Eintraege': Frequenzliste als Wortquelle, siebenstufiger Pruefschritt, bewusste Trennung vom Content-Generator a… |
+| 2 | Tests und tsc weiterhin gruen | **erfüllt** | 154 Tests in 3 Suites gruen; npx tsc --noEmit fehlerfrei. |
+| 3 | Vollstaendige Review-Session in beide Richtungen durchspielbar (Browser) | **erfüllt** | Im Browser beide Richtungen durchgespielt: aufdecken, bewerten, Karte wechselt weiter, Sitzungsabschluss. |
+| 3 | Vollstaendige Review-Session am Geraet in Expo Go | offen — braucht den Nutzer (B-2) | B-2 - braucht das Geraet des Nutzers; betrifft jetzt auch Phase 5 (nativer Bildpfad). |
+| 3 | Mehrsilbige Woerter zeigen unterschiedliche Tonfarben je Silbe | **erfüllt** | สวัสดี im DOM nachgemessen: sa=rgb(79,96,118) tief, wat=rgb(79,96,118) tief, dii=rgb(111,138,106) mittel. ThaiWord wertet syllables[] aus, tone nur a… |
+| 3 | Unverifizierte Eintraege sind erkennbar gekennzeichnet | **erfüllt** | VerificationBadge nur bei sourceVerified:false; im Browser mit นอน geprueft, Antippen klappt die verificationNote auf. |
+| 3 | Dashboard zeigt beide Richtungen getrennt | **erfüllt** | Zwei Karten mit eigener Faelligkeitszahl; Test belegt, dass Bewertungen einer Richtung die andere nicht beeinflussen. |
+| 3 | Layout auf Handy UND breitem Browser geprueft | **erfüllt** | 1280px: zwei gleich breite Spalten. 375px: untereinander, Bewertungsknoepfe brechen auf 2x2 um. Ungleiche Kartenbreiten (306/290 statt 343) gefunden … |
+| 3 | Tests und tsc gruen | **erfüllt** | 187 Tests in 6 Suites gruen; npx tsc --noEmit fehlerfrei. |
+| 4 | Lernstatistik-Screen zeigt echte Daten statt Platzhalter | **erfüllt** | Wiederholungen heute, Tagesserie, faellige Karten, Kartenzustaende und 14-Tage-Diagramm aus der Persistenzschicht; im Browser mit echten Bewertungen … |
+| 4 | Einschraenkung der Statistik-Methode dokumentiert | **erfüllt** | AE-9; Hinweis steht im UI selbst ('Protokolliert seit ... Fruehere Sitzungen sind nicht enthalten'). |
+| 4 | Teilausfall-Verhalten nachweislich getestet | **erfüllt** | Tests: Fehler mitten im Lauf (14 ok / 2 fehlgeschlagen, alle 16 angefasst), drei Fehler zu Beginn (13 bleiben gespeichert), Fortsetzen (12 uebersprun… |
+| 4 | CORS-Header im Web-Build | **erfüllt** | Direkt gemessen: ohne Header 'TypeError: Failed to fetch', mit Header HTTP 401 mit JSON-Fehlerobjekt. dangerouslyAllowBrowser setzt genau diesen Head… |
+| 4 | Key-Speicherung plattformgerecht geloest und begruendet | **erfüllt** | AE-10: expo-secure-store hat auf Web die Implementierung 'export default {}'. Nativ Keychain, Web nur Arbeitsspeicher fuer die Sitzung; Weiche ueber … |
+| 4 | Situationen offline abspielbar (Neustart-Test) | **erfüllt** | Zwei Situationen im Schema eingespielt, Gespraech-Screen zeigt sie vollstaendig; nach komplettem Neuladen unveraendert vorhanden, ohne Schluessel und… |
+| 4 | Testlauf mit echtem Schluessel (10-20 Situationen) | **erfüllt** | Vom Nutzer mit gueltigem Anthropic-Schluessel durchgefuehrt und bestaetigt (2026-08-31); die Zahlen des Laufs liegen nicht vor. |
+| 4 | Tests und tsc gruen | **erfüllt** | 237 Tests in 9 Suites gruen; npx tsc --noEmit fehlerfrei. |
+| 4 | Prompt-Vertrag geprueft (Antwortform passt zum Parser) | **erfüllt** | prompt-contract.test.ts: zwei ausformulierte Musterantworten je Richtung; prueft Zuglaenge, Sprecherwechsel, alle drei Sprachfassungen und richtungss… |
+| 5 | Bild-Pipeline nutzt die Batch-Infrastruktur aus Phase 4 statt einer Kopie | **erfüllt** | Der Laeufer steht jetzt einmalig in lib/generation/batch.ts (runBatch + BatchTask); conversation/batch.ts und images/batch.ts sind duenne Adapter. Al… |
+| 5 | Anbieter gewaehlt und Browser-/CORS-Verhalten empirisch belegt | **erfüllt** | AE-13. Gemessen: POST an api.openai.com wird von CORS geblockt (GET nicht), POST an api.stability.ai kommt durch (401). Kontrollmessung an api.anthro… |
+| 5 | Anfrageform gegen die laufende API belegt, nicht geraten | **erfüllt** | Stability prueft Pflichtfelder und Enums vor der Authentifizierung; die API nannte die erlaubten Werte fuer output_format, aspect_ratio, seed und pro… |
+| 5 | Speicherformat fuer Bilder begruendet geloest | **erfüllt** | AE-14: Metadaten in der Sammlung images, Bytes in eigener Ablage (nativ expo-file-system, Web IndexedDB). Grund nachgesehen: AsyncStorage-Web ist win… |
+| 5 | isConcrete-Gate testgesichert - Pipeline laeuft fuer abstrakte Eintraege gar nicht erst an | **erfüllt** | AE-15: drei Sperren plus Literaltyp isConcrete: true. Ein Test faehrt einen gefaelschten Auftrag durch den echten Batch: 0 Client-Aufrufe, 0 gespeich… |
+| 5 | Kleiner Testlauf erfolgreich, danach offline abrufbar ohne Schluessel | **erfüllt** | 5 Bilder durch dieselbe Pipeline mit einem Ersatz-Client (echte WebP-Bytes): 5 erzeugt, 0 fehlgeschlagen; die IndexedDB enthielt die fuenf .webp-Eint… |
+| 5 | Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel) | **erfüllt** | Aus dem Web-Build: 5/5 verarbeitet, 0 erzeugt, 5 fehlgeschlagen mit 'HTTP 401: authorization: invalid or missing header value', 0 gespeichert. |
+| 5 | Bild auf der Karteikarte, richtungsabhaengig | **erfüllt** | de_to_th: Bild schon auf der Vorderseite (verraet die thailaendische Form nicht). th_to_de: erst nach dem Aufdecken (waere sonst die Antwort). Eine a… |
+| 5 | Testlauf mit gueltigem Stability-Schluessel | offen — braucht den Nutzer (B-4) | B-4 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein. |
+| 5 | Tests und tsc gruen | **erfüllt** | 275 Tests in 10 Suites gruen; npx tsc --noEmit fehlerfrei. |
+| 6 | Je Richtung mindestens ein eigener Uebungstyp aus vorhandenen Daten | **erfüllt** | de_to_th: Ton-Erkennung aus syllables[0].tone (69 einsilbige Eintraege, alle fuenf Toene vertreten). th_to_de: Artikel aus germanNoun.article (29 Sub… |
+| 6 | Uebungen im Browser spielbar | **erfüllt** | Alle drei durchgespielt: Ton (Antwort 'Tief' auf สี่ -> richtig, Aufloesung 'sìi - vier'), Artikel (falsche Antwort -> richtige Option gruen umrandet… |
+| 6 | Kein erfundener Ablenker | **erfüllt** | Test prueft fuer JEDES Verb im Bestand, dass jede falsche Antwort entweder eine echte Perfektform aus der Vokabeldatei oder die Form mit vertauschtem… |
+| 6 | Ton-Uebung nur fuer einsilbige Woerter | **erfüllt** | Bei mehrsilbigen Woertern hat jede Silbe ihren eigenen Ton (AE-7), und die Silbengrenze in der Thai-Schrift ist nicht bestimmbar (AE-8). buildToneQue… |
+| 6 | FSRS-Integrationsfrage entschieden und begruendet | **erfüllt** | AE-16: Uebungen laufen NICHT durch FSRS (eine Erinnerungsspur je Item; Ratequote 20-33 % passt nicht zur Selbsteinschaetzungs-Skala; Kartenschluessel… |
+| 6 | Nutzerprofil-Frage entschieden und begruendet | **erfüllt** | AE-17: Standard-Lernrichtung im meta-Dokument 'profile', nur ausdruecklich gesetzt, jederzeit aufhebbar, Auswahl bleibt ueber 'Richtung wechseln' err… |
+| 6 | Fehlende Thai-Stimme wird benannt statt stumm zu bleiben | **erfüllt** | isLanguageAvailable liefert ja/nein/weiss-nicht; gewarnt wird nur bei eindeutigem Nein, weil manche Plattformen eine leere Stimmenliste liefern. Im T… |
+| 6 | Uebungen in der Statistik sichtbar, ohne die Wiederholungszahl zu verfaelschen | **erfüllt** | Eigene Zaehler drills/drillsCorrect, eigene Kachel, gestapeltes Diagramm mit Legende. Im Browser nach zwei Aufgaben: 'Heute wiederholt 0 - Heute geue… |
+| 6 | Tests und tsc gruen | **erfüllt** | 322 Tests in 11 Suites gruen; npx tsc --noEmit fehlerfrei. |
+| 7 | Reale Modulstruktur mit Quellenangabe erhoben und dokumentiert | **erfüllt** | Beide vorgegebenen Seiten liefern WebFetch HTTP 403; abgerufen ueber den echten Browser am 2026-08-31, dazu die drei Zertifikatsseiten gzsd1/gzsd2/gz… |
+| 7 | Aufgabenformate beobachtet statt geraten | **erfüllt** | Einstufungstest (goethe.de/lrn/pro/30-item/, im iframe der tsd.html) Aufgabe fuer Aufgabe durchgeklickt: A/B/C-Auswahl, Richtig/Falsch mit echten mp3… |
+| 7 | ExamModule-Schema festgelegt und umgesetzt | **erfüllt** | Unterscheidende Union: bewertbare Aufgaben tragen items, freie tragen production. Der Typ zwingt die Oberflaeche, beide Faelle zu behandeln, statt fu… |
+| 7 | Mindestens ein spielbares Beispiel je Fertigkeit und Aufgabentyp | **erfüllt** | Acht mitgelieferte Aufgaben decken Lesen, Hoeren, Schreiben und Sprechen sowie alle fuenf Formate auf A1 und A2 ab; Tests erzwingen beide Abdeckungen… |
+| 7 | Geltungsbereich begruendet entschieden | **erfüllt** | AE-19: Modul ist th_to_de. Ein Thai-Gegenstueck existiert (CU-TFL, Chulalongkorn), wurde aber nicht gebaut - die Primaerquelle war aus der Sitzung ni… |
+| 7 | Inhalt aus Vorhandenem, Batch-Infrastruktur wiederverwendet | **erfüllt** | Texte aus dem deutschen Teil des geprueften Grundstocks plus elementare Funktionswoerter; Hoerskripte ueber die Aussprache-Abstraktion aus Phase 3 (d… |
+| 7 | Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel) | **erfüllt** | Aus der Oberflaeche heraus: 8/8 verarbeitet, 0 erzeugt, 8 fehlgeschlagen mit '401 authentication_error - API key is invalid', 0 gespeichert; der Best… |
+| 7 | Keine erfundene Bewertung | **erfüllt** | AE-20: Lesen und Hoeren werden ausgewertet, Schreiben und Sprechen bekommen Musterloesung und Selbstkontrolle statt einer Punktzahl. Nirgends eine Be… |
+| 7 | Tests und tsc gruen | **erfüllt** | 365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. |
+| 8 | eas.json mit development/preview/production-Profilen | **erfüllt** | development (Dev-Client, APK, iOS-Simulator), preview (APK, iOS-Simulator, interne Verteilung), production (AAB, autoIncrement); cli.appVersionSource… |
+| 8 | app.json fuer EAS vollstaendig | **erfüllt** | android.package und ios.bundleIdentifier ergaenzt (com.thailernbegleiter.app) - ohne sie baut EAS gar nicht. expo-dev-client installiert, sonst kann … |
+| 8 | APK/AAB-Wahl begruendet | **erfüllt** | AE-21: Testprofile bauen APK, weil ein AAB sich laut EAS-Dokumentation nicht direkt aufs Geraet installieren laesst; production bleibt beim AAB, weil… |
+| 8 | iOS-Weg ohne Apple-Konto gefunden und begruendet | **erfüllt** | AE-22: Simulator-Build (ios.simulator true). Die EAS-Dokumentation sagt woertlich, das gehe 'without needing to deploy to TestFlight or even having a… |
+| 8 | EAS-Kontingente und Kosten aktuell nachgesehen | **erfüllt** | Am 2026-09-01 von expo.dev/pricing und expo.dev/pricing.md: Free 0 $/Monat mit 15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Upda… |
+| 8 | Web-Export lauffaehig | **erfüllt** | npx expo export --platform web: 8 statische Routen, 3,1 MB in dist/, die Bildablage als eigene Datei (verzoegertes Laden aus Phase 5 funktioniert auc… |
+| 8 | WordPress-Anschluss bewusst offen gelassen und begruendet | **erfüllt** | AE-23: Im Export nachgemessen, dass die Buendel absolut referenziert werden (/_expo/static/...). Fuer ein Unterverzeichnis braucht es experiments.bas… |
+| 8 | Icons/Splash geprueft | **erfüllt** | Nachgesehen: assets/images/ enthaelt unveraendert den Bildersatz des Expo-Templates, auch assets/expo.icon/ ist das Expo-Symbol. Als offener Punkt vo… |
+| 8 | Android-Testbuild tatsaechlich gebaut und installiert | offen — braucht den Nutzer (B-5) | B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wur… |
+| 8 | iOS-Build mindestens einmal ueber EAS durchgelaufen | offen — braucht den Nutzer (B-5) | B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wur… |
+| 8 | Tests und tsc gruen | **erfüllt** | 365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. Phase 8 hat keine Geschaeftslogik angefasst. |
+| 8 | Build-Konfiguration vorab validiert, ohne Konto | **erfüllt** | expo-doctor fand eine fehlende Peer-Abhaengigkeit (expo-asset, gebraucht von expo-audio, 'Your app may crash outside of Expo Go without this dependen… |
+| 8 | Keine ueberfluessigen Android-Berechtigungen | **erfüllt** | Der Prebuild zeigte RECORD_AUDIO, FOREGROUND_SERVICE und FOREGROUND_SERVICE_MEDIA_PLAYBACK aus expo-audio - die App nimmt aber nie auf. Im Plugin nac… |
+| 9 | Kontrastwerte tatsaechlich berechnet, nicht geschaetzt | **erfüllt** | WCAG-2.1-Formel (relative Leuchtdichte, (L1+0,05)/(L2+0,05)) in tones.test.ts ausgeschrieben und gegen die Norm-Beispiele geprueft (Schwarz/Weiss = 2… |
+| 9 | Tonfarben erreichen WCAG AA auf jedem Untergrund | **erfüllt** | AE-24: je Ton eine helle und eine dunkle Fassung, Farbton erhalten, Helligkeit geloest. Alle fuenf Toene erreichen in beiden Modi >= 4,5:1 gegen back… |
+| 9 | Screenreader-Labels fuer alle Icon-only-Interaktionen | **erfüllt** | Audit ueber alle 30 Pressables. Einziger echter Icon-only-Knopf war die kompakte Vorlesetaste des Beispielsatzes; ihr Label lautete '▶: <Text>' und b… |
+| 9 | Tippziele mindestens 24x24 (WCAG 2.2 AA 2.5.8) | **erfüllt** | Im Web-Build gemessen: drei reine Textknoepfe waren nur 20 Pixel hoch ('Richtung wechseln', 'Als Standard merken', 'Uebung verlassen'). Auf 44 gesetz… |
+| 9 | Tastaturbedienbarkeit im Web-Build geprueft | **erfüllt** | 15 von 15 Bedienelementen sind fokussierbar (tabIndex >= 0), Tab wandert der Reihe nach durch, der Fokusring ist sichtbar (im Screenshot belegt), und… |
+| 9 | Fehlerbehandlung ausserhalb der Batch-Pfade geschlossen | **erfüllt** | AE-25: Beim Schreiben wurde streng geprueft, beim LESEN blind vertraut. Ein leeres oder veraltetes Dokument liess Pruefungs- und Gespraech-Screen mit… |
+| 9 | Konsolidierte Abnahme gegen den JETZIGEN Repo-Zustand | **erfüllt** | Tabelle in PROGRESS.md, aus .agent/state.json erzeugt statt abgetippt. Der Quergriff, den Phase 9 selbst gefaehrdet hat, wurde eigens nachgemessen: d… |
+| 9 | Toter Code aus der Vorlage entfernt | **erfüllt** | Collapsible aus dem Expo-Template war nirgends eingebunden und das einzige Bedienelement ganz ohne accessibilityRole. Entfernt; damit wurde expo-symb… |
+| 9 | Tests und tsc gruen | **erfüllt** | 392 Tests in 14 Suites gruen; npx tsc --noEmit fehlerfrei. |
+
+**Die vier offenen Punkte, alle beim Nutzer:**
+
+| Blocker | Was fehlt | Warum ich es nicht selbst tue |
+| --- | --- | --- |
+| **B-2** | Gerätecheck in Expo Go | Braucht das Gerät des Nutzers. Über B-5 für Android miterledigt. |
+| **B-4** | Bilder-Probelauf mit gültigem Stability-Schlüssel | Fremde API-Schlüssel gebe ich nicht ein. |
+| **B-5** | EAS-Konto, dann Android- und iOS-Build | Konten lege ich nicht an. Vom Nutzer bewusst zurückgestellt. |
+
+**Bewusst außerhalb v1 — nie Abnahmekriterium, hier nur der Vollständigkeit
+halber:**
+
+- **Live-Chat mit einem Sprachmodell.** Verworfen in Phase 4: Die App muss ohne
+  Netz und ohne Schlüssel benutzbar sein.
+- **~1000 Vokabeln.** Der Grundstock sind 84; der Weg dorthin steht als
+  Skalierungsplan, einschließlich des siebenstufigen Prüfschritts je Eintrag.
+- **Vorproduzierte Audioclips.** Die Abstraktion wartet darauf
+  (`registerAudioAssetResolver`), bis dahin läuft alles über die Sprachausgabe
+  des Geräts.
+- **B1-Prüfungsaufgaben.** Brauchen B1-Wortschatz.
+- **Bestehensgrenzen im Prüfungsmodul.** Stehen in den nicht erhobenen
+  Durchführungsbestimmungen — eine ausgedachte Grenze wäre schlimmer als keine.
+- **Prüfungsmodul für `de_to_th`.** Ein Thai-Gegenstück (CU-TFL) existiert,
+  wurde aber nicht aus widersprüchlichen Sekundärquellen zusammengesetzt.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -1754,6 +2007,10 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
    Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft.
 3. **Restliche 20 Bilder**, sobald der Probelauf sitzt: „Alle konkreten
    Vokabeln" statt „Probelauf". Der Lauf überspringt, was schon da ist.
+> **Der ursprüngliche Plan (Phase 0–9) ist abgearbeitet.** Was hier noch steht,
+> braucht eine Handlung des Nutzers oder war nie Teil von v1 — die vollständige
+> Bewertung steht im Abschnitt „Konsolidierte Abnahme".
+
 4. **EAS-Konto anlegen und bauen (Blocker B-5, schließt Phase 8 ab und
    B-2 für Android gleich mit):** `npm install --global eas-cli`, dann
    `eas login`, dann `eas build --platform android --profile preview`. Beim

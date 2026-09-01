@@ -140,20 +140,38 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
             {entry.exampleGerman}
           </ThemedText>
         </View>
-        <SpeakButton label="▶" text={entry.exampleThai} language="th" compact />
+        <SpeakButton
+          label="▶"
+          spokenLabel="Beispielsatz anhören"
+          text={entry.exampleThai}
+          language="th"
+          compact
+        />
       </View>
     </ThemedView>
   );
 }
 
+/**
+ * Aussprache-Knopf.
+ *
+ * `spokenLabel` gibt es, weil die kompakte Fassung nur ein „▶" zeigt. Ohne
+ * eigene Beschriftung läse ein Screenreader genau dieses Zeichen vor — die
+ * Ansage „schwarzes rechtsweisendes Dreieck" sagt niemandem, was der Knopf tut
+ * (Phase 9). Die Vorlesetaste ist ausserdem mindestens 44 Punkte gross, damit
+ * sie auch mit dem Daumen zu treffen ist.
+ */
 function SpeakButton({
   label,
+  spokenLabel,
   text,
   language,
   assetId,
   compact = false,
 }: {
   label: string;
+  /** Was der Screenreader sagt, wenn das Sichtbare nur ein Zeichen ist. */
+  spokenLabel?: string;
   text: string;
   language: 'th' | 'de';
   assetId?: string;
@@ -168,7 +186,7 @@ function SpeakButton({
         playPronunciation({ text, language, audioAssetId: assetId }).catch(() => {});
       }}
       accessibilityRole="button"
-      accessibilityLabel={`${label}: ${text}`}
+      accessibilityLabel={`${spokenLabel ?? label}: ${text}`}
       style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type="backgroundSelected"
@@ -180,6 +198,9 @@ function SpeakButton({
     </Pressable>
   );
 }
+
+/** Kleinste sinnvolle Grösse eines Tippziels. */
+export const MIN_TOUCH = 44;
 
 const styles = StyleSheet.create({
   card: {
@@ -237,7 +258,12 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
   },
   speakCompact: {
-    paddingVertical: Spacing.one,
+    // Mindestens 44 Punkte in beide Richtungen - unter diesem Mass ist ein
+    // Ziel mit dem Daumen kaum zu treffen (Apple HIG 44 pt, Android 48 dp).
+    minWidth: MIN_TOUCH,
+    minHeight: MIN_TOUCH,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: Spacing.two,
     borderRadius: Spacing.two,
   },

@@ -4,7 +4,7 @@ import { ThemedText } from './themed-text';
 import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { syllablesOf, uniformTone } from '@/data/vocab-helpers';
 import { VocabEntry } from '@/data/vocabulary';
 
@@ -32,13 +32,14 @@ export function ThaiWord({
 }) {
   const syllables = syllablesOf(entry);
   const single = uniformTone(entry);
+  const toneColor = useToneColor();
 
   return (
     <View style={styles.wrapper}>
       <ThemedText
         style={[
           size === 'large' ? styles.thaiLarge : styles.thaiMedium,
-          single ? { color: TONES[single].color } : null,
+          single ? { color: toneColor(single) } : null,
         ]}>
         {entry.thai}
       </ThemedText>
@@ -49,7 +50,7 @@ export function ThaiWord({
             <ToneContour tone={syllable.tone} height={12} />
             <ThemedText
               type={size === 'large' ? 'default' : 'small'}
-              style={{ color: TONES[syllable.tone].color }}>
+              style={{ color: toneColor(syllable.tone) }}>
               {syllable.roman}
             </ThemedText>
             {index < syllables.length - 1 ? (

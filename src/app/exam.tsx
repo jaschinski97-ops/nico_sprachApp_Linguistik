@@ -8,7 +8,7 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { ExamOverview, loadExamModule, loadExamOverview } from '@/lib/exam/session';
 import {
   certificateFor,
@@ -36,6 +36,7 @@ export default function ExamScreen() {
   const router = useRouter();
 
   const level: ExamLevel = isLevel(params.level) ? params.level : 'A1';
+  const toneColor = useToneColor();
 
   const [overview, setOverview] = useState<ExamOverview[] | null>(null);
   const [module, setModule] = useState<ExamModule | null>(null);
@@ -91,7 +92,10 @@ export default function ExamScreen() {
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView
               type={candidate === level ? 'backgroundSelected' : 'backgroundElement'}
-              style={[styles.levelButton, candidate === level && styles.levelButtonSelected]}>
+              style={[
+                styles.levelButton,
+                candidate === level && { borderColor: toneColor('mid') },
+              ]}>
               <ThemedText type="small">{candidate}</ThemedText>
             </ThemedView>
           </Pressable>
@@ -208,9 +212,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  levelButtonSelected: {
-    borderColor: TONES.mid.color,
-  },
+  levelButtonSelected: {},
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.three,

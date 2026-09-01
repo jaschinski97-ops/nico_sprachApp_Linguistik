@@ -6,17 +6,22 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { TONES } from '@/constants/tones';
+import { Tone } from '@/constants/tones';
+import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { DIRECTION_LABELS } from '@/lib/review-session';
 import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
-const STATE_COLORS = {
-  new: TONES.low.color,
-  learning: TONES.falling.color,
-  review: TONES.high.color,
-  mastered: TONES.mid.color,
-} as const;
+/**
+ * Kartenzustaende auf Toene abgebildet - die Farbe selbst kommt zur Laufzeit
+ * aus dem Anzeigemodus (AE-24).
+ */
+const STATE_TONES: Record<string, Tone> = {
+  new: 'low',
+  learning: 'falling',
+  review: 'high',
+  mastered: 'mid',
+};
 
 export default function ProgressScreen() {
   const [stats, setStats] = useState<LearningStats | null>(null);
@@ -117,14 +122,15 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
   // beides ist Lernzeit, aber nur die Wiederholungen laufen durch FSRS
   // (AE-16). Eine gemeinsame Saeule ohne Trennung wuerde die Beschriftung
   // "Wiederholungen" zur Unwahrheit machen.
+  const toneColor = useToneColor();
   const max = Math.max(1, ...stats.days.map((day) => day.total + drillCount(day)));
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedText type="smallBold">Pro Tag</ThemedText>
       <View style={styles.legend}>
-        <LegendDot color={TONES.mid.color} label="Wiederholungen" />
-        <LegendDot color={TONES.high.color} label="Übungen" />
+        <LegendDot color={toneColor('mid')} label="Wiederholungen" />
+        <LegendDot color={toneColor('high')} label="Übungen" />
       </View>
 
       <View style={styles.chart}>
@@ -140,7 +146,7 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
                     styles.barFill,
                     {
                       height: `${(drillCount(day) / max) * 100}%`,
-                      backgroundColor: TONES.high.color,
+                      backgroundColor: toneColor('high'),
                     },
                   ]}
                 />
@@ -150,7 +156,7 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
                   styles.barFill,
                   {
                     height: `${(day.total / max) * 100}%`,
-                    backgroundColor: day.total > 0 ? TONES.mid.color : 'transparent',
+                    backgroundColor: day.total > 0 ? toneColor('mid') : 'transparent',
                   },
                 ]}
               />
@@ -192,6 +198,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
 }
 
 function CardStates({ stats }: { stats: LearningStats }) {
+  const toneColor = useToneColor();
   const total = Math.max(1, stats.totalCards);
 
   return (
@@ -208,7 +215,7 @@ function CardStates({ stats }: { stats: LearningStats }) {
               style={{
                 flexGrow: count,
                 flexBasis: 0,
-                backgroundColor: STATE_COLORS[state],
+                backgroundColor: toneColor(STATE_TONES[state]),
               }}
             />
           );
@@ -218,7 +225,7 @@ function CardStates({ stats }: { stats: LearningStats }) {
       <View style={styles.legend}>
         {CARD_STATE_ORDER.map((state) => (
           <View key={state} style={styles.legendItem}>
-            <View style={[styles.swatch, { backgroundColor: STATE_COLORS[state] }]} />
+            <View style={[styles.swatch, { backgroundColor: toneColor(STATE_TONES[state]) }]} />
             <ThemedText type="small">{CARD_STATE_LABELS[state]}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {stats.cardStates[state]} ({Math.round((stats.cardStates[state] / total) * 100)} %)
