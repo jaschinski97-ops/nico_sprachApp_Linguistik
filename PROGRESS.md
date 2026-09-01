@@ -1604,12 +1604,33 @@ zurückgesetzt.
 - Web-Export nach allen Konfigurationsänderungen erneut erzeugt, aus statischem
   Server ausgeliefert, App lief fehlerfrei.
 
+**Entscheidung des Nutzers: die Phase wird so abgeschlossen**
+
+Zwei der sechs Abnahmekriterien — der installierbare Android-Build und ein
+iOS-Durchlauf über EAS — sind **nicht erfüllt**. Das ist kein Versehen und
+keine Nachlässigkeit, sondern eine ausdrückliche Entscheidung.
+
+Dem Nutzer wurden am 2026-09-01 drei Wege vorgelegt:
+
+1. Kostenlosen Expo-Account anlegen und `eas login` ausführen (zwei Minuten);
+   die Builds hätte ich danach selbst gestartet und verfolgt.
+2. JDK und Android-SDK lokal installieren (~4 GB, 30–60 Minuten, mit
+   Fehlerrisiko) und das APK ohne EAS mit Gradle bauen — iOS bliebe auch dann
+   unmöglich, weil das macOS braucht.
+3. Die Phase mit den zwei offenen Kriterien abschließen.
+
+**Gewählt wurde Weg 3.** Damit gilt für die Übergabe: alles Vorbereitende ist
+fertig und geprüft, aber **es ist nachweislich kein Build gelaufen**. Wer
+später liest „Phase 8 abgeschlossen", muss das mitlesen — deshalb steht es hier
+und nicht nur in der Blockerliste.
+
 **Offen**
 
-- **B-5 (neu): EAS-Konto anlegen und die drei Builds anstoßen.** Das ist der
-  einzige verbleibende Schritt dieser Phase und liegt beim Nutzer. Erst danach
-  lässt sich sagen, dass ein Build tatsächlich durchgelaufen ist — ich habe
-  die Konfiguration vorbereitet, nicht den Build bewiesen.
+- **B-5 (neu): EAS-Konto anlegen und die Builds anstoßen.** Der einzige
+  verbleibende Schritt dieser Phase; vom Nutzer bewusst zurückgestellt (siehe
+  oben). Erst danach lässt sich sagen, dass ein Build tatsächlich durchgelaufen
+  ist — ich habe die Konfiguration vorbereitet und vorab validiert, nicht den
+  Build bewiesen.
 - **B-2** bleibt formal offen, ist aber jetzt anders gelagert: Der
   Android-Weg über ein `preview`-APK umgeht Expo Go vollständig. Sobald B-5
   erledigt ist, schließt derselbe Schritt B-2 für Android mit. Für iOS bleibt

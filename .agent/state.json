@@ -4,7 +4,7 @@
   "lastUpdated": "2026-09-01",
   "currentPhase": 8,
   "currentPhaseName": "Build & Distribution",
-  "currentPhaseStatus": "configured-and-web-export-verified-awaiting-expo-account",
+  "currentPhaseStatus": "closed-with-two-criteria-open-by-user-decision",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -420,14 +420,14 @@
       "criterion": "Android-Testbuild tatsaechlich gebaut und installiert",
       "done": false,
       "verifiedHow": null,
-      "blocker": "B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an."
+      "blocker": "B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wurden."
     },
     {
       "phase": 8,
       "criterion": "iOS-Build mindestens einmal ueber EAS durchgelaufen",
       "done": false,
       "verifiedHow": null,
-      "blocker": "B-5 - dasselbe Konto. Der Simulator-Weg braucht danach kein Apple-Konto mehr (AE-22)."
+      "blocker": "B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wurden."
     },
     {
       "phase": 8,
@@ -596,7 +596,7 @@
         8
       ],
       "needsUser": true,
-      "note": "Gemessen, nicht vermutet: 'npx eas-cli whoami' -> 'Not logged in'; selbst 'eas config' bricht mit 'An Expo user account is required to proceed' ab. Es gibt also keinen Teil von EAS, den ich stellvertretend pruefen koennte. Fremde Konten lege ich nicht an - dieselbe Linie wie bei den API-Schluesseln. Der freie Tarif reicht (15 Android- und 15 iOS-Builds).",
+      "note": "Gemessen, nicht vermutet: 'npx eas-cli whoami' -> 'Not logged in'; selbst 'eas config' bricht mit 'An Expo user account is required to proceed' ab. Es gibt also keinen Teil von EAS, den ich stellvertretend pruefen koennte. Fremde Konten lege ich nicht an - dieselbe Linie wie bei den API-Schluesseln. Der freie Tarif reicht (15 Android- und 15 iOS-Builds). ENTSCHEIDUNG 2026-09-01: Dem Nutzer wurden drei Wege vorgelegt - (a) Account anlegen und einloggen, danach haette ich die Builds selbst gestartet, (b) JDK und Android-SDK lokal installieren und ohne EAS bauen, (c) Phase mit offenen Kriterien abschliessen. Gewaehlt wurde (c). Es ist also nachweislich KEIN Build gelaufen.",
       "steps": "npm install --global eas-cli ; eas login ; eas build --platform android --profile preview (beim ersten Lauf 'Generate new keystore' bestaetigen, dann APK ueber den QR-Code aufs Handy). Danach eas build --platform ios --profile preview fuer den Simulator-Build."
     }
   ],
@@ -734,5 +734,6 @@
     "doctor": "21/21 Pruefungen bestanden (nach Nachinstallation von expo-asset)",
     "androidPermissions": "INTERNET, MODIFY_AUDIO_SETTINGS, READ/WRITE_EXTERNAL_STORAGE (maxSdkVersion 32), VIBRATE, SYSTEM_ALERT_WINDOW; RECORD_AUDIO bewusst abgeschaltet",
     "nativeDirs": "android/ und ios/ sind gitignoriert (schon seit Phase 0, Expo-Vorlage) - EAS erzeugt sie im Build selbst"
-  }
+  },
+  "phase8Note": "Phase 8 gilt als abgeschlossen, aber ZWEI von sechs Abnahmekriterien sind offen: der installierbare Android-Build und ein iOS-Durchlauf. Beide brauchen ein Expo-Konto (B-5). Vorbereitung, Vorab-Validierung und Web-Export sind fertig und geprueft."
 }
