@@ -10,6 +10,7 @@ const LINKS = [
   { name: 'home', href: '/', label: 'Übersicht' },
   { name: 'review', href: '/review', label: 'Lernen' },
   { name: 'conversation', href: '/conversation', label: 'Gespräch' },
+  { name: 'exam', href: '/exam', label: 'Prüfung' },
   { name: 'progress', href: '/progress', label: 'Fortschritt' },
   { name: 'settings', href: '/settings', label: 'Einstellungen' },
 ] as const;

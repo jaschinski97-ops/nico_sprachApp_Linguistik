@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-08-31",
-  "currentPhase": 6,
-  "currentPhaseName": "Bidirektionalitaet & Curriculum-Differenzierung",
+  "currentPhase": 7,
+  "currentPhaseName": "Pruefungsmodul",
   "currentPhaseStatus": "done-in-web-build",
   "stack": {
     "framework": "expo",
@@ -312,6 +312,60 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "322 Tests in 11 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 7,
+      "criterion": "Reale Modulstruktur mit Quellenangabe erhoben und dokumentiert",
+      "done": true,
+      "verifiedHow": "Beide vorgegebenen Seiten liefern WebFetch HTTP 403; abgerufen ueber den echten Browser am 2026-08-31, dazu die drei Zertifikatsseiten gzsd1/gzsd2/gzb1 unter .../inf.html. Struktur woertlich im Code (lib/exam/types.ts) mit source und retrieved, sichtbar auch im UI."
+    },
+    {
+      "phase": 7,
+      "criterion": "Aufgabenformate beobachtet statt geraten",
+      "done": true,
+      "verifiedHow": "Einstufungstest (goethe.de/lrn/pro/30-item/, im iframe der tsd.html) Aufgabe fuer Aufgabe durchgeklickt: A/B/C-Auswahl, Richtig/Falsch mit echten mp3-Dateien, Zuordnung (Kaufhaus-Wegweiser, 'Welche Anzeige passt'), Lueckentext. Daraus die vier Formate im Schema."
+    },
+    {
+      "phase": 7,
+      "criterion": "ExamModule-Schema festgelegt und umgesetzt",
+      "done": true,
+      "verifiedHow": "Unterscheidende Union: bewertbare Aufgaben tragen items, freie tragen production. Der Typ zwingt die Oberflaeche, beide Faelle zu behandeln, statt fuer einen freien Text eine Punktzahl zu erfinden. ExamPart hat ein eigenes Feld approximate, weil A2 'etwa 30 Minuten' sagt und A1 '25 Minuten'."
+    },
+    {
+      "phase": 7,
+      "criterion": "Mindestens ein spielbares Beispiel je Fertigkeit und Aufgabentyp",
+      "done": true,
+      "verifiedHow": "Acht mitgelieferte Aufgaben decken Lesen, Hoeren, Schreiben und Sprechen sowie alle fuenf Formate auf A1 und A2 ab; Tests erzwingen beide Abdeckungen. Im Browser durchgespielt: Hoeren A1 (3/3, Skript erst nach dem Auswerten), Lesen A1, Sprechen A1 mit Musterloesung und Vorlesetaste."
+    },
+    {
+      "phase": 7,
+      "criterion": "Geltungsbereich begruendet entschieden",
+      "done": true,
+      "verifiedHow": "AE-19: Modul ist th_to_de. Ein Thai-Gegenstueck existiert (CU-TFL, Chulalongkorn), wurde aber nicht gebaut - die Primaerquelle war aus der Sitzung nicht erreichbar und die Sekundaerquellen widersprechen sich in der Stufenskala. Das Feld direction steht trotzdem im Schema."
+    },
+    {
+      "phase": 7,
+      "criterion": "Inhalt aus Vorhandenem, Batch-Infrastruktur wiederverwendet",
+      "done": true,
+      "verifiedHow": "Texte aus dem deutschen Teil des geprueften Grundstocks plus elementare Funktionswoerter; Hoerskripte ueber die Aussprache-Abstraktion aus Phase 3 (de-DE), also ohne neue Audio-Erzeugung. runExamBatch ist ein Adapter ueber demselben Laeufer wie Situationen und Bilder - dritter Nutzer, keine Kopie."
+    },
+    {
+      "phase": 7,
+      "criterion": "Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel)",
+      "done": true,
+      "verifiedHow": "Aus der Oberflaeche heraus: 8/8 verarbeitet, 0 erzeugt, 8 fehlgeschlagen mit '401 authentication_error - API key is invalid', 0 gespeichert; der Bestand blieb bei den acht mitgelieferten Aufgaben."
+    },
+    {
+      "phase": 7,
+      "criterion": "Keine erfundene Bewertung",
+      "done": true,
+      "verifiedHow": "AE-20: Lesen und Hoeren werden ausgewertet, Schreiben und Sprechen bekommen Musterloesung und Selbstkontrolle statt einer Punktzahl. Nirgends eine Bestehensgrenze, weil die Durchfuehrungsbestimmungen nicht erhoben wurden - der Hinweis steht im UI."
+    },
+    {
+      "phase": 7,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -399,6 +453,21 @@
       "id": "AE-17",
       "title": "Standard-Lernrichtung im Profil, ausdruecklich gesetzt und jederzeit aenderbar",
       "rationale": "Zwei getrennte Zielgruppen; fuer die meisten ist die Richtung eine Eigenschaft der Person, nicht eine Entscheidung je Sitzung. Nicht automatisch aus der letzten Wahl abgeleitet, weil Bidirektionalitaet ein Kernversprechen ist (AE-11) und ein Geraet geteilt werden kann - ein einzelnes Tippen duerfte die App nicht festlegen. Auswahl bleibt ueber 'Richtung wechseln' erreichbar (eigener Parameter, nicht das blosse Fehlen der Richtung). Abgelegt in der seit Phase 1 dafuer vorgesehenen, bis dahin ungenutzten Sammlung meta."
+    },
+    {
+      "id": "AE-18",
+      "title": "Pruefungsstruktur erhoben statt erinnert, mit Quelle und Abrufdatum im Schema und im UI",
+      "rationale": "Pruefungsformate aendern sich, und aus dem Gedaechtnis aufgeschriebene Formate klingen plausibel, auch wenn sie falsch sind. Die Recherche entschied zwei Punkte gegen die naheliegende Vermutung: A1/A2 haben Pruefungsteile, B1 hat Module, die einzeln ablegbar sind; und die Dauern folgen keiner Regel (Lesen 25 / etwa 30 / 65 Minuten). Deshalb traegt ExamPart ein eigenes Feld approximate."
+    },
+    {
+      "id": "AE-19",
+      "title": "Pruefungsmodul nur fuer th_to_de, Begruendung im UI",
+      "rationale": "Das Goethe-Institut zertifiziert Deutsch. Ein Thai-Gegenstueck (CU-TFL) existiert, wurde aber nicht modelliert: die Primaerquelle war nicht erreichbar, und zwei Sekundaerquellen nennen unterschiedliche Stufenskalen. Aus widerspruechlichen Sekundaerquellen ein Schema zu bauen waere genau das Raten, das diese Phase verbietet. direction bleibt im Schema, damit ein recherchierter CU-TFL spaeter ohne Umbau danebenpasst."
+    },
+    {
+      "id": "AE-20",
+      "title": "Lesen und Hoeren werden bewertet, Schreiben und Sprechen nicht - und nirgends eine Bestehensgrenze",
+      "rationale": "Freie Texte und gesprochene Antworten liessen sich nur von einem Sprachmodell beurteilen; dessen Urteil waere eine ungepruefte Aussage ueber die eigene Pruefungsreife, und die Pruefung kostet Geld und haengt teils an einem Visum. Musterloesung plus Pruefliste sagt so viel, wie belegbar ist. Dieselbe Ueberlegung fuer die Bestehensgrenze: sie steht in den nicht erhobenen Durchfuehrungsbestimmungen. Folge fuer den Generator: nur Lesen und Hoeren werden erzeugt."
     }
   ],
   "openBlockers": [
@@ -427,13 +496,12 @@
     }
   ],
   "nextUp": {
-    "phase": 7,
-    "name": "Pruefungsmodul",
+    "phase": 8,
+    "name": "Build & Distribution",
     "tasks": [
       "Zuerst B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel, danach die restlichen 20 Bilder",
-      "Goethe-Modulstruktur aus den Originalseiten erheben, nicht raten",
-      "Moegliche Fortsetzung aus Phase 6: Uebungstyp mit freier Eingabe statt Auswahl - erst damit waere die FSRS-Frage aus AE-16 neu zu stellen",
-      "Weitere Uebungen aus vorhandenen Daten: Plural und Steigerung (germanAdjective), Tonzeichen-Lesen"
+      "EAS-Build fuer Android/iOS, Web-Export",
+      "Offene Faeden aus Phase 7: Durchfuehrungsbestimmungen erheben (dann erst 'bestanden'), B1-Aufgaben nach dem Wortschatz-Ausbau, CU-TFL recherchieren falls die Gegenrichtung dazukommen soll"
     ]
   },
   "situations": {
@@ -495,5 +563,48 @@
     "defaultDirection": "nur ausdruecklich gesetzt; ohne Angabe fragt die App bei jeder Sitzung",
     "storedIn": "meta/profile",
     "decision": "AE-17"
+  },
+  "exam": {
+    "scope": "th_to_de",
+    "levels": [
+      "A1",
+      "A2",
+      "B1"
+    ],
+    "builtinModules": 8,
+    "skillsCovered": [
+      "lesen",
+      "hoeren",
+      "schreiben",
+      "sprechen"
+    ],
+    "taskTypes": [
+      "multipleChoice",
+      "trueFalse",
+      "matching",
+      "gapFill",
+      "production"
+    ],
+    "generatedSkills": [
+      "lesen",
+      "hoeren"
+    ],
+    "planTestRun": 8,
+    "planFullRun": 64,
+    "model": "claude-opus-5",
+    "sources": {
+      "retrieved": "2026-08-31",
+      "note": "Beide vorgegebenen Seiten liefern WebFetch HTTP 403; abgerufen ueber den echten Browser.",
+      "pages": [
+        "https://www.goethe.de/ins/th/de/spr/prf.html",
+        "https://www.goethe.de/ins/th/de/spr/tsd.html",
+        "https://www.goethe.de/ins/th/de/spr/prf/gzsd1/inf.html",
+        "https://www.goethe.de/ins/th/de/spr/prf/gzsd2/inf.html",
+        "https://www.goethe.de/ins/th/de/spr/prf/gzb1/inf.html",
+        "https://www.goethe.de/lrn/pro/30-item/m/de/index.html"
+      ]
+    },
+    "notScraped": "Durchfuehrungsbestimmungen (Punkteverteilung, Bestehensgrenzen) - deshalb keine Bewertung bestanden/nicht bestanden",
+    "b1": "keine Aufgaben - braucht B1-Wortschatz, der Grundstock traegt A1/A2"
   }
 }

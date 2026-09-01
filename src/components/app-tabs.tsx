@@ -47,6 +47,15 @@ export default function AppTabs() {
         }}
       />
       <Tabs.Screen
+        name="exam"
+        options={{
+          title: 'Prüfung',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="ribbon" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="progress"
         options={{
           title: 'Fortschritt',

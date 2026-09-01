@@ -486,6 +486,87 @@ Lernprofil, Zähler") und war bis jetzt ungenutzt. Ein Profil aus einer älteren
 Version wird nachsichtig gelesen: ein unbekannter Wert ergibt „immer fragen"
 statt eines Absturzes oder einer Sperre.
 
+### AE-18 — Die Prüfungsstruktur ist erhoben, nicht erinnert
+
+**Entscheidung:** Das `ExamModule`-Schema bildet ab, was auf den Seiten des
+Goethe-Instituts steht — Fertigkeiten, Textsorten, Dauern, Alters- und
+Stundenempfehlungen — und trägt an jedem Zertifikat **Quelle und Abrufdatum**,
+sichtbar auch im UI.
+
+**Begründung:** Prüfungsformate ändern sich, und aus dem Gedächtnis
+aufgeschriebene Formate klingen plausibel, auch wenn sie falsch sind. Zwei
+Punkte, die die Recherche gegen die naheliegende Vermutung entschieden hat:
+
+1. **A1 und A2 haben „Prüfungsteile", B1 hat „Module".** Und der Unterschied
+   ist keine Wortklauberei: bei B1 „können die vier Module einzeln oder in
+   Kombination abgelegt werden", und „die Einzelzeugnisse über vier Module
+   entsprechen einem Gesamtzeugnis". Die Seiten benennen das selbst
+   unterschiedlich — Überschrift bei A1/A2: „Gar nicht so schwer: die
+   Prüfungsteile", bei B1: „Ihr Auftritt, bitte! Die Module". Ein Schema, das
+   überall „Module" schreibt, hätte für A1 etwas versprochen, das es dort nicht
+   gibt.
+2. **Die Dauern folgen keiner Regel.** Lesen dauert bei A1 25 Minuten, bei A2
+   „etwa 30", bei B1 65. Schreiben: 20 / „etwa 30" / 60. Das „etwa" steht bei
+   A2 an drei von vier Teilen und bei A1 an keinem — deshalb hat `ExamPart` ein
+   eigenes Feld `approximate`, statt eine Zahl zu behaupten, wo die Quelle
+   ungefähr sagt.
+
+Auch die **Aufgabenformate** sind nicht ausgedacht, sondern im Einstufungstest
+(`goethe.de/lrn/pro/30-item/`) Aufgabe für Aufgabe durchgeklickt: Auswahl mit
+drei Möglichkeiten, Richtig/Falsch, Zuordnung, Lückentext. Die vollständige
+Beobachtung steht im Protokolleintrag zu Phase 7.
+
+### AE-19 — Das Prüfungsmodul ist einseitig, und das steht in der App
+
+**Entscheidung:** Das Modul richtet sich ausschließlich an `th_to_de` —
+Thai-Muttersprachler, die Deutsch lernen. Für `de_to_th` ist **nichts**
+hinterlegt. Das Feld `direction` steht trotzdem im Schema.
+
+**Begründung:** Das Goethe-Institut zertifiziert Deutsch. Ein Thai-Gegenstück
+gibt es durchaus — die Suche führte auf den **CU-TFL** des Sirindhorn Thai
+Language Institute der Chulalongkorn-Universität, der ebenfalls Hören,
+Sprechen, Lesen und Schreiben prüft. Gebaut wurde er hier trotzdem nicht, und
+zwar aus genau dem Grund, aus dem diese Phase überhaupt mit Recherche beginnt:
+
+- Die **Primärquelle war aus dieser Sitzung nicht erreichbar** (die Navigation
+  zu `sti.chula.ac.th` wurde abgelehnt).
+- Die Sekundärquellen widersprechen sich in einem Kernpunkt, der ins Schema
+  gehört: die eine nennt die fünf Stufen *Basic, Intermediate, Good,
+  Excellent, Superior*, die andere *Novice, Intermediate, Advanced, Superior,
+  Distinguished*.
+
+Eine Stufenskala aus zwei einander widersprechenden Sekundärquellen
+zusammenzusetzen, wäre dasselbe Raten, das die Phasenvorgabe ausdrücklich
+verbietet — nur diesmal auf der anderen Seite der App. Also: nichts bauen, den
+Grund benennen, und das Schema so lassen, dass ein **recherchierter** CU-TFL
+später danebenpasst, ohne dass etwas umgebaut werden muss. Die Einseitigkeit
+steht auch im UI, damit niemand sie für ein Versehen hält.
+
+### AE-20 — Lesen und Hören werden bewertet, Schreiben und Sprechen nicht
+
+**Entscheidung:** Aufgaben zu Lesen und Hören werden automatisch ausgewertet.
+Schreiben und Sprechen sind Aufgaben mit **Musterlösung und Selbstkontrolle**
+(Typ `production`) — sie bekommen keine Punktzahl. Es gibt außerdem
+**nirgends eine Bestehensgrenze**.
+
+**Begründung:** Ein freier Text oder eine gesprochene Antwort ließe sich nur
+von einem Sprachmodell beurteilen. Dessen Urteil wäre eine ungeprüfte Aussage
+über die eigene Prüfungsreife — und die Prüfung kostet Geld, Zeit und hängt in
+manchen Fällen an einem Visum. „Deine Antwort reicht für A1" ist eine Auskunft,
+für die dieses Projekt keine Grundlage hat. Musterlösung plus Prüfliste sagt
+dagegen genau so viel, wie belegbar ist.
+
+Dieselbe Überlegung führt zur fehlenden Bestehensgrenze: wie viele Punkte zum
+Bestehen nötig sind, steht in den Durchführungsbestimmungen des
+Goethe-Instituts, die hier **nicht** erhoben wurden. Eine ausgedachte Grenze
+(„60 % — bestanden!") wäre die plausibel klingende Erfindung, gegen die diese
+ganze Phase gerichtet ist. Angezeigt wird deshalb nur, wie viel richtig war,
+mit dem Hinweis, dass es eine Übung ist und keine Prüfung.
+
+Aus derselben Entscheidung folgt, was der Generator **nicht** erzeugt: Lese-
+und Hörtexte ja, Schreib- und Sprechaufgaben nein — dort wäre die Musterlösung
+selbst ungeprüfter Text, an dem sich jemand ausrichtet.
+
 ---
 
 ## Protokoll
@@ -1133,6 +1214,127 @@ TTS, ohne dass an der Übung etwas geändert werden muss.
   der Warnpfad, der lief, nicht der Hörpfad. Ob eine Thai-TTS-Stimme die Töne
   brauchbar wiedergibt, lässt sich erst am Gerät beurteilen und gehört zu B-2.
 
+### 2026-08-31 — Phase 7: Prüfungsmodul
+
+**Zuerst die Recherche — sie hat das Schema bestimmt, nicht umgekehrt**
+
+Beide vorgegebenen Seiten liefern über `WebFetch` **HTTP 403**. Abgerufen wurden
+sie deshalb über den echten Browser, am **2026-08-31**:
+
+| Seite | Was sie hergab |
+| --- | --- |
+| `goethe.de/ins/th/de/spr/prf.html` | Prüfungsangebot A1–C2, dazu TestDaF und Goethe-Test PRO; je Stufe getrennt für Jugendliche und Erwachsene |
+| `…/prf/gzsd1/inf.html` | Struktur **A1: Start Deutsch 1** |
+| `…/prf/gzsd2/inf.html` | Struktur **A2** |
+| `…/prf/gzb1/inf.html` | Struktur **B1** |
+| `goethe.de/ins/th/de/spr/tsd.html` | Einstufungstest — der Inhalt steckt in einem `iframe` auf `goethe.de/lrn/pro/30-item/m/de/index.html` |
+
+Die erhobene Struktur (wörtlich übernommen, Belege stehen im Code an jedem
+Zertifikat):
+
+| | A1: Start Deutsch 1 | A2 | B1 |
+| --- | --- | --- | --- |
+| Teile heißen | Prüfungsteile | Prüfungsteile | **Module**, einzeln ablegbar |
+| Lesen | 25 Min | etwa 30 Min | 65 Min |
+| Hören | 20 Min | etwa 30 Min | 40 Min |
+| Schreiben | 20 Min | etwa 30 Min | 60 Min |
+| Sprechen | 15 Min, **Gruppenprüfung** | 15 Min | etwa 15 Min, **Paarprüfung** |
+| Alter empfohlen | ab 16 | ab 16 | Jugendliche ab 12, Erwachsene ab 16 |
+| Unterrichtseinheiten | 80–200 | 200–350 | 350–650 |
+
+**Der Einstufungstest, Aufgabe für Aufgabe durchgeklickt.** Die URL sagt
+`30-item`; die Einleitung nennt als Gegenstand „wie gut Sie schriftliche und
+mündliche deutsche Texte verstehen und wie gut Ihre Grammatik- und
+Wortschatzkenntnisse schon sind". Beobachtet wurden diese Formate, in dieser
+Reihenfolge: Zeitungsanzeige mit drei A/B/C-Fragen → Hörgespräch (echte
+mp3-Datei) mit Richtig/Falsch → Kaufhaus-Wegweiser als Zuordnung → Radio-Ansage
+mit A/B/C → „Welche Anzeige passt zu der Situation?" → Kommentare mit
+Zuordnung → Pressetext mit A/B/C → Hörtext mit Richtig/Falsch → **Lückentext**
+(„Rekonstruieren Sie den Text, indem Sie die fehlenden Wörter ergänzen"). Die
+Schwierigkeit steigt sichtbar von einer Bahn-Anzeige bis zu „Erkenntnisse aus
+der Stressforschung". Daraus stammen die vier Aufgabenformate im Schema —
+`multipleChoice`, `trueFalse`, `matching`, `gapFill`.
+
+**Gemacht**
+
+- `src/lib/exam/types.ts` — die drei Zertifikate als Daten samt Quelle und
+  Abrufdatum, dazu das `ExamModule`-Schema als **unterscheidende Union**:
+  bewertbare Aufgaben tragen `items`, freie Aufgaben `production`. Der Typ
+  zwingt die Oberfläche, beide Fälle zu behandeln, statt eine Punktzahl für
+  einen freien Text zu erfinden.
+- `src/data/exam-modules.ts` — **acht mitgelieferte Aufgaben**, alle vier
+  Fertigkeiten und alle fünf Formate abgedeckt, auf A1 und A2.
+- `src/lib/exam/session.ts` — Übersicht je Stufe und Fertigkeit, Auswertung.
+- `src/lib/exam/{plan,generator,batch}.ts` — zusätzliche Lese- und Höraufgaben
+  über die **schon vorhandene** Batch-Infrastruktur.
+- `src/app/exam.tsx` + `components/exam-runner.tsx`, neuer Reiter **Prüfung**
+  in beiden Navigationen.
+- Einstellungen: dritte Generator-Karte.
+
+**Inhalt aus Vorhandenem, und wo das aufhört**
+
+Die Texte sind aus dem deutschen Teil des geprüften Vokabel-Grundstocks
+zusammengesetzt — Markt, Obst, Gemüse, Fisch, Laden, Schule, Arzt, Auto,
+Kaffee, Tee —, ergänzt um elementare Funktionswörter, Uhrzeiten und
+Eigennamen, ohne die eine Anzeige keine Anzeige wäre. Dieselbe Ehrlichkeit wie
+bei den Beispielsätzen aus Phase 2: die einzelnen Wörter sind gedeckt, die
+Sätze als Ganzes sind nicht einzeln gegen eine Quelle geprüft. Und ausdrücklich
+im UI: **es sind keine Originalaufgaben und keine Modellsätze** des
+Goethe-Instituts.
+
+Für den Hörteil war kein neues Material nötig — die Skripte werden über die
+Aussprache-Abstraktion aus Phase 3 vorgelesen (`de-DE`). Das Skript ist vor dem
+Auswerten **nicht** zu lesen, danach schon, weil man es zum Nachvollziehen der
+eigenen Fehler braucht.
+
+**Batch-Infrastruktur zum dritten Mal benutzt, nicht neu gebaut**
+
+`runExamBatch` ist ein Adapter über demselben Läufer wie Sprachsituationen und
+Bilder. Die vier Robustheitsregeln stehen weiterhin an genau einer Stelle. Neu
+ist nur die Sammlung `exam` — und die Regel, dass **Löschen die mitgelieferten
+Aufgaben nicht anfasst**: sie sind Teil der App und müssen ohne Schlüssel und
+ohne Netz da sein.
+
+**Ein echter Fehler, den erst ein Test gefunden hat**
+
+Die mitgelieferten Aufgaben wurden anfangs nur eingespielt, wenn die Sammlung
+`exam` **komplett leer** war. Wer auf einem frischen Gerät zuerst Aufgaben
+erzeugt und erst danach den Prüfungs-Reiter öffnet, hätte deshalb nie die
+mitgelieferten bekommen — dauerhaft. Geprüft wird jetzt, ob die
+**mitgelieferten IDs** vorhanden sind, nicht ob die Sammlung leer ist.
+
+**Verifiziert**
+
+- `npm test` → **365 Tests grün** in 12 Suites (vorher 322). `npx tsc --noEmit`
+  fehlerfrei. Die Tests prüfen unter anderem, dass jedes Zertifikat eine
+  `https`-Quelle und ein Abrufdatum trägt, dass die erhobenen Dauern
+  unverändert im Code stehen, dass in **jeder** bewertbaren Aufgabe der
+  `correctIndex` auf eine tatsächlich vorhandene Option zeigt (der
+  gefährlichste denkbare Fehler: die Aufgabe wäre nie lösbar), und dass der
+  Generator eine Antwort mit `correctIndex` außerhalb der Optionen ablehnt.
+- **Im Browser durchgespielt:** Hörverstehen A1 (3/3 richtig, Skript erst nach
+  dem Auswerten sichtbar, Begründung je Aufgabe), Leseverstehen A1 mit Anzeige,
+  Sprechen A1 (Aufgabe, Leitpunkte, Musterlösung mit Vorlesetaste,
+  Selbstkontrolle). B1 zeigt korrekt die Modul-Formulierung und für alle vier
+  Fertigkeiten „noch keine Aufgabe".
+- **Echter Lauf durch den Netzwerkpfad**, aus der Oberfläche heraus mit
+  absichtlich ungültigem Schlüssel: 8 von 8 verarbeitet, 0 erzeugt, 8
+  fehlgeschlagen, jeder Fehlschlag mit ID und
+  `401 … authentication_error … API key is invalid`, **0 Aufgaben gespeichert**
+  — der Bestand blieb bei den acht mitgelieferten.
+- Layout bei 375 px geprüft.
+
+**Offen**
+
+- **B-2** (Gerätecheck in Expo Go) und **B-4** (Bilder-Probelauf mit gültigem
+  Stability-Schlüssel) sind beide weiterhin offen — am selben Tag vom Nutzer
+  bestätigt.
+- Für **B1** gibt es keine Aufgaben. Das ist kein Versehen: B1-Material
+  bräuchte B1-Wortschatz, und der Grundstock trägt A1/A2. Der Reiter sagt das.
+- Die **Durchführungsbestimmungen** (Punkteverteilung, Bestehensgrenzen) sind
+  nicht erhoben. Solange das so ist, gibt es hier bewusst keine Bewertung
+  „bestanden/nicht bestanden" — siehe AE-20.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -1230,9 +1432,18 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
    Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft.
 3. **Restliche 20 Bilder**, sobald der Probelauf sitzt: „Alle konkreten
    Vokabeln" statt „Probelauf". Der Lauf überspringt, was schon da ist.
-4. **Phase 7 — Prüfungsmodul** (Goethe-Seiten erst fetchen, dann bauen).
-5. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
-6. **Phase 9 — QA & Abschluss.**
+4. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
+5. **Phase 9 — QA & Abschluss.**
+
+**Offene Fäden aus Phase 7, bewusst nicht mitgemacht:**
+
+- **Durchführungsbestimmungen erheben** (die PDFs sind auf den
+  Zertifikatsseiten verlinkt): Punkteverteilung und Bestehensgrenzen. Erst
+  damit dürfte die App „bestanden" sagen — siehe AE-20.
+- **B1-Aufgaben** brauchen erst B1-Wortschatz; das hängt am Skalierungsplan.
+- **CU-TFL recherchieren**, falls das Prüfungsmodul auch die Gegenrichtung
+  bedienen soll — Primärquelle `sti.chula.ac.th`, die aus dieser Sitzung nicht
+  erreichbar war. Das Schema trägt `direction` bereits (AE-19).
 
 **Naheliegende Fortsetzungen aus Phase 6, bewusst nicht mitgemacht:**
 

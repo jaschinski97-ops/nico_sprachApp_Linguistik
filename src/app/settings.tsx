@@ -9,13 +9,24 @@ import { Spacing } from '@/constants/theme';
 import { runGenerationBatch } from '@/lib/conversation/batch';
 import { createAnthropicClient, GENERATOR_MODEL } from '@/lib/conversation/generator';
 import { FULL_RUN, planSituations } from '@/lib/conversation/plan';
+import { runExamBatch } from '@/lib/exam/batch';
+import { createExamClient, EXAM_GENERATOR_MODEL } from '@/lib/exam/generator';
+import { EXAM_FULL_RUN, EXAM_TEST_RUN, planExamModules } from '@/lib/exam/plan';
 import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store';
 import { runImageBatch } from '@/lib/images/batch';
 import { createStabilityImageClient, IMAGE_MODEL } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
 import { Direction } from '@/lib/fsrs/types';
 import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
-import { clearSituations, clearVocabImages, countSituations, countVocabImages } from '@/lib/repository';
+import {
+  clearGeneratedExamModules,
+  clearSituations,
+  clearVocabImages,
+  countExamModules,
+  countGeneratedExamModules,
+  countSituations,
+  countVocabImages,
+} from '@/lib/repository';
 import { DIRECTION_LABELS, DIRECTIONS } from '@/lib/review-session';
 
 /**
@@ -39,6 +50,19 @@ const SITUATION_RUNS: RunOption[] = [
 
 const IMAGE_CANDIDATES = countImageCandidates();
 
+const EXAM_RUNS: RunOption[] = [
+  {
+    id: 'test',
+    label: 'Probelauf',
+    hint: `${planExamModules(EXAM_TEST_RUN).length} Aufgaben — jede Kombination aus Stufe, Fertigkeit und Format einmal`,
+  },
+  {
+    id: 'full',
+    label: 'Vollständiger Lauf',
+    hint: `${planExamModules(EXAM_FULL_RUN).length} Aufgaben — kostet echtes Geld und dauert`,
+  },
+];
+
 const IMAGE_RUNS: RunOption[] = [
   {
     id: 'test',
@@ -56,6 +80,7 @@ export default function SettingsScreen() {
   const [situations, setSituations] = useState<number | null>(null);
   const [images, setImages] = useState<number | null>(null);
   const [blobBackend, setBlobBackend] = useState<string | null>(null);
+  const [exams, setExams] = useState<{ total: number; generated: number } | null>(null);
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
 
   const refreshSituations = useCallback(async () => {
@@ -66,14 +91,19 @@ export default function SettingsScreen() {
     setImages(await countVocabImages());
   }, []);
 
+  const refreshExams = useCallback(async () => {
+    setExams({ total: await countExamModules(), generated: await countGeneratedExamModules() });
+  }, []);
+
   useEffect(() => {
     refreshSituations();
     refreshImages();
+    refreshExams();
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
     getImageBlobStore().then(() => setBlobBackend(getActiveBlobBackend()));
     loadProfile().then(setProfile);
-  }, [refreshSituations, refreshImages]);
+  }, [refreshSituations, refreshImages, refreshExams]);
 
   const chooseDefaultDirection = useCallback(async (direction: Direction | null) => {
     setProfile(await setDefaultDirection(direction));
@@ -102,6 +132,17 @@ export default function SettingsScreen() {
       // Bildaufrufe dauern deutlich länger als Textaufrufe; die Pause darf
       // entsprechend größer sein.
       delayMs: 800,
+    });
+  }, []);
+
+  const startExams = useCallback(async ({ optionId, apiKey, onProgress, shouldCancel }: StartArgs) => {
+    const specs = planExamModules(optionId === 'full' ? EXAM_FULL_RUN : EXAM_TEST_RUN);
+    await runExamBatch({
+      specs,
+      client: createExamClient(apiKey),
+      onProgress,
+      shouldCancel,
+      delayMs: 400,
     });
   }, []);
 
@@ -162,11 +203,25 @@ export default function SettingsScreen() {
         onFinished={refreshImages}
       />
 
+      <GeneratorCard
+        heading="Generator: Prüfungsaufgaben"
+        description="Zusätzliche Lese- und Höraufgaben für die Goethe-Zertifikate A1 und A2. Die mitgelieferten Aufgaben bleiben immer erhalten; erzeugt wird nur, was dazukommt. Schreiben und Sprechen werden bewusst nicht erzeugt — dort gäbe es keine geprüfte Musterlösung."
+        provider="anthropic"
+        keyPlaceholder="sk-ant-…"
+        statusLine={`Im Speicher: ${exams === null ? '…' : `${exams.total} Aufgaben, davon ${exams.generated} erzeugt`} · Modell ${EXAM_GENERATOR_MODEL}`}
+        runOptions={EXAM_RUNS}
+        onStart={startExams}
+        onDelete={clearGeneratedExamModules}
+        deleteLabel="Erzeugte Aufgaben löschen"
+        canDelete={Boolean(exams && exams.generated > 0)}
+        onFinished={refreshExams}
+      />
+
       <ThemedText type="small" themeColor="textSecondary">
-        Die beiden Generatoren brauchen verschiedene Anbieter: Anthropic
-        erzeugt keine Bilder, Stability AI schon. Beide Schlüssel liegen
-        getrennt und werden nur für Generierungsläufe gebraucht, nie zum
-        Lernen.
+        Die Generatoren brauchen verschiedene Anbieter: Anthropic
+        erzeugt Dialoge und Prüfungsaufgaben, aber keine Bilder — die kommen
+        von Stability AI. Beide Schlüssel liegen getrennt und werden nur für
+        Generierungsläufe gebraucht, nie zum Lernen.
       </ThemedText>
     </ScreenScaffold>
   );

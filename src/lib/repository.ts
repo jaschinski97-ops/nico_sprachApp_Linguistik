@@ -8,7 +8,10 @@
 
 import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
+import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
+
 import { ConversationSituation } from './conversation/types';
+import { ExamModule } from './exam/types';
 import { getImageBlobStore } from './images/blob-store';
 import { ImageBlobStore, VocabImage } from './images/types';
 
@@ -201,6 +204,68 @@ export async function clearVocabImages(
   // erzeugt. Andersherum blieben Dateien liegen, von denen niemand mehr weiss.
   await blobs.clear();
   await db.clear('images');
+}
+
+/* ---------- Pruefungsmodule (Phase 7) ---------- */
+
+/**
+ * Spielt die mitgelieferten Aufgaben ein.
+ *
+ * Wie beim Vokabel-Grundstock: idempotent und ueberschreibend, weil sie Teil
+ * der App sind und nicht Nutzerdaten. Erzeugte Aufgaben (`source: 'generated'`)
+ * werden dabei nicht angefasst.
+ */
+export async function seedExamModules(
+  store?: DataStore,
+  modules: ExamModule[] = BUILTIN_EXAM_MODULES
+): Promise<number> {
+  const db = store ?? (await getStore());
+  await db.putMany(
+    'exam',
+    modules.map((module) => ({ id: module.id, value: module }))
+  );
+  return modules.length;
+}
+
+export async function loadExamModules(store?: DataStore): Promise<ExamModule[]> {
+  const db = store ?? (await getStore());
+  let modules = await db.getAll<ExamModule>('exam');
+
+  // Geprueft wird, ob die MITGELIEFERTEN Aufgaben da sind - nicht, ob die
+  // Sammlung leer ist. Der Unterschied ist keine Feinheit: wer auf einem
+  // frischen Geraet erst Aufgaben erzeugt und dann die Pruefung oeffnet,
+  // haette sonst nur die erzeugten und nie die mitgelieferten.
+  const vorhanden = new Set(modules.map((module) => module.id));
+  const fehlt = BUILTIN_EXAM_MODULES.some((module) => !vorhanden.has(module.id));
+  if (fehlt) {
+    await seedExamModules(db);
+    modules = await db.getAll<ExamModule>('exam');
+  }
+
+  return modules.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export async function countExamModules(store?: DataStore): Promise<number> {
+  return (await loadExamModules(store)).length;
+}
+
+export async function countGeneratedExamModules(store?: DataStore): Promise<number> {
+  return (await loadExamModules(store)).filter((module) => module.source === 'generated').length;
+}
+
+/**
+ * Loescht nur die erzeugten Aufgaben.
+ *
+ * Die mitgelieferten bleiben: sie sind Teil der App und muessen ohne
+ * Schluessel und ohne Netz da sein - dieselbe Regel wie beim
+ * Vokabel-Grundstock.
+ */
+export async function clearGeneratedExamModules(store?: DataStore): Promise<void> {
+  const db = store ?? (await getStore());
+  const modules = await db.getAll<ExamModule>('exam');
+  for (const module of modules) {
+    if (module.source === 'generated') await db.remove('exam', module.id);
+  }
 }
 
 /* ---------- Einstellungen / Lernprofil ---------- */
