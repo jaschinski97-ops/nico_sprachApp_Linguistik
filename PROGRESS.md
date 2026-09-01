@@ -1604,6 +1604,23 @@ zurückgesetzt.
 - Web-Export nach allen Konfigurationsänderungen erneut erzeugt, aus statischem
   Server ausgeliefert, App lief fehlerfrei.
 
+**Für iOS gibt es auf diesem Rechner überhaupt keinen Weg — auch keinen lokalen**
+
+Zur Vollständigkeit geprüft, damit die Frage nicht offenbleibt: Der
+Android-Prebuild lief unter Windows durch und ließ sich auswerten (siehe oben).
+Der iOS-Prebuild lehnt schon die Erzeugung ab:
+
+```
+$ npx expo prebuild --platform ios --no-install
+⚠️  Skipping generating the iOS native project files.
+   Run npx expo prebuild again from macOS or Linux to generate the iOS project.
+CommandError: At least one platform must be enabled when syncing
+```
+
+Damit ist belegt, was vorher nur plausibel war: Für iOS gibt es keinen lokalen
+Ersatzweg, mit dem sich irgendetwas ohne EAS prüfen ließe. Der Mac-Cloud-Weg
+über EAS ist die einzige Möglichkeit, und die hängt am Konto.
+
 **Entscheidung des Nutzers: die Phase wird so abgeschlossen**
 
 Zwei der sechs Abnahmekriterien — der installierbare Android-Build und ein
