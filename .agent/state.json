@@ -1,10 +1,10 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-08-31",
-  "currentPhase": 7,
-  "currentPhaseName": "Pruefungsmodul",
-  "currentPhaseStatus": "done-in-web-build",
+  "lastUpdated": "2026-09-01",
+  "currentPhase": 8,
+  "currentPhaseName": "Build & Distribution",
+  "currentPhaseStatus": "configured-and-web-export-verified-awaiting-expo-account",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -366,6 +366,74 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 8,
+      "criterion": "eas.json mit development/preview/production-Profilen",
+      "done": true,
+      "verifiedHow": "development (Dev-Client, APK, iOS-Simulator), preview (APK, iOS-Simulator, interne Verteilung), production (AAB, autoIncrement); cli.appVersionSource remote. Gueltiges JSON; gegen die EAS-CLI pruefbar erst nach Anmeldung."
+    },
+    {
+      "phase": 8,
+      "criterion": "app.json fuer EAS vollstaendig",
+      "done": true,
+      "verifiedHow": "android.package und ios.bundleIdentifier ergaenzt (com.thailernbegleiter.app) - ohne sie baut EAS gar nicht. expo-dev-client installiert, sonst kann das development-Profil nicht bauen."
+    },
+    {
+      "phase": 8,
+      "criterion": "APK/AAB-Wahl begruendet",
+      "done": true,
+      "verifiedHow": "AE-21: Testprofile bauen APK, weil ein AAB sich laut EAS-Dokumentation nicht direkt aufs Geraet installieren laesst; production bleibt beim AAB, weil Google Play das verlangt."
+    },
+    {
+      "phase": 8,
+      "criterion": "iOS-Weg ohne Apple-Konto gefunden und begruendet",
+      "done": true,
+      "verifiedHow": "AE-22: Simulator-Build (ios.simulator true). Die EAS-Dokumentation sagt woertlich, das gehe 'without needing to deploy to TestFlight or even having an Apple Developer account'. Ein Geraete-Build braucht weiterhin das Apple Developer Program."
+    },
+    {
+      "phase": 8,
+      "criterion": "EAS-Kontingente und Kosten aktuell nachgesehen",
+      "done": true,
+      "verifiedHow": "Am 2026-09-01 von expo.dev/pricing und expo.dev/pricing.md: Free 0 $/Monat mit 15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Updates an 1K MAUs; Starter 19 $, Production 199 $, Enterprise individuell. Fuer dieses Projekt reicht der freie Tarif."
+    },
+    {
+      "phase": 8,
+      "criterion": "Web-Export lauffaehig",
+      "done": true,
+      "verifiedHow": "npx expo export --platform web: 8 statische Routen, 3,1 MB in dist/, die Bildablage als eigene Datei (verzoegertes Laden aus Phase 5 funktioniert auch im Export). Aus einem schlichten statischen Server ausgeliefert - Pruefungsmodul und Artikel-Uebung liefen vollstaendig, keine Konsolenfehler."
+    },
+    {
+      "phase": 8,
+      "criterion": "WordPress-Anschluss bewusst offen gelassen und begruendet",
+      "done": true,
+      "verifiedHow": "AE-23: Im Export nachgemessen, dass die Buendel absolut referenziert werden (/_expo/static/...). Fuer ein Unterverzeichnis braucht es experiments.baseUrl in app.json plus einen neuen Export; ohne bekannten Zielpfad gesetzt, macht das den Export ueberall sonst kaputt. Haken laut Doku: Link und router setzen den Basispfad selbst davor, ein rohes <a> und die Linking-API nicht."
+    },
+    {
+      "phase": 8,
+      "criterion": "Icons/Splash geprueft",
+      "done": true,
+      "verifiedHow": "Nachgesehen: assets/images/ enthaelt unveraendert den Bildersatz des Expo-Templates, auch assets/expo.icon/ ist das Expo-Symbol. Als offener Punkt vor einer Store-Einreichung benannt, nicht selbst gestaltet - kein Auftrag dieser Phase."
+    },
+    {
+      "phase": 8,
+      "criterion": "Android-Testbuild tatsaechlich gebaut und installiert",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an."
+    },
+    {
+      "phase": 8,
+      "criterion": "iOS-Build mindestens einmal ueber EAS durchgelaufen",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-5 - dasselbe Konto. Der Simulator-Weg braucht danach kein Apple-Konto mehr (AE-22)."
+    },
+    {
+      "phase": 8,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. Phase 8 hat keine Geschaeftslogik angefasst."
     }
   ],
   "architectureDecisions": [
@@ -468,6 +536,21 @@
       "id": "AE-20",
       "title": "Lesen und Hoeren werden bewertet, Schreiben und Sprechen nicht - und nirgends eine Bestehensgrenze",
       "rationale": "Freie Texte und gesprochene Antworten liessen sich nur von einem Sprachmodell beurteilen; dessen Urteil waere eine ungepruefte Aussage ueber die eigene Pruefungsreife, und die Pruefung kostet Geld und haengt teils an einem Visum. Musterloesung plus Pruefliste sagt so viel, wie belegbar ist. Dieselbe Ueberlegung fuer die Bestehensgrenze: sie steht in den nicht erhobenen Durchfuehrungsbestimmungen. Folge fuer den Generator: nur Lesen und Hoeren werden erzeugt."
+    },
+    {
+      "id": "AE-21",
+      "title": "APK fuer Testbuilds, AAB nur fuer den Play Store",
+      "rationale": "Laut EAS-Dokumentation lassen sich AABs nicht direkt aufs Geraet installieren - fuer einen installierbaren Testbuild, der Expo Go und damit B-2 umgeht, waere das genau das Falsche. Google Play verlangt umgekehrt ein AAB, deshalb bleibt production dabei. Beide Testprofile nutzen distribution internal fuer eine teilbare Installationsadresse."
+    },
+    {
+      "id": "AE-22",
+      "title": "iOS zuerst als Simulator-Build, weil das ohne Apple-Konto geht",
+      "rationale": "Der Apple-Signierweg war dem Nutzer schon in Phase 3 zu aufwendig, und das Developer Program kostet laufend Geld. Die EAS-Doku zu Simulator-Builds sagt woertlich, das gehe ohne Apple Developer Account. Damit ist genau ein iOS-Weg offen, der ohne Apple-Konto durch die Mac-Cloud laeuft. Kein Geraete- oder TestFlight-Build."
+    },
+    {
+      "id": "AE-23",
+      "title": "Web-Export bleibt an der Wurzel; WordPress-Einbettung bewusst nicht gebaut",
+      "rationale": "Im Export nachgemessen: Buendel werden absolut referenziert (/_expo/static/..., /favicon.ico). In einem Unterverzeichnis wuerde der Browser sie an der Wurzel suchen. Der Hebel dafuer ist experiments.baseUrl in app.json, wirkt aber zur Exportzeit - ohne bekannten Zielpfad gesetzt, macht er den Export ueberall sonst kaputt. Die Hosting-Entscheidung gehoert dem Nutzer; die Umstellung ist spaeter eine Zeile plus erneuter Export."
     }
   ],
   "openBlockers": [
@@ -481,7 +564,7 @@
         6
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen.",
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist.",
       "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
     },
     {
@@ -493,15 +576,25 @@
       "needsUser": true,
       "note": "Fremde API-Schluessel gebe ich nicht ein. Alles davor ist geprueft: CORS empirisch, Anfrageform gegen die laufende API, Fehlerverhalten, Batch-Robustheit, Ablage, Offline-Abruf und Anzeige. Nicht pruefbar war allein die ANTWORTform - der Parser nennt im Fehlerfall die gelieferten Feldnamen.",
       "steps": "Einstellungen -> Karte 'Generator: Bilder' -> Stability-Schluessel eintragen -> Probelauf (5) -> Start. Erwartung 5/5 erzeugt; danach '5 von 25 Bildern' und Bilder im Reiter Lernen, nach dem Neuladen ohne Schluessel weiterhin da."
+    },
+    {
+      "id": "B-5",
+      "title": "EAS-Konto anlegen und die Builds anstossen",
+      "affectsPhases": [
+        8
+      ],
+      "needsUser": true,
+      "note": "Gemessen, nicht vermutet: 'npx eas-cli whoami' -> 'Not logged in'; selbst 'eas config' bricht mit 'An Expo user account is required to proceed' ab. Es gibt also keinen Teil von EAS, den ich stellvertretend pruefen koennte. Fremde Konten lege ich nicht an - dieselbe Linie wie bei den API-Schluesseln. Der freie Tarif reicht (15 Android- und 15 iOS-Builds).",
+      "steps": "npm install --global eas-cli ; eas login ; eas build --platform android --profile preview (beim ersten Lauf 'Generate new keystore' bestaetigen, dann APK ueber den QR-Code aufs Handy). Danach eas build --platform ios --profile preview fuer den Simulator-Build."
     }
   ],
   "nextUp": {
-    "phase": 8,
-    "name": "Build & Distribution",
+    "phase": 9,
+    "name": "QA & Abschluss",
     "tasks": [
-      "Zuerst B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel, danach die restlichen 20 Bilder",
-      "EAS-Build fuer Android/iOS, Web-Export",
-      "Offene Faeden aus Phase 7: Durchfuehrungsbestimmungen erheben (dann erst 'bestanden'), B1-Aufgaben nach dem Wortschatz-Ausbau, CU-TFL recherchieren falls die Gegenrichtung dazukommen soll"
+      "Zuerst B-5: EAS-Konto, Android-APK bauen und installieren (schliesst B-2 fuer Android mit)",
+      "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
+      "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen"
     ]
   },
   "situations": {
@@ -606,5 +699,25 @@
     },
     "notScraped": "Durchfuehrungsbestimmungen (Punkteverteilung, Bestehensgrenzen) - deshalb keine Bewertung bestanden/nicht bestanden",
     "b1": "keine Aufgaben - braucht B1-Wortschatz, der Grundstock traegt A1/A2"
+  },
+  "distribution": {
+    "easProfiles": {
+      "development": "Dev-Client, APK, iOS-Simulator",
+      "preview": "APK, iOS-Simulator, interne Verteilung",
+      "production": "AAB, autoIncrement"
+    },
+    "appVersionSource": "remote",
+    "bundleIdentifier": "com.thailernbegleiter.app",
+    "bundleIdentifierNote": "Vor dem ersten Store-Upload bestaetigen - danach nicht mehr aenderbar.",
+    "webExport": {
+      "command": "npx expo export --platform web",
+      "routes": 8,
+      "sizeMb": 3.1,
+      "assetPaths": "absolut (/_expo/static/...) - Unterverzeichnis braucht experiments.baseUrl",
+      "verified": "aus schlichtem statischem Server ausgeliefert, App lief fehlerfrei"
+    },
+    "easPricingChecked": "2026-09-01",
+    "easFreeTier": "15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Updates an 1K MAUs",
+    "placeholders": "App-Symbol und Splash sind noch die Expo-Template-Platzhalter"
   }
 }

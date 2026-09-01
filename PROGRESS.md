@@ -567,6 +567,76 @@ Aus derselben Entscheidung folgt, was der Generator **nicht** erzeugt: Lese-
 und Hörtexte ja, Schreib- und Sprechaufgaben nein — dort wäre die Musterlösung
 selbst ungeprüfter Text, an dem sich jemand ausrichtet.
 
+### AE-21 — APK für Testbuilds, AAB nur für den Play Store
+
+**Entscheidung:** Die Profile `development` und `preview` bauen ein **APK**
+(`android.buildType: "apk"`), `production` ein **AAB** (`app-bundle`).
+
+**Begründung — in der EAS-Dokumentation nachgesehen:** „AABs can't be installed
+directly on your device." Ein AAB ist ein Bündel, aus dem der Play Store erst
+gerätespezifische APKs schneidet; auf ein Handy laden lässt es sich nicht. Da
+das erklärte Ziel dieser Phase ein **installierbarer** Testbuild ist — und
+zwar einer, der den Umweg über Expo Go und damit den Blocker B-2 umgeht —,
+wäre ein AAB hier genau das Falsche. Umgekehrt verlangt Google Play für neue
+Apps ein AAB, deshalb bleibt `production` dabei.
+
+Beide Testprofile tragen zusätzlich `distribution: "internal"`. Das erzeugt
+laut Dokumentation eine teilbare Installationsadresse — der Nutzer bekommt
+einen Link aufs Handy statt einer Datei, die er erst irgendwie übertragen muss.
+
+### AE-22 — iOS zuerst als Simulator-Build, weil das ohne Apple-Konto geht
+
+**Entscheidung:** Die Profile `development` und `preview` setzen für iOS
+`simulator: true`.
+
+**Begründung:** Der Apple-Signierweg war dem Nutzer schon in Phase 3 zu
+aufwendig (B-2), und die Mitgliedschaft im Apple Developer Program kostet
+laufend Geld. Die EAS-Dokumentation zu Simulator-Builds sagt dazu wörtlich, ein
+solcher Build laufe „without needing to deploy to TestFlight or even having an
+**Apple Developer account**". Damit ist genau ein iOS-Weg offen, der ohne
+Apple-Konto durch die Mac-Cloud läuft — und das ist der, der in dieser Phase
+verlangt war („mindestens ein Durchlauf über EAS").
+
+Was das **nicht** ist: ein Build fürs echte Gerät oder für TestFlight. Dafür
+braucht es das Apple Developer Program (99 USD/Jahr laut EAS-Setup-Seite) und
+Signierschlüssel, die EAS zwar selbst erzeugen kann, aber erst nach Anmeldung
+mit einer Apple-ID. Das bleibt offen und ist als solches benannt.
+
+### AE-23 — Der Web-Export bleibt an der Wurzel; die WordPress-Einbettung ist bewusst nicht gebaut
+
+**Entscheidung:** `npx expo export --platform web` erzeugt einen statischen
+Export, der an der **Wurzel** einer Domain oder Subdomain liegt. Eine
+WordPress-Einbettung ist **nicht** gebaut — aber der Hebel dafür ist benannt
+und der Export so gelassen, dass er ihn nicht verstellt.
+
+**Begründung — im Export nachgemessen, nicht vermutet:** Die erzeugte
+`dist/index.html` verweist auf ihre Bündel **absolut**:
+
+```
+src="/_expo/static/js/web/entry-367a768a954092aad27cf9af094d407c.js"
+href="/favicon.ico"
+```
+
+Unter `example.com/lernbegleiter/` abgelegt, würde der Browser diese Dateien
+also unter `example.com/_expo/…` suchen und nicht finden. Wer den Export später
+in ein Unterverzeichnis legen will, braucht deshalb `experiments.baseUrl` in
+`app.json` (z. B. `"baseUrl": "/lernbegleiter"`) und einen **neuen Export** —
+die Angabe wirkt zur Exportzeit, nicht zur Laufzeit. Die Dokumentation nennt
+dazu einen Haken, der später zählt: `Link` und die `router`-API setzen den
+Basispfad selbst davor, ein rohes `<a>` oder die `Linking`-API dagegen nicht.
+
+Warum jetzt trotzdem nichts davon gesetzt wird: Ein `baseUrl` festzulegen,
+ohne den Zielpfad zu kennen, macht den Export an jeder anderen Stelle kaputt —
+inklusive dem lokalen Ausprobieren. Die Entscheidung „eigene Subdomain oder
+Unterverzeichnis" gehört zum Hosting und liegt beim Nutzer. Der Export
+funktioniert heute ohne jede Sonderbehandlung; die Umstellung ist später eine
+Zeile plus ein erneuter Export.
+
+**Geprüft, nicht angenommen:** Der Export wurde aus einem gewöhnlichen
+statischen Server ausgeliefert (kein Dev-Server, kein Metro) und die App lief
+vollständig — inklusive Prüfungsmodul und Artikel-Übung, ohne einen einzigen
+Konsolenfehler.
+
 ---
 
 ## Protokoll
@@ -1335,6 +1405,150 @@ mitgelieferten bekommen — dauerhaft. Geprüft wird jetzt, ob die
   nicht erhoben. Solange das so ist, gibt es hier bewusst keine Bewertung
   „bestanden/nicht bestanden" — siehe AE-20.
 
+### 2026-09-01 — Phase 8: Build & Distribution
+
+**Was ich selbst machen konnte — und wo die Wand steht**
+
+Der Web-Export ist fertig und geprüft. Alles, was EAS betrifft, ist vorbereitet,
+aber **nicht ausgeführt**: EAS verlangt ein Expo-Konto, und der Nutzer hat
+keines. Das ist nicht vermutet, sondern gemessen:
+
+```
+$ npx eas-cli@latest whoami
+Not logged in
+
+$ npx eas-cli@latest config --platform android --profile preview
+An Expo user account is required to proceed.
+Either log in with eas login or set the EXPO_TOKEN environment variable
+```
+
+Bemerkenswert daran: Selbst das bloße **Anzeigen** der Konfiguration verlangt
+ein Konto. Es gibt also keinen Teil von EAS, den ich stellvertretend prüfen
+könnte. Fremde Konten lege ich nicht an — dieselbe Linie wie bei den
+API-Schlüsseln in Phase 4, 5 und 7.
+
+**EAS-Kosten, am 2026-09-01 nachgesehen** (nicht aus altem Wissen), von
+`expo.dev/pricing` und der maschinenlesbaren Fassung `expo.dev/pricing.md`:
+
+| Tarif | Preis | Build-Guthaben | Warteschlange |
+| --- | --- | --- | --- |
+| **Free** | 0 $/Monat | **15 Android- und 15 iOS-Builds** | niedrige Priorität |
+| Starter | 19 $/Monat + Nutzung | 45 $ Guthaben | hohe Priorität |
+| Production | 199 $/Monat + Nutzung | 225 $ Guthaben | hohe Priorität, 2 Nebenläufigkeiten |
+| Enterprise | individuell | 1 000 $ Guthaben | 5 Nebenläufigkeiten |
+
+Der freie Tarif enthält außerdem 60 Minuten CI/CD-Workflows, Einreichung in die
+App-Stores und Updates an 1 000 aktive Nutzer im Monat. **Für dieses Projekt
+reicht der freie Tarif**: 15 Android- und 15 iOS-Builds sind für ein paar
+Testdurchläufe reichlich. Eine Einschränkung, die die Seite nicht ausspricht:
+ob die 15 Builds monatlich zurückgesetzt werden oder einmalig sind, steht dort
+nicht — sie stehen in der Vergleichstabelle in derselben Zeile wie das
+monatliche Guthaben der Bezahltarife („Build credit"). Wer viel bauen will,
+sollte das im Konto selbst nachsehen.
+
+**Gemacht**
+
+- `eas.json` mit drei Profilen — `development` (Dev-Client, APK, iOS-Simulator),
+  `preview` (APK, iOS-Simulator, interne Verteilung), `production` (AAB,
+  `autoIncrement`). `cli.appVersionSource: "remote"`, weil EAS damit
+  `versionCode` und `buildNumber` selbst hochzählt und doppelte Uploads
+  verhindert. Begründung zu APK/AAB in **AE-21**, zu iOS in **AE-22**.
+- `app.json` um die beiden Angaben ergänzt, **ohne die EAS gar nicht baut**:
+  `android.package` und `ios.bundleIdentifier`, beide
+  `com.thailernbegleiter.app`.
+- `expo-dev-client` installiert — ohne das Paket kann das `development`-Profil
+  nicht bauen.
+- Web-Export erzeugt und aus einem gewöhnlichen statischen Server geprüft.
+
+**Der Web-Export, geprüft**
+
+`npx expo export --platform web` erzeugte **8 statische Routen** (`/`, `/review`,
+`/conversation`, `/exam`, `/progress`, `/settings`, `/_sitemap`, `/+not-found`)
+und 3,1 MB in `dist/`. Der Haupt-Bundle wiegt 2,5 MB; die Bildablage liegt
+erwartungsgemäß als **eigene Datei** daneben
+(`blob-backend-….js`, 1,4 KB) — das verzögerte Laden aus Phase 5 funktioniert
+also auch im Export und nicht nur im Dev-Server.
+
+Danach aus einem schlichten statischen Server ausgeliefert (kein Metro, kein
+Dev-Server): Prüfungsmodul und Artikel-Übung liefen vollständig, **keine
+Konsolenfehler**. Zur Wurzel-/Unterverzeichnis-Frage siehe **AE-23**.
+
+**Icons und Splash: noch die Platzhalter aus dem Template**
+
+Nachgesehen statt vermutet. `assets/images/` enthält unverändert den
+Bildersatz des Expo-Templates — `icon.png`, `splash-icon.png`,
+`android-icon-foreground/background/monochrome.png`, dazu `expo-logo.png`,
+`react-logo.png`, `expo-badge.png`. Auch `assets/expo.icon/` (Apples neues
+`.icon`-Bündelformat, auf das `ios.icon` zeigt) ist das Expo-Symbol. Der
+Splash-Screen läuft über `expo-splash-screen` mit `#208AEF` und demselben
+Platzhalterbild.
+
+Das ist **kein Fehler und kein Auftrag dieser Phase**, aber es gehört benannt:
+Ein Build mit diesen Dateien trägt das Expo-Logo als App-Symbol. Für einen
+Testbuild ist das gleichgültig, für eine Store-Einreichung nicht.
+
+**Bundle-Identifier: einmal gewählt, dann festgenagelt**
+
+`com.thailernbegleiter.app` ist gesetzt, weil ohne ihn gar nichts baut. Er ist
+aber eine Entscheidung, die der Nutzer vor dem **ersten Store-Upload**
+bestätigen sollte: Nach der Veröffentlichung lässt sich weder der
+Android-`package` noch der iOS-`bundleIdentifier` ändern, ohne dass daraus eine
+neue App wird. Üblich ist eine Umkehrung einer Domain, die einem selbst gehört.
+
+**Der Weg zum Android-Testbuild — für den Nutzer**
+
+```bash
+npm install --global eas-cli
+```
+
+```bash
+eas login
+```
+
+```bash
+eas build --platform android --profile preview
+```
+
+Der erste Build fragt nach einem Android-Keystore; „Generate new keystore"
+bestätigen, EAS verwahrt ihn. Danach liefert EAS eine Adresse mit QR-Code — auf
+dem Handy öffnen, APK laden, installieren (Android fragt einmal nach
+„Installation aus unbekannten Quellen"). Das ist eine **installierte App**,
+kein Expo Go: die SDK-Versionsfrage, an der B-2 hing, stellt sich damit nicht
+mehr.
+
+Für iOS im Simulator:
+
+```bash
+eas build --platform ios --profile preview
+```
+
+Das braucht **kein** Apple-Konto (AE-22), liefert aber ein Simulator-Abbild,
+das nur auf einem Mac mit Xcode läuft. Ein Build fürs echte iPhone braucht das
+Apple Developer Program.
+
+**Verifiziert**
+
+- `npm test` → **365 Tests grün** in 12 Suites, `npx tsc --noEmit` fehlerfrei
+  (Phase 8 hat keine Geschäftslogik angefasst).
+- `eas.json` ist gültiges JSON; gegen die EAS-CLI prüfen ließ es sich nicht,
+  weil dafür ein Konto nötig ist (siehe oben).
+- Web-Export erzeugt, aus statischem Server ausgeliefert, App lief fehlerfrei.
+
+**Offen**
+
+- **B-5 (neu): EAS-Konto anlegen und die drei Builds anstoßen.** Das ist der
+  einzige verbleibende Schritt dieser Phase und liegt beim Nutzer. Erst danach
+  lässt sich sagen, dass ein Build tatsächlich durchgelaufen ist — ich habe
+  die Konfiguration vorbereitet, nicht den Build bewiesen.
+- **B-2** bleibt formal offen, ist aber jetzt anders gelagert: Der
+  Android-Weg über ein `preview`-APK umgeht Expo Go vollständig. Sobald B-5
+  erledigt ist, schließt derselbe Schritt B-2 für Android mit. Für iOS bleibt
+  B-2 offen, solange kein Apple-Konto da ist.
+- **B-4** (Bilder mit gültigem Stability-Schlüssel) unverändert offen — am
+  selben Tag vom Nutzer bestätigt.
+- **App-Symbol und Splash** sind Template-Platzhalter. Vor einer
+  Store-Einreichung zu ersetzen; ausdrücklich kein Auftrag dieser Phase.
+
 ---
 
 ## Skalierungsplan auf ~1000 Einträge
@@ -1432,8 +1646,25 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
    Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft.
 3. **Restliche 20 Bilder**, sobald der Probelauf sitzt: „Alle konkreten
    Vokabeln" statt „Probelauf". Der Lauf überspringt, was schon da ist.
-4. **Phase 8 — Build & Distribution** (EAS Android/iOS, Web-Export).
+4. **EAS-Konto anlegen und bauen (Blocker B-5, schließt Phase 8 ab und
+   B-2 für Android gleich mit):** `npm install --global eas-cli`, dann
+   `eas login`, dann `eas build --platform android --profile preview`. Beim
+   ersten Lauf „Generate new keystore" bestätigen. Der freie Tarif reicht
+   (15 Android- und 15 iOS-Builds). Danach `--platform ios --profile preview`
+   für den Simulator-Build, der **kein** Apple-Konto braucht.
+   *Warum ich das nicht selbst gemacht habe:* EAS verlangt schon zum Lesen der
+   Konfiguration ein Konto (`Not logged in`), und fremde Konten lege ich nicht
+   an. Alles davor ist vorbereitet und geprüft.
 5. **Phase 9 — QA & Abschluss.**
+
+**Vor einer Store-Einreichung, nicht vorher nötig:**
+
+- **App-Symbol und Splash-Screen** ersetzen — stehen noch auf den
+  Template-Platzhaltern von Expo (kein Auftrag von Phase 8, siehe dort).
+- **Bundle-Identifier bestätigen** (`com.thailernbegleiter.app`). Nach der
+  Veröffentlichung nicht mehr änderbar.
+- **Google Play (25 $ einmalig) bzw. Apple Developer Program (99 $/Jahr)** —
+  Zahlen von der EAS-Setup-Seite, abgerufen am 2026-09-01.
 
 **Offene Fäden aus Phase 7, bewusst nicht mitgemacht:**
 
