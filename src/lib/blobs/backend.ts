@@ -1,30 +1,32 @@
 import { Directory, File, Paths } from 'expo-file-system';
 
-import { ImageBlobStore } from './types';
+import { BlobStore, BlobStoreConfig } from './types';
 
 /**
- * Natives Bild-Backend (iOS/Android): eine Datei je Bild unter
- * `<Dokumentverzeichnis>/images/`.
+ * Natives Backend (iOS/Android): eine Datei je Eintrag unter
+ * `<Dokumentverzeichnis>/<name>/`.
  *
- * NACHGESEHEN, NICHT ANGENOMMEN — `expo-file-system@57.0.6`:
+ * NACHGESEHEN, NICHT ANGENOMMEN — `expo-file-system@57.0.6` (Phase 5):
  * - `File.write(inhalt, { encoding: 'base64' })` nimmt Base64 direkt entgegen
- *   und dekodiert nativ (`src/File.types.ts`, `encoding?: EncodingType | 'utf8'
- *   | 'base64'`). Ein eigener Base64-Dekodierer in JavaScript ist damit
+ *   und dekodiert nativ. Ein eigener Base64-Dekodierer in JavaScript ist damit
  *   überflüssig.
  * - `Paths.document` ist laut Typdefinition „a place to store files that are
  *   safe from being deleted by the system" — im Gegensatz zu `Paths.cache`,
- *   das das System bei Speichermangel leeren darf. Generierte Bilder kosten
+ *   das das System bei Speichermangel leeren darf. Generierte Inhalte kosten
  *   Geld; sie gehören nicht in einen Cache.
- * - `file.uri` liefert einen `file:///`-Pfad, den `<Image>` direkt anzeigt.
+ * - `file.uri` liefert einen `file:///`-Pfad, den `<Image>` und `expo-audio`
+ *   direkt entgegennehmen.
  *
- * Metro wählt für Web stattdessen `blob-backend.web.ts` — expo-file-system hat
- * auf Web **gar keine** Umsetzung (siehe AE-14).
+ * Metro wählt für Web stattdessen `backend.web.ts` — expo-file-system hat auf
+ * Web **gar keine** Umsetzung (siehe AE-14).
  */
 
-const DIRECTORY_NAME = 'images';
+class FileSystemBlobStore implements BlobStore {
+  private directory: Directory;
 
-class FileSystemImageBlobStore implements ImageBlobStore {
-  private directory = new Directory(Paths.document, DIRECTORY_NAME);
+  constructor(private readonly config: BlobStoreConfig) {
+    this.directory = new Directory(Paths.document, config.name);
+  }
 
   async init(): Promise<void> {
     if (!this.directory.exists) {
@@ -58,13 +60,13 @@ class FileSystemImageBlobStore implements ImageBlobStore {
 
   async clear(): Promise<void> {
     if (this.directory.exists) this.directory.delete();
-    this.directory = new Directory(Paths.document, DIRECTORY_NAME);
+    this.directory = new Directory(Paths.document, this.config.name);
     this.directory.create({ intermediates: true });
   }
 }
 
-export function createImageBlobStore(): ImageBlobStore {
-  return new FileSystemImageBlobStore();
+export function createBlobStore(config: BlobStoreConfig): BlobStore {
+  return new FileSystemBlobStore(config);
 }
 
 export const BLOB_BACKEND_NAME = 'expo-file-system';

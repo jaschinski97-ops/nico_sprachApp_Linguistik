@@ -25,6 +25,11 @@ export type CollectionName =
    * Begründung in AE-14.
    */
   | 'images'
+  /**
+   * AudioClip — Metadaten zu den Hörclips (Phase 11). Die Audiodaten liegen
+   * wie die Bilder im Blob-Speicher (`lib/clips`), siehe AE-30.
+   */
+  | 'audio'
   /** ExamModule — Prüfungsvorbereitung (Phase 7). */
   | 'exam'
   /** ReviewDayLog — ein Dokument je Kalendertag mit Wiederholungszahlen (Phase 4). */
@@ -37,6 +42,7 @@ export const COLLECTIONS: CollectionName[] = [
   'cards',
   'situations',
   'images',
+  'audio',
   'exam',
   'reviewLog',
   'meta',

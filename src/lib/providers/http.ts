@@ -131,6 +131,37 @@ export async function postJson(options: JsonPostOptions): Promise<unknown> {
   }
 }
 
+/**
+ * Ein POST mit JSON hin und **Binärdaten** zurück — für Anbieter, die eine
+ * Audiodatei direkt liefern statt JSON mit Base64 (OpenAI, Phase 11).
+ */
+export async function postForBytes(
+  options: JsonPostOptions
+): Promise<{ bytes: ArrayBuffer; contentType: string }> {
+  const host = hostOf(options.url);
+
+  let response: Response;
+  try {
+    response = await fetch(options.url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      body: JSON.stringify(options.body),
+      credentials: NO_CREDENTIALS,
+    });
+  } catch (error) {
+    throw describeNetworkFailure(error, host);
+  }
+
+  if (!response.ok) {
+    throw new Error(describeHttpError(response.status, await response.text()));
+  }
+
+  return {
+    bytes: await response.arrayBuffer(),
+    contentType: response.headers.get('content-type') ?? '',
+  };
+}
+
 export function hostOf(url: string): string {
   const match = url.match(/^https?:\/\/([^/]+)/i);
   return match ? match[1] : url;

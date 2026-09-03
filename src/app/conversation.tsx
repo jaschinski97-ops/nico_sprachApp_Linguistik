@@ -6,7 +6,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { playPronunciation } from '@/lib/audio';
+import { PlaybackKind, playPronunciation } from '@/lib/audio';
 import { ConversationSituation, TOPIC_LABELS } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
 import { loadSituations } from '@/lib/repository';
@@ -144,17 +144,7 @@ function SituationCard({
                 <ThemedText type="small" themeColor="textSecondary">
                   {turn.speaker === 'learner' ? 'Du' : 'Gegenüber'}
                 </ThemedText>
-                <Pressable
-                  onPress={() => {
-                    playPronunciation({ text: turn.thai, language: 'th' }).catch(() => {});
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Anhören: ${turn.thai}`}
-                  style={({ pressed }) => pressed && styles.pressed}>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    🔊
-                  </ThemedText>
-                </Pressable>
+                <TurnSpeakButton text={turn.thai} />
               </View>
               <ThemedText>{turn.thai}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -186,7 +176,46 @@ function SituationCard({
   );
 }
 
+/**
+ * Vorlesetaste eines Zugs. Seit Phase 11 kann dahinter ein Clip stecken
+ * (`lib/clips`, gefunden ueber Text und Sprache - deshalb ohne ID). Spielt
+ * einer, steht „KI-Stimme" daneben: eine synthetische Aufnahme, keine
+ * Muttersprachler-Aufnahme (Pflicht 4).
+ */
+function TurnSpeakButton({ text }: { text: string }) {
+  const [played, setPlayed] = useState<PlaybackKind | null>(null);
+  return (
+    <View style={styles.turnSpeak}>
+      {played === 'asset' ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          KI-Stimme
+        </ThemedText>
+      ) : null}
+      <Pressable
+        onPress={() => {
+          playPronunciation({ text, language: 'th' })
+            .then(setPlayed)
+            .catch(() => {});
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`Anhören: ${text}${
+          played === 'asset' ? ' (synthetische Stimme, keine Muttersprachler-Aufnahme)' : ''
+        }`}
+        style={({ pressed }) => pressed && styles.pressed}>
+        <ThemedText type="small" themeColor="textSecondary">
+          🔊
+        </ThemedText>
+      </Pressable>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  turnSpeak: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.three,

@@ -11,10 +11,19 @@ import * as Speech from 'expo-speech';
  *      -> vorproduzierter Clip.
  *   2. Sonst -> `expo-speech` (TTS), th-TH für Thai, de-DE für Deutsch.
  *
- * In Phase 3 gibt es noch keine Clips, der Auflöser liefert also immer `null`
- * und es läuft alles über TTS. Sobald der Content-Schritt Clips erzeugt, wird
- * per `registerAudioAssetResolver` ein Auflöser eingehängt — die aufrufenden
- * Screens ändern sich dabei nicht.
+ * In Phase 3 gab es noch keine Clips, der Auflöser lieferte also immer `null`
+ * und es lief alles über TTS. Seit Phase 11 hängt `lib/clips` einen
+ * Auflöser ein — und zwar **über Text und Sprache**, nicht nur über eine
+ * Asset-ID: die Gespräch-Seite ruft `playPronunciation({ text, language })`
+ * ohne jede ID, und sie sollte dafür nicht angefasst werden. Reihenfolge:
+ *
+ *   1. `audioAssetId` gesetzt und auflösbar → Clip.
+ *   2. Sonst: Clip zu (Sprache, Text) vorhanden → Clip.
+ *   3. Sonst: `expo-speech`.
+ *
+ * Was abgespielt wurde, sagt der Rückgabewert (`asset` / `tts`) — die
+ * Oberfläche kann damit ehrlich kennzeichnen, dass ein Clip eine
+ * synthetische Stimme ist (Pflicht 4 der Phase 11).
  */
 
 export type SpeechLanguage = 'th' | 'de';
@@ -40,13 +49,25 @@ export type PronunciationRequest = {
 /** Was tatsächlich abgespielt wurde — nützlich für Tests und Anzeige. */
 export type PlaybackKind = 'asset' | 'tts' | 'unavailable';
 
-/** Löst eine Asset-ID in eine abspielbare Quelle auf. */
-export type AudioAssetResolver = (assetId: string) => string | null;
+/** Löst eine Asset-ID in eine abspielbare Quelle auf — synchron oder asynchron. */
+export type AudioAssetResolver = (assetId: string) => string | null | Promise<string | null>;
 
 let resolveAudioAsset: AudioAssetResolver = () => null;
 
 export function registerAudioAssetResolver(resolver: AudioAssetResolver): void {
   resolveAudioAsset = resolver;
+}
+
+/** Findet zu (Sprache, Text) einen Clip — der Weg, den `lib/clips` benutzt. */
+export type PronunciationClipLookup = (request: {
+  text: string;
+  language: SpeechLanguage;
+}) => string | null | Promise<string | null>;
+
+let lookupClip: PronunciationClipLookup = () => null;
+
+export function registerPronunciationClipLookup(lookup: PronunciationClipLookup | null): void {
+  lookupClip = lookup ?? (() => null);
 }
 
 /** Trennt die Wiedergabe von der Entscheidungslogik, damit sie testbar bleibt. */
@@ -101,7 +122,17 @@ export async function playPronunciation(
     // Nichts lief, das ist kein Fehler.
   });
 
-  const uri = request.audioAssetId ? resolveAudioAsset(request.audioAssetId) : null;
+  let uri: string | null = null;
+  if (request.audioAssetId) {
+    uri = await resolveAudioAsset(request.audioAssetId);
+  }
+  if (!uri) {
+    // Ein Fehler beim Nachschlagen darf die Wiedergabe nicht verhindern -
+    // dann eben TTS, wie vor Phase 11.
+    uri = await Promise.resolve(lookupClip({ text, language: request.language })).catch(
+      () => null
+    );
+  }
   if (uri) {
     await backend.playAsset(uri);
     return 'asset';

@@ -6,7 +6,13 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { runClipBatch } from '@/lib/clips/batch';
+import { getActiveAudioBlobBackend, getAudioBlobStore } from '@/lib/clips/blob-store';
+import { createClipGenerationClient } from '@/lib/clips/generator';
+import { estimateClipBytes, formatBytes, planClips, planClipTestRun } from '@/lib/clips/plan';
+import { AudioClipSpec } from '@/lib/clips/types';
 import { runGenerationBatch } from '@/lib/conversation/batch';
+import { ConversationSituation } from '@/lib/conversation/types';
 import { createGenerationClient } from '@/lib/conversation/generator';
 import { FULL_RUN, planSituations } from '@/lib/conversation/plan';
 import { runExamBatch } from '@/lib/exam/batch';
@@ -28,14 +34,19 @@ import {
   setGeneratorProvider,
 } from '@/lib/providers/settings';
 import {
+  clearAudioClips,
   clearGeneratedExamModules,
   clearSituations,
   clearVocabImages,
+  countAudioClips,
   countExamModules,
   countGeneratedExamModules,
   countSituations,
   countVocabImages,
+  loadSituations,
+  sumAudioClipBytes,
 } from '@/lib/repository';
+import { ProviderId } from '@/lib/providers/types';
 import { DIRECTION_LABELS, DIRECTIONS } from '@/lib/review-session';
 
 /**
@@ -89,8 +100,47 @@ const IMAGE_RUNS: RunOption[] = [
   },
 ];
 
+/**
+ * Die Umfänge des Clip-Laufs hängen vom Bestand ab (wie viele Situationen
+ * gespeichert sind) und vom Anbieter (WAV bei Gemini, mp3 bei ChatGPT) —
+ * deshalb werden sie je Aufruf gebaut, nicht als Konstante. Die Schätzung
+ * steht **vor** dem Start am Knopf (Pflicht 3).
+ */
+function clipRunOptions(
+  storedSituations: ConversationSituation[],
+  provider: ProviderId
+): { options: RunOption[]; specsFor: (optionId: string) => AudioClipSpec[] } {
+  const plans: Record<string, AudioClipSpec[]> = {
+    test: planClipTestRun(),
+    vocab: planClips({}),
+    turns: planClips({ includeWords: false, includeExamples: false, situations: storedSituations }),
+    all: planClips({ situations: storedSituations }),
+  };
+  const size = (specs: AudioClipSpec[]) => {
+    const bytes = estimateClipBytes(specs, provider);
+    return bytes === null ? '' : ` · geschätzt ${formatBytes(bytes)}`;
+  };
+  const options: RunOption[] = [
+    { id: 'test', label: 'Probelauf', hint: `${plans.test.length} Clips — fünf Vokabeln samt Beispielsatz${size(plans.test)}` },
+    { id: 'vocab', label: 'Alle Vokabeln', hint: `${plans.vocab.length} Clips — jedes Wort und jeder Beispielsatz${size(plans.vocab)}` },
+    {
+      id: 'turns',
+      label: 'Gesprächszüge',
+      hint:
+        plans.turns.length === 0
+          ? 'Keine gespeicherten Sprachsituationen — erst oben Dialoge erzeugen.'
+          : `${plans.turns.length} Clips — jeder Thai-Zug der ${storedSituations.length} gespeicherten Situationen, gleiche Sätze nur einmal${size(plans.turns)}`,
+    },
+    { id: 'all', label: 'Alles', hint: `${plans.all.length} Clips${size(plans.all)} — kostet echtes Geld und dauert` },
+  ];
+  return { options, specsFor: (optionId) => plans[optionId] ?? plans.test };
+}
+
 export default function SettingsScreen() {
   const [situations, setSituations] = useState<number | null>(null);
+  const [storedSituations, setStoredSituations] = useState<ConversationSituation[]>([]);
+  const [clips, setClips] = useState<{ count: number; bytes: number } | null>(null);
+  const [clipBackend, setClipBackend] = useState<string | null>(null);
   const [images, setImages] = useState<number | null>(null);
   const [blobBackend, setBlobBackend] = useState<string | null>(null);
   const [exams, setExams] = useState<{ total: number; generated: number } | null>(null);
@@ -99,6 +149,12 @@ export default function SettingsScreen() {
 
   const refreshSituations = useCallback(async () => {
     setSituations(await countSituations());
+    // Die Clip-Umfaenge haengen an den gespeicherten Situationen.
+    setStoredSituations(await loadSituations());
+  }, []);
+
+  const refreshClips = useCallback(async () => {
+    setClips({ count: await countAudioClips(), bytes: await sumAudioClipBytes() });
   }, []);
 
   const refreshImages = useCallback(async () => {
@@ -113,12 +169,14 @@ export default function SettingsScreen() {
     refreshSituations();
     refreshImages();
     refreshExams();
+    refreshClips();
+    getAudioBlobStore().then(() => setClipBackend(getActiveAudioBlobBackend()));
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
     getImageBlobStore().then(() => setBlobBackend(getActiveBlobBackend()));
     loadProfile().then(setProfile);
     loadGeneratorSettings().then(setGenerators);
-  }, [refreshSituations, refreshImages, refreshExams]);
+  }, [refreshSituations, refreshImages, refreshExams, refreshClips]);
 
   const chooseDefaultDirection = useCallback(async (direction: Direction | null) => {
     setProfile(await setDefaultDirection(direction));
@@ -170,6 +228,20 @@ export default function SettingsScreen() {
     });
   },
     []
+  );
+
+  const startClips = useCallback(
+    async ({ optionId, apiKey, provider, model, voice, onProgress, shouldCancel }: StartArgs) => {
+      const specs = clipRunOptions(storedSituations, provider).specsFor(optionId);
+      await runClipBatch({
+        specs,
+        client: createClipGenerationClient(provider, apiKey, model, voice),
+        onProgress,
+        shouldCancel,
+        delayMs: 600,
+      });
+    },
+    [storedSituations]
   );
 
   const startExams = useCallback(
@@ -258,6 +330,21 @@ export default function SettingsScreen() {
         deleteLabel="Erzeugte Aufgaben löschen"
         canDelete={Boolean(exams && exams.generated > 0)}
         onFinished={refreshExams}
+      />
+
+      <GeneratorCard
+        heading="Generator: Hörclips"
+        description="Eine Aufnahme je Vokabel, Beispielsatz und Gesprächszug, einmalig erzeugt und lokal gespeichert — danach spielt „Anhören“ den Clip statt der Sprachausgabe des Geräts, auch wenn dort keine Thai-Stimme installiert ist. Es sind synthetische Stimmen, keine Muttersprachler-Aufnahmen; die App sagt das beim Abspielen dazu. Ob die Töne stimmen, ist gemessen (AE-31), nicht versprochen."
+        group="audio"
+        choice={generators.audio}
+        onChoiceChange={(change) => changeGenerator('audio', change)}
+        statusLine={`Im Speicher: ${clips === null ? '…' : `${clips.count} Clips, ${formatBytes(clips.bytes)}`} · Ablage ${clipBackend ?? '…'}`}
+        runOptions={clipRunOptions(storedSituations, generators.audio.provider).options}
+        onStart={startClips}
+        onDelete={clearAudioClips}
+        deleteLabel="Alle Clips löschen"
+        canDelete={Boolean(clips && clips.count > 0)}
+        onFinished={refreshClips}
       />
 
       <ThemedText type="small" themeColor="textSecondary">

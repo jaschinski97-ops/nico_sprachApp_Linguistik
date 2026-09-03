@@ -31,7 +31,7 @@ import {
 
 const SETTINGS_KEY = 'generators';
 
-export const GENERATOR_GROUPS = ['situations', 'exam', 'images'] as const;
+export const GENERATOR_GROUPS = ['situations', 'exam', 'images', 'audio'] as const;
 export type GeneratorGroupId = (typeof GENERATOR_GROUPS)[number];
 
 export type GeneratorGroupInfo = {
@@ -63,10 +63,20 @@ export const GENERATOR_GROUP_INFO: Record<GeneratorGroupId, GeneratorGroupInfo> 
     // Der Bestand aus Phase 5 (AE-13).
     defaultProvider: 'stability',
   },
+  audio: {
+    id: 'audio',
+    label: 'Hörclips',
+    needs: 'audio',
+    // Kein Bestand, also die Wahl nach Messung: Gemini kommt aus dem Browser
+    // durch, ChatGPT nicht (AE-27/AE-31). Nativ ginge beides.
+    defaultProvider: 'gemini',
+  },
 };
 
 export type GeneratorChoice = {
   provider: ProviderId;
+  /** Nur bei Sprachausgabe: die Stimme des Anbieters. Freitext wie das Modell. */
+  voice?: string;
   /**
    * Freitext. **Nicht validiert** (Pflicht 5): Modellnamen wechseln zu oft,
    * um sie einzufrieren, und ein Katalog im Code wäre schon beim nächsten
@@ -82,12 +92,18 @@ export function defaultModelFor(provider: ProviderId, needs: ProviderCapability)
   return PROVIDER_INFO[provider].modelPlaceholder[needs];
 }
 
+export function defaultVoiceFor(provider: ProviderId): string {
+  return PROVIDER_INFO[provider].voicePlaceholder;
+}
+
 export function defaultChoiceFor(group: GeneratorGroupId): GeneratorChoice {
   const info = GENERATOR_GROUP_INFO[group];
-  return {
+  const choice: GeneratorChoice = {
     provider: info.defaultProvider,
     model: defaultModelFor(info.defaultProvider, info.needs),
   };
+  if (info.needs === 'audio') choice.voice = defaultVoiceFor(info.defaultProvider);
+  return choice;
 }
 
 export function defaultSettings(): GeneratorSettings {
@@ -95,6 +111,7 @@ export function defaultSettings(): GeneratorSettings {
     situations: defaultChoiceFor('situations'),
     exam: defaultChoiceFor('exam'),
     images: defaultChoiceFor('images'),
+    audio: defaultChoiceFor('audio'),
   };
 }
 
@@ -123,7 +140,14 @@ export function normalizeChoice(raw: unknown, group: GeneratorGroupId): Generato
       ? value.model.trim()
       : defaultModelFor(provider, info.needs);
 
-  return { provider, model };
+  const choice: GeneratorChoice = { provider, model };
+  if (info.needs === 'audio') {
+    choice.voice =
+      typeof value.voice === 'string' && value.voice.trim() !== ''
+        ? value.voice.trim()
+        : defaultVoiceFor(provider);
+  }
+  return choice;
 }
 
 export async function loadGeneratorSettings(store?: DataStore): Promise<GeneratorSettings> {
@@ -132,6 +156,7 @@ export async function loadGeneratorSettings(store?: DataStore): Promise<Generato
     situations: normalizeChoice(stored?.situations, 'situations'),
     exam: normalizeChoice(stored?.exam, 'exam'),
     images: normalizeChoice(stored?.images, 'images'),
+    audio: normalizeChoice(stored?.audio, 'audio'),
   };
 }
 
@@ -163,7 +188,11 @@ export async function setGeneratorProvider(
 ): Promise<GeneratorSettings> {
   return setGeneratorChoice(
     group,
-    { provider, model: defaultModelFor(provider, GENERATOR_GROUP_INFO[group].needs) },
+    {
+      provider,
+      model: defaultModelFor(provider, GENERATOR_GROUP_INFO[group].needs),
+      voice: defaultVoiceFor(provider),
+    },
     store
   );
 }

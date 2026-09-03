@@ -35,6 +35,7 @@ import {
 } from './image';
 import {
   defaultChoiceFor,
+  GENERATOR_GROUP_INFO,
   GENERATOR_GROUPS,
   loadGeneratorSettings,
   normalizeChoice,
@@ -142,7 +143,7 @@ describe('Fähigkeiten der Anbieter', () => {
       const angeboten = providersForGroup(group);
       expect(angeboten.length).toBeGreaterThan(0);
       for (const info of angeboten) {
-        expect(info.modelPlaceholder[group === 'images' ? 'image' : 'text']).not.toBe('');
+        expect(info.modelPlaceholder[GENERATOR_GROUP_INFO[group].needs]).not.toBe('');
       }
     }
   });

@@ -1,29 +1,26 @@
-import { formatOfKey, ImageBlobStore, MIME_BY_FORMAT } from './types';
+import { BlobStore, BlobStoreConfig } from './types';
 
 /**
- * Web-Bild-Backend: IndexedDB.
+ * Web-Backend: IndexedDB, eine Datenbank je Ablage.
  *
  * WARUM NICHT DER VORHANDENE DOKUMENTSPEICHER (AE-14, kurz):
  * Dessen Web-Backend schreibt über `@react-native-async-storage/async-storage`,
  * und dessen Web-Umsetzung ist `window.localStorage` — im installierten Paket
- * nachgesehen (`lib/module/AsyncStorage.js`, `window.localStorage.setItem`).
- * localStorage hat je Herkunft rund 5 MB, und zwar für **alle** Sammlungen
- * zusammen: Vokabeln, Kartenzustände, Sprachsituationen, Tagesprotokoll. Ein
- * paar Dutzend Bilder sprengen das.
+ * nachgesehen. localStorage hat je Herkunft rund 5 MB, und zwar für **alle**
+ * Sammlungen zusammen. Ein paar Dutzend Bilder sprengen das; Hörclips
+ * (Phase 11) erst recht — ein einziger Satz als 24-kHz-PCM wiegt so viel wie
+ * zwei Bilder.
  *
  * IndexedDB hat dagegen keine feste Kleinstgrenze (Browser vergeben Anteile
  * des freien Plattenplatzes), speichert asynchron und wird nicht bei jedem
  * Schreibvorgang komplett neu serialisiert.
  *
- * Abgelegt wird der **Base64-String**, nicht ein `Blob`. Grund: `<Image>` in
- * React Native Web nimmt eine `data:`-URL direkt entgegen; ein Objekt-URL
- * (`URL.createObjectURL`) müsste dagegen wieder freigegeben werden, und ein
- * vergessenes `revokeObjectURL` hält die Daten für die ganze Sitzung im
- * Speicher. Der Aufschlag von einem Drittel durch Base64 ist der einfachere
- * Tausch.
+ * Abgelegt wird der **Base64-String**, nicht ein `Blob`: `<Image>` und
+ * `<audio>` nehmen eine `data:`-URL direkt entgegen; ein Objekt-URL müsste
+ * wieder freigegeben werden, und ein vergessenes `revokeObjectURL` hält die
+ * Daten für die ganze Sitzung im Speicher.
  */
 
-const DB_NAME = 'thai-lernbegleiter-images';
 const STORE_NAME = 'blobs';
 const DB_VERSION = 1;
 
@@ -34,8 +31,15 @@ function promisify<T>(request: IDBRequest<T>): Promise<T> {
   });
 }
 
-class IndexedDbImageBlobStore implements ImageBlobStore {
+class IndexedDbBlobStore implements BlobStore {
   private db: IDBDatabase | null = null;
+  private readonly dbName: string;
+
+  constructor(private readonly config: BlobStoreConfig) {
+    // `thai-lernbegleiter-images` heisst so seit Phase 5 - der Name ist Teil
+    // der gespeicherten Daten und darf sich nicht aendern.
+    this.dbName = `thai-lernbegleiter-${config.name}`;
+  }
 
   async init(): Promise<void> {
     if (this.db) return;
@@ -46,7 +50,7 @@ class IndexedDbImageBlobStore implements ImageBlobStore {
     }
 
     this.db = await new Promise<IDBDatabase>((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      const request = indexedDB.open(this.dbName, DB_VERSION);
       request.onupgradeneeded = () => {
         const db = request.result;
         if (!db.objectStoreNames.contains(STORE_NAME)) {
@@ -60,7 +64,7 @@ class IndexedDbImageBlobStore implements ImageBlobStore {
 
   private transaction(mode: IDBTransactionMode): IDBObjectStore {
     if (!this.db) {
-      throw new Error('ImageBlobStore.init() muss vor dem ersten Zugriff aufgerufen werden.');
+      throw new Error('BlobStore.init() muss vor dem ersten Zugriff aufgerufen werden.');
     }
     return this.db.transaction(STORE_NAME, mode).objectStore(STORE_NAME);
   }
@@ -77,7 +81,7 @@ class IndexedDbImageBlobStore implements ImageBlobStore {
   async uri(key: string): Promise<string | null> {
     const base64 = await promisify<string | undefined>(this.transaction('readonly').get(key));
     if (typeof base64 !== 'string') return null;
-    return `data:${MIME_BY_FORMAT[formatOfKey(key)]};base64,${base64}`;
+    return `data:${this.config.mimeOf(key)};base64,${base64}`;
   }
 
   async remove(key: string): Promise<void> {
@@ -89,8 +93,8 @@ class IndexedDbImageBlobStore implements ImageBlobStore {
   }
 }
 
-export function createImageBlobStore(): ImageBlobStore {
-  return new IndexedDbImageBlobStore();
+export function createBlobStore(config: BlobStoreConfig): BlobStore {
+  return new IndexedDbBlobStore(config);
 }
 
 export const BLOB_BACKEND_NAME = 'indexeddb';

@@ -12,6 +12,9 @@ import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
 import { ExamModule, isValidExamModule } from './exam/types';
+import { getAudioBlobStore } from './clips/blob-store';
+import { invalidateClipIndex } from './clips/lookup';
+import { AudioBlobStore, AudioClip, isValidAudioClip } from './clips/types';
 import { getImageBlobStore } from './images/blob-store';
 import { ImageBlobStore, VocabImage } from './images/types';
 
@@ -223,6 +226,42 @@ export async function clearVocabImages(
   // erzeugt. Andersherum blieben Dateien liegen, von denen niemand mehr weiss.
   await blobs.clear();
   await db.clear('images');
+}
+
+/* ---------- Hoerclips (Phase 11) ---------- */
+
+/**
+ * Wie die Bilder zweigeteilt: Metadaten in der Sammlung `audio`, die
+ * Audiodaten im Blob-Speicher (AE-30). Gelesen wird nachsichtig (AE-25).
+ */
+
+export async function loadAudioClips(store?: DataStore): Promise<AudioClip[]> {
+  const db = store ?? (await getStore());
+  const raw = await db.getAll<unknown>('audio');
+  const clips = raw.filter(isValidAudioClip);
+  meldeAussortierte('Hoerclips', raw.length, clips.length);
+  return clips.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+export async function countAudioClips(store?: DataStore): Promise<number> {
+  return (await loadAudioClips(store)).length;
+}
+
+/** Summe der abgelegten Audiodaten in Byte — die gemessene Zahl neben der Schaetzung. */
+export async function sumAudioClipBytes(store?: DataStore): Promise<number> {
+  return (await loadAudioClips(store)).reduce((sum, clip) => sum + clip.byteSize, 0);
+}
+
+export async function clearAudioClips(
+  store?: DataStore,
+  blobStore?: AudioBlobStore
+): Promise<void> {
+  const db = store ?? (await getStore());
+  const blobs = blobStore ?? (await getAudioBlobStore());
+  // Erst die Dateien, dann die Dokumente - wie bei den Bildern.
+  await blobs.clear();
+  await db.clear('audio');
+  invalidateClipIndex();
 }
 
 /* ---------- Pruefungsmodule (Phase 7) ---------- */

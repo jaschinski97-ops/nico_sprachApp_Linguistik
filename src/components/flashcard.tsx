@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThaiWord } from './thai-word';
@@ -8,7 +9,7 @@ import { VocabImageView } from './vocab-image';
 
 import { Spacing } from '@/constants/theme';
 import { VocabEntry } from '@/data/vocabulary';
-import { playPronunciation } from '@/lib/audio';
+import { PlaybackKind, playPronunciation } from '@/lib/audio';
 import { Direction } from '@/lib/fsrs/types';
 
 /**
@@ -177,25 +178,42 @@ function SpeakButton({
   assetId?: string;
   compact?: boolean;
 }) {
+  const [played, setPlayed] = useState<PlaybackKind | null>(null);
+
   return (
-    <Pressable
-      onPress={() => {
-        // Absichtlich ohne await: die Karte soll nicht auf die Sprachausgabe
-        // warten. Fehler (z. B. keine Thai-Stimme installiert) dürfen den
-        // Lernfluss nicht unterbrechen.
-        playPronunciation({ text, language, audioAssetId: assetId }).catch(() => {});
-      }}
-      accessibilityRole="button"
-      accessibilityLabel={`${spokenLabel ?? label}: ${text}`}
-      style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView
-        type="backgroundSelected"
-        style={compact ? styles.speakCompact : styles.speakButton}>
-        <ThemedText type="small" themeColor="textSecondary">
-          {compact ? label : `🔊 ${label}`}
+    <View style={compact ? undefined : styles.speakColumn}>
+      <Pressable
+        onPress={() => {
+          // Absichtlich ohne await: die Karte soll nicht auf die Sprachausgabe
+          // warten. Fehler (z. B. keine Thai-Stimme installiert) dürfen den
+          // Lernfluss nicht unterbrechen.
+          playPronunciation({ text, language, audioAssetId: assetId })
+            .then(setPlayed)
+            .catch(() => {});
+        }}
+        accessibilityRole="button"
+        accessibilityLabel={`${spokenLabel ?? label}: ${text}${
+          played === 'asset' ? ' (synthetische Stimme, keine Muttersprachler-Aufnahme)' : ''
+        }`}
+        style={({ pressed }) => pressed && styles.pressed}>
+        <ThemedView
+          type="backgroundSelected"
+          style={compact ? styles.speakCompact : styles.speakButton}>
+          <ThemedText type="small" themeColor="textSecondary">
+            {compact ? label : `🔊 ${label}`}
+          </ThemedText>
+        </ThemedView>
+      </Pressable>
+      {/* Pflicht 4 (Phase 11): Ein Clip ist eine KI-Stimme. Das steht genau
+          dann da, wenn einer gespielt hat - nicht als Dauerhinweis, der bald
+          niemand mehr liest, und nicht bei der Sprachausgabe des Geraets, die
+          ohnehin als solche erkennbar ist. */}
+      {played === 'asset' ? (
+        <ThemedText type="small" themeColor="textSecondary" style={styles.syntheticNote}>
+          {compact ? 'KI-Stimme' : 'KI-Stimme — keine Muttersprachler-Aufnahme'}
         </ThemedText>
-      </ThemedView>
-    </Pressable>
+      ) : null}
+    </View>
   );
 }
 
@@ -203,6 +221,12 @@ function SpeakButton({
 export const MIN_TOUCH = 44;
 
 const styles = StyleSheet.create({
+  speakColumn: {
+    gap: 2,
+  },
+  syntheticNote: {
+    fontSize: 11,
+  },
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.four,

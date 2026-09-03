@@ -43,8 +43,8 @@ export function isProviderId(value: unknown): value is ProviderId {
   return typeof value === 'string' && (PROVIDERS as readonly string[]).includes(value);
 }
 
-/** Was ein Anbieter kann — gemessen, nicht vermutet. Siehe AE-26/AE-27. */
-export type ProviderCapability = 'text' | 'image';
+/** Was ein Anbieter kann — gemessen, nicht vermutet. Siehe AE-26/AE-27/AE-31. */
+export type ProviderCapability = 'text' | 'image' | 'audio';
 
 export type ProviderInfo = {
   id: ProviderId;
@@ -64,6 +64,11 @@ export type ProviderInfo = {
    */
   modelPlaceholder: Record<ProviderCapability, string>;
   /**
+   * Beispielhafte Stimme für die Sprachausgabe — wie das Modell ein
+   * Platzhalter und kein Katalog. Leer, wenn der Anbieter nicht spricht.
+   */
+  voicePlaceholder: string;
+  /**
    * Warum dieser Anbieter im **Web-Build** nicht oder kaum funktioniert.
    * `null` heißt: nichts dergleichen gemessen. Steht nur im Web in der
    * Oberfläche — nativ gibt es kein CORS, dort gilt der Hinweis nicht.
@@ -78,20 +83,25 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     vendor: 'Anthropic',
     // Anthropic bietet keine Bild-Erzeugung an - das war schon der Grund,
     // warum Phase 5 ueberhaupt einen zweiten Anbieter suchen musste.
-    can: { text: true, image: false },
+    // ... und keine Sprachausgabe: Anthropic hat kein TTS-Modell (Phase 11).
+    can: { text: true, image: false, audio: false },
     keyPlaceholder: 'sk-ant-…',
     keySource: 'console.anthropic.com',
-    modelPlaceholder: { text: 'claude-opus-5', image: '' },
+    modelPlaceholder: { text: 'claude-opus-5', image: '', audio: '' },
+    voicePlaceholder: '',
     webWarning: null,
   },
   chatgpt: {
     id: 'chatgpt',
     label: 'ChatGPT',
     vendor: 'OpenAI',
-    can: { text: true, image: true },
+    can: { text: true, image: true, audio: true },
     keyPlaceholder: 'sk-…',
     keySource: 'platform.openai.com',
-    modelPlaceholder: { text: 'gpt-5', image: 'gpt-image-1' },
+    // Sprachausgabe: POST /v1/audio/speech, liefert die Audiodatei binaer
+    // (mp3/opus/aac/flac/wav/pcm); Thai steht in der Sprachliste der Doku.
+    modelPlaceholder: { text: 'gpt-5', image: 'gpt-image-1', audio: 'gpt-4o-mini-tts' },
+    voicePlaceholder: 'alloy',
     // Gemessen am 2026-09-03, siehe AE-27. Betrifft jeden echten Schluessel.
     webWarning:
       'Im Browser voraussichtlich unbrauchbar. Gemessen: Ein POST an api.openai.com mit ' +
@@ -106,10 +116,17 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     id: 'gemini',
     label: 'Gemini',
     vendor: 'Google',
-    can: { text: true, image: true },
+    can: { text: true, image: true, audio: true },
     keyPlaceholder: 'AIza…',
     keySource: 'aistudio.google.com',
-    modelPlaceholder: { text: 'gemini-2.5-flash', image: 'gemini-2.5-flash-image' },
+    // Sprachausgabe ueber denselben generateContent-Aufruf wie Text und Bild,
+    // mit responseModalities AUDIO; die Doku nennt Thai ("th") als unterstuetzt.
+    modelPlaceholder: {
+      text: 'gemini-2.5-flash',
+      image: 'gemini-2.5-flash-image',
+      audio: 'gemini-2.5-flash-preview-tts',
+    },
+    voicePlaceholder: 'Kore',
     webWarning: null,
   },
   stability: {
@@ -117,12 +134,13 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     label: 'Stability AI',
     vendor: 'Stability AI',
     // Reiner Bildanbieter - Textmodelle gibt es dort nicht.
-    can: { text: false, image: true },
+    can: { text: false, image: true, audio: false },
     keyPlaceholder: 'sk-…',
     keySource: 'platform.stability.ai',
     // Bei Stability steckt das Modell im Pfad (`…/generate/core`). Das Feld
     // nimmt beide Schreibweisen an, `stable-image-core` und `core`.
-    modelPlaceholder: { text: '', image: 'stable-image-core' },
+    modelPlaceholder: { text: '', image: 'stable-image-core', audio: '' },
+    voicePlaceholder: '',
     webWarning: null,
   },
 };
@@ -185,6 +203,46 @@ export type ImageClient = {
   create(request: ImageRequest): Promise<ImageResponse>;
 };
 
+// ---------------------------------------------------------------------------
+// Sprachausgabe (Phase 11)
+// ---------------------------------------------------------------------------
+
+export type AudioFormat = 'wav' | 'mp3';
+
+export type AudioRequest = {
+  text: string;
+  language: 'th' | 'de';
+};
+
+export type AudioResponse = {
+  base64: string;
+  /** Das Format, in dem die Daten wirklich vorliegen (fertig abspielbar). */
+  format: AudioFormat;
+  model: string;
+  voice: string;
+  /** Bekannt bei PCM/WAV; bei komprimierten Formaten nicht aus der Antwort ablesbar. */
+  sampleRate?: number;
+};
+
+/**
+ * „Text rein, abspielbare Audiodatei raus." Das Format entscheidet der
+ * Anbieter: Gemini liefert rohes PCM, das hier zu WAV verpackt wird; OpenAI
+ * liefert direkt mp3. Beides spielt `expo-audio` ab; die Ablage benennt die
+ * Datei nach dem Format (AE-30).
+ */
+export type AudioClient = {
+  provider: ProviderId;
+  model: string;
+  voice: string;
+  synthesize(request: AudioRequest): Promise<AudioResponse>;
+};
+
+const CAPABILITY_NEGATED: Record<ProviderCapability, string> = {
+  text: 'keinen Text',
+  image: 'keine Bilder',
+  audio: 'keine Sprachausgabe',
+};
+
 /**
  * Ein Anbieter kann das nicht — als Fehler, nicht als stiller Leerlauf.
  *
@@ -198,7 +256,7 @@ export type ImageClient = {
 export function unsupported(provider: ProviderId, capability: ProviderCapability): Error {
   const info = PROVIDER_INFO[provider];
   return new Error(
-    `${info.label} (${info.vendor}) erzeugt ${capability === 'image' ? 'keine Bilder' : 'keinen Text'} — ` +
+    `${info.label} (${info.vendor}) erzeugt ${CAPABILITY_NEGATED[capability]} — ` +
       'bitte in den Einstellungen einen anderen Anbieter wählen.'
   );
 }

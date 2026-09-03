@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-03",
-  "currentPhase": 10,
-  "currentPhaseName": "KI-Anbieter-Auswahl in den Einstellungen",
+  "currentPhase": 11,
+  "currentPhaseName": "Natives Audio (Hoeren)",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -567,6 +567,67 @@
       "done": false,
       "verifiedHow": null,
       "blocker": "B-6 - beide Anbieter pruefen den Schluessel VOR der Anfrageform und antworten auf jede Anfrage mit demselben Auth-Fehler. Anders als bei Stability (AE-13) liess sich deshalb nichts ohne bezahlten Schluessel festklopfen. Die Parser nennen im Fehlerfall die gelieferten Feldnamen, damit ein Formwechsel sofort in der Fehlerliste steht."
+    },
+    {
+      "phase": 11,
+      "criterion": "Kleiner Testlauf erzeugt Audio, danach offline abspielbar ohne Key",
+      "done": true,
+      "verifiedHow": "Probelauf (5 Vokabeln + 5 Beispielsaetze) durch die echte Pipeline mit einem Ersatz-Client wie in Phase 5: zehn echte Thai-Clips (Microsoft th-TH-Premwadee, mp3) fuer genau die zehn Texte. 10/10 erzeugt; IndexedDB thai-lernbegleiter-audio mit zehn th-<hash>.mp3, 105 264 Byte, localStorage nur +3 280 Zeichen Metadaten. Nach Neuladen ohne Schluessel: Statuszeile '10 Clips, 103 KB', Gespraechszug spielt den Clip (mitgeschnitten new Audio('data:audio/mpeg…') + play()), Karteikarte สวัสดี im Reiter Lernen spielt den Clip und schreibt 'KI-Stimme - keine Muttersprachler-Aufnahme' darunter. Der ECHTE Anbieterlauf (Gemini/ChatGPT) steht wegen B-6 aus."
+    },
+    {
+      "phase": 11,
+      "criterion": "Resolver bevorzugt Asset, faellt ohne Asset weiterhin auf TTS zurueck (Test)",
+      "done": true,
+      "verifiedHow": "clips.test.ts: Clip vorhanden -> 'asset' mit data:audio/wav-Quelle, gefunden nur ueber Text und Sprache wie die Gespraech-Seite ruft; kein Clip -> 'tts' mit th-TH; Clip-Suche wirft -> 'tts'; ausdrueckliche audioAssetId hat Vortritt; Index wird nach Lauf und Loeschen verworfen. Die neun Tests aus Phase 3 (audio.test.ts) laufen unveraendert. Im Web-Build: Zug ohne Clip blieb bei der Sprachausgabe, Zug mit Clip spielte ihn."
+    },
+    {
+      "phase": 11,
+      "criterion": "Tonqualitaets-Messung samt Grenzen dokumentiert",
+      "done": true,
+      "verifiedHow": "AE-31 und scripts/tone-contour.html. Fuenf Minimalpaar-Woerter aus dem Grundstock (มา ม้า หมา ไม่ ใหม่), drei Stimmen zweier Engines (Microsoft Premwadee/Niwat, Google), F0 ueber normierte Autokorrelation mit Oktavkorrektur, Konturen in Halbtoenen, schwellenfreie Ordnungspruefung je 7 von 8. Befund: fallend/tief ueberall klar, steigend bei Google NICHT realisiert, mittel/hoch bei Microsoft schwach getrennt - keine Stimme trifft alle fuenf. Grenze ausdruecklich: die App-Anbieter selbst (Gemini, ChatGPT) konnten ohne Schluessel nicht gemessen werden; Kontur ist keine Hoerpruefung."
+    },
+    {
+      "phase": 11,
+      "criterion": "Speicherbedarf-Abschaetzung dokumentiert",
+      "done": true,
+      "verifiedHow": "AE-30. Gemini-PCM 48 000 Byte/s aus der Doku; Sprechraten an zwei Stimmen gemessen (Silbe 0,9-1,6 s, 11 Zeichen ~2 s, 37 Zeichen 3,4-4,3 s); konservativ 1 s + 10 Zeichen/s. Probelauf ~0,8 MB, alle Vokabeln ~11 MB, voller Dialoglauf ~700 MB als WAV (ChatGPT-mp3 etwa ein Achtel, geschaetzt). Die Schaetzung steht am Knopf VOR dem Start, die Ist-Summe in der Statuszeile; gemessen 10 mp3-Clips = 105 264 Byte."
+    },
+    {
+      "phase": 11,
+      "criterion": "AudioClient in der Provider-Abstraktion aus Phase 10, CORS je Anbieter gemessen",
+      "done": true,
+      "verifiedHow": "providers/audio.ts neben text.ts und image.ts; vierte Generator-Gruppe 'audio' mit Stimme als Freitext. Gemessen: Gemini-TTS ueber generateContent und ueber /v1beta/interactions beide 400 lesbar; OpenAI /v1/audio/speech unterliegt der sk--Regel aus AE-27 (Bearer ungueltig -> 401 lesbar, Bearer sk-… -> Failed to fetch). Claude und Stability: 'keine Sprachausgabe' als benannter Fehler. Kein fuenfter Anbieter - Begruendung in AE-31."
+    },
+    {
+      "phase": 11,
+      "criterion": "Ablage nach AE-14-Muster: Metadaten in Sammlung, Bytes in Dateiablage",
+      "done": true,
+      "verifiedHow": "Sammlung 'audio' + Blob-Ablage 'audio' (nativ Paths.document/audio/, Web IndexedDB thai-lernbegleiter-audio). Dafuer die Bildablage zu lib/blobs verallgemeinert (AE-30); alle Bild-Tests liefen ohne Aenderung weiter, IndexedDB-Name und Ordner der Bilder unveraendert."
+    },
+    {
+      "phase": 11,
+      "criterion": "Ehrliche Kennzeichnung: TTS-Aufnahmen sind keine Muttersprachler-Aufnahmen",
+      "done": true,
+      "verifiedHow": "synthetic: true als Literaltyp im Dokument. Karteikarte, Beispielsatz und Gespraechszug schreiben 'KI-Stimme - keine Muttersprachler-Aufnahme' daneben, sobald ein Clip gespielt hat (auch im Screenreader-Label); bei der Sprachausgabe des Geraets nicht. Im Web-Build beobachtet: 'KI-Stimme' erschien genau am Zug mit Clip, nicht am Zug ohne."
+    },
+    {
+      "phase": 11,
+      "criterion": "Screens fuer den Resolver-Pfad nicht angefasst",
+      "done": true,
+      "verifiedHow": "Die Screens rufen weiter playPronunciation({ text, language }); der Clip wird ueber Text und Sprache gefunden (Thai ohne Leerraum, AE-30). Geaendert wurden Screens NUR fuer die Kennzeichnung nach Pflicht 4 (SpeakButton, TurnSpeakButton) - nicht, damit Clips spielen."
+    },
+    {
+      "phase": 11,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "469 Tests in 16 Suites gruen (vorher 437 in 15); npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 11,
+      "criterion": "Tonqualitaet der App-Anbieter selbst gemessen (Gemini, ChatGPT)",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-6 - beide geben ohne gueltigen Schluessel kein Audio her. Das Messwerkzeug (scripts/tone-contour.html) nimmt Dateien oder ein Manifest entgegen; Anleitung im TODO."
     }
   ],
   "architectureDecisions": [
@@ -714,6 +775,16 @@
       "id": "AE-29",
       "title": "aria-checked wird direkt gesetzt, weil React Native Web es nicht uebersetzt",
       "rationale": "Im DOM nachgemessen: accessibilityState={{selected}} erzeugt gar kein ARIA-Attribut, und accessibilityRole 'radio' plus accessibilityState {{checked}} liefert zwar role=radio, aber kein aria-checked - was schlechter waere als gar keine Rolle, weil sie einen Zustand verspricht, den niemand abfragen kann. Erst das direkt gesetzte Attribut kam an: 18 von 18 Auswahlknoepfen mit Zustand, davon 7 auf true. Betroffen war nicht nur die neue Anbieterwahl, sondern auch Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Die Pruefung in Phase 9 hat Beschriftung, Tippziel und Fokus gemessen, den Zustand aber nicht - 'Label vorhanden' ist nicht dasselbe wie 'Zustand ablesbar'. Knoepfe ohne selected bleiben role=button."
+    },
+    {
+      "id": "AE-30",
+      "title": "Eine Blob-Ablage fuer Bilder und Hoerclips, und der Speicherpreis von Sprache",
+      "rationale": "Die Bildablage aus AE-14 war eine allgemeine Datei-je-Eintrag-Ablage mit fest verdrahtetem Ordner und MIME-Typen; fuer Clips waeren IndexedDB-, Dateisystem- und Speicher-Umsetzung sonst dreifach zu pflegen gewesen. lib/blobs parametrisiert ueber Name und MIME; 'images' bleibt, damit gespeicherte Bilder auffindbar bleiben. Speicherpreis gemessen wo moeglich: Gemini-PCM 48 000 Byte/s (Doku), Sprechraten an zwei Thai-Stimmen (Faktor zwei Unterschied), konservativ 1 s + 10 Zeichen/s. Voller Dialoglauf ~700 MB als WAV - deshalb Schaetzung am Knopf und Ist-Summe in der Statuszeile; Verdichtung braeuchte Encoder oder natives Modul. Clip-ID = 64-Bit-Hash aus Sprache und Text, bei Thai ohne Leerraum (Grundstock schreibt 'สวัสดี ครับ', Dialog 'สวัสดีครับ' - nachgestellt); die Regel ist Teil der gespeicherten Daten."
+    },
+    {
+      "id": "AE-31",
+      "title": "Die Thai-Toene der TTS-Stimmen sind gemessen, und die Grenze der Messung ist benannt",
+      "rationale": "Ob ein TTS-Modell die fuenf Toene realisiert, steht in keiner Doku und laesst sich hier nicht hoeren (kein Thai auf Windows noch im Browser). Deshalb ein Messwerkzeug (F0 ueber normierte Autokorrelation, Oktavkorrektur, Kontur in Halbtoenen, schwellenfreie Ordnungspruefung) an Minimalpaaren aus dem Grundstock, angewendet auf drei Stimmen zweier Engines. Befund: keine Stimme trifft alle fuenf Toene ueberzeugend - Google laesst den steigenden Ton fallen, Microsoft trennt mittel und hoch kaum. Die App-Anbieter selbst konnten nicht gemessen werden (B-6); das Werkzeug liegt im Repo dafuer bereit. Konsequenz: synthetic: true als Literaltyp, 'KI-Stimme' beim Abspielen, nirgends ein Versprechen ueber Toene. Kein fuenfter Anbieter: kein Bestand wie bei Stability, Gemini gemessen offen, ein Spezialanbieter waere neu; edge-tts ist ein nachgebauter Zugang ohne API - gut zum Messen, untauglich fuer die App. Ein Oktavfehler der ersten Werkzeugfassung (+5 Halbtoene am Silbenanfang) ist als Methodenfehler festgehalten, nicht als Ton."
     }
   ],
   "openBlockers": [
@@ -725,10 +796,11 @@
         4,
         5,
         6,
-        10
+        10,
+        11
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht.",
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht. SEIT PHASE 11: Native Clip-Ablage (Paths.document/audio/) und Wiedergabe ueber expo-audio sind nur typgeprueft.",
       "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
     },
     {
@@ -755,18 +827,19 @@
       "id": "B-6",
       "title": "Antwortform von ChatGPT und Gemini ist ohne gueltigen Schluessel nicht belegbar",
       "affectsPhases": [
-        10
+        10,
+        11
       ],
       "needsUser": true,
-      "note": "Beide Anbieter pruefen den Schluessel VOR der Anfrageform: OpenAI beantwortet auch einen voellig leeren Koerper mit invalid_api_key, Google jede Anfrage mit 'API key not valid' - sogar ein erfundenes Modell und ein GET auf die Modellliste. Anders als bei Stability (AE-13, Pflichtfelder und Enums vor der Authentifizierung) liess sich deshalb weder Anfrage- noch Antwortform festklopfen. Vorsorge im Code: die Parser nennen im Fehlerfall die tatsaechlich gelieferten Feldnamen. Fremde Schluessel gebe ich nicht ein - dieselbe Linie wie bei B-4. Bei ChatGPT kommt hinzu, dass ein Versuch im Browser berechnet werden koennte, ohne dass die Antwort ankommt (AE-27).",
+      "note": "Beide Anbieter pruefen den Schluessel VOR der Anfrageform: OpenAI beantwortet auch einen voellig leeren Koerper mit invalid_api_key, Google jede Anfrage mit 'API key not valid' - sogar ein erfundenes Modell und ein GET auf die Modellliste. Anders als bei Stability (AE-13, Pflichtfelder und Enums vor der Authentifizierung) liess sich deshalb weder Anfrage- noch Antwortform festklopfen. Vorsorge im Code: die Parser nennen im Fehlerfall die tatsaechlich gelieferten Feldnamen. Fremde Schluessel gebe ich nicht ein - dieselbe Linie wie bei B-4. Bei ChatGPT kommt hinzu, dass ein Versuch im Browser berechnet werden koennte, ohne dass die Antwort ankommt (AE-27). SEIT PHASE 11: Betrifft auch die Sprachausgabe - ohne Schluessel kein Audio, also keine Messung der Thai-Toene von Gemini und ChatGPT (AE-31) und keine Bestaetigung der Antwortform (inlineData audio/L16). Das Messwerkzeug scripts/tone-contour.html wartet auf echte Clips.",
       "steps": "Einstellungen -> Gruppe waehlen -> Anbieter Gemini -> gueltigen Google-Schluessel eintragen -> Probelauf -> Start. Erwartung: Situationen bzw. Aufgaben werden erzeugt. Bei Fehlschlaegen nennt die Meldung die gelieferten Feldnamen; anzupassen sind dann parseGeminiText / parseGeminiImage in src/lib/providers/."
     }
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 10 abgeschlossen; offen ist, was einen Schluessel oder ein Geraet des Nutzers braucht",
+    "name": "Phase 11 abgeschlossen; Phase 12 (Sprechen) baut auf den Clips auf",
     "tasks": [
-      "B-6: Probelauf mit gueltigem Gemini-Schluessel - belegt Anfrage- UND Antwortform, die sich sonst nicht pruefen lassen",
+      "B-6: Probelauf Hoerclips mit gueltigem Gemini-Schluessel - danach die zehn Clips in scripts/tone-contour.html ziehen und die Toene messen (AE-31)",
       "B-5: EAS-Konto, dann Android-APK bauen (schliesst B-2 fuer Android mit)",
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
       "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27)",
@@ -933,5 +1006,37 @@
     "modelField": "Freitext ohne Validierung (Pflicht 5); leeres Feld nimmt den Platzhalter des Anbieters",
     "corsMeasured": "2026-09-03, aus dem laufenden Web-Build",
     "transport": "Claude ueber den offiziellen SDK (AE-12); ChatGPT, Gemini und Stability ueber eigenes fetch - kein weiterer Node-SDK im Browser-Bundle"
+  },
+  "audioClips": {
+    "generated": 0,
+    "testRun": "5 Vokabeln + 5 Beispielsaetze = 10 Clips",
+    "plan": "Vokabeln -> Beispielsaetze -> Thai-Zuege der gespeicherten Situationen, dedupliziert ueber den Text",
+    "providers": "gemini (Voreinstellung, generateContent AUDIO, PCM->WAV) und chatgpt (/v1/audio/speech, mp3; im Web-Build gekennzeichnet)",
+    "storage": {
+      "metadata": "Dokumentspeicher, Sammlung 'audio', synthetic: true",
+      "bytes": "lib/blobs Name 'audio': nativ expo-file-system (Datei je Clip unter Paths.document/audio), Web IndexedDB thai-lernbegleiter-audio",
+      "estimate": "1 s + 10 Thai-Zeichen/s; Gemini 48 000 Byte/s, ChatGPT ~6 000 Byte/s (geschaetzt)"
+    },
+    "lookup": "ueber (Sprache, Text); Thai ohne Leerraum; Index im Arbeitsspeicher; registriert in _layout.tsx",
+    "labeling": "'KI-Stimme - keine Muttersprachler-Aufnahme' bei Karteikarte, Beispielsatz und Gespraechszug, sobald ein Clip spielt",
+    "toneMeasurement": {
+      "tool": "scripts/tone-contour.html",
+      "measuredVoices": [
+        "Microsoft th-TH-PremwadeeNeural",
+        "Microsoft th-TH-NiwatNeural",
+        "Google translate tl=th"
+      ],
+      "words": [
+        "มา mid",
+        "ม้า high",
+        "หมา rising",
+        "ไม่ falling",
+        "ใหม่ low"
+      ],
+      "orderChecks": "je 7 von 8",
+      "finding": "keine Stimme trifft alle fuenf Toene; Google ohne steigenden Ton; Microsoft mittel/hoch kaum getrennt",
+      "notMeasured": "Gemini und ChatGPT (B-6)"
+    },
+    "note": "Zehn Ersatz-Clips wurden zum Pruefen von Ablage, Offline-Abruf, Wiedergabe und Kennzeichnung eingespielt und danach wieder entfernt."
   }
 }

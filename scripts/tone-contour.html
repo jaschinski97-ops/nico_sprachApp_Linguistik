@@ -1,0 +1,246 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Tonhöhenkontur — Thai-Töne in TTS-Clips messen</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; margin: 1.5rem; max-width: 1200px; }
+  table { border-collapse: collapse; margin-top: 1rem; }
+  td, th { border: 1px solid #bbb; padding: 4px 8px; text-align: right; font-variant-numeric: tabular-nums; }
+  td:first-child, th:first-child, td:nth-child(2), td:nth-child(3), td:nth-child(4) { text-align: left; }
+  .ok { background: #e6f4e6; } .fail { background: #f9e3e3; } .warn { background: #fbf3d9; }
+  canvas { border: 1px solid #ccc; margin: 2px; }
+  pre { background: #f4f4f4; padding: 8px; overflow: auto; }
+</style>
+<h1>Tonhöhenkontur — Thai-Töne in TTS-Clips messen</h1>
+<p>
+  Misst je Clip die Grundfrequenz (F0) über die Zeit und vergleicht die Form mit
+  den fünf Thai-Tönen. <strong>Das ist eine Konturmessung, keine Hörprüfung</strong>:
+  sie sagt, ob die Tonhöhe die erwartete Richtung nimmt — nicht, ob ein
+  Muttersprachler die Silbe als richtig hört. Grenzen stehen unten.
+</p>
+<p>
+  Clips laden: <input type="file" id="files" multiple accept="audio/*" />
+  (Dateiname <code>engine_stimme_wort_ton.ext</code>, Ton = mid/low/falling/high/rising)
+  oder Manifest <code>?manifest=clips/index.json</code> (Felder: file, engine, voice, word, tone).
+</p>
+<div id="status"></div>
+<div id="out"></div>
+<div id="order"></div>
+<h2>Wie gemessen wird</h2>
+<ul>
+  <li>Dekodierung über Web Audio (<code>decodeAudioData</code>), Mono, Originalabtastrate.</li>
+  <li>F0 je 40-ms-Fenster (Schritt 10 ms) über <em>normierte Autokorrelation</em>, Suchbereich 70–400 Hz;
+      stimmhaft, wenn Korrelation ≥ 0,6 und Energie ≥ 8 % des Maximums. Medianfilter (3) gegen Ausreißer.</li>
+  <li><strong>Oktavkorrektur:</strong> Werte über dem 1,8-fachen bzw. unter dem 1/1,8-fachen des Median der
+      Strecke werden halbiert bzw. verdoppelt — die typische Autokorrelationsfalle am Silbenanfang.</li>
+  <li>Bewertet wird die längste zusammenhängende stimmhafte Strecke, <strong>ohne die ersten und letzten 8 %</strong>
+      (An- und Ausklang). Für Sätze zählt zusätzlich die Gesamtdauer des Clips.</li>
+  <li>Kontur in <strong>Halbtönen relativ zum Median der Stimme</strong> über alle ihre Clips.</li>
+  <li>Sechs Stützstellen bei 0/20/40/60/80/100 % der bewerteten Strecke; daraus Anfang, Ende, Min, Max, Mittel.</li>
+  <li>Erwartete Formen (Bangkok-Thai, nach Abramson): <em>mittel</em> eben, leicht fallend · <em>tief</em> tief, eben bis fallend ·
+      <em>fallend</em> hoch beginnend, deutlich fallend · <em>hoch</em> mittelhoch beginnend, zum Ende steigend ·
+      <em>steigend</em> tief beginnend, Senke, dann deutlich steigend.</li>
+  <li><strong>Ordnungsprüfung je Stimme</strong> (schwellenfrei): Ende(hoch) &gt; Ende(mittel) &gt; Ende(fallend);
+      Ende(steigend) &gt; Ende(tief); Anfang(fallend) &gt; Anfang(tief); Min(steigend) &lt; Ende(steigend) − 2 st.</li>
+</ul>
+<h2>Grenzen</h2>
+<ul>
+  <li>Autokorrelation kann bei Rauschen, Nasalen und sehr kurzen Silben irren; die Oktavkorrektur fängt nur den groben Fall.</li>
+  <li>Formzuordnung und Ordnungsprüfung sind Heuristiken. „passt" heißt: die Kontur widerspricht dem Ton nicht.</li>
+  <li>Vokallänge, Stimmqualität, Silbenendrand und die Wahrnehmung durch Muttersprachler werden nicht bewertet.</li>
+</ul>
+<script>
+const TONE_LABEL = { mid: 'mittel', low: 'tief', falling: 'fallend', high: 'hoch', rising: 'steigend' };
+
+function autocorrF0(samples, sr) {
+  const win = Math.round(0.040 * sr), hop = Math.round(0.010 * sr);
+  const minLag = Math.floor(sr / 400), maxLag = Math.ceil(sr / 70);
+  const frames = [];
+  let maxRms = 0;
+  for (let start = 0; start + win + maxLag <= samples.length; start += hop) {
+    let e = 0;
+    for (let i = 0; i < win; i++) e += samples[start + i] * samples[start + i];
+    const rms = Math.sqrt(e / win);
+    maxRms = Math.max(maxRms, rms);
+    frames.push({ t: start / sr, start, rms });
+  }
+  for (const f of frames) {
+    f.f0 = 0;
+    if (f.rms < 0.08 * maxRms) continue;
+    let best = 0, bestLag = 0;
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let num = 0, d1 = 0, d2 = 0;
+      for (let i = 0; i < win; i++) {
+        const a = samples[f.start + i], b = samples[f.start + i + lag];
+        num += a * b; d1 += a * a; d2 += b * b;
+      }
+      const r = num / (Math.sqrt(d1 * d2) || 1);
+      if (r > best) { best = r; bestLag = lag; }
+    }
+    if (best >= 0.6) f.f0 = sr / bestLag;
+  }
+  const f0s = frames.map((f) => f.f0);
+  for (let i = 1; i < frames.length - 1; i++) {
+    const trio = [f0s[i - 1], f0s[i], f0s[i + 1]].filter((v) => v > 0).sort((a, b) => a - b);
+    if (trio.length === 3) frames[i].f0 = trio[1];
+  }
+  return frames;
+}
+
+function longestRun(frames) {
+  let runs = [], cur = [];
+  for (const f of frames) { if (f.f0 > 0) cur.push(f); else { if (cur.length) runs.push(cur); cur = []; } }
+  if (cur.length) runs.push(cur);
+  runs.sort((a, b) => b.length - a.length);
+  return runs[0] && runs[0].length >= 4 ? runs[0] : null;
+}
+
+function octaveCorrect(run) {
+  const sorted = run.map((f) => f.f0).sort((a, b) => a - b);
+  const med = sorted[Math.floor(sorted.length / 2)];
+  return run.map((f) => {
+    let f0 = f.f0;
+    if (f0 > med * 1.8) f0 /= 2;
+    else if (f0 < med / 1.8) f0 *= 2;
+    return { ...f, f0 };
+  });
+}
+
+function trimEdges(run, fraction) {
+  const cut = Math.floor(run.length * fraction);
+  return run.length - 2 * cut >= 4 ? run.slice(cut, run.length - cut) : run;
+}
+
+const st = (hz, ref) => 12 * Math.log2(hz / ref);
+
+function summarize(span, ref) {
+  const n = span.length;
+  const at = (p) => st(span[Math.min(n - 1, Math.round(p * (n - 1)))].f0, ref);
+  const pts = [0, 0.2, 0.4, 0.6, 0.8, 1].map(at);
+  const all = span.map((f) => st(f.f0, ref));
+  const mean = all.reduce((a, b) => a + b, 0) / n;
+  return { pts, start: pts[0], end: pts[5], min: Math.min(...all), max: Math.max(...all), mean,
+           slope: pts[5] - pts[0], durMs: Math.round((span[n - 1].t - span[0].t) * 1000) };
+}
+
+/** Passt die Kontur zum erwarteten Ton? Heuristik, bewusst grob. */
+function matches(tone, s) {
+  switch (tone) {
+    case 'mid':     return Math.abs(s.slope) < 3 && Math.abs(s.mean) < 2.5;
+    case 'low':     return s.mean < -0.5 && s.slope < 1.5;
+    case 'falling': return s.slope < -3 && s.max > s.end + 3;
+    case 'high':    return s.end > 0 && s.end >= s.start - 1;
+    case 'rising':  return s.end - s.min > 3 && s.end > s.start - 0.5;
+  }
+  return false;
+}
+
+/** Ordnungsprüfung ohne Schwellen: gilt die erwartete Rangfolge innerhalb einer Stimme? */
+function orderChecks(byTone) {
+  const t = (tone) => byTone[tone];
+  const checks = [];
+  const add = (label, ok) => checks.push({ label, ok });
+  if (t('high') && t('mid')) add('Ende(hoch) > Ende(mittel)', t('high').end > t('mid').end);
+  if (t('mid') && t('falling')) add('Ende(mittel) > Ende(fallend)', t('mid').end > t('falling').end);
+  if (t('high') && t('falling')) add('Ende(hoch) > Ende(fallend)', t('high').end > t('falling').end);
+  if (t('rising') && t('low')) add('Ende(steigend) > Ende(tief)', t('rising').end > t('low').end);
+  if (t('falling') && t('low')) add('Anfang(fallend) > Anfang(tief)', t('falling').start > t('low').start);
+  if (t('rising')) add('steigend: Ende − Min > 2 st', t('rising').end - t('rising').min > 2);
+  if (t('falling')) add('fallend: Max − Ende > 2 st', t('falling').max - t('falling').end > 2);
+  if (t('high') && t('low')) add('Mittel(hoch) > Mittel(tief)', t('high').mean > t('low').mean);
+  return checks;
+}
+
+function drawContour(span, ref) {
+  const c = document.createElement('canvas'); c.width = 160; c.height = 60;
+  const g = c.getContext('2d');
+  g.strokeStyle = '#999'; g.beginPath(); g.moveTo(0, 30); g.lineTo(160, 30); g.stroke();
+  g.strokeStyle = '#1a5'; g.lineWidth = 2; g.beginPath();
+  span.forEach((f, i) => { const x = (i / (span.length - 1)) * 158 + 1; const y = 30 - st(f.f0, ref) * 3; i ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.stroke();
+  return c;
+}
+
+async function decode(arrayBuffer) {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const buf = await ctx.decodeAudioData(arrayBuffer);
+  const mono = new Float32Array(buf.length);
+  for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c); for (let i = 0; i < d.length; i++) mono[i] += d[i] / buf.numberOfChannels; }
+  await ctx.close();
+  return { samples: mono, sr: buf.sampleRate, seconds: buf.duration };
+}
+
+async function analyze(items) {
+  const status = document.getElementById('status');
+  const results = [];
+  for (const it of items) {
+    status.textContent = `analysiere ${it.file} …`;
+    try {
+      const { samples, sr, seconds } = await decode(it.buffer);
+      const frames = autocorrF0(samples, sr);
+      const voicedMs = frames.filter((f) => f.f0 > 0).length * 10;
+      const run = longestRun(frames);
+      const span = run ? trimEdges(octaveCorrect(run), 0.08) : null;
+      results.push({ ...it, sr, seconds, voicedMs, span, error: span ? null : 'keine stimmhafte Strecke gefunden' });
+    } catch (e) { results.push({ ...it, error: String(e.message || e) }); }
+  }
+  status.textContent = '';
+  const byVoice = {};
+  for (const r of results) if (r.span) (byVoice[r.engine + '/' + r.voice] ??= []).push(...r.span.map((f) => f.f0));
+  const refOf = {};
+  for (const k in byVoice) { const a = byVoice[k].sort((x, y) => x - y); refOf[k] = a[Math.floor(a.length / 2)]; }
+  for (const r of results) if (r.span) { r.ref = refOf[r.engine + '/' + r.voice]; r.summary = summarize(r.span, r.ref); r.match = r.tone ? matches(r.tone, r.summary) : null; }
+
+  const order = {};
+  for (const k in byVoice) {
+    const byTone = {};
+    for (const r of results) if (r.span && r.tone && r.engine + '/' + r.voice === k) byTone[r.tone] = r.summary;
+    order[k] = orderChecks(byTone);
+  }
+  render(results, order);
+  window.__toneReport = results.map((r) => ({ file: r.file, engine: r.engine, voice: r.voice, word: r.word, tone: r.tone, chars: r.chars,
+    seconds: r.seconds && +r.seconds.toFixed(2), voicedMs: r.voicedMs, refHz: r.ref && Math.round(r.ref), durMs: r.summary?.durMs,
+    pts: r.summary?.pts.map((v) => +v.toFixed(1)), mean: r.summary && +r.summary.mean.toFixed(1), slope: r.summary && +r.summary.slope.toFixed(1),
+    min: r.summary && +r.summary.min.toFixed(1), max: r.summary && +r.summary.max.toFixed(1), match: r.match, error: r.error }));
+  window.__toneOrder = order;
+  window.__toneReportReady = true;
+}
+
+function render(results, order) {
+  const out = document.getElementById('out');
+  const f = (v) => (v >= 0 ? '+' : '') + v.toFixed(1);
+  const rows = results.map((r) => {
+    if (r.error) return `<tr class="warn"><td>${r.engine}</td><td>${r.voice}</td><td>${r.word}</td><td>${TONE_LABEL[r.tone] || ''}</td><td colspan="10">${r.error}</td></tr>`;
+    const s = r.summary, cls = r.match === null ? '' : r.match ? 'ok' : 'fail';
+    return `<tr class="${cls}"><td>${r.engine}</td><td>${r.voice}</td><td>${r.word}</td><td>${TONE_LABEL[r.tone] || ''}</td>
+      <td>${r.seconds.toFixed(2)} s</td><td>${Math.round(r.ref)} Hz</td><td>${s.durMs} ms</td><td>${s.pts.map(f).join(' ')}</td><td>${f(s.mean)}</td><td>${f(s.slope)}</td><td>${f(s.min)}</td><td>${f(s.max)}</td>
+      <td>${r.match === null ? '–' : r.match ? 'passt' : 'passt nicht'}</td><td class="c"></td></tr>`;
+  });
+  out.innerHTML = `<table><thead><tr><th>Engine</th><th>Stimme</th><th>Wort</th><th>Ton</th><th>Clip</th><th>Referenz</th><th>bewertet</th><th>Kontur (st) 0·20·40·60·80·100 %</th><th>Ø</th><th>Ende−Anfang</th><th>Min</th><th>Max</th><th>Form</th><th>Verlauf</th></tr></thead><tbody>${rows.join('')}</tbody></table>`;
+  const cells = out.querySelectorAll('td.c');
+  results.filter((r) => !r.error).forEach((r, i) => cells[i].appendChild(drawContour(r.span, r.ref)));
+
+  const od = document.getElementById('order');
+  od.innerHTML = '<h2>Ordnungsprüfung je Stimme</h2>' + Object.entries(order).map(([voice, checks]) =>
+    `<h3>${voice} — ${checks.filter((c) => c.ok).length} von ${checks.length}</h3><ul>` +
+    checks.map((c) => `<li class="${c.ok ? 'ok' : 'fail'}">${c.ok ? '✓' : '✗'} ${c.label}</li>`).join('') + '</ul>').join('');
+}
+
+document.getElementById('files').addEventListener('change', async (ev) => {
+  const items = [];
+  for (const file of ev.target.files) {
+    const m = file.name.match(/^(.+?)_(.+?)_(.+?)_(mid|high|rising|falling|low|none)\.\w+$/);
+    items.push({ file: file.name, engine: m ? m[1] : '?', voice: m ? m[2] : '?', word: m ? m[3] : file.name, tone: m && m[4] !== 'none' ? m[4] : null, buffer: await file.arrayBuffer() });
+  }
+  analyze(items);
+});
+
+(async () => {
+  const manifest = new URLSearchParams(location.search).get('manifest');
+  if (!manifest) return;
+  const list = await (await fetch(manifest)).json();
+  const base = manifest.slice(0, manifest.lastIndexOf('/') + 1);
+  const items = [];
+  for (const e of list) items.push({ ...e, buffer: await (await fetch(base + e.file)).arrayBuffer() });
+  analyze(items);
+})();
+</script>

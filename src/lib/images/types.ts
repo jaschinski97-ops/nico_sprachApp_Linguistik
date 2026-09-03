@@ -1,5 +1,7 @@
 import { PartOfSpeech } from '@/data/vocabulary';
 
+import { BlobStore, BlobStoreConfig } from '../blobs/types';
+
 /**
  * Bilder zu konkreten Vokabeln (Phase 5).
  *
@@ -84,24 +86,17 @@ export function formatOfKey(key: string): ImageFormat {
 /**
  * Ablage der reinen Bilddaten.
  *
- * Getrennt vom Dokumentspeicher (AE-6), weil der auf JSON ausgelegt ist —
- * Begründung in AE-14. Dieselbe Bauart wie dort: eine schmale Schnittstelle,
- * je Plattform eine Umsetzung, und ein Speicher im Arbeitsspeicher als
- * Notnagel und für Tests.
+ * Seit Phase 11 ist das die allgemeine Blob-Ablage aus `lib/blobs` — Bilder
+ * und Hörclips brauchen dieselben fünf Operationen (AE-14, AE-30). Der Name
+ * `images` ist Teil der gespeicherten Daten (IndexedDB
+ * `thai-lernbegleiter-images`, Ordner `<Dokumente>/images/`) und bleibt.
  */
-export interface ImageBlobStore {
-  init(): Promise<void>;
-  has(key: string): Promise<boolean>;
-  /** Legt die Bilddaten ab. `base64` ohne `data:`-Präfix. */
-  put(key: string, base64: string): Promise<void>;
-  /**
-   * Anzeigbare Quelle für `<Image source={{ uri }} />` — nativ ein
-   * `file://`-Pfad, im Web eine `data:`-URL. `null`, wenn nichts abgelegt ist.
-   */
-  uri(key: string): Promise<string | null>;
-  remove(key: string): Promise<void>;
-  clear(): Promise<void>;
-}
+export type ImageBlobStore = BlobStore;
+
+export const IMAGE_BLOB_CONFIG: BlobStoreConfig = {
+  name: 'images',
+  mimeOf: (key) => MIME_BY_FORMAT[formatOfKey(key)],
+};
 
 /**
  * Wie viele Byte stecken in einem Base64-String? Ohne ihn zu dekodieren:

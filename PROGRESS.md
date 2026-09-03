@@ -909,6 +909,164 @@ Beschriftung, Tippziel und Fokus gemessen — den **Zustand** hat sie nicht
 gemessen, und deshalb ist er durchgerutscht. Das ist die Lehre daraus: „Label
 vorhanden" ist nicht dasselbe wie „Zustand ablesbar".
 
+### AE-30 — Eine Blob-Ablage für Bilder und Hörclips, und der Speicherpreis von Sprache
+
+**Entscheidung:** Die Bildablage aus AE-14 ist zu `src/lib/blobs/`
+verallgemeinert: dieselben fünf Operationen, parametrisiert über einen Namen
+(`images`, `audio`) und eine MIME-Zuordnung. Hörclips liegen wie Bilder
+zweigeteilt — Metadaten in der neuen Sammlung `audio`, Bytes in der Ablage
+(nativ `<Dokumente>/audio/`, Web IndexedDB `thai-lernbegleiter-audio`). Der
+Name `images` bleibt unverändert, gespeicherte Bilder bleiben also auffindbar.
+
+**Begründung:** Die Bildablage war von Anfang an eine allgemeine
+Datei-je-Eintrag-Ablage, nur mit Bild-MIME-Typen und dem Ordnernamen fest
+verdrahtet. Sie ein zweites Mal zu schreiben hieße, IndexedDB-Umsetzung,
+Dateisystem-Umsetzung und Notnagel im Arbeitsspeicher dreimal zu pflegen —
+dieselbe Überlegung wie beim Batch-Läufer (Phase 5) und der Anbieter-Naht
+(Phase 10). Alle 21 Bild-Tests liefen nach dem Umbau unverändert.
+
+**Der Speicherpreis — gemessen, wo es ging (Pflicht 3):**
+
+Gemini liefert Sprachausgabe als **rohes PCM, 24 kHz, 16 Bit, mono** (laut
+Doku), also **48 000 Byte je Sekunde**, plus 44 Byte WAV-Kopf. OpenAI liefert
+mp3; die Bitrate steht nicht in der Doku, 48 kbit/s (6 000 Byte/s) ist die
+Größenordnung und als Schätzung gekennzeichnet. Für die **Dauer** je Text gibt
+es keine Gemini-Messung (B-6); gemessen wurde an zwei anderen neuronalen
+Thai-Stimmen, Dauer aus der dekodierten Wellenform:
+
+| Text | Zeichen | Microsoft Premwadee | Google (translate) |
+| --- | --- | --- | --- |
+| eine Silbe (มา, ม้า, …) | 2–4 | 1,27–1,63 s | 0,89–0,98 s |
+| ผม ไม่ กิน หมู | 11 | 2,04 s | 1,75 s |
+| ขอบคุณ มาก ครับ | 13 | 2,02 s | 1,78 s |
+| สวัสดีครับ วันนี้อยากได้อะไรครับ | 31 | 3,10 s | 3,84 s |
+| ขอข้าวผัดหนึ่งจานครับ ราคาเท่าไหร่ครับ | 37 | 3,41 s | 4,34 s |
+
+Die beiden Stimmen unterscheiden sich fast um den Faktor zwei im Sprechtempo
+(≈ 1,5 s + Zeichen/19 gegen ≈ 0,65 s + Zeichen/10), und beide legen um jeden
+Clip Stille. Genommen ist die **langsamere** Rate — 1 s Grundlast plus
+10 Zeichen je Sekunde —, weil Überschätzen billiger ist als eine gesprengte
+Ablage. Daraus, mit dem Grundstock (84 Wörter, 84 Beispielsätze) und den
+Dialogen aus Phase 4 (16 im Probelauf, 512 im vollen Lauf, je ~8 Züge, ~25
+Zeichen):
+
+| Umfang | Clips | Dauer | Gemini (WAV) | ChatGPT (mp3, geschätzt) |
+| --- | --- | --- | --- | --- |
+| Probelauf (5 Wörter + 5 Sätze) | 10 | ~16 s | **~0,8 MB** | ~0,1 MB |
+| Alle Vokabeln | 168 | ~4 min | **~11 MB** | ~1,4 MB |
+| + Züge des Dialog-Probelaufs | ~+120 | ~+7 min | **~+20 MB** | ~+2,5 MB |
+| + Züge des vollen Dialoglaufs | ~+4 000 | ~+4 h | **~+700 MB** | ~+85 MB |
+
+Die letzte Zeile ist der Grund, warum die Schätzung **am Knopf** steht, bevor
+jemand startet, und warum die Statuszeile die tatsächlich abgelegte Summe
+zeigt. 700 MB WAV sind im Browser theoretisch möglich (IndexedDB vergibt
+Anteile des freien Plattenplatzes), aber nichts, was man unbemerkt anhäufen
+sollte. Eine Verdichtung von Gemini-PCM zu mp3/opus bräuchte einen Encoder im
+JavaScript-Bündel oder ein natives Modul — bewusst nicht gebaut; wer den
+vollen Dialoglauf vertonen will, nimmt nativ ChatGPT (mp3) oder wartet auf
+einen Encoder. Gemessen im Web: der Probelauf mit zehn mp3-Clips belegt
+105 264 Byte in der IndexedDB, `localStorage` wuchs nur um 3 280 Zeichen
+Metadaten.
+
+**Dedupliziert über den Text:** Gleicher Text in gleicher Sprache ist ein
+Clip. „สวัสดีครับ" in zwanzig Dialogen ist einer, nicht zwanzig. Die Clip-ID
+ist ein 64-Bit-Hash (zweimal FNV-1a über Codepunkte) aus Sprache und
+normalisiertem Text; ein 32-Bit-Hash hätte bei ~1 500 Texten eine
+Kollisionswahrscheinlichkeit im Promillebereich — zu viel für etwas, das still
+den falschen Clip abspielen würde.
+
+### AE-31 — Die Thai-Töne der TTS-Stimmen sind gemessen, und die Grenze der Messung ist benannt
+
+**Entscheidung:** Hörclips werden von Gemini oder ChatGPT erzeugt (die
+einzigen beiden der vier Anbieter mit Sprachausgabe, beide nennen Thai in
+ihrer Doku). Ein Messwerkzeug für die Tonhöhenkontur liegt im Repo
+(`scripts/tone-contour.html`). Es wurde an zwei **anderen** neuronalen
+Thai-Stimmen angewendet, weil die beiden App-Anbieter ohne bezahlten Schlüssel
+kein Audio hergeben (B-6). Die App **verspricht** deshalb nirgends, dass die
+Töne stimmen — sie sagt beim Abspielen „KI-Stimme, keine
+Muttersprachler-Aufnahme" (Pflicht 4).
+
+**Warum das nicht aus Trainingswissen zu beantworten war:** Ob ein
+TTS-Modell die fünf Thai-Töne realisiert, entscheidet sich an der
+Grundfrequenz über die Silbe hinweg. Das steht in keiner Doku, und es lässt
+sich auch nicht hören, wenn man es nicht messen kann — dieser Rechner hat
+keine Thai-Stimme (Windows: nur de-DE und en-US; Browser: nur de-DE), und
+Hören wäre ohnehin keine Messung.
+
+**Wie gemessen wurde:** Minimalpaare aus dem verifizierten Grundstock, alle
+fünf Töne: มา (mittel), ม้า (hoch), หมา (steigend), ไม่ (fallend), ใหม่ (tief).
+Zwei Engines, drei Stimmen: Microsoft neural th-TH-Premwadee und th-TH-Niwat
+(über `edge-tts`), Google (translate, `tl=th`). Je Clip F0 über normierte
+Autokorrelation (40-ms-Fenster, 10 ms Schritt, 70–400 Hz), Oktavkorrektur,
+längste stimmhafte Strecke ohne An- und Ausklang, in Halbtönen relativ zum
+Median der Stimme. Erwartete Formen nach der Beschreibung des Bangkok-Thai
+(Abramson): mittel eben · tief tief, eben bis fallend · fallend hoch beginnend,
+deutlich fallend · hoch mittelhoch beginnend, zum Ende steigend · steigend
+tief beginnend, Senke, dann deutlich steigend.
+
+**Ergebnis** (Kontur in Halbtönen bei 0/20/40/60/80/100 % der Silbe):
+
+| Stimme | มา mittel | ม้า hoch | หมา steigend | ไม่ fallend | ใหม่ tief |
+| --- | --- | --- | --- | --- | --- |
+| Premwadee | +1,4 … −3,1 (fällt) | +0,8 … −1,8 (fällt) | +0,7 → −4,0 → +1,3 ✓ | +2,8 → −6,5 ✓ | +1,9 → −6,6 ✓ |
+| Niwat | +1,7 … −0,9 ✓ | +0,8 … −1,0 (eben, keine Steigung) | −2,5 → +1,4 ✓ | +3,9 → −4,6 ✓ | −2,1 → −6,4 ✓ |
+| Google | 0 … −3,6 (Fall am Ende) | 0 … +1,8 ✓ | −0,9 → −4,9 → −4,5 (**keine Steigung**) | +4,2 → −5,5 ✓ | −0,4 → −5,7 ✓ |
+
+Schwellenfreie **Ordnungsprüfung** innerhalb jeder Stimme (Ende(hoch) >
+Ende(mittel) > Ende(fallend); Ende(steigend) > Ende(tief); Anfang(fallend) >
+Anfang(tief); Senke-zu-Ende beim steigenden, Gipfel-zu-Ende beim fallenden Ton
+je > 2 Halbtöne): **je 7 von 8** bei allen drei Stimmen.
+
+Lesart: Fallend und tief realisieren alle drei Stimmen klar. Der steigende Ton
+ist bei beiden Microsoft-Stimmen sauber (Senke, dann +5 bis +6 Halbtöne), bei
+Google dagegen **nicht** — หมา fällt dort und bleibt unten, was einem
+Muttersprachler als tiefer Ton erscheinen dürfte. Mittel und hoch sind bei den
+Microsoft-Stimmen nur schwach getrennt (Premwadee lässt beide fallen), bei
+Google dagegen richtig geordnet (hoch endet oben, mittel fällt am Ende).
+**Keine der drei Stimmen realisiert alle fünf Töne überzeugend.** Das ist der
+wichtigste Befund dieser Phase: Man darf einem TTS-Anbieter die Thai-Töne
+nicht unbesehen glauben — und die beiden Anbieter, die die App benutzt,
+konnten gar nicht gemessen werden.
+
+**Grenzen, ausdrücklich:**
+
+- Gemessen sind **nicht** die Anbieter der App. Gemini- und OpenAI-Clips
+  brauchen einen Schlüssel; das Werkzeug ist dafür gebaut (Dateien hineinziehen
+  oder Manifest) und steht als TODO-Punkt oben.
+- Eine Konturmessung ist keine Hörprüfung. Sie sagt, ob die Tonhöhe die
+  erwartete Richtung nimmt — nicht, ob ein Muttersprachler die Silbe als
+  richtig hört. Vokallänge, Stimmqualität und Silbenendrand bleiben unbewertet.
+- Autokorrelation irrt bei Nasalen und sehr kurzen Silben; die
+  Oktavkorrektur fängt nur den groben Fall. Die erste Messung ohne sie zeigte
+  bei mehreren Clips einen Sprung von +5 Halbtönen am Silbenanfang — ein
+  Messfehler, kein Ton. Deshalb steht die Korrektur jetzt im Werkzeug und in
+  der Beschreibung.
+- Die „erwarteten Formen" sind eine Beschreibung des Bangkok-Standards; die
+  Schwellen in der Formzuordnung sind Heuristik.
+
+**Konsequenz im Code:** `synthetic: true` ist ein Literaltyp im Clip-Dokument,
+damit keine Fassung behaupten kann, etwas anderes zu sein; die Wiedergabe
+meldet `asset` oder `tts`, und die Oberfläche schreibt bei `asset` „KI-Stimme"
+daneben — bei Vokabel, Beispielsatz und Gesprächszug. Dieselbe Linie wie
+`sourceVerified` bei den Vokabeln: kennzeichnen, was nicht belegt ist.
+
+**Warum kein fünfter Anbieter für Sprachausgabe:** AE-28 hat Stability als
+*Bestandsanbieter* behalten, weil die Bild-Gruppe sonst keinen einzigen
+gemessenen Weg mehr gehabt hätte. Hier gibt es keinen Bestand, und der Weg von
+Gemini ist aus dem Browser gemessen offen; ein Spezialanbieter (ElevenLabs
+o. ä.) wäre ein *neuer* fünfter, den Phase 10 ausschließt. Die
+Microsoft-Stimmen der Messung sind keine Option: `edge-tts` ist ein
+nachgebauter Zugang ohne offizielle API und ohne Schlüssel — gut zum Messen,
+untauglich als Grundlage einer App.
+
+**CORS, gemessen wie in AE-26/AE-27:** `POST …/gemini-2.5-flash-preview-tts:
+generateContent` mit `responseModalities: ["AUDIO"]` kommt durch (400,
+lesbar), ebenso der neue Endpunkt `/v1beta/interactions` aus der aktuellen
+Doku. `POST api.openai.com/v1/audio/speech` unterliegt der `sk-`-Regel aus
+AE-27: mit `Bearer ungueltig` ein lesbares 401, mit `Bearer sk-…` „Failed to
+fetch". ChatGPT ist damit auch für Sprachausgabe im Web-Build gekennzeichnet,
+nativ offen. Die Voreinstellung der Gruppe ist Gemini.
+
 ---
 
 ## Protokoll
@@ -2120,10 +2278,137 @@ Auswahlknöpfen mit Zustand, davon sieben auf `true`.
 
 ---
 
+### 2026-09-03 — Phase 11: Natives Audio (Hören)
+
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauber
+auf `main` bei `b00dfde`, 437 Tests grün, `tsc` fehlerfrei). Nach **B-2**,
+**B-4**, **B-5** und **B-6** wurde beim Nutzer nachgefragt; bis zum Ende der
+Sitzung kam keine Antwort. **Alle vier gelten weiterhin als offen.** Für diese
+Phase heißt das: die beiden Sprachausgabe-Anbieter der App (Gemini, ChatGPT)
+konnten kein Audio hergeben — die Tonmessung lief deshalb an zwei anderen
+Stimmen, und der Probelauf in der App mit einem Ersatz-Client (siehe unten).
+
+**Ausgangslage, auf diesem Rechner nachgemessen:** Windows hat als
+Sprachausgabe nur de-DE und en-US (SAPI: Hedda, Zira; OneCore: Hedda, Katja,
+Stefan), der Browser des Web-Builds nur die drei de-DE-Stimmen. **Keine
+Thai-Stimme** — exakt die Lage, die der Nutzer am eigenen Gerät erlebt hat.
+„Thai anhören" war hier bis zu dieser Phase stumm.
+
+**Gemacht**
+
+- `src/lib/blobs/` — die Bildablage aus AE-14 verallgemeinert (AE-30); Bilder
+  hängen unverändert daran (`images`), Hörclips neu (`audio`). Die alten
+  Bild-Backend-Dateien sind weg, die Bild-Tests liefen ohne Änderung weiter.
+- `src/lib/clips/` — Typen mit `synthetic: true` als Literaltyp, Bauplan
+  (Vokabeln → Beispielsätze → Dialogzüge, dedupliziert über den Text),
+  Base64/WAV ohne Abhängigkeiten, Generator-Naht, Batch als **vierter Nutzer**
+  von `lib/generation/batch.ts`, Auflöser mit Index im Arbeitsspeicher.
+- `src/lib/providers/audio.ts` — `AudioClient` in der Naht aus Phase 10:
+  Gemini (`generateContent` mit `responseModalities: AUDIO`, PCM → WAV),
+  ChatGPT (`/v1/audio/speech`, mp3 binär). Claude und Stability: „keine
+  Sprachausgabe".
+- `src/lib/audio.ts` — zweite Stufe vor TTS: Clip zu (Sprache, Text). Die
+  Screens rufen weiter `playPronunciation()` — die Gespräch-Seite ohne jede
+  ID, und genau so wird der Clip gefunden. Eingehängt einmal in `_layout.tsx`.
+- Sammlung `audio` im Dokumentspeicher; Repository-Helfer; vierte
+  Generator-Gruppe „Hörclips" in den Einstellungen mit Stimme als Freitext
+  und **Speicherschätzung am Knopf**.
+- Pflicht 4: `SpeakButton` (Karteikarte, Beispielsatz) und der Zug-Knopf im
+  Gespräch schreiben „KI-Stimme — keine Muttersprachler-Aufnahme" daneben,
+  sobald ein Clip gespielt hat; auch im Screenreader-Label.
+- `scripts/tone-contour.html` — das Messwerkzeug (AE-31), im Repo, damit die
+  Messung mit echten Gemini-/OpenAI-Clips wiederholbar ist.
+
+**Pflicht 1 — Tonqualität gemessen (AE-31)**
+
+Fünf Minimalpaar-Wörter aus dem Grundstock (มา ม้า หมา ไม่ ใหม่), drei Stimmen
+zweier Engines (Microsoft Premwadee/Niwat, Google), F0-Kontur je Silbe in
+Halbtönen, dazu eine schwellenfreie Ordnungsprüfung. Ergebnis: fallend und
+tief bei allen dreien klar; steigend bei Microsoft sauber, **bei Google
+nicht** (หมา fällt und bleibt unten); mittel/hoch bei Microsoft schwach
+getrennt, bei Google richtig geordnet. Ordnungsprüfung je 7 von 8. **Keine
+Stimme realisiert alle fünf Töne überzeugend.** Die Anbieter der App sind
+nicht darunter — das ist die benannte Grenze, nicht ein Versprechen.
+
+Zwischenfall, festgehalten, weil er die Methode betrifft: Die erste Fassung
+des Werkzeugs zeigte bei mehreren Clips +5 Halbtöne am Silbenanfang. Das war
+ein Oktavfehler der Autokorrelation, kein Ton. Oktavkorrektur und das
+Abschneiden von An- und Ausklang stehen seitdem im Werkzeug und in seiner
+Beschreibung.
+
+**Pflicht 2 — CORS gemessen**
+
+Gemini-TTS über `generateContent` und über den neuen Endpunkt
+`/v1beta/interactions`: beide 400, lesbar. OpenAI `/v1/audio/speech`: mit
+`Bearer ungueltig` 401 lesbar, mit `Bearer sk-…` „Failed to fetch" — die
+Regel aus AE-27 gilt auch hier. Google Cloud TTS (`texttospeech.googleapis.com`)
+käme ebenfalls durch, ist aber ein anderer Dienst mit anderem Schlüssel und
+bleibt außen vor.
+
+**Pflicht 3 — Speicherbedarf (AE-30)**
+
+Gemini-PCM: 48 000 Byte je Sekunde. Sprechraten gemessen (Silbe ~1–1,6 s,
+Satz mit 11 Zeichen ~2 s, Zug mit 37 Zeichen ~3,4–4,3 s). Probelauf ~0,8 MB,
+alle Vokabeln ~11 MB, voller Dialoglauf **~700 MB** als WAV. Die Schätzung
+steht am Knopf, die Ist-Summe in der Statuszeile.
+
+**Verifiziert**
+
+- `npm test` → **469 Tests grün** in 16 Suites (vorher 437 in 15).
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Web-Build durchgespielt:** Vier Generator-Karten, Hörclips mit
+  Anbieterreihe (ChatGPT, Gemini), Modell- und Stimmenfeld, Statuszeile „0 Clips,
+  0 B · Ablage indexeddb", Umfänge mit Schätzung („10 Clips … geschätzt
+  792 KB").
+- **Probelauf durch die echte Pipeline mit Ersatz-Client** — wie in Phase 5
+  für die Bilder: zehn echte Thai-Clips (Microsoft th-TH-Premwadee, mp3) für
+  genau die zehn Texte des Probelaufs, per `runClipBatch` durch Plan, Batch,
+  Ablage. 10/10 erzeugt, 0 fehlgeschlagen; IndexedDB
+  `thai-lernbegleiter-audio` enthält zehn `th-<hash>.mp3`, 105 264 Byte;
+  `localStorage` wuchs um 3 280 Zeichen Metadaten; jedes Dokument trägt
+  `synthetic: true` und den Ersatz-Anbieter im Feld `model`.
+- **Danach offline, ohne Schlüssel:** Seite neu geladen, Statuszeile „10 Clips,
+  103 KB". Eine von Hand eingespielte Situation (Muster Phase 4) mit drei Zügen:
+  Zug „ขอบคุณ มาก ครับ" spielte den Clip — mitgeschnitten `new Audio("data:audio/
+  mpeg;base64,…")` und `play()` — und daneben stand „KI-Stimme"; Zug ohne Clip
+  blieb bei der Sprachausgabe, ohne Kennzeichnung. Zug „สวัสดีครับ" spielte
+  **zunächst TTS**, weil der Grundstock „สวัสดี ครับ" schreibt: daraus wurde die
+  Thai-Regel im Schlüssel (Leerraum fällt weg), mit Test.
+- **Karteikarte, offline, ohne Schlüssel:** Reiter Lernen, Richtung
+  Thai → Deutsch, erste Karte สวัสดี, „Thai anhören" — mitgeschnitten
+  `new Audio("data:audio/mpeg;base64,…")` und `play()`, darunter „KI-Stimme
+  — keine Muttersprachler-Aufnahme", das Screenreader-Label trägt denselben
+  Zusatz. Nach dem Neuladen mit der Thai-Regel: alle drei Züge der
+  Demo-Situation verhalten sich wie erwartet — zwei Clips mit Kennzeichnung,
+  einer Sprachausgabe ohne.
+- **Danach aufgeräumt** wie in Phase 5: Clips gelöscht („Alle Clips
+  löschen" → 0 Clips, IndexedDB leer), Demo-Situation entfernt.
+
+**Offen / bewusst nicht gemacht**
+
+- **Tonqualität der App-Anbieter selbst** (Gemini, ChatGPT). Braucht einen
+  Schlüssel (B-6); das Werkzeug wartet darauf. Bis dahin steht im UI „KI-Stimme,
+  keine Muttersprachler-Aufnahme" und nirgends „richtige Töne".
+- **Antwortform** beider Anbieter (B-6): Gemini-`inlineData` mit
+  `audio/L16;codec=pcm;rate=24000` ist aus der Doku abgeleitet, nicht gemessen;
+  der Parser liest den `mimeType` und nennt im Fehlerfall die gelieferten Teile.
+- **Deutsche Clips** (für Thai-Muttersprachler, Prüfungs-Hörtexte) sind im
+  Vertrag vorgesehen (`language: 'de'`), aber nicht im Bauplan — deutsche
+  Stimmen sind auf Geräten die Regel, Thai-Stimmen die Ausnahme.
+- **Verdichtung** von Gemini-PCM (mp3/opus) — bräuchte Encoder oder natives
+  Modul. Nicht gebaut; die 700-MB-Zahl ist der Grund, warum die Schätzung vor
+  dem Start steht.
+- **Nativ** (B-2): Dateiablage unter `Paths.document/audio/` und Wiedergabe
+  über `expo-audio` sind nur typgeprüft — dieselbe Lage wie bei den Bildern.
+
+---
+
 ## Konsolidierte Abnahme (Stand 2026-09-03)
 
 Jedes „Fertig, wenn" aus Phase 0–10 gegen den **jetzigen** Repo-Zustand.
-**83 von 88 erfüllt; 5 offen, und alle 5 hängen an einer Handlung des
+**92 von 98 erfüllt; 6 offen, und alle 6 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -2219,9 +2504,16 @@ Fassung abweichen.
 | 10 | Auswahlzustand ist fuer Screenreader ablesbar (Nebenbefund) | **erfüllt** | AE-29, nicht Auftrag dieser Phase, beim Nachmessen gefunden: accessibilityState={{selected}} erzeugt in dieser React-Native-Web-Fassung GAR KEIN ARIA-Attribut, und accessibilityRole 'radio' + accessibilityState {{checked}} liefert zwar role=radio, aber kein aria-checked. Betraf auch Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Behoben durch direkt gesetztes aria-checked plus radiogroup; nachgemessen 18 von 18 Auswahlknoepfen mit Zustand, davon 7 auf true, und kein Aktionsknopf mit falscher Rolle. |
 | 10 | Tests und tsc gruen | **erfüllt** | 437 Tests in 15 Suites gruen (vorher 392 in 14); npx tsc --noEmit fehlerfrei. |
 | 10 | Antwortform von ChatGPT und Gemini gegen die laufende API belegt | **offen** | Blocker: B-6 - beide Anbieter pruefen den Schluessel VOR der Anfrageform und antworten auf jede Anfrage mit demselben Auth-Fehler. Anders als bei Stability (AE-13) liess sich deshalb nichts ohne bezahlten Schluessel festklopfen. Die Parser nennen im Fehlerfall die gelieferten Feldnamen, damit ein Formwechsel sofort in der Fehlerliste steht. |
-
----
-
+| 11 | Kleiner Testlauf erzeugt Audio, danach offline abspielbar ohne Key | **erfüllt** | Probelauf (5 Vokabeln + 5 Beispielsaetze) durch die echte Pipeline mit einem Ersatz-Client wie in Phase 5: zehn echte Thai-Clips (Microsoft th-TH-Premwadee, mp3) fuer genau die zehn Texte. 10/10 erzeugt; IndexedDB thai-lernbegleiter-audio mit zehn th-<hash>.mp3, 105 264 Byte, localStorage nur +3 280 Zeichen Metadaten. Nach Neuladen ohne Schluessel: Statuszeile '10 Clips, 103 KB', Gespraechszug spielt den Clip (mitgeschnitten new Audio('data:audio/mpeg…') + play()), Karteikarte สวัสดี im Reiter Lernen spielt den Clip und schreibt 'KI-Stimme - keine Muttersprachler-Aufnahme' darunter. Der ECHTE Anbieterlauf (Gemini/ChatGPT) steht wegen B-6 aus. |
+| 11 | Resolver bevorzugt Asset, faellt ohne Asset weiterhin auf TTS zurueck (Test) | **erfüllt** | clips.test.ts: Clip vorhanden -> 'asset' mit data:audio/wav-Quelle, gefunden nur ueber Text und Sprache wie die Gespraech-Seite ruft; kein Clip -> 'tts' mit th-TH; Clip-Suche wirft -> 'tts'; ausdrueckliche audioAssetId hat Vortritt; Index wird nach Lauf und Loeschen verworfen. Die neun Tests aus Phase 3 (audio.test.ts) laufen unveraendert. Im Web-Build: Zug ohne Clip blieb bei der Sprachausgabe, Zug mit Clip spielte ihn. |
+| 11 | Tonqualitaets-Messung samt Grenzen dokumentiert | **erfüllt** | AE-31 und scripts/tone-contour.html. Fuenf Minimalpaar-Woerter aus dem Grundstock (มา ม้า หมา ไม่ ใหม่), drei Stimmen zweier Engines (Microsoft Premwadee/Niwat, Google), F0 ueber normierte Autokorrelation mit Oktavkorrektur, Konturen in Halbtoenen, schwellenfreie Ordnungspruefung je 7 von 8. Befund: fallend/tief ueberall klar, steigend bei Google NICHT realisiert, mittel/hoch bei Microsoft schwach getrennt - keine Stimme trifft alle fuenf. Grenze ausdruecklich: die App-Anbieter selbst (Gemini, ChatGPT) konnten ohne Schluessel nicht gemessen werden; Kontur ist keine Hoerpruefung. |
+| 11 | Speicherbedarf-Abschaetzung dokumentiert | **erfüllt** | AE-30. Gemini-PCM 48 000 Byte/s aus der Doku; Sprechraten an zwei Stimmen gemessen (Silbe 0,9-1,6 s, 11 Zeichen ~2 s, 37 Zeichen 3,4-4,3 s); konservativ 1 s + 10 Zeichen/s. Probelauf ~0,8 MB, alle Vokabeln ~11 MB, voller Dialoglauf ~700 MB als WAV (ChatGPT-mp3 etwa ein Achtel, geschaetzt). Die Schaetzung steht am Knopf VOR dem Start, die Ist-Summe in der Statuszeile; gemessen 10 mp3-Clips = 105 264 Byte. |
+| 11 | AudioClient in der Provider-Abstraktion aus Phase 10, CORS je Anbieter gemessen | **erfüllt** | providers/audio.ts neben text.ts und image.ts; vierte Generator-Gruppe 'audio' mit Stimme als Freitext. Gemessen: Gemini-TTS ueber generateContent und ueber /v1beta/interactions beide 400 lesbar; OpenAI /v1/audio/speech unterliegt der sk--Regel aus AE-27 (Bearer ungueltig -> 401 lesbar, Bearer sk-… -> Failed to fetch). Claude und Stability: 'keine Sprachausgabe' als benannter Fehler. Kein fuenfter Anbieter - Begruendung in AE-31. |
+| 11 | Ablage nach AE-14-Muster: Metadaten in Sammlung, Bytes in Dateiablage | **erfüllt** | Sammlung 'audio' + Blob-Ablage 'audio' (nativ Paths.document/audio/, Web IndexedDB thai-lernbegleiter-audio). Dafuer die Bildablage zu lib/blobs verallgemeinert (AE-30); alle Bild-Tests liefen ohne Aenderung weiter, IndexedDB-Name und Ordner der Bilder unveraendert. |
+| 11 | Ehrliche Kennzeichnung: TTS-Aufnahmen sind keine Muttersprachler-Aufnahmen | **erfüllt** | synthetic: true als Literaltyp im Dokument. Karteikarte, Beispielsatz und Gespraechszug schreiben 'KI-Stimme - keine Muttersprachler-Aufnahme' daneben, sobald ein Clip gespielt hat (auch im Screenreader-Label); bei der Sprachausgabe des Geraets nicht. Im Web-Build beobachtet: 'KI-Stimme' erschien genau am Zug mit Clip, nicht am Zug ohne. |
+| 11 | Screens fuer den Resolver-Pfad nicht angefasst | **erfüllt** | Die Screens rufen weiter playPronunciation({ text, language }); der Clip wird ueber Text und Sprache gefunden (Thai ohne Leerraum, AE-30). Geaendert wurden Screens NUR fuer die Kennzeichnung nach Pflicht 4 (SpeakButton, TurnSpeakButton) - nicht, damit Clips spielen. |
+| 11 | Tests und tsc gruen | **erfüllt** | 469 Tests in 16 Suites gruen (vorher 437 in 15); npx tsc --noEmit fehlerfrei. |
+| 11 | Tonqualitaet der App-Anbieter selbst gemessen (Gemini, ChatGPT) | **offen** | Blocker: B-6 - beide geben ohne gueltigen Schluessel kein Audio her. Das Messwerkzeug (scripts/tone-contour.html) nimmt Dateien oder ein Manifest entgegen; Anleitung im TODO. |
 ## Skalierungsplan auf ~1000 Einträge
 
 Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
@@ -2291,12 +2583,33 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 
 ## TODO — priorisiert
 
-> **Neu aus Phase 10 (2026-09-03):** Die Anbieterwahl steht. Was hier oben
+> **Neu aus Phase 11 (2026-09-03):** Hörclips stehen; die Karteikarte, der
+> Beispielsatz und die Gesprächszüge spielen sie bevorzugt und sagen „KI-Stimme"
+> dazu. Was oben steht, braucht weiterhin einen Schlüssel oder ein Gerät.
+
+0. **Hörclips mit gültigem Gemini-Schlüssel erzeugen und die Töne messen
+   (neu, Phase 11 — schließt B-6 für Audio):** Reiter **Einstellungen**, Karte
+   **Generator: Hörclips**, Anbieter Gemini, Modell und Stimme stehen lassen,
+   Schlüssel eintragen, **Probelauf**, **Start**. Erwartung: 10 von 10 erzeugt,
+   Statuszeile „10 Clips, ~0,8 MB"; im Reiter **Lernen** spielt „Thai anhören"
+   bei สวัสดี den Clip und schreibt „KI-Stimme" daneben. **Dann messen:** die
+   zehn Clips liegen im Web in der IndexedDB `thai-lernbegleiter-audio` (nativ
+   unter `<Dokumente>/audio/`); als Dateien exportiert nach dem Muster
+   `gemini_Kore_<wort>_<ton>.wav` in `scripts/tone-contour.html` ziehen — der
+   Ton ist einer von mid/low/falling/high/rising — und mit der Tabelle in AE-31
+   vergleichen. Erst danach darf irgendwo stehen, dass Geminis Thai-Töne
+   stimmen; bis dahin bleibt es bei „KI-Stimme, keine Muttersprachler-Aufnahme".
+   *Falls Fehlschläge kommen:* Steht „Antwort enthielt kein Audio" oder
+   „Unbekannter Audio-Typ" in der Fehlerliste, nennt die Meldung die gelieferten
+   Teile bzw. den `mimeType` — anzupassen ist dann `parseGeminiAudio` in
+   `src/lib/providers/audio.ts`.
+
+> **Aus Phase 10 (2026-09-03):** Die Anbieterwahl steht. Was hier oben
 > liegt, ist unverändert das, was einen Schlüssel oder ein Gerät des Nutzers
 > braucht — nur dass die Probeläufe seit Phase 10 auch mit **Gemini** gefahren
 > werden können und nicht mehr nur mit Anthropic und Stability.
 
-0. **Anbieter mit einem gültigen Schlüssel gegenprüfen (neu, Phase 10):**
+0a. **Anbieter mit einem gültigen Schlüssel gegenprüfen (Phase 10):**
    Reiter **Einstellungen**, bei einer Gruppe den gewünschten Anbieter wählen,
    Modell stehen lassen, Schlüssel eintragen, **Probelauf**, **Start**. Was
    dabei erstmals belegbar wäre und heute offen ist:

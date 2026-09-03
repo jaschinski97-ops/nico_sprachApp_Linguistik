@@ -60,6 +60,8 @@ export type StartArgs = {
   provider: ProviderId;
   /** Freitext aus dem Modellfeld — ungeprüft, siehe Pflicht 5. */
   model: string;
+  /** Nur bei Sprachausgabe: die Stimme, ebenfalls Freitext. Sonst leer. */
+  voice: string;
   onProgress: (progress: BatchProgress) => void;
   shouldCancel: () => boolean;
 };
@@ -162,6 +164,10 @@ export function GeneratorCard({
         // Leeres Feld heisst „nimm den Vorschlag" - kein Grund fuer eine
         // Fehlermeldung, und geprueft wird der Name ohnehin nicht (Pflicht 5).
         model: choice.model.trim() || providerInfo.modelPlaceholder[groupInfo.needs],
+        voice:
+          groupInfo.needs === 'audio'
+            ? (choice.voice ?? '').trim() || providerInfo.voicePlaceholder
+            : '',
         onProgress: setProgress,
         shouldCancel: () => cancelRef.current,
       });
@@ -171,7 +177,7 @@ export function GeneratorCard({
       setRunning(false);
       await onFinished();
     }
-  }, [key, provider, providerInfo, groupInfo, choice.model, runOption, onStart, onFinished]);
+  }, [key, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
@@ -219,8 +225,9 @@ export function GeneratorCard({
             ? `${providerInfo.label}: Schlüssel von ${providerInfo.keySource}.`
             : `${providerInfo.label} kommt von ${providerInfo.vendor}; Schlüssel von ${providerInfo.keySource}.`}
           {' '}
-          Zur Auswahl stehen nur Anbieter, die {groupInfo.needs === 'image' ? 'Bilder' : 'Text'}{' '}
-          erzeugen — Claude kann keine Bilder, Stability AI keinen Text.
+          {groupInfo.needs === 'audio'
+            ? 'Zur Auswahl stehen nur Anbieter mit Sprachausgabe — Claude und Stability AI haben keine.'
+            : `Zur Auswahl stehen nur Anbieter, die ${groupInfo.needs === 'image' ? 'Bilder' : 'Text'} erzeugen — Claude kann keine Bilder, Stability AI keinen Text.`}
         </ThemedText>
         {/* Nur im Web: nativ gibt es kein CORS, dort gilt der Hinweis nicht. */}
         {Platform.OS === 'web' && providerInfo.webWarning ? (
@@ -252,6 +259,28 @@ export function GeneratorCard({
             : ''}
         </ThemedText>
       </View>
+
+      {groupInfo.needs === 'audio' ? (
+        <View style={styles.field}>
+          <ThemedText type="small">Stimme</ThemedText>
+          <TextInput
+            value={choice.voice ?? ''}
+            onChangeText={(value) => onChoiceChange({ voice: value })}
+            placeholder={providerInfo.voicePlaceholder}
+            placeholderTextColor={theme.textSecondary}
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!running}
+            accessibilityLabel={`Stimme für ${heading}`}
+            style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
+          />
+          <ThemedText type="small" themeColor="textSecondary">
+            Name einer Stimme des Anbieters, ebenfalls ungeprüft. Leer lassen nimmt „
+            {providerInfo.voicePlaceholder}". Alle Stimmen sind synthetisch — welche die
+            Thai-Töne trifft, ist gemessen (AE-31), nicht versprochen.
+          </ThemedText>
+        </View>
+      ) : null}
 
       <View style={styles.field}>
         <ThemedText type="small">API-Schlüssel für {providerInfo.vendor}</ThemedText>
