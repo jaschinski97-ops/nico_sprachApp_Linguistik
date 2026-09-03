@@ -34,7 +34,7 @@ import { analyzeSyllable, syllableShape, toneFrom } from './syllable';
 const monosyllabic = VOCABULARY.filter((entry) => entry.syllables?.length === 1);
 
 function shortLabel(entry: VocabEntry): string {
-  return `${entry.thai} (${entry.romanization}, ${entry.german})`;
+  return `${entry.term} (${entry.romanization}, ${entry.german})`;
 }
 
 describe('Die Datengrundlage stammt aus der Quelle', () => {
@@ -172,7 +172,7 @@ describe('Gegenprobe gegen den Grundstock', () => {
     // Lernende wuerden die falsche Regel mitlernen.
     const wrong: string[] = [];
     for (const entry of monosyllabic) {
-      const result = analyzeSyllable(entry.thai);
+      const result = analyzeSyllable(entry.term);
       if (!result.ok) continue;
       if (result.tone !== entry.syllables[0].tone) {
         wrong.push(
@@ -189,7 +189,7 @@ describe('Gegenprobe gegen den Grundstock', () => {
     // Eintrag durchfallen, nennt die Meldung ihn samt Grund - dann ist zu
     // entscheiden, ob eine Regel fehlt oder das Wort eine Ausnahme ist.
     const unresolved = monosyllabic
-      .map((entry) => ({ entry, result: analyzeSyllable(entry.thai) }))
+      .map((entry) => ({ entry, result: analyzeSyllable(entry.term) }))
       .filter(({ result }) => !result.ok)
       .map(({ entry, result }) => `${shortLabel(entry)}: ${(result as { reason: string }).reason}`);
     expect(unresolved).toEqual([]);
@@ -198,7 +198,7 @@ describe('Gegenprobe gegen den Grundstock', () => {
   it('deckt dabei alle fuenf Toene ab', () => {
     const derived = new Set(
       monosyllabic
-        .map((entry) => analyzeSyllable(entry.thai))
+        .map((entry) => analyzeSyllable(entry.term))
         .filter((result) => result.ok)
         .map((result) => (result as { tone: string }).tone)
     );
@@ -284,7 +284,7 @@ describe('Was die Analyse ausdruecklich nicht kann', () => {
     // Beleg aus Phase 3 - drei Silben, aber die mittlere teilt sich einen
     // Bindekonsonanten mit ihren Nachbarn.
     for (const entry of VOCABULARY.filter((candidate) => candidate.syllables.length > 1)) {
-      const result = analyzeSyllable(entry.thai);
+      const result = analyzeSyllable(entry.term);
       if (result.ok) {
         throw new Error(
           `${shortLabel(entry)} ist ${entry.syllables.length}-silbig, wurde aber als eine Silbe gelesen.`
@@ -334,14 +334,14 @@ describe('Die Uebung „Ton herleiten"', () => {
 
   it('zeigt die Schrift und verraet die Umschrift nicht', () => {
     // Die Umschrift traegt die Tonzeichen (à, á, â, ǎ) und waere die Antwort.
-    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.thai === 'หมา')!);
+    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.term === 'หมา')!);
     expect(question.visible).toBe('หมา');
     expect(question.visibleHint).toBeNull();
     expect(question.speak).toBeNull();
   });
 
   it('erklaert jeden Schritt der Herleitung, nicht nur das Ergebnis', () => {
-    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.thai === 'หมา')!);
+    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.term === 'หมา')!);
     const labels = question.derivation!.map((step) => step.label);
     expect(labels).toEqual([
       'Anfangskonsonant',
@@ -357,13 +357,13 @@ describe('Die Uebung „Ton herleiten"', () => {
   });
 
   it('reicht eine benannte Unsicherheit bis in die Aufgabe durch', () => {
-    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.thai === 'คน')!);
+    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.term === 'คน')!);
     expect(question.uncertain).toContain('/ɔː/');
   });
 
   it('benutzt dieselbe feste Tonreihenfolge wie die Hoer-Uebung', () => {
     // Wer beide uebt, soll nicht zwei Ordnungen im Kopf behalten muessen.
-    const entry = VOCABULARY.find((candidate) => candidate.thai === 'ไก่')!;
+    const entry = VOCABULARY.find((candidate) => candidate.term === 'ไก่')!;
     const byEar = buildToneQuestion(entry).options.map((option) => option.tone);
     const byRule = buildToneRuleQuestion(entry).options.map((option) => option.tone);
     expect(byRule).toEqual(byEar);
@@ -374,7 +374,7 @@ describe('Die Uebung „Ton herleiten"', () => {
     // Pflicht 4: keine zweite Darstellung neben constants/tones.ts. Die
     // Option traegt nur den Ton; Farbe und Konturglyphe holt die Oberflaeche
     // daraus - inklusive der in Phase 9 kontrastgeprueften Fassungen.
-    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.thai === 'ไก่')!);
+    const question = buildToneRuleQuestion(VOCABULARY.find((e) => e.term === 'ไก่')!);
     for (const option of question.options) {
       expect(option.tone).toBeTruthy();
       expect(option.label).toBe(TONES[option.tone!].label);

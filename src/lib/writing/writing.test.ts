@@ -23,7 +23,7 @@ import { buildWritingSession, submitWriting, summarizeWriting } from './session'
  *    wertet einen Tippfehler als „Schwer".
  */
 
-const de = (thai: string): VocabEntry => VOCABULARY.find((entry) => entry.thai === thai)!;
+const de = (thai: string): VocabEntry => VOCABULARY.find((entry) => entry.term === thai)!;
 
 async function freshStore(): Promise<DataStore> {
   const store = new MemoryDataStore();
@@ -154,11 +154,11 @@ describe('Pflicht 3 — was Lernziel ist, gilt nie als Tippfehler', () => {
   });
 
   it('prüft das an allen Thai-Einträgen mit Tonzeichen', () => {
-    const withMark = VOCABULARY.filter((entry) => /[่-๋]/.test(entry.thai));
+    const withMark = VOCABULARY.filter((entry) => /[่-๋]/.test(entry.term));
     expect(withMark.length).toBeGreaterThanOrEqual(25);
     for (const entry of withMark) {
-      const stripped = entry.thai.replace(/[่-๋]/g, '');
-      const verdict = verdictFor(stripped, [entry.thai], 'th');
+      const stripped = entry.term.replace(/[่-๋]/g, '');
+      const verdict = verdictFor(stripped, [entry.term], 'th');
       expect(verdict.correct).toBe(false);
       expect(verdict.mistake).toBe('tone-mark');
     }

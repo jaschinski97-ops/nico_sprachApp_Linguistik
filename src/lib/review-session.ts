@@ -2,6 +2,8 @@ import { VocabEntry } from '@/data/vocabulary';
 
 import { createCardState, dueCards, retrievability } from './fsrs/fsrs';
 import { Direction, FSRSCardState } from './fsrs/types';
+import { directionLabel, directionPrompt } from './languages/registry';
+import { directionsFor } from './languages/types';
 import { loadCardStatesForDirection, loadVocabulary, seedVocabulary } from './repository';
 import { DataStore, getStore } from './storage';
 
@@ -14,18 +16,16 @@ import { DataStore, getStore } from './storage';
  * FSRS-Zustand.
  */
 
-export const DIRECTIONS: Direction[] = ['de_to_th', 'th_to_de'];
+/**
+ * Die Richtungen der aktuell gewaehlten Sprache.
+ *
+ * Seit Phase 15 keine Konstante mehr: Welche zwei Richtungen es gibt, haengt
+ * an der Sprache (AE-42). `DIRECTIONS` bleibt als Thai-Vorgabe erhalten, damit
+ * bestehende Aufrufer unveraendert weiterlaufen.
+ */
+export const DIRECTIONS: Direction[] = directionsFor('th');
 
-export const DIRECTION_LABELS: Record<Direction, string> = {
-  th_to_de: 'Thai → Deutsch',
-  de_to_th: 'Deutsch → Thai',
-};
-
-/** Was auf der Vorderseite steht — die Rückseite ist jeweils die andere Sprache. */
-export const DIRECTION_PROMPTS: Record<Direction, string> = {
-  th_to_de: 'Thai lesen, deutsche Bedeutung abrufen',
-  de_to_th: 'Deutsch lesen, thailändisches Wort abrufen',
-};
+export { directionLabel, directionPrompt, directionsFor };
 
 export type ReviewItem = {
   entry: VocabEntry;

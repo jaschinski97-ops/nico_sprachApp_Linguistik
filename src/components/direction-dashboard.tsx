@@ -7,8 +7,8 @@ import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
 import {
-  DIRECTION_LABELS,
-  DIRECTION_PROMPTS,
+  directionLabel,
+  directionPrompt,
   DirectionSummary,
   summarizeAllDirections,
 } from '@/lib/review-session';
@@ -74,14 +74,14 @@ export function DirectionDashboard() {
             asChild>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${DIRECTION_LABELS[summary.direction]} lernen, ${summary.due} Karten fällig`}
+              accessibilityLabel={`${directionLabel(summary.direction)} lernen, ${summary.due} Karten fällig`}
               style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.card}>
                 <ThemedText type="smallBold">
-                  {DIRECTION_LABELS[summary.direction]}
+                  {directionLabel(summary.direction)}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {DIRECTION_PROMPTS[summary.direction]}
+                  {directionPrompt(summary.direction)}
                 </ThemedText>
 
                 <View style={styles.numbers}>

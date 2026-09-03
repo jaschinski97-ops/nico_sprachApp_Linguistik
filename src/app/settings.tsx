@@ -47,7 +47,7 @@ import {
   sumAudioClipBytes,
 } from '@/lib/repository';
 import { ProviderId } from '@/lib/providers/types';
-import { DIRECTION_LABELS, DIRECTIONS } from '@/lib/review-session';
+import { directionLabel, DIRECTIONS } from '@/lib/review-session';
 
 /**
  * Alle drei Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`),
@@ -278,7 +278,7 @@ export default function SettingsScreen() {
           {DIRECTIONS.map((direction) => (
             <Button
               key={direction}
-              label={DIRECTION_LABELS[direction]}
+              label={directionLabel(direction)}
               onPress={() => chooseDefaultDirection(direction)}
               selected={profile?.defaultDirection === direction}
               disabled={profile === null}

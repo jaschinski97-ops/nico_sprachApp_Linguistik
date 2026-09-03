@@ -37,7 +37,7 @@ export function canBuildToneQuestion(entry: VocabEntry): boolean {
 export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
   if (!canBuildToneQuestion(entry)) {
     throw new Error(
-      `"${entry.id}" (${entry.thai}) ist mehrsilbig — jede Silbe hat einen eigenen Ton, ` +
+      `"${entry.id}" (${entry.term}) ist mehrsilbig — jede Silbe hat einen eigenen Ton, ` +
         'eine einzelne Antwort gäbe es nicht.'
     );
   }
@@ -62,10 +62,10 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
     // Gedächtnis abzurufen statt sie zu hören. Genau das soll die Übung nicht.
     visible: null,
     visibleHint: null,
-    speak: { text: entry.thai, language: 'th' },
+    speak: { text: entry.term, language: 'th' },
     options,
     correctIndex: TONE_KEYS.indexOf(tone),
-    solution: `${entry.thai} · ${entry.romanization} — ${entry.german}`,
+    solution: `${entry.term} · ${entry.romanization} — ${entry.german}`,
     explanation: `${TONES[tone].adjective} Ton.`,
   };
 }
@@ -88,19 +88,19 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
  */
 export function canBuildToneRuleQuestion(entry: VocabEntry): boolean {
   if (entry.syllables?.length !== 1) return false;
-  const analysis = analyzeSyllable(entry.thai);
+  const analysis = analyzeSyllable(entry.term);
   return analysis.ok && analysis.tone === entry.syllables[0].tone;
 }
 
 export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
-  const analysis = analyzeSyllable(entry.thai);
+  const analysis = analyzeSyllable(entry.term);
   if (!analysis.ok) {
-    throw new Error(`"${entry.id}" (${entry.thai}): ${analysis.reason}`);
+    throw new Error(`"${entry.id}" (${entry.term}): ${analysis.reason}`);
   }
   const tone = entry.syllables[0].tone;
   if (analysis.tone !== tone) {
     throw new Error(
-      `"${entry.id}" (${entry.thai}): Herleitung ergibt ${TONES[analysis.tone].label}, ` +
+      `"${entry.id}" (${entry.term}): Herleitung ergibt ${TONES[analysis.tone].label}, ` +
         `belegt ist ${TONES[tone].label}. Solange das nicht geklaert ist, wird daraus keine Aufgabe.`
     );
   }
@@ -120,12 +120,12 @@ export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
     // Hier ist die Schrift die Aufgabe, nicht die halbe Loesung: Genau aus
     // ihr soll der Ton abgeleitet werden. Die Umschrift steht bewusst NICHT
     // dabei - sie traegt die Tonzeichen und waere die Antwort.
-    visible: entry.thai,
+    visible: entry.term,
     visibleHint: null,
     speak: null,
     options,
     correctIndex: TONE_KEYS.indexOf(tone),
-    solution: `${entry.thai} · ${entry.romanization} — ${entry.german}`,
+    solution: `${entry.term} · ${entry.romanization} — ${entry.german}`,
     explanation: `${TONES[tone].adjective} Ton.`,
     derivation: analysis.steps,
     uncertain: analysis.uncertain,
@@ -179,7 +179,7 @@ export function buildArticleQuestion(entry: VocabEntry): DrillQuestion {
     visible: `___ ${word}`,
     // Das thailändische Wort als Kontext: die lernende Person spricht Thai,
     // und ohne Kontext wäre bei mehrdeutigen Woertern unklar, was gemeint ist.
-    visibleHint: `${entry.thai} · ${entry.romanization}`,
+    visibleHint: `${entry.term} · ${entry.romanization}`,
     speak: null,
     options,
     correctIndex: ARTICLES.indexOf(noun.article),
@@ -260,7 +260,7 @@ export function buildVerbFormQuestion(
     direction: 'th_to_de',
     vocabId: entry.id,
     visible: entry.german.split(',')[0].trim(),
-    visibleHint: `${entry.thai} · ${entry.romanization}`,
+    visibleHint: `${entry.term} · ${entry.romanization}`,
     speak: null,
     options,
     correctIndex: options.findIndex((option) => option.label === correct),

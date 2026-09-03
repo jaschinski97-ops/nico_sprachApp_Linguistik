@@ -23,12 +23,12 @@ describe('Vokabel-Grundstock: Umfang und Eindeutigkeit', () => {
   });
 
   it('hat keine doppelten Thai-Schreibungen', () => {
-    const thai = VOCABULARY.map((e) => e.thai);
+    const thai = VOCABULARY.map((e) => e.term);
     expect(new Set(thai).size).toBe(thai.length);
   });
 
   it('findet Eintraege ueber findVocab', () => {
-    expect(findVocab('gai')?.thai).toBe('ไก่');
+    expect(findVocab('gai')?.term).toBe('ไก่');
     expect(findVocab('gibtesnicht')).toBeUndefined();
   });
 });
@@ -37,8 +37,8 @@ describe('Vokabel-Grundstock: Schema-Konformitaet', () => {
   it.each(VOCABULARY.map((e) => [e.id, e] as [string, VocabEntry]))(
     '%s ist schema-konform',
     (_id, entry) => {
-      expect(entry.thai.trim()).not.toBe('');
-      expect(THAI_ONLY.test(entry.thai)).toBe(true);
+      expect(entry.term.trim()).not.toBe('');
+      expect(THAI_ONLY.test(entry.term)).toBe(true);
       expect(entry.romanization.trim()).not.toBe('');
       expect(entry.german.trim()).not.toBe('');
 
@@ -115,9 +115,9 @@ describe('Vokabel-Grundstock: Bidirektionalitaet', () => {
   it('haelt fuer beide Richtungen alle noetigen Felder bereit', () => {
     VOCABULARY.forEach((entry) => {
       // Thai -> Deutsch braucht Schrift, Umschrift, Ton und Bedeutung.
-      expect(entry.thai && entry.romanization && entry.tone && entry.german).toBeTruthy();
+      expect(entry.term && entry.romanization && entry.tone && entry.german).toBeTruthy();
       // Deutsch -> Thai braucht dieselben Felder plus ein Beispiel.
-      expect(entry.exampleThai.trim()).not.toBe('');
+      expect(entry.exampleTerm.trim()).not.toBe('');
       expect(entry.exampleRoman.trim()).not.toBe('');
       expect(entry.exampleGerman.trim()).not.toBe('');
     });
@@ -125,7 +125,7 @@ describe('Vokabel-Grundstock: Bidirektionalitaet', () => {
 
   it('verwendet im Beispiel tatsaechlich das Stichwort', () => {
     VOCABULARY.forEach((entry) => {
-      expect(entry.exampleThai).toContain(entry.thai);
+      expect(entry.exampleTerm).toContain(entry.term);
     });
   });
 
@@ -227,7 +227,7 @@ describe('Vokabel-Grundstock: laedt korrekt durch die Persistenzschicht', () => 
     await seedVocabulary(store);
 
     const entry = await loadVocabEntry('gai', store);
-    expect(entry?.thai).toBe('ไก่');
+    expect(entry?.term).toBe('ไก่');
     expect(entry?.tone).toBe('low');
     expect(await loadVocabEntry('gibtesnicht', store)).toBeNull();
   });

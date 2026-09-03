@@ -85,7 +85,7 @@ function extrasFor(entry: VocabEntry): string[] {
  */
 export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
   if (direction === 'th_to_de') return germanTargets(entry).length > 0;
-  return Boolean(entry.thai.trim());
+  return Boolean(entry.term.trim());
 }
 
 export function buildWritingPrompt(entry: VocabEntry, direction: Direction): WritingPrompt {
@@ -99,7 +99,7 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
       vocabId: entry.id,
       direction,
       language: 'de',
-      shown: entry.thai,
+      shown: entry.term,
       // Die Umschrift als Lesehilfe: Wer Deutsch lernt, soll an der deutschen
       // Form scheitern duerfen, nicht am Entziffern der eigenen Schrift.
       shownHint: entry.romanization,
@@ -116,8 +116,8 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
     language: 'th',
     shown: typeableGerman(entry.german.split(',')[0]),
     shownHint: entry.german.includes(',') ? entry.german : null,
-    targets: [entry.thai],
-    solution: `${entry.thai} · ${entry.romanization}`,
+    targets: [entry.term],
+    solution: `${entry.term} · ${entry.romanization}`,
     extras: extrasFor(entry),
   };
 }

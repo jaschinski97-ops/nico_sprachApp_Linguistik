@@ -27,7 +27,7 @@ export type ReviewDayLog = {
   /** Kalendertag in lokaler Zeit, `YYYY-MM-DD`. */
   date: string;
   total: number;
-  byDirection: Record<Direction, number>;
+  byDirection: Partial<Record<Direction, number>>;
   /** Schlüssel sind die Bewertungen 1..4 als Zeichenkette. */
   byRating: Record<string, number>;
   /**

@@ -1,5 +1,14 @@
-/** Lernrichtung. Bewusst zwei getrennte Karten pro Vokabel, nicht ein Flip. */
-export type Direction = 'de_to_th' | 'th_to_de';
+import { Direction } from '../languages/types';
+
+/**
+ * Lernrichtung. Bewusst zwei getrennte Karten pro Vokabel, nicht ein Flip.
+ *
+ * SEIT PHASE 15 sprachpaar-faehig (AE-42): Der Typ kommt aus
+ * `lib/languages/types.ts` und deckt alle Paare mit Deutsch als Drehscheibe
+ * ab. `'de_to_th'` und `'th_to_de'` bleiben woertlich gueltige Werte -
+ * gespeicherte Kartenschluessel muessen deshalb NICHT angefasst werden.
+ */
+export type { Direction };
 
 /**
  * Bewertung nach dem Aufdecken einer Karte.

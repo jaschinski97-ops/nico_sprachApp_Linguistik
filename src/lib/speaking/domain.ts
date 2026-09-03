@@ -95,7 +95,7 @@ export function buildSpeakingPrompt(entry: VocabEntry): SpeakingPrompt {
   return {
     id: `speaking:${entry.id}`,
     vocabId: entry.id,
-    thai: entry.thai,
+    thai: entry.term,
     romanization: entry.romanization,
     german: entry.german,
     source: entry.source ?? null,

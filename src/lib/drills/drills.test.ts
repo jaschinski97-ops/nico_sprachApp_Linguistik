@@ -20,7 +20,7 @@ import {
 } from './questions';
 import { seededRandom, shuffled } from './random';
 import { buildDrillSession, DRILL_SESSION_SIZE, scoreAnswers } from './session';
-import { DRILL_META, DRILLS, DRILLS_BY_DIRECTION, DrillId } from './types';
+import { DRILL_META, DRILLS, drillsForDirection, DrillId } from './types';
 
 const T0 = Date.UTC(2026, 8, 1, 10);
 
@@ -209,16 +209,16 @@ describe('Uebungen je Richtung', () => {
   it('ordnet jede Uebung genau einer Richtung zu', () => {
     for (const drill of DRILLS) {
       const direction = DRILL_META[drill].direction;
-      expect(DRILLS_BY_DIRECTION[direction]).toContain(drill);
+      expect(drillsForDirection(direction)).toContain(drill);
       const andere = direction === 'de_to_th' ? 'th_to_de' : 'de_to_th';
-      expect(DRILLS_BY_DIRECTION[andere]).not.toContain(drill);
+      expect(drillsForDirection(andere)).not.toContain(drill);
     }
   });
 
   it('gibt jeder Richtung mindestens eine eigene Uebung', () => {
     // Der Kern von Phase 6: beide Zielgruppen scheitern an anderen Stellen.
-    expect(DRILLS_BY_DIRECTION.de_to_th.length).toBeGreaterThan(0);
-    expect(DRILLS_BY_DIRECTION.th_to_de.length).toBeGreaterThan(0);
+    expect(drillsForDirection('de_to_th').length).toBeGreaterThan(0);
+    expect(drillsForDirection('th_to_de').length).toBeGreaterThan(0);
   });
 
   it('uebt fuer Thai-Lernende Toene und fuer Deutsch-Lernende Grammatik', () => {
@@ -226,8 +226,8 @@ describe('Uebungen je Richtung', () => {
     // hoeren" trainiert das Ohr, „Ton herleiten" die Schriftregel. Beides
     // fuehrt zum selben Ton, aber ueber verschiedene Wege - wer nur hoert,
     // bleibt bei jedem neuen Wort auf das Ohr angewiesen.
-    expect(DRILLS_BY_DIRECTION.de_to_th).toEqual(['tone', 'toneRule']);
-    expect(DRILLS_BY_DIRECTION.th_to_de).toEqual(['article', 'verbForms']);
+    expect(drillsForDirection('de_to_th')).toEqual(['tone', 'toneRule']);
+    expect(drillsForDirection('th_to_de')).toEqual(['article', 'verbForms']);
   });
 });
 
@@ -384,9 +384,12 @@ describe('Tagesprotokoll mit Uebungen', () => {
 });
 
 describe('Lernprofil', () => {
-  it('startet ohne Standard-Richtung', async () => {
+  it('startet ohne Standard-Richtung, aber mit einer Sprache', async () => {
+    // Seit Phase 15 traegt das Profil zusaetzlich die gewaehlte Sprache
+    // (AE-42). Ohne Angabe ist es die erste mit Inhalten - eine App ohne
+    // Sprache waere kein sinnvoller Anfangszustand.
     const store = await freshStore();
-    expect(await loadProfile(store)).toEqual({ defaultDirection: null });
+    expect(await loadProfile(store)).toEqual({ defaultDirection: null, language: 'th' });
   });
 
   it('merkt sich eine Richtung und gibt sie wieder heraus', async () => {

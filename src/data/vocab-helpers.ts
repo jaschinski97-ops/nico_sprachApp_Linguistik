@@ -1,4 +1,5 @@
 import { Tone } from '@/constants/tones';
+import { featureFor } from '@/lib/languages/feature';
 
 import { VocabEntry } from './vocabulary';
 
@@ -16,10 +17,11 @@ export type SyllableView = { roman: string; tone: Tone };
  * Normalfall wird es nicht benutzt.
  */
 export function syllablesOf(entry: VocabEntry): SyllableView[] {
-  if (entry.syllables && entry.syllables.length > 0) {
-    return entry.syllables;
-  }
-  return [{ roman: entry.romanization, tone: entry.tone }];
+  // SEIT PHASE 15 ueber das Sprachmerkmal (Pflicht 3): Welche Silben ein
+  // Eintrag hat und wie sie ausgezeichnet sind, weiss die Sprache, nicht
+  // diese Datei. Fuer Thai kommt genau dasselbe heraus wie vorher - die
+  // Tests aus den Phasen 3, 6 und 13 blieben unveraendert gruen.
+  return featureFor(entry).annotate(entry) as SyllableView[];
 }
 
 /**
@@ -31,7 +33,8 @@ export function syllablesOf(entry: VocabEntry): SyllableView[] {
  */
 export function uniformTone(entry: VocabEntry): Tone | null {
   const syllables = syllablesOf(entry);
-  const first = syllables[0].tone;
+  const first = syllables[0]?.tone;
+  if (!first) return null;
   return syllables.every((syllable) => syllable.tone === first) ? first : null;
 }
 
@@ -41,5 +44,5 @@ export function isMultiSyllable(entry: VocabEntry): boolean {
 
 /** Was auf der Vorderseite steht, hängt an der Lernrichtung. */
 export function promptText(entry: VocabEntry, direction: string): string {
-  return direction === 'de_to_th' ? entry.german : entry.thai;
+  return direction === 'de_to_th' ? entry.german : entry.term;
 }

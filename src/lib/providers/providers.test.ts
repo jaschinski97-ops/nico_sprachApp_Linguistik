@@ -616,7 +616,7 @@ describe('Die Generatoren hinter der Abstraktion', () => {
     const gefaelscht = {
       id: abstrakt.id,
       vocabId: abstrakt.id,
-      thai: abstrakt.thai,
+      thai: abstrakt.term,
       romanization: abstrakt.romanization,
       german: abstrakt.german,
       partOfSpeech: abstrakt.partOfSpeech,

@@ -41,7 +41,7 @@ export function ThaiWord({
           size === 'large' ? styles.thaiLarge : styles.thaiMedium,
           single ? { color: toneColor(single) } : null,
         ]}>
-        {entry.thai}
+        {entry.term}
       </ThemedText>
 
       <View style={styles.syllables}>

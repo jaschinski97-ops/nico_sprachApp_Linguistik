@@ -47,12 +47,12 @@ export function planClips(options: ClipPlanOptions = {}): AudioClipSpec[] {
 
   if (options.includeWords ?? true) {
     for (const entry of entries) {
-      add({ language: 'th', text: entry.thai, kind: 'vocab', sourceId: entry.id });
+      add({ language: 'th', text: entry.term, kind: 'vocab', sourceId: entry.id });
     }
   }
   if (options.includeExamples ?? true) {
     for (const entry of entries) {
-      add({ language: 'th', text: entry.exampleThai, kind: 'example', sourceId: entry.id });
+      add({ language: 'th', text: entry.exampleTerm, kind: 'example', sourceId: entry.id });
     }
   }
   for (const situation of options.situations ?? []) {

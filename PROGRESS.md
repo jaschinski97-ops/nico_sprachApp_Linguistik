@@ -1501,6 +1501,149 @@ liegt außerhalb dieses Pfades.
 müsste, übte Abschreiben statt Produzieren — und stehen danach vollständig in
 der Auflösung. Bei mehreren Bedeutungen („ja, richtig") zählt jede.
 
+### AE-42 — Deutsch ist die Drehscheibe, und das ist eine Entscheidung
+
+**Entscheidung:** Jedes Sprachpaar hat Deutsch auf einer Seite. `Direction` ist
+deshalb `de_to_<X>` oder `<X>_to_de` und **kein** freies Kreuzprodukt der
+Sprachen. Englisch↔Spanisch ohne Deutsch dazwischen ist damit ausdrücklich
+nicht vorgesehen.
+
+**Begründung:** Der Wunsch lautet „Deutschen X beibringen und umgekehrt". Aus
+zwei Zielsprachen ein volles Kreuzprodukt zu machen, wäre eine stille
+Ausweitung mit spürbaren Folgen:
+
+- **Inhalt.** Jedes Paar braucht seinen eigenen geprüften Grundstock. Bei drei
+  Sprachen mit Drehscheibe sind das drei Grundstöcke; als Kreuzprodukt wären
+  es sechs — und der Aufwand je Grundstock steht in Phase 2 (siebenstufiger
+  Prüfschritt je Eintrag).
+- **Die deutschen Module.** Prüfungsmodul (Goethe, Phase 7) und die
+  Grammatikübungen (Genus, Stammformen, Phase 6) prüfen **Deutsch**. Mit
+  Deutsch auf jeder Seite gelten sie für jedes Paar; in einem Kreuzprodukt
+  wären sie für Englisch↔Spanisch sinnlos und müssten ausgeblendet werden.
+- **Der Vokabeleintrag.** Er trägt eine fremdsprachige Form und eine deutsche.
+  Ein Kreuzprodukt bräuchte je Eintrag beliebig viele Sprachfelder oder eine
+  eigene Übersetzungstabelle — ein deutlich größerer Umbau für einen Nutzen,
+  den niemand verlangt hat.
+
+**Die Erweiterung ist bewusst additiv und nicht ersetzend.** `'de_to_th'` und
+`'th_to_de'` bleiben **wörtlich** gültige Werte des neuen Typs. Das ist der
+Grund, warum diese Phase 180 Richtungsliterale im Bestand nicht anfassen
+musste und warum gespeicherte Kartenschlüssel (`vocabId:de_to_th`) ohne
+Umschreiben weiterleben. AE-11 gilt unverändert: `direction` benennt die
+Sprache, die aktiv hervorgebracht wird.
+
+**Was aus einer Tabelle eine Funktion wurde:** `DIRECTION_LABELS`,
+`DIRECTION_PROMPTS` und `DRILLS_BY_DIRECTION` waren `Record<Direction, …>` mit
+zwei Einträgen. Mit sechs Richtungen müsste jede neue Sprache an drei Stellen
+nachgetragen werden, und eine davon würde vergessen. Sie sind jetzt
+Funktionen, die aus dem Sprachverzeichnis ableiten.
+
+### AE-43 — Die Migration betrifft die Auslieferungsdaten, nicht den Lernfortschritt
+
+**Entscheidung:** Ein Schemastand in `meta/schemaVersion`. Beim Start läuft
+`migrateStore()`: Steht dort eine ältere Version, wird der **Vokabel**-Grundstock
+neu eingespielt. Kartenzustände, Tagesprotokoll und Profil werden **nicht
+angefasst**.
+
+**Begründung — die Trennung ist der ganze Punkt.** Was der Nutzer erarbeitet
+hat, steht in den Karten (Stabilität, Difficulty, Fälligkeit, Wiederholungen),
+im Tagesprotokoll und im Profil. Der Vokabel-Grundstock dagegen kommt mit der
+App; er ist Auslieferungsdatum und kein Besitz. Deshalb:
+
+- **Karten:** kein Eingriff. Der Schlüssel `vocabId:direction` hat sich nicht
+  geändert (AE-42), es gibt also nichts umzuschreiben — und was man nicht
+  anfasst, kann man nicht verlieren.
+- **Vokabeln:** vollständig ersetzt statt feldweise umgebaut. Ein feldweiser
+  Umbau müsste für jede künftige Schemaänderung nachgezogen werden und wäre
+  bei jedem Sprung eine neue Fehlerquelle.
+
+**Der Test prüft den Migrationsweg, nicht den Neuzustand.** Er baut einen
+Speicher in der **alten** Form: ein Vokabeldokument mit `thai`/`exampleThai`
+und ohne `language`, dazu eine Karte mit echtem Lernfortschritt (zweimal
+bewertet, Stabilität und Fälligkeit gesetzt). Nach dem Lauf muss die Karte
+**Feld für Feld unverändert** sein — `toEqual` gegen den vorherigen Zustand —
+und die Vokabeln in der neuen Form vorliegen. Dazu: Idempotenz (ein zweiter
+Lauf tut nichts), ein leerer Speicher bekommt nur die Versionsnummer, und der
+Lauf meldet `cardsTouched: 0`.
+
+**Was am Datenmodell geändert wurde:** `thai` → `term`, `exampleThai` →
+`exampleTerm`, neu `language`. Der alte Name war eine Festlegung auf eine
+Sprache, die es nicht mehr gibt — ein Feld `thai` an einem englischen Eintrag
+wäre absurd. `tone` und `syllables` bleiben, sind aber im Typ als
+**sprachspezifisch** gekennzeichnet und werden nur noch über das Merkmal
+gelesen (AE-44).
+
+**Bewusst nicht umbenannt:** `ConversationTurn.thai` (Phase 4),
+`ImageSpec.thai` (Phase 5) und die Sprechaufgabe (Phase 12). Das sind
+**Inhaltstypen des Thai-Paars**, keine sprachneutralen Strukturen; sie werden
+verallgemeinert, wenn das zweite Paar Inhalte bekommt. Sie jetzt umzubenennen
+hieße, eine Abstraktion für Daten zu bauen, die es noch nicht gibt.
+
+### AE-44 — Das Merkmal ist einhängbar, und für Englisch und Spanisch entschieden statt geraten
+
+**Entscheidung:** Jede Sprache bringt ein `LanguageFeature` mit — beschrieben
+in `lib/languages/types.ts`, ausgeführt in `lib/languages/feature.ts`. Es
+liefert genau zweierlei: die **Silbenauszeichnung** eines Eintrags und die
+**Übungen**, die zum Merkmal gehören.
+
+**Was bewusst nicht ins Merkmal wandert: die Darstellung.** Tonfarben bleiben
+in `constants/tones.ts`, die Schriftregeln in `data/thai-script.ts`. Ein
+Merkmal sagt, **welcher** Ton eine Silbe trägt — wie er aussieht, entscheidet
+weiterhin die eine geprüfte Stelle. Ein zweites Darstellungssystem hätte die
+Kontrastprüfung aus Phase 9 entwertet, und Pflicht 3 verbietet es ausdrücklich.
+
+**Nachweis am Bestand:** `syllablesOf` in `data/vocab-helpers.ts` ruft jetzt
+`featureFor(entry).annotate(entry)`. Für Thai kommt genau dasselbe heraus wie
+vorher — alle Tests der Phasen 3, 6 und 13 blieben ohne eine einzige Änderung
+grün, einschließlich der Aussage, dass สวัสดี tief-tief-mittel ist.
+
+**Die deutschen Module hängen an „X → Deutsch", nicht an Thai (Pflicht 6).**
+`drillsForDirection` gibt für **jede** Richtung auf `_to_de` die
+Grammatikübungen zurück. Sobald Englisch oder Spanisch Inhalte haben, sind
+Artikel- und Stammformen-Übung dort ohne weiteres Zutun verfügbar; ein Test
+prüft das für alle drei Sprachen. Die Ton-Übungen bleiben, wo sie hingehören.
+
+**Das Merkmal je neuer Sprache — recherchiert, nicht angenommen (Pflicht 4).**
+Beide Quellen am 2026-09-03 über die MediaWiki-API im Rohtext abgerufen, wie
+in Phase 13:
+
+**Spanisch → Betonung.** Der Artikel „Spanish orthography" sagt wörtlich:
+*„Stress in Spanish is marked **unequivocally** through a series of
+orthographic rules. The default stress is on the penultimate (next-to-last)
+syllable on words that end in a vowel, [n] or [s] (not preceded by another
+consonant) and on the final syllable when the word ends in any consonant other
+than [n] or [s] or in a consonant group. Words that do not follow the default
+stress have an acute accent over the stressed vowel."* Damit ist die spanische
+Betonung strukturell **dasselbe** wie der Thai-Ton aus Phase 13: eine aus der
+Schreibung ableitbare Regel, kein Gedächtnisstoff. Die passende Übung ist
+folglich eine Herleitungsübung nach demselben Muster. Ein Haken, der schon
+jetzt benannt gehört: Die Regel setzt eine Silbenzählung voraus, und die
+Quelle beschreibt dafür eigene Diphthong- und ⟨h⟩-Regeln — eine spätere Phase
+muss die mitnehmen, sonst zählt sie falsch.
+
+**Englisch → Aussprache je Wort.** Derselbe Zugriff auf „English orthography"
+ergibt das **Gegenteil**: *„in unfamiliar words and proper nouns, the
+pronunciation of some sequences, ⟨ough⟩ being the prime example, is
+**unpredictable even for educated native speakers**."* Der Artikel zählt für
+⟨ough⟩ mindestens zehn Aussprachen auf (though, tough, cough, through,
+thought, thorough, bough, lough …). Eine Herleitungsübung wäre für Englisch
+also nicht nur schwierig, sondern **sachlich falsch** — es gibt die Regel
+nicht, die sie lehren würde. Das Merkmal muss deshalb je Wort als Lautschrift
+hinterlegt werden, und die sinnvolle Übung ist der Vergleich ähnlicher
+Schreibungen mit verschiedener Aussprache, nicht die Ableitung.
+
+Der Unterschied steht als Feld im Modell (`kind: 'derivable' | 'per-word'`),
+nicht nur im Fließtext — damit eine spätere Phase nicht versehentlich für
+Englisch baut, was nur für Spanisch trägt.
+
+**Beide Merkmale sind entschieden, keines ist gebaut** (`implemented: false`).
+Der Inhalt kommt je Sprache in einer eigenen Phase mit eigener Recherche, wie
+bei Thai in Phase 2. Die Auswahl sagt das auch so: Englisch und Spanisch
+stehen sichtbar als „noch keine Inhalte" da, sind nicht anwählbar und melden
+das über `accessibilityState.disabled` auch dem Screenreader (Pflicht 5). Sie
+lernbar aussehen zu lassen wäre dieselbe Art Unwahrheit wie ein Bild zu einem
+abstrakten Wort oder eine erfundene Bestehensgrenze.
+
 ---
 
 ## Protokoll
@@ -3126,10 +3269,132 @@ nichts.
 
 ---
 
+### 2026-09-03 — Phase 15: Mehrsprachigkeit, Fundament und Sprachauswahl
+
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauber auf
+`main` bei `e23c5c7`, 582 Tests in 24 Suites grün, `npx tsc --noEmit`
+fehlerfrei). Nach **B-2**, **B-4**, **B-5** und **B-6** erneut gefragt; keine
+Antwort bis zum Ende der Sitzung, **alle vier bleiben offen**. Für diese Phase
+ohne Einfluss — sie fasst weder Netz noch Gerät an.
+
+**Was diese Phase ist und was nicht**
+
+Nur Fundament und Auswahl. **Kein Inhalt** für Englisch oder Spanisch: Der
+kommt je Sprache in einer eigenen Phase mit eigener Recherche, wie bei Thai in
+Phase 2. Was hier entschieden wurde, ist das Modell darunter — und für die
+beiden neuen Sprachen ihr Merkmal, belegt statt geraten.
+
+**Gemacht**
+
+- `src/lib/languages/` — `types.ts` (Drehscheibe, Richtungen, Merkmalsvertrag),
+  `registry.ts` (die drei Sprachen mit Quelle je Merkmal), `feature.ts` (der
+  einhängbare Teil).
+- **Datenmodell migriert:** `thai` → `term`, `exampleThai` → `exampleTerm`, neu
+  `language` an allen 84 Einträgen. `tone` und `syllables` bleiben, sind aber
+  als sprachspezifisch gekennzeichnet.
+- **`Direction` erweitert statt ersetzt:** `de_to_<X>` / `<X>_to_de`.
+  `'de_to_th'` und `'th_to_de'` bleiben wörtlich gültig.
+- `src/lib/storage/migration.ts` — Schemastand und Neueinspielen des
+  Grundstocks, Kartenzustände unangetastet.
+- `src/components/language-picker.tsx` und die neue Übersicht.
+
+**Pflicht 1 — die Migration bricht nichts**
+
+Der entscheidende Kunstgriff steckt im Typ: Die Erweiterung ist **additiv**.
+Dadurch mussten von 180 Richtungsliteralen im Bestand **null** angefasst
+werden, und gespeicherte Kartenschlüssel bleiben gültig. Nach der kompletten
+Umstellung liefen die **582 Tests aus Phase 0–14 unverändert grün** — kein
+einziger musste inhaltlich angepasst werden; die einzige Änderung war eine
+Zusicherung im Profiltest, weil das Profil jetzt zusätzlich die Sprache trägt.
+
+Der Migrationstest prüft den **Weg**, nicht den Neuzustand: Ein Speicher in der
+alten Form, dazu eine Karte mit echtem Lernfortschritt (zweimal bewertet).
+Nach dem Lauf ist die Karte Feld für Feld unverändert und die Vokabeln in der
+neuen Form. Dazu Idempotenz, leerer Speicher, `cardsTouched: 0`.
+
+**Pflicht 2 — Deutsch als Drehscheibe (AE-42)**
+
+Ausdrücklich entschieden, mit den Folgen: drei Grundstöcke statt sechs, die
+deutschen Module gelten für jedes Paar, und der Vokabeleintrag bleibt
+zweiseitig. Englisch↔Spanisch ist damit nicht vorgesehen.
+
+**Pflicht 3 — das Merkmal als Baustein (AE-44)**
+
+`syllablesOf` läuft jetzt durch `featureFor(entry).annotate(entry)`. Für Thai
+kommt genau dasselbe heraus wie vorher; alle Thai-Tests aus den Phasen 3, 6
+und 13 blieben ohne Änderung grün. Farben und Glyphen sind **nicht** ins
+Merkmal gewandert — sie bleiben in `constants/tones.ts`, damit kein zweites
+Darstellungssystem neben dem kontrastgeprüften entsteht.
+
+**Pflicht 4 — Merkmal je neuer Sprache, recherchiert**
+
+Beide Quellen am 2026-09-03 über die MediaWiki-API im Rohtext. Sie sagen
+Gegensätzliches, und genau das ist der Befund:
+
+| Sprache | Merkmal | Quelle sagt | Folge |
+| --- | --- | --- | --- |
+| Spanisch | Betonung | „marked **unequivocally** through a series of orthographic rules" | ableitbar → Herleitungsübung wie Phase 13 |
+| Englisch | Aussprache | „**unpredictable** even for educated native speakers" (⟨ough⟩, ≥ 10 Lesarten) | je Wort hinterlegen → Vergleichsübung, **keine** Herleitung |
+
+Der Unterschied steht als Feld im Modell (`kind`), nicht nur im Fließtext —
+damit eine spätere Phase nicht für Englisch baut, was nur für Spanisch trägt.
+Für Spanisch ist zusätzlich vermerkt, dass die Regel eine Silbenzählung mit
+eigenen Diphthong-Regeln voraussetzt.
+
+**Pflicht 5 — leere Sprachen ehrlich**
+
+Englisch und Spanisch stehen in der Auswahl, tragen sichtbar „Noch keine
+Inhalte", sind nicht anwählbar und melden das über `accessibilityState.disabled`
+auch dem Screenreader. Dazu steht dort, welches Merkmal für sie entschieden
+ist — das ist keine Werbung, sondern die Auskunft, dass die Entscheidung
+bereits belegt vorliegt.
+
+**Pflicht 6 — Module richtig zugeordnet**
+
+`drillsForDirection` liefert für **jede** Richtung auf `_to_de` die deutschen
+Grammatikübungen; ein Test prüft das für alle drei Sprachen. Damit sind sie
+für Englisch und Spanisch verfügbar, sobald es dort Inhalte gibt, ohne dass
+jemand daran denken muss.
+
+**Verifiziert**
+
+- `npm test` → **606 Tests grün** in 25 Suites (vorher 582 in 24).
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Web-Build durchgespielt:** Die Übersicht zeigt die Sprachauswahl an
+  erster Stelle. Thai ist gewählt („84 Vokabeln · Merkmal: Töne"), Englisch und
+  Spanisch stehen als „Noch keine Inhalte" mit ihrem entschiedenen Merkmal und
+  sind abgeblendet. Die Richtungskarten heißen weiterhin „Deutsch → Thai" und
+  „Thai → Deutsch", jetzt aus dem Verzeichnis gebaut. Der Fortschritt-Reiter
+  rendert unverändert. `meta/schemaVersion` steht nach dem Start auf 2.
+- **Barrierefreiheit:** kein Bedienelement ohne Beschriftung, keines unter 24
+  Punkten, alle Auswahlknöpfe mit `aria-checked`. In einem frischen Tab keine
+  Konsolenfehler — die zunächst sichtbaren stammten aus dem Puffer der
+  Umbauphase, was durch Neustart des Servers und einen zweiten Tab
+  auseinandergehalten wurde.
+
+**Offen / bewusst nicht gemacht**
+
+- **Inhalt für Englisch und Spanisch.** Ausdrücklich nicht Teil dieser Phase.
+- **Merkmale bauen.** Beide sind entschieden und belegt, keines implementiert.
+- **`ConversationTurn.thai`, `ImageSpec.thai`, die Sprechaufgabe.** Das sind
+  Inhaltstypen des Thai-Paars, keine sprachneutralen Strukturen. Sie werden
+  verallgemeinert, wenn das zweite Paar Inhalte bekommt — jetzt wäre es eine
+  Abstraktion für Daten, die es nicht gibt.
+- **Das Prüfungsmodul** ist im Modell als „gilt für jedes X → Deutsch"
+  eingetragen (`hasGermanModules`), aber der Prüfungs-Screen selbst filtert
+  noch nicht nach Sprache — er hat auch nur Inhalte für ein Paar.
+- **Die Sprachausgabe** je Sprache (`speechLocale` steht im Verzeichnis) ist
+  hinterlegt, aber die Audio-Abstraktion liest sie noch nicht; sie kennt
+  weiterhin `th` und `de`.
+
+---
+
 ## Konsolidierte Abnahme (Stand 2026-09-03)
 
-Jedes „Fertig, wenn" aus Phase 0–14 gegen den **jetzigen** Repo-Zustand.
-**112 von 119 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
+Jedes „Fertig, wenn" aus Phase 0–15 gegen den **jetzigen** Repo-Zustand.
+**120 von 127 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -3256,6 +3521,14 @@ Fassung abweichen.
 | 14 | AE-16 und AE-35 bleiben gueltig, nicht ueberschrieben | **erfüllt** | AE-16 hat die freie Eingabe selbst als den sauberen Weg zu FSRS benannt ('Dann gaebe es kein Rateproblem, und die Antwort waere ein echter Abruf') - diese Phase loest das ein, statt es zu widerrufen. Die drei Auswahluebungen aus Phase 6 und die Tonkonturmessung aus Phase 12 (AE-35) schreiben unveraendert nichts; ihre Gruende (Ratequote 20-33 Prozent, Teilmessung der Aussprache) gelten weiter. |
 | 14 | Barrierefreiheit auf dem Niveau von Phase 9 gehalten | **erfüllt** | Pflicht 5, im Web-Build gemessen: 63 Bedienelemente auf dem Schreibscreen, keines ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknoepfe der Palette mit aria-checked, das Eingabefeld beschriftet. Jede der 44 Zeichentasten traegt ihren akrophonischen Namen aus den Phase-13-Daten - ein Screenreader laese sonst nur ein einzelnes Zeichen vor. Rechtschreibhilfe im Eingabefeld abgeschaltet, weil sie genau die Fehler wegkorrigieren wuerde, um die es geht. Keine Konsolenfehler. |
 | 14 | Tests und tsc gruen | **erfüllt** | 582 Tests in 24 Suites gruen (vorher 545 in 23); npx tsc --noEmit fehlerfrei. |
+| 15 | Datenmodell sprachpaar-faehig, Thai<->Deutsch migriert, alle bisherigen Tests gruen | **erfüllt** | Direction ist jetzt de_to_<X> / <X>_to_de (AE-42) - eine ADDITIVE Erweiterung, 'de_to_th' und 'th_to_de' bleiben woertlich gueltig. Deshalb mussten von 180 Richtungsliteralen im Bestand null angefasst werden. VocabEntry: thai -> term, exampleThai -> exampleTerm, neu language an allen 84 Eintraegen; tone und syllables bleiben, als sprachspezifisch gekennzeichnet. Die 582 Tests aus Phase 0-14 liefen danach unveraendert gruen; die einzige Anpassung war eine Zusicherung im Profiltest, weil das Profil jetzt die Sprache mitfuehrt. |
+| 15 | Migrationspfad fuer vorhandene Kartenzustaende getestet | **erfüllt** | AE-43. meta/schemaVersion; migrateStore() spielt den Vokabel-Grundstock neu ein und laesst Karten, Tagesprotokoll und Profil unangetastet - die Trennung Auslieferungsdaten gegen Nutzerdaten ist der Punkt. Der Test baut einen Speicher in der ALTEN Form (Vokabel mit thai/exampleThai, ohne language) plus eine Karte mit echtem Lernfortschritt (zweimal bewertet); nach dem Lauf ist die Karte Feld fuer Feld unveraendert (toEqual) und die Vokabeln in der neuen Form. Dazu Idempotenz, leerer Speicher, cardsTouched 0. |
+| 15 | Uebersicht bietet Sprachauswahl; gewaehlte Sprache steuert den Lernen-Bereich | **erfüllt** | LanguagePicker steht an erster Stelle der Uebersicht; die Wahl liegt im Lernprofil (meta/profile) und setzt beim Wechsel die Standard-Lernrichtung zurueck, weil sie zur alten Sprache gehoerte. Die Tonlegende erscheint nur noch, wenn das Merkmal der gewaehlten Sprache das hergibt. Im Web-Build geprueft: Thai gewaehlt mit '84 Vokabeln - Merkmal: Toene', Richtungskarten aus dem Verzeichnis gebaut. |
+| 15 | Merkmals-Plugin existiert und traegt Thai unveraendert | **erfüllt** | AE-44. lib/languages/feature.ts liefert Silbenauszeichnung und Merkmalsuebungen; syllablesOf laeuft jetzt durch featureFor(entry).annotate(entry). Fuer Thai kommt genau dasselbe heraus - alle Tests der Phasen 3, 6 und 13 blieben ohne eine einzige Aenderung gruen, einschliesslich der Aussage, dass สวัสดี tief-tief-mittel ist. Farben und Konturglyphen sind BEWUSST nicht ins Merkmal gewandert; sie bleiben in constants/tones.ts, damit kein zweites Darstellungssystem neben dem kontrastgeprueften entsteht. |
+| 15 | Merkmal je neuer Sprache recherchiert dokumentiert, nicht implementiert | **erfüllt** | AE-44, beide Quellen am 2026-09-03 ueber die MediaWiki-API im Rohtext. Spanisch: 'Stress in Spanish is marked unequivocally through a series of orthographic rules' -> ableitbar, Herleitungsuebung wie Phase 13; Haken vermerkt, dass die Regel eine Silbenzaehlung mit eigenen Diphthong-Regeln voraussetzt. Englisch: 'unpredictable even for educated native speakers' (⟨ough⟩, mindestens zehn Lesarten) -> NICHT ableitbar, Aussprache muss je Wort hinterlegt werden, Vergleichsuebung statt Herleitung. Der Unterschied steht als Feld kind: 'derivable' \| 'per-word' im Modell, nicht nur im Fliesstext. Beide implemented: false. |
+| 15 | Leere Sprachen ehrlich gekennzeichnet | **erfüllt** | Pflicht 5. Englisch und Spanisch stehen in der Auswahl, tragen sichtbar 'Noch keine Inhalte', sind nicht anwaehlbar und melden das ueber accessibilityState.disabled auch dem Screenreader; dazu steht ihr entschiedenes Merkmal dabei. Im Web-Build nachgelesen. |
+| 15 | Deutsche Module jedem Paar zugeordnet, nicht Thai allein | **erfüllt** | Pflicht 6. drillsForDirection gibt fuer JEDE Richtung auf _to_de die Grammatikuebungen (Artikel, Stammformen) zurueck; ein Test prueft das fuer alle drei Sprachen. hasGermanModules steht am Sprachverzeichnis. Damit sind sie fuer Englisch und Spanisch verfuegbar, sobald es dort Inhalte gibt. |
+| 15 | Tests und tsc gruen | **erfüllt** | 606 Tests in 25 Suites gruen (vorher 582 in 24); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler. |
 ## Skalierungsplan auf ~1000 Einträge
 
 Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
@@ -3324,6 +3597,12 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 15 (2026-09-03):** Das Fundament für Mehrsprachigkeit steht,
+> Thai↔Deutsch ist das erste Paar im neuen Modell. Englisch und Spanisch haben
+> ein **entschiedenes und belegtes** Merkmal, aber keinen Inhalt — der ist je
+> Sprache eine eigene Phase mit eigener Recherche, wie Phase 2 für Thai.
+
 
 > **Neu aus Phase 14 (2026-09-03):** Mit dem freien Schreiben sind alle vier
 > Fertigkeiten geschlossen — Lesen, Hören, Sprechen, Schreiben. Der Schreibpfad

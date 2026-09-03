@@ -51,12 +51,12 @@ export function Flashcard({ entry, direction, revealed }: Props) {
             <ThaiWord entry={entry} />
           ) : (
             <View style={styles.frontThai}>
-              <ThemedText style={styles.thaiPlain}>{entry.thai}</ThemedText>
+              <ThemedText style={styles.thaiPlain}>{entry.term}</ThemedText>
             </View>
           )}
           <SpeakButton
             label="Thai anhören"
-            text={entry.thai}
+            text={entry.term}
             language="th"
             assetId={entry.audioAssetId}
           />
@@ -76,7 +76,7 @@ export function Flashcard({ entry, direction, revealed }: Props) {
               <ThaiWord entry={entry} />
               <SpeakButton
                 label="Thai anhören"
-                text={entry.thai}
+                text={entry.term}
                 language="th"
                 assetId={entry.audioAssetId}
               />
@@ -133,7 +133,7 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
     <ThemedView type="backgroundSelected" style={styles.example}>
       <View style={styles.exampleRow}>
         <View style={styles.exampleText}>
-          <ThemedText type="small">{entry.exampleThai}</ThemedText>
+          <ThemedText type="small">{entry.exampleTerm}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {entry.exampleRoman}
           </ThemedText>
@@ -144,7 +144,7 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
         <SpeakButton
           label="▶"
           spokenLabel="Beispielsatz anhören"
-          text={entry.exampleThai}
+          text={entry.exampleTerm}
           language="th"
           compact
         />

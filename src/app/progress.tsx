@@ -9,7 +9,7 @@ import { Spacing } from '@/constants/theme';
 import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
-import { DIRECTION_LABELS } from '@/lib/review-session';
+import { directionLabel } from '@/lib/review-session';
 import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
 /**
@@ -82,7 +82,7 @@ export default function ProgressScreen() {
         <ThemedText type="smallBold">Fällige Karten je Richtung</ThemedText>
         {stats.perDirection.map((summary) => (
           <View key={summary.direction} style={styles.row}>
-            <ThemedText type="small">{DIRECTION_LABELS[summary.direction]}</ThemedText>
+            <ThemedText type="small">{directionLabel(summary.direction)}</ThemedText>
             <ThemedText type="smallBold">
               {summary.due} von {summary.total}
             </ThemedText>

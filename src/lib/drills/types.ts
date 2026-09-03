@@ -2,6 +2,7 @@ import { Tone } from '@/constants/tones';
 
 import { SpeechLanguage } from '../audio';
 import { Direction } from '../fsrs/types';
+import { drillsForDirectionViaFeature } from '../languages/feature';
 import { DerivationStep } from '../reading/syllable';
 
 /**
@@ -73,11 +74,20 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   },
 };
 
-/** Welche Übungen zu welcher Richtung gehören. */
-export const DRILLS_BY_DIRECTION: Record<Direction, DrillId[]> = {
-  de_to_th: ['tone', 'toneRule'],
-  th_to_de: ['article', 'verbForms'],
-};
+/**
+ * Welche Übungen zu welcher Richtung gehören.
+ *
+ * SEIT PHASE 15 EINE FUNKTION (Pflicht 6): Die Grammatikübungen prüfen
+ * **Deutsch** — Genus und Stammformen. Sie gehören damit zu jedem „X → Deutsch"
+ * und nicht zu Thai allein; sobald Englisch oder Spanisch Inhalte haben, sind
+ * sie dort ohne weiteres Zutun verfügbar. Die Ton-Übungen dagegen sind das
+ * Thai-**Merkmal** und hängen an der Sprache (AE-44).
+ */
+export function drillsForDirection(direction: Direction): DrillId[] {
+  return drillsForDirectionViaFeature(direction);
+}
+
+
 
 export type DrillOption = {
   label: string;

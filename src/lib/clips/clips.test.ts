@@ -149,10 +149,10 @@ describe('Clip-IDs', () => {
   it('kollidieren im ganzen Grundstock nicht', () => {
     const ids = new Set<string>();
     for (const entry of VOCABULARY) {
-      ids.add(clipIdFor('th', entry.thai));
-      ids.add(clipIdFor('th', entry.exampleThai));
+      ids.add(clipIdFor('th', entry.term));
+      ids.add(clipIdFor('th', entry.exampleTerm));
     }
-    const unique = new Set(VOCABULARY.flatMap((e) => [normalizeClipText(e.thai), normalizeClipText(e.exampleThai)]));
+    const unique = new Set(VOCABULARY.flatMap((e) => [normalizeClipText(e.term), normalizeClipText(e.exampleTerm)]));
     expect(ids.size).toBe(unique.size);
   });
 });
@@ -173,11 +173,11 @@ describe('Bauplan', () => {
     const entry = VOCABULARY[0];
     const specs = planClips({
       vocabulary: [entry],
-      situations: [situation('s1', [entry.thai, entry.thai + ' ', 'อื่น'])],
+      situations: [situation('s1', [entry.term, entry.term + ' ', 'อื่น'])],
     });
     // Das Wort steht als Vokabel im Plan, nicht noch einmal als Zug.
-    expect(specs.filter((s) => s.text === normalizeClipText(entry.thai))).toHaveLength(1);
-    expect(specs.find((s) => s.text === normalizeClipText(entry.thai))!.kind).toBe('vocab');
+    expect(specs.filter((s) => s.text === normalizeClipText(entry.term))).toHaveLength(1);
+    expect(specs.find((s) => s.text === normalizeClipText(entry.term))!.kind).toBe('vocab');
     expect(specs.filter((s) => s.kind === 'turn')).toHaveLength(1);
   });
 

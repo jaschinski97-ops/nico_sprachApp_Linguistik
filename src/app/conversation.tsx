@@ -10,7 +10,7 @@ import { PlaybackKind, playPronunciation } from '@/lib/audio';
 import { ConversationSituation, TOPIC_LABELS } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
 import { loadSituations } from '@/lib/repository';
-import { DIRECTION_LABELS, DIRECTIONS } from '@/lib/review-session';
+import { directionLabel, DIRECTIONS } from '@/lib/review-session';
 
 export default function ConversationScreen() {
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
@@ -72,7 +72,7 @@ export default function ConversationScreen() {
             <ThemedView
               type={direction === d ? 'backgroundSelected' : 'backgroundElement'}
               style={styles.chip}>
-              <ThemedText type="small">{DIRECTION_LABELS[d]}</ThemedText>
+              <ThemedText type="small">{directionLabel(d)}</ThemedText>
             </ThemedView>
           </Pressable>
         ))}

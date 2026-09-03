@@ -42,7 +42,7 @@ export function imageSpecFor(entry: VocabEntry): ImageSpec {
   return {
     id: entry.id,
     vocabId: entry.id,
-    thai: entry.thai,
+    thai: entry.term,
     romanization: entry.romanization,
     german: entry.german,
     partOfSpeech: entry.partOfSpeech,

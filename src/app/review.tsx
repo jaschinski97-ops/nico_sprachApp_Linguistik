@@ -12,14 +12,14 @@ import { ToneLegend } from '@/components/tone-legend';
 import { WritingRunner } from '@/components/writing-runner';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { DRILL_META, DrillId, DRILLS_BY_DIRECTION } from '@/lib/drills/types';
+import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
 import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
 import { rateCard } from '@/lib/repository';
 import {
   buildReviewQueue,
-  DIRECTION_LABELS,
-  DIRECTION_PROMPTS,
+  directionLabel,
+  directionPrompt,
   DIRECTIONS,
   ReviewItem,
 } from '@/lib/review-session';
@@ -34,7 +34,7 @@ function isDirection(value: unknown): value is Direction {
 }
 
 function parseMode(value: unknown, direction: Direction): Mode {
-  const drills: string[] = DRILLS_BY_DIRECTION[direction];
+  const drills: string[] = drillsForDirection(direction);
   if (direction === 'de_to_th' && value === 'speaking') return 'speaking';
   // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
   // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
@@ -45,7 +45,7 @@ function parseMode(value: unknown, direction: Direction): Mode {
 function modesForDirection(direction: Direction): Mode[] {
   return [
     'cards',
-    ...DRILLS_BY_DIRECTION[direction],
+    ...drillsForDirection(direction),
     ...(direction === 'de_to_th' ? (['speaking'] as const) : []),
     'writing',
   ];
@@ -100,7 +100,7 @@ export default function ReviewScreen() {
   const mode = parseMode(params.mode, direction);
 
   return (
-    <ScreenScaffold title="Lernen" subtitle={DIRECTION_LABELS[direction]}>
+    <ScreenScaffold title="Lernen" subtitle={directionLabel(direction)}>
       <ModeBar
         direction={direction}
         mode={mode}
@@ -167,11 +167,11 @@ function DirectionPicker({
           style={({ pressed }) => pressed && styles.pressed}>
           <ThemedView type="backgroundElement" style={styles.pickerCard}>
             <ThemedText type="smallBold">
-              {DIRECTION_LABELS[direction]}
+              {directionLabel(direction)}
               {profile.defaultDirection === direction ? ' · Standard' : ''}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              {DIRECTION_PROMPTS[direction]}
+              {directionPrompt(direction)}
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Karteikarten ·{' '}
