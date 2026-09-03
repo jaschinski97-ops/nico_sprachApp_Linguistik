@@ -1170,6 +1170,165 @@ und fallende Formen sind aus einer einzelnen medianbezogenen Aufnahme relativ
 entscheidbar. Ein eigener Ausspracheplan wäre später ein eigener Skill mit
 validierter Skala, nicht ein stiller Schreibzugriff auf `vocabId:direction`.
 
+### AE-36 — Die Schriftregeln sind erhoben, nicht erinnert — und zwar aus dem Rohtext
+
+**Entscheidung:** Konsonanteninventar, Klassenzuordnung, Schlusslaute,
+Vokalmuster mit Länge und die Tonregeltabelle stehen in
+`src/data/thai-script.ts`, mit Quelle und Abrufdatum im Kopf. Die 44
+Konsonantenzeilen sind aus dem **Rohtext der Quelltabelle erzeugt**, nicht
+abgetippt.
+
+**Begründung — dasselbe Vorgehen wie in Phase 2 und 7, und aus demselben
+Grund.** Der erste Abruf lief über ein zusammenfassendes Werkzeug. Was
+zurückkam, sah vollständig aus und war es nicht:
+
+- **28 von 44 Konsonanten**, mit dem Zusatz „(Note: ฃ, ฅ, ฆ, ฌ, ฎ, ฏ, ฐ, ฑ, ฒ,
+  ณ are also listed but with various details)" — eine Auslassung, die man nur
+  bemerkt, wenn man nachzählt.
+- Für ล den Schlusslaut „/n/ or /w/", für ร „/n/" — der zweite Wert bei ล
+  stammt aus der Quelle, aber die Zusammenfassung ließ offen, dass es eine
+  Mehrdeutigkeit ist und keine Tatsache.
+
+Deshalb der Weg von Phase 2: die **MediaWiki-API** (`action=parse&
+prop=wikitext`) und ein eigener Parser über die Tabellenzeilen. Ergebnis: 44
+Konsonanten, Verteilung 9 Mittelklasse / 11 Hochklasse / 24 Tiefklasse. Diese
+drei Zahlen stehen als Test — sie sind die Kontrolle dafür, dass beim Parsen
+keine Zeile verlorenging oder doppelt ankam.
+
+**Quelle:** Englische Wikipedia, „Thai script", abgerufen am **2026-09-03**.
+Für die Konsonantenverbindungen zusätzlich „Thai language", Abschnitt
+„Syllable structure and consonant clusters", gleiches Datum — warum, steht in
+AE-38.
+
+**Der Schlusslaut kommt aus der IPA-Spalte, nicht aus dem Kopf.** Ob eine
+Silbe lebend oder tot ist, hängt daran, ob ihr Schlusskonsonant klingt oder
+verschließt. Statt das je Buchstabe zu behaupten, liest der Generator die
+Spalte „IPA final" der Quelle: /ŋ/, /n/, /m/, /j/, /w/ sind Sonoranten, /k/,
+/t/, /p/ Plosive, „–" heißt „kommt am Silbenende nicht vor". Damit ist die
+Live/Dead-Entscheidung eine Ableitung aus der Quelle und keine zweite
+Wissensquelle im Code.
+
+**Zwei Stellen sind gekennzeichnet statt entschieden** — Muster ร้าน/นอน aus
+Phase 2:
+
+1. **ล** trägt in der Quelle „/n/ or /w/". Der Eintrag führt beide Werte und
+   eine `uncertainNote`. Für die Tonregel ändert es nichts, weil beide
+   Sonoranten sind; das steht in der Notiz mit dabei, damit niemand später
+   glaubt, die Frage sei geklärt.
+2. **Der implizite Vokal** — zwei Konsonanten ohne Vokalzeichen (คน, รถ). Die
+   Quelle führt ihn als kurzes /o/ und nennt in einer Fußnote für dieselbe
+   Schreibung auch ein langes /ɔː/. Welche Lesart gilt, ist der Schrift nicht
+   anzusehen. Die Herleitung nimmt /o/ und **zeigt die Mehrdeutigkeit im
+   UI an**, statt sie zu verschweigen.
+
+**Was hier bewusst nicht steht:** Handschrift und Strichfolge — für eine
+Lese-App nicht nötig, und die Vorgabe schließt es ausdrücklich aus.
+
+### AE-37 — Der Ton wird hergeleitet, nicht abgefragt
+
+**Entscheidung:** Neue Übung „Ton herleiten" (`toneRule`, Richtung `de_to_th`).
+Sie zeigt die **Thai-Schrift**, fragt den Ton und erklärt danach die
+Herleitung in sieben Schritten: Anfangskonsonant → Konsonantenklasse → Vokal →
+Schlusslaut → Silbenart → Tonzeichen → Ergebnis.
+
+**Begründung:** Eine Tabelle zum Nachschlagen hätte die Lücke nicht
+geschlossen. Der Ton ist im Thai ein **Regelsystem**, und der Unterschied
+zwischen „ich weiß, dass หมา steigend ist" und „ich kann den Ton eines Wortes
+bestimmen, das ich noch nie gesehen habe" ist genau der Zweck dieser Phase.
+Deshalb steht die Herleitung als **Liste von Schritten** im Aufgabentyp
+(`derivation`) und nicht als Fließtext in `explanation` — jeder Schritt trägt,
+was an dieser Stelle in der Schrift steht **und warum** das so gelesen wird.
+
+**Die Umschrift steht bewusst nicht dabei.** Sie trägt die Tonzeichen (à, á,
+â, ǎ) und wäre schlicht die Antwort. Sichtbar ist nur die Thai-Schrift; die
+Umschrift erscheint erst in der Auflösung. Das ist dieselbe Überlegung wie bei
+der Hör-Übung aus Phase 6, wo umgekehrt die **Schrift** verborgen bleibt, weil
+sie dort die halbe Lösung wäre.
+
+**Zwei Ton-Übungen nebeneinander, mit Absicht.** „Töne hören" trainiert das
+Ohr, „Ton herleiten" die Schriftregel. Beide führen zum selben Ton, aber über
+verschiedene Wege — und wer nur hört, bleibt bei jedem neuen Wort auf das Ohr
+angewiesen. Die fünf Antworten stehen in beiden Übungen in **derselben festen
+Reihenfolge** (mittel, tief, fallend, hoch, steigend): Wer beide übt, soll
+nicht zwei Ordnungen im Kopf behalten müssen.
+
+**Die Gegenprobe ist der eigentliche Beleg (Pflicht 2).** Für jeden
+einsilbigen Eintrag des Grundstocks ist der richtige Ton seit Phase 2 bekannt.
+Die Herleitung trifft ihn bei **69 von 69** — und, wichtiger, sie leitet bei
+**keinem** einen falschen Ton her. Ein Fehlschlag wäre hinnehmbar, die Übung
+ließe das Wort dann aus; ein falscher Ton wäre es nicht, weil Lernende die
+falsche Regel mitlernen würden. Deshalb baut die Übung eine Aufgabe **nur**,
+wenn die Herleitung gelingt *und* mit dem quellengeprüften Ton übereinstimmt.
+Alle fünf Töne kommen darin vor.
+
+Die Fälle, an denen die Regel wirklich hängt, stehen einzeln im Test:
+
+| Wort | Was daran hängt | Ohne die Regel |
+| --- | --- | --- |
+| หมา | ห นำ hebt ม in die Hochklasse | „mittel" statt steigend |
+| หก | ห + ก ist **kein** ห นำ, ก ist Schlusslaut | falsche Silbenzerlegung |
+| ปลา | Verbindung — die Klasse kommt vom ersten Buchstaben | ล wäre Tiefklasse |
+| อยาก | อ นำ, laut Quelle nur in vier Wörtern | „hoch" statt tief |
+| รัก / มาก | tot kurz gegen tot lang, sonst gleich | hoch gegen fallend |
+| เย็น / เล็ก | kurzer Vokal, klingender gegen verschließenden Schluss | lebend gegen tot |
+| ค่ะ | das Tonzeichen überstimmt die Silbenart | „hoch" statt fallend |
+
+**Konsistenz mit Bestehendem (Pflicht 4):** Die Antworten tragen nur den Ton;
+Farbe und Konturglyphe holt die Oberfläche aus `constants/tones.ts` — im
+Web-Build nachgemessen, es sind exakt die dort hinterlegten Werte
+(`#88a083`, `#8a9bb1`, `#c88b7a`, `#ba9443`, `#82a097`) und Konturpfade,
+also auch die in Phase 9 kontrastgeprüften Fassungen. Es gibt keine zweite
+Darstellung. Die Schritt-Liste trägt `role="list"` und `role="listitem"`,
+damit ein Screenreader sie als Folge ansagt und nicht als lose Textfetzen.
+
+### AE-38 — Ohne Verbindungsliste liest eine Analyse ตลาด als eine Silbe
+
+**Entscheidung:** Als Konsonantenverbindung gilt nur, was in der belegten
+Liste steht — elf Lautverbindungen, geschrieben mit fünfzehn Paaren. Alles
+andere ist keine Verbindung. AE-8 gilt unverändert weiter: mehrsilbige Wörter
+werden **abgewiesen**, nicht zerlegt.
+
+**Begründung — in der Gegenprobe gefunden, nicht vorhergesehen.** Der erste
+Durchlauf des Tests über den Grundstock meldete einen einzigen Fall:
+
+```
+ตลาด (dtà-làat, der Markt) ist 2-silbig, wurde aber als eine Silbe gelesen.
+```
+
+Die Ursache war eine stillschweigende Annahme im Code: Wenn ein einzelner
+Anfangskonsonant nicht aufging, wurden einfach **zwei** probiert. Damit war
+jedes Konsonantenpaar eine Verbindung — auch ตล, das keine ist. ตลาด ist
+zweisilbig (ต mit implizitem Vokal, dann ล), und die Analyse hätte ihm einen
+Ton zugeschrieben.
+
+Der Artikel „Thai script" enthält **keine** Liste echter Verbindungen. Der
+Artikel „Thai language" enthält sie, Abschnitt „Syllable structure and
+consonant clusters": „In the core vocabulary (i.e. excluding loanwords), only
+clusters of two consonants occur, of which there are 11 combinations" — กร,
+กล, กว, ขร/คร, ขล/คล, ขว/คว, ปร, ปล, พร, ผล/พล, ตร. Mit dieser Schranke
+scheitert ตลาด richtig, und alle 69 einsilbigen Einträge gehen weiterhin auf.
+
+**Die Liste ist abschließend gemeint.** Die Quelle nennt zusätzlich
+Verbindungen in Lehnwörtern (ทร in อินทรา, ฟร in ฟรี). Sie stehen bewusst
+nicht dabei: Der Grundstock braucht sie nicht, und eine offene Liste hätte
+denselben Fehler wie gar keine — sie würde wieder Paare durchlassen, die keine
+Verbindung sind.
+
+**Was das nicht ist: ein Segmentierungsansatz.** Die Vorgabe erlaubte
+ausdrücklich, einen solchen Befund zu dokumentieren, aber nicht darauf
+aufzubauen. Das hier ist kein Verfahren, um Silbengrenzen zu finden — es ist
+das Gegenteil: eine Schranke, die verhindert, dass die Analyse eine Grenze
+**errät**, wo sie keine kennt. Ein Test fährt alle 15 mehrsilbigen Einträge
+des Grundstocks durch und verlangt, dass jeder einzelne mit benanntem Grund
+abgewiesen wird.
+
+**Was daraus für eine spätere Phase folgt:** Die Verbindungsliste ist die
+halbe Miete für eine echte Segmentierung — sie sagt, wo eine Silbe *nicht*
+endet. Was fehlt, ist die Unterscheidung zwischen Verbindung und
+Leitkonsonant (อักษรนำ) bei den Paaren, die beides sein können, und dafür
+braucht es eine Quelle, die diese Wörter aufzählt. ผล ist genau so ein Fall:
+in der Verbindungsliste als /pʰl/, in ผลไม้ dagegen zweisilbig (pǒn-lá-).
+
 ---
 
 ## Protokoll
@@ -2593,10 +2752,107 @@ ein möglicher Weg zum Android-Preview-Build.
 
 ---
 
+### 2026-09-03 — Phase 13: Thai-Schrift (Lesen)
+
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauber auf
+`main` bei `25fd614`, 508 Tests in 22 Suites grün, `npx tsc --noEmit`
+fehlerfrei). Nach **B-2**, **B-4**, **B-5** und **B-6** wurde erneut gefragt —
+B-2 diesmal mit besonderem Gewicht, weil die F0-Messung aus Phase 12 ohne
+echte Stimme unbelegt bleibt. Bis zum Ende der Sitzung kam keine Antwort;
+**alle vier bleiben offen**. Für diese Phase ist das ohne Einfluss: Die
+Schriftregeln brauchen weder Schlüssel noch Gerät, und die Übung läuft
+vollständig offline.
+
+**Die Lücke, um die es ging**
+
+Die App zeigte Thai-Schrift, lehrte sie aber nicht. Keine Konsonanten, keine
+Klassen, keine Vokalzeichen, keine Tonregeln — also musste jeder Ton Wort für
+Wort auswendig gelernt werden. Dabei ist er weitgehend **ableitbar**, und
+genau darauf weist der Kommentar in `constants/tones.ts` seit Phase 0 hin:
+„the tone mark alone does not determine the tone".
+
+**Gemacht**
+
+- `src/data/thai-script.ts` — 44 Konsonanten mit Klasse, Anfangs- und
+  Schlusslaut, 59 Vokalmuster mit Länge, die vollständige Tonregeltabelle, die
+  vier Tonzeichen, ห นำ, อ นำ und die belegten Konsonantenverbindungen.
+  Quelle und Abrufdatum im Kopf (AE-36).
+- `src/lib/reading/syllable.ts` — die Herleitung: zerlegt eine einsilbige
+  Schreibung in Anlaut, Vokal, Schlusslaut und Tonzeichen, bestimmt die
+  Silbenart und liest den Ton aus der Tabelle. Liefert **die Schritte mit**,
+  nicht nur das Ergebnis. Was sich nicht eindeutig lesen lässt, fällt mit
+  benanntem Grund durch — es wird nichts geraten.
+- Vierte Übung `toneRule` („Ton herleiten") in der bestehenden
+  Übungs-Infrastruktur aus Phase 6; der Übungs-Screen zeigt die Herleitung als
+  Liste (AE-37).
+
+**Pflicht 1 — Recherchedisziplin**
+
+Der erste Abruf über ein zusammenfassendes Werkzeug lieferte **28 von 44**
+Konsonanten. Deshalb derselbe Weg wie in Phase 2: MediaWiki-API, Rohtext,
+eigener Parser. Zwei Stellen sind gekennzeichnet statt entschieden — der
+Schlusslaut von ล („/n/ or /w/") und der implizite Vokal, für den die Quelle
+zwei Lesarten kennt. Die zweite steht sogar im UI, weil sie eine Aufgabe
+betrifft, die Lernende zu sehen bekommen.
+
+**Pflicht 2 — die Gegenprobe**
+
+Für jeden einsilbigen Eintrag ist der richtige Ton seit Phase 2 belegt. Die
+Herleitung trifft ihn bei **69 von 69**, und sie leitet bei **keinem** einen
+falschen Ton her. Die Übung baut eine Aufgabe nur, wenn beides zusammenfällt.
+
+**Pflicht 3 — Silbengrenzen bleiben ungelöst**
+
+AE-8 gilt unverändert. Die Analyse nimmt genau eine Silbe entgegen; alle 15
+mehrsilbigen Einträge werden mit benanntem Grund abgewiesen, per Test. Dabei
+kam ein Befund heraus, der ohne die Gegenprobe unbemerkt geblieben wäre:
+ตลาด wurde zunächst als **eine** Silbe gelesen, weil jedes Konsonantenpaar als
+Verbindung durchging. Die Lösung ist die belegte Verbindungsliste aus einer
+zweiten Quelle — ausdrücklich **keine** Segmentierung, sondern eine Schranke
+gegen das Raten (AE-38).
+
+**Pflicht 4 — Konsistenz**
+
+Farben und Konturglyphen kommen unverändert aus `constants/tones.ts`; im
+Web-Build nachgemessen sind es exakt die dort hinterlegten Dunkelmodus-Werte
+und Pfade. Keine zweite Darstellung, keine neuen Farben — damit gilt die
+Kontrastprüfung aus Phase 9 unverändert weiter.
+
+**Verifiziert**
+
+- `npm test` → **545 Tests grün** in 23 Suites (vorher 508 in 22).
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Web-Build durchgespielt:** Die Übung erscheint in der Richtung
+  Deutsch → Thai neben „Töne hören". Eine volle Runde über zehn Aufgaben
+  gespielt — darunter หนึ่ง (ห นำ), ครับ (Verbindung), หก (gerade **kein**
+  ห นำ), ค่ะ und ห้า —, jede Aufgabe zeigte nach der Antwort die
+  siebenschrittige Herleitung, die Runde schloss mit Auswertung ab.
+  Beispielausgabe für หนึ่ง: „ห ist stumm und hebt น (Tiefklasse) in die
+  Hochklasse — ห นำ" → „Hochklasse + mai ek → Tief".
+- **Barrierefreiheit:** kein Bedienelement ohne Beschriftung, kein Tippziel
+  unter 24 Punkten, die Herleitung als `list` mit sieben `listitem`, keine
+  Konsolenfehler.
+
+**Offen / bewusst nicht gemacht**
+
+- **Handschrift und Strichfolge** — kein Ziel dieser Phase.
+- **Mehrsilbige Wörter.** Für eine echte Segmentierung fehlt die
+  Unterscheidung zwischen Verbindung und Leitkonsanant bei Paaren, die beides
+  sein können; ผล ist der Fall im eigenen Grundstock (Verbindung /pʰl/, in
+  ผลไม้ aber zweisilbig). Das braucht eine Quelle, die diese Wörter aufzählt.
+- **Eine nachschlagbare Konsonantentafel im UI.** Die Daten liegen vollständig
+  vor (Namen, Bedeutungen, Klassen); gebaut ist bisher nur die Übung, weil die
+  Vorgabe ausdrücklich Regeln lehren und nicht Tabellen abbilden wollte.
+- **Lehnwort-Verbindungen** (ทร, ฟร) — bewusst nicht in der Liste, siehe AE-38.
+
+---
+
 ## Konsolidierte Abnahme (Stand 2026-09-03)
 
-Jedes „Fertig, wenn" aus Phase 0–12 gegen den **jetzigen** Repo-Zustand.
-**99 von 106 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
+Jedes „Fertig, wenn" aus Phase 0–13 gegen den **jetzigen** Repo-Zustand.
+**105 von 112 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -2708,8 +2964,14 @@ Fassung abweichen.
 | 12 | F0-Verfahren aus tone-contour.html samt Oktavgrenze wiederverwendet | **erfüllt** | 40/10 ms, 70-400 Hz, RMS/Korrelation, Medianfilter, laengste Strecke, einmalige 1,8-fache Oktavkorrektur, 8 Prozent Beschnitt und sechs Halbtonpunkte. Tests fuer 48->8 kHz, Oktavsprung, genau einen Durchgang, Stille und eine steigende PCM-Kurve; verbleibender Oktavfehler steht im UI. |
 | 12 | Bewertung bleibt ehrlich und ohne Aussprache-Score | **erfüllt** | UI nennt Konsonanten, Vokallaenge, Aspiration, F0-/Oktavfehler. Nur relative Steig-/Fallform bekommt ohne Baseline ein binaeres Kontururteil; mittel/tief/hoch melden Register offen. Kein score/correct-Feld, keine Behauptung vollstaendiger Aussprache. |
 | 12 | FSRS-Entscheidung begruendet und ohne Schreibzugriff umgesetzt | **erfüllt** | AE-35. Kartenzustand wird nur fuer die Auswahl schwacher Woerter gelesen; Session-Test vergleicht den Kartenbestand vor/nach dem Bau. Keine Karte, Bewertung oder Statistik wird geschrieben. |
-| 12 | Physische Aufnahme und Konturauswertung auf Android/iOS-Geraet | **offen** | B-2 - installierte Paketquellen, Manifest, Typen, native Hook-Lebenszyklen und PCM-Dekodierung sind belegt; tatsächliche Hardware-Rate, Mikrofonberechtigung und F0-Kontur brauchen ein Gerät/Preview-Build. Das ist eine dokumentierte Abnahmegrenze, nicht still als bestanden markiert. |
+| 12 | Physische Aufnahme und Konturauswertung auf Android/iOS-Geraet | **offen** | Blocker: B-2 - installierte Paketquellen, Manifest, Typen, native Hook-Lebenszyklen und PCM-Dekodierung sind belegt; tatsaechliche Hardware-Rate, Mikrofonberechtigung und F0-Kontur brauchen ein Geraet/Preview-Build. Das ist eine dokumentierte Abnahmegrenze, nicht still als bestanden markiert. |
 | 12 | Tests, TypeScript und Web-Export gruen | **erfüllt** | 508 Tests in 22 Suites gruen (vorher 469/16); npx tsc --noEmit fehlerfrei; Expo-Web-Export mit acht statischen Routen erfolgreich; gerenderter Sprechscreen ohne Browser-Konsolenfehler. |
+| 13 | Konsonanten mit Klassen, Vokalzeichen und Tonregeln als gepruefte Daten mit Quellenangabe | **erfüllt** | src/data/thai-script.ts: 44 Konsonanten (9 mittel / 11 hoch / 24 tief, per Test nachgerechnet), 59 Vokalmuster mit Laenge, vollstaendige Tonregeltabelle inklusive der Luecken bei mai tri und mai chattawa, vier Tonzeichen, ho nam, o nam. Quelle englische Wikipedia 'Thai script', abgerufen 2026-09-03 ueber die MediaWiki-API als ROHTEXT - ein erster Abruf ueber ein zusammenfassendes Werkzeug lieferte nur 28 der 44 Konsonanten. Die Konsonantenzeilen sind aus dem geparsten Rohtext erzeugt, nicht abgetippt. |
+| 13 | Unsichere Faelle gekennzeichnet statt entschieden | **erfüllt** | Zwei Stellen, Muster ร้าน/นอน aus Phase 2: ล traegt in der Quelle '/n/ or /w/' und fuehrt beide Werte samt uncertainNote; der implizite Vokal (zwei Konsonanten ohne Vokalzeichen) wird als kurzes /o/ gelesen, die Quelle kennt fuer dieselbe Schreibung auch ein langes /ɔː/ - diese Mehrdeutigkeit steht im UI der Uebung, nicht nur im Code. Ein Test haelt fest, dass genau ล gekennzeichnet ist. |
+| 13 | Spielbare Herleitungsuebung, gegen die bekannten Toene des Grundstocks gegengeprueft | **erfüllt** | AE-37. Vierte Uebung 'Ton herleiten' (toneRule, de_to_th): zeigt die Thai-Schrift, fragt den Ton, erklaert danach sieben Schritte (Anfangskonsonant, Klasse, Vokal, Schlusslaut, Silbenart, Tonzeichen, Ergebnis). Gegenprobe: 69 von 69 einsilbigen Eintraegen richtig hergeleitet, KEIN einziger falsch; die Uebung baut eine Aufgabe nur, wenn Herleitung und quellengepruefter Ton uebereinstimmen. Im Web-Build eine volle Runde ueber zehn Aufgaben gespielt (darunter หนึ่ง, ครับ, หก, ค่ะ, ห้า) mit Auswertung am Ende. |
+| 13 | Silbengrenzen bleiben ungeloest - mehrsilbige Woerter werden abgewiesen | **erfüllt** | AE-8 gilt weiter. analyzeSyllable nimmt genau eine Silbe entgegen; ein Test faehrt alle 15 mehrsilbigen Eintraege durch und verlangt fuer jeden einen benannten Fehlschlag. Dabei kam ein Befund heraus: ตลาด wurde zunaechst als eine Silbe gelesen, weil jedes Konsonantenpaar als Verbindung durchging. Behoben ueber die belegte Verbindungsliste (zweite Quelle) - eine Schranke gegen das Raten, ausdruecklich kein Segmentierungsansatz (AE-38). |
+| 13 | Konsistenz mit Bestehendem: Tonfarben, Konturglyphen, Barrierefreiheit | **erfüllt** | Pflicht 4. Die Antwortoptionen tragen nur den Ton; Farbe und Kontur holt die Oberflaeche aus constants/tones.ts. Im Web-Build nachgemessen: exakt die dort hinterlegten Dunkelmodus-Werte (#88a083, #8a9bb1, #c88b7a, #ba9443, #82a097) und Konturpfade - keine zweite Darstellung, keine neuen Farben, also gilt die Kontrastpruefung aus Phase 9 unveraendert. Herleitung als role=list mit sieben role=listitem; kein Bedienelement ohne Beschriftung, kein Tippziel unter 24 Punkten, keine Konsolenfehler. |
+| 13 | Tests und tsc gruen | **erfüllt** | 545 Tests in 23 Suites gruen (vorher 508 in 22); npx tsc --noEmit fehlerfrei. |
 ## Skalierungsplan auf ~1000 Einträge
 
 Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
@@ -2778,6 +3040,12 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 13 (2026-09-03):** Die Schriftregeln stehen als geprüfte
+> Daten, und „Ton herleiten" trainiert sie gegen den Grundstock. Was hier oben
+> liegt, braucht weiterhin einen Schlüssel oder ein Gerät des Nutzers — die
+> Schriftregeln brauchen beides nicht.
+
 
 > **Neu aus Phase 12 (2026-09-03):** Die lokale Sprechübung steht vollständig
 > im Code und im automatisierten Gate. Offen sind nur die ausdrücklich

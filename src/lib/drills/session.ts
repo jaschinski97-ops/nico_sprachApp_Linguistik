@@ -8,9 +8,11 @@ import { DataStore, getStore } from './../storage';
 import {
   buildArticleQuestion,
   buildToneQuestion,
+  buildToneRuleQuestion,
   buildVerbFormQuestion,
   canBuildArticleQuestion,
   canBuildToneQuestion,
+  canBuildToneRuleQuestion,
   canBuildVerbFormQuestion,
 } from './questions';
 import { Random, seededRandom, shuffled } from './random';
@@ -58,6 +60,8 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
   switch (drill) {
     case 'tone':
       return canBuildToneQuestion(entry);
+    case 'toneRule':
+      return canBuildToneRuleQuestion(entry);
     case 'article':
       return canBuildArticleQuestion(entry);
     case 'verbForms':
@@ -74,6 +78,8 @@ function buildQuestion(
   switch (drill) {
     case 'tone':
       return buildToneQuestion(entry);
+    case 'toneRule':
+      return buildToneRuleQuestion(entry);
     case 'article':
       return buildArticleQuestion(entry);
     case 'verbForms':

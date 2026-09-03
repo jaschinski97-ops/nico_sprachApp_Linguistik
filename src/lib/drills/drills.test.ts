@@ -222,7 +222,11 @@ describe('Uebungen je Richtung', () => {
   });
 
   it('uebt fuer Thai-Lernende Toene und fuer Deutsch-Lernende Grammatik', () => {
-    expect(DRILLS_BY_DIRECTION.de_to_th).toEqual(['tone']);
+    // Seit Phase 13 zweimal Ton fuer de_to_th, und das mit Absicht: „Toene
+    // hoeren" trainiert das Ohr, „Ton herleiten" die Schriftregel. Beides
+    // fuehrt zum selben Ton, aber ueber verschiedene Wege - wer nur hoert,
+    // bleibt bei jedem neuen Wort auf das Ohr angewiesen.
+    expect(DRILLS_BY_DIRECTION.de_to_th).toEqual(['tone', 'toneRule']);
     expect(DRILLS_BY_DIRECTION.th_to_de).toEqual(['article', 'verbForms']);
   });
 });

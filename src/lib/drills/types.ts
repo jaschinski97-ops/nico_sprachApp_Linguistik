@@ -2,6 +2,7 @@ import { Tone } from '@/constants/tones';
 
 import { SpeechLanguage } from '../audio';
 import { Direction } from '../fsrs/types';
+import { DerivationStep } from '../reading/syllable';
 
 /**
  * Übungstypen (Phase 6).
@@ -24,7 +25,7 @@ import { Direction } from '../fsrs/types';
  * abgeleitet (vertauschtes Hilfsverb).
  */
 
-export const DRILLS = ['tone', 'article', 'verbForms'] as const;
+export const DRILLS = ['tone', 'toneRule', 'article', 'verbForms'] as const;
 export type DrillId = (typeof DRILLS)[number];
 
 export type DrillMeta = {
@@ -46,6 +47,14 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
       'Wort anhören und den Ton bestimmen. Nur einsilbige Wörter — bei mehrsilbigen hat jede Silbe ihren eigenen Ton.',
     prompt: 'Welchen Ton hörst du?',
   },
+  toneRule: {
+    id: 'toneRule',
+    direction: 'de_to_th',
+    label: 'Ton herleiten',
+    description:
+      'Den Ton aus der Schrift ableiten statt ihn auswendig zu lernen: Konsonantenklasse, Vokallänge, Schlusslaut und Tonzeichen ergeben ihn. Nur einsilbige Wörter.',
+    prompt: 'Welchen Ton hat dieses Wort?',
+  },
   article: {
     id: 'article',
     direction: 'th_to_de',
@@ -66,7 +75,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
 
 /** Welche Übungen zu welcher Richtung gehören. */
 export const DRILLS_BY_DIRECTION: Record<Direction, DrillId[]> = {
-  de_to_th: ['tone'],
+  de_to_th: ['tone', 'toneRule'],
   th_to_de: ['article', 'verbForms'],
 };
 
@@ -99,6 +108,17 @@ export type DrillQuestion = {
   explanation: string;
   /** Die Auflösung in Klartext, für die Anzeige nach der Antwort. */
   solution: string;
+  /**
+   * Die Herleitung Schritt für Schritt — nur bei „Ton herleiten" (Phase 13).
+   *
+   * Der Punkt der Übung ist nicht die richtige Antwort, sondern der Weg
+   * dorthin: Wer die vier Schritte einmal nachvollzogen hat, kann den Ton
+   * eines Wortes bestimmen, das er noch nie gesehen hat. Deshalb steht das
+   * hier als Liste und nicht als Fließtext in `explanation`.
+   */
+  derivation?: DerivationStep[];
+  /** Benannte Unsicherheit der Herleitung, falls die Quelle mehrdeutig ist. */
+  uncertain?: string | null;
 };
 
 export type DrillAnswer = {

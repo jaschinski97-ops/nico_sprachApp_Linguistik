@@ -1,6 +1,8 @@
 import { TONE_KEYS, TONES } from '@/constants/tones';
 import { VocabEntry } from '@/data/vocabulary';
 
+import { analyzeSyllable } from '../reading/syllable';
+
 import { Random, shuffled } from './random';
 import { DRILL_META, DrillOption, DrillQuestion } from './types';
 
@@ -65,6 +67,68 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
     correctIndex: TONE_KEYS.indexOf(tone),
     solution: `${entry.thai} · ${entry.romanization} — ${entry.german}`,
     explanation: `${TONES[tone].adjective} Ton.`,
+  };
+}
+
+/* ---------- Ton herleiten (de_to_th) ---------- */
+
+/**
+ * Nur Eintraege, deren Ton sich aus der Schrift **herleiten** laesst — und
+ * deren Herleitung mit dem quellengeprueften Ton uebereinstimmt.
+ *
+ * Die zweite Bedingung ist die wichtigere. Waeren beide je verschieden,
+ * zeigte die Uebung eine Begruendung, die der als richtig markierten Antwort
+ * widerspricht; die lernende Person lernte die falsche Regel mit. Lieber eine
+ * Vokabel weniger im Topf. Ein Test faehrt den ganzen Grundstock durch und
+ * belegt, dass es diesen Fall derzeit nicht gibt.
+ *
+ * Einsilbig ist ohnehin Voraussetzung (AE-8, Pflicht 3): Silbengrenzen sind
+ * in der Thai-Schrift nicht markiert, und `analyzeSyllable` weist alles
+ * zurueck, was sich nicht als genau eine Silbe lesen laesst.
+ */
+export function canBuildToneRuleQuestion(entry: VocabEntry): boolean {
+  if (entry.syllables?.length !== 1) return false;
+  const analysis = analyzeSyllable(entry.thai);
+  return analysis.ok && analysis.tone === entry.syllables[0].tone;
+}
+
+export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
+  const analysis = analyzeSyllable(entry.thai);
+  if (!analysis.ok) {
+    throw new Error(`"${entry.id}" (${entry.thai}): ${analysis.reason}`);
+  }
+  const tone = entry.syllables[0].tone;
+  if (analysis.tone !== tone) {
+    throw new Error(
+      `"${entry.id}" (${entry.thai}): Herleitung ergibt ${TONES[analysis.tone].label}, ` +
+        `belegt ist ${TONES[tone].label}. Solange das nicht geklaert ist, wird daraus keine Aufgabe.`
+    );
+  }
+
+  // Dieselbe feste Reihenfolge wie bei der Hoer-Uebung: Wer beide uebt, soll
+  // nicht zwei verschiedene Ordnungen im Kopf behalten muessen.
+  const options: DrillOption[] = TONE_KEYS.map((key) => ({
+    label: TONES[key].label,
+    tone: key,
+  }));
+
+  return {
+    id: `toneRule:${entry.id}`,
+    drill: 'toneRule',
+    direction: 'de_to_th',
+    vocabId: entry.id,
+    // Hier ist die Schrift die Aufgabe, nicht die halbe Loesung: Genau aus
+    // ihr soll der Ton abgeleitet werden. Die Umschrift steht bewusst NICHT
+    // dabei - sie traegt die Tonzeichen und waere die Antwort.
+    visible: entry.thai,
+    visibleHint: null,
+    speak: null,
+    options,
+    correctIndex: TONE_KEYS.indexOf(tone),
+    solution: `${entry.thai} · ${entry.romanization} — ${entry.german}`,
+    explanation: `${TONES[tone].adjective} Ton.`,
+    derivation: analysis.steps,
+    uncertain: analysis.uncertain,
   };
 }
 

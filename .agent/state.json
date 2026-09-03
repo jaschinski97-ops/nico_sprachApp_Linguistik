@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-03",
-  "currentPhase": 12,
-  "currentPhaseName": "Sprechen (Mikrofon + Aussprachekorrektur)",
+  "currentPhase": 13,
+  "currentPhaseName": "Thai-Schrift (Lesen)",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -677,6 +677,42 @@
       "criterion": "Tests, TypeScript und Web-Export gruen",
       "done": true,
       "verifiedHow": "508 Tests in 22 Suites gruen (vorher 469/16); npx tsc --noEmit fehlerfrei; Expo-Web-Export mit acht statischen Routen erfolgreich; gerenderter Sprechscreen ohne Browser-Konsolenfehler."
+    },
+    {
+      "phase": 13,
+      "criterion": "Konsonanten mit Klassen, Vokalzeichen und Tonregeln als gepruefte Daten mit Quellenangabe",
+      "done": true,
+      "verifiedHow": "src/data/thai-script.ts: 44 Konsonanten (9 mittel / 11 hoch / 24 tief, per Test nachgerechnet), 59 Vokalmuster mit Laenge, vollstaendige Tonregeltabelle inklusive der Luecken bei mai tri und mai chattawa, vier Tonzeichen, ho nam, o nam. Quelle englische Wikipedia 'Thai script', abgerufen 2026-09-03 ueber die MediaWiki-API als ROHTEXT - ein erster Abruf ueber ein zusammenfassendes Werkzeug lieferte nur 28 der 44 Konsonanten. Die Konsonantenzeilen sind aus dem geparsten Rohtext erzeugt, nicht abgetippt."
+    },
+    {
+      "phase": 13,
+      "criterion": "Unsichere Faelle gekennzeichnet statt entschieden",
+      "done": true,
+      "verifiedHow": "Zwei Stellen, Muster ร้าน/นอน aus Phase 2: ล traegt in der Quelle '/n/ or /w/' und fuehrt beide Werte samt uncertainNote; der implizite Vokal (zwei Konsonanten ohne Vokalzeichen) wird als kurzes /o/ gelesen, die Quelle kennt fuer dieselbe Schreibung auch ein langes /ɔː/ - diese Mehrdeutigkeit steht im UI der Uebung, nicht nur im Code. Ein Test haelt fest, dass genau ล gekennzeichnet ist."
+    },
+    {
+      "phase": 13,
+      "criterion": "Spielbare Herleitungsuebung, gegen die bekannten Toene des Grundstocks gegengeprueft",
+      "done": true,
+      "verifiedHow": "AE-37. Vierte Uebung 'Ton herleiten' (toneRule, de_to_th): zeigt die Thai-Schrift, fragt den Ton, erklaert danach sieben Schritte (Anfangskonsonant, Klasse, Vokal, Schlusslaut, Silbenart, Tonzeichen, Ergebnis). Gegenprobe: 69 von 69 einsilbigen Eintraegen richtig hergeleitet, KEIN einziger falsch; die Uebung baut eine Aufgabe nur, wenn Herleitung und quellengepruefter Ton uebereinstimmen. Im Web-Build eine volle Runde ueber zehn Aufgaben gespielt (darunter หนึ่ง, ครับ, หก, ค่ะ, ห้า) mit Auswertung am Ende."
+    },
+    {
+      "phase": 13,
+      "criterion": "Silbengrenzen bleiben ungeloest - mehrsilbige Woerter werden abgewiesen",
+      "done": true,
+      "verifiedHow": "AE-8 gilt weiter. analyzeSyllable nimmt genau eine Silbe entgegen; ein Test faehrt alle 15 mehrsilbigen Eintraege durch und verlangt fuer jeden einen benannten Fehlschlag. Dabei kam ein Befund heraus: ตลาด wurde zunaechst als eine Silbe gelesen, weil jedes Konsonantenpaar als Verbindung durchging. Behoben ueber die belegte Verbindungsliste (zweite Quelle) - eine Schranke gegen das Raten, ausdruecklich kein Segmentierungsansatz (AE-38)."
+    },
+    {
+      "phase": 13,
+      "criterion": "Konsistenz mit Bestehendem: Tonfarben, Konturglyphen, Barrierefreiheit",
+      "done": true,
+      "verifiedHow": "Pflicht 4. Die Antwortoptionen tragen nur den Ton; Farbe und Kontur holt die Oberflaeche aus constants/tones.ts. Im Web-Build nachgemessen: exakt die dort hinterlegten Dunkelmodus-Werte (#88a083, #8a9bb1, #c88b7a, #ba9443, #82a097) und Konturpfade - keine zweite Darstellung, keine neuen Farben, also gilt die Kontrastpruefung aus Phase 9 unveraendert. Herleitung als role=list mit sieben role=listitem; kein Bedienelement ohne Beschriftung, kein Tippziel unter 24 Punkten, keine Konsolenfehler."
+    },
+    {
+      "phase": 13,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "545 Tests in 23 Suites gruen (vorher 508 in 22); npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -854,6 +890,21 @@
       "id": "AE-35",
       "title": "Die Sprechuebung schreibt nicht in den bestehenden FSRS-Karteikasten",
       "rationale": "Eine F0-Kontur ist objektiver als Raten, misst aber weder lexikalischen Abruf noch Konsonanten, Aspiration oder Vokallaenge und kann irren. Sie darf das Intervall einer ganzen Vokabel nicht aendern. FSRS wird nur fuer die Auswahl schwacher Woerter gelesen; es gibt weder Karte noch Score noch Statistik-Schreibzugriff. Ohne persoenliche Referenz werden nur relative Steig-/Fallformen beurteilt; mittel/tief/hoch melden ehrlich Register offen."
+    },
+    {
+      "id": "AE-36",
+      "title": "Die Schriftregeln sind erhoben, nicht erinnert - und zwar aus dem Rohtext",
+      "rationale": "Ein erster Abruf ueber ein zusammenfassendes Werkzeug lieferte 28 von 44 Konsonanten und liess eine Mehrdeutigkeit wie eine Tatsache aussehen. Deshalb der Weg aus Phase 2: MediaWiki-API mit prop=wikitext und ein eigener Parser ueber die Tabellenzeilen. Die Klassenverteilung 9/11/24 steht als Test - sie ist die Kontrolle gegen verlorene oder doppelte Zeilen. Der Schlusslaut (Sonorant gegen Plosiv, und damit lebende gegen tote Silbe) wird aus der IPA-Spalte der Quelle abgeleitet statt je Buchstabe behauptet. Zwei Stellen sind gekennzeichnet statt entschieden: ล ('/n/ or /w/') und der implizite Vokal, fuer den die Quelle kurzes /o/ und langes /ɔː/ kennt - Letzteres steht im UI."
+    },
+    {
+      "id": "AE-37",
+      "title": "Der Ton wird hergeleitet, nicht abgefragt",
+      "rationale": "Eine nachschlagbare Tabelle haette die Luecke nicht geschlossen: Der Unterschied zwischen 'ich weiss, dass หมา steigend ist' und 'ich kann den Ton eines unbekannten Wortes bestimmen' ist der Zweck der Phase. Die Uebung zeigt die Schrift, fragt den Ton und erklaert sieben Schritte; die Umschrift bleibt verborgen, weil sie die Tonzeichen traegt und damit die Antwort waere. Zwei Ton-Uebungen nebeneinander mit Absicht - 'Toene hoeren' trainiert das Ohr, 'Ton herleiten' die Regel; die fuenf Antworten stehen in beiden in derselben festen Reihenfolge. Gegenprobe: 69 von 69 richtig, keiner falsch; eine Aufgabe entsteht nur, wenn Herleitung und belegter Ton zusammenfallen, sonst zeigte die Uebung eine Begruendung, die ihrer eigenen Loesung widerspricht."
+    },
+    {
+      "id": "AE-38",
+      "title": "Ohne Verbindungsliste liest eine Analyse ตลาด als eine Silbe",
+      "rationale": "In der Gegenprobe gefunden, nicht vorhergesehen: Wenn ein einzelner Anfangskonsonant nicht aufging, wurden zwei probiert - damit war jedes Konsonantenpaar eine Verbindung, auch ตล, das keine ist, und dem zweisilbigen ตลาด waere ein Ton zugeschrieben worden. Der Artikel 'Thai script' fuehrt keine Verbindungsliste; 'Thai language' fuehrt sie (11 Lautverbindungen, 15 Schreibungen). Mit dieser Schranke scheitert ตลาด richtig und alle 69 einsilbigen Eintraege gehen weiter auf. Lehnwort-Verbindungen (ทร, ฟร) stehen bewusst nicht dabei - eine offene Liste haette denselben Fehler wie gar keine. Das ist ausdruecklich KEIN Segmentierungsansatz, sondern das Gegenteil: eine Schranke, die verhindert, dass eine Silbengrenze erraten wird. AE-8 gilt unveraendert."
     }
   ],
   "openBlockers": [
@@ -907,7 +958,7 @@
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 12 abgeschlossen; echte Mikrofon-Hardware bleibt als dokumentierte Grenze",
+    "name": "Phase 13 abgeschlossen; Lesen/Hoeren/Sprechen stehen, Schreiben fehlt noch",
     "tasks": [
       "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2), inklusive Auto-Stopp und sofortigem Ende des Mikrofonindikators",
       "B-6: Probelauf Hoerclips mit gueltigem Gemini-Schluessel - danach die zehn Clips in scripts/tone-contour.html ziehen und die Toene messen (AE-31)",
@@ -915,7 +966,8 @@
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
       "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27), und physisches PCM der Sprechuebung pruefen (AE-34)",
       "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen",
-      "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen"
+      "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen",
+      "Frei: Konsonantentafel zum Nachschlagen aus den Daten von Phase 13; Segmentierung mehrsilbiger Woerter braucht eine Quelle fuer Leitkonsonant gegen Verbindung (AE-38)"
     ]
   },
   "situations": {
@@ -958,7 +1010,8 @@
   },
   "drills": {
     "de_to_th": [
-      "tone"
+      "tone",
+      "toneRule"
     ],
     "th_to_de": [
       "article",
@@ -968,7 +1021,8 @@
     "candidates": {
       "tone": 69,
       "article": 29,
-      "verbForms": 20
+      "verbForms": 20,
+      "toneRule": 69
     },
     "fsrs": "bewusst nicht angebunden - siehe AE-16; Aufgabenauswahl nutzt aber den vorhandenen Kartenzustand",
     "logging": "eigene Zaehler drills/drillsCorrect im Tagesprotokoll, getrennt von total"
@@ -1126,5 +1180,39 @@
     "fsrs": "nur fuer Aufgabenauswahl gelesen; keine Karte, Bewertung oder Statistik geschrieben (AE-35)",
     "permission": "Phase-8-Umkehr (AE-33): RECORD_AUDIO und iOS-Zwecktext an; Runtime-Frage erst im start-Pfad nach UI-Begruendung; Hintergrundaufnahme/-wiedergabe aus",
     "verification": "508 Tests in 22 Suites, tsc, Web-Export 8 Routen, Web-DOM ohne Konsolenfehler; physisches In-App-Browser-Mikrofon und natives Geraet als AE-34/B-2-Grenze offen"
+  },
+  "thaiScript": {
+    "sources": [
+      {
+        "title": "Thai script",
+        "url": "https://en.wikipedia.org/wiki/Thai_script",
+        "retrieved": "2026-09-03",
+        "how": "MediaWiki-API, action=parse&prop=wikitext - Rohtext, nicht Zusammenfassung",
+        "for": "Konsonanten mit Klasse und Schlusslaut, Vokalmuster mit Laenge, Tonregeltabelle, Tonzeichen, ho nam, o nam"
+      },
+      {
+        "title": "Thai language",
+        "section": "Syllable structure and consonant clusters",
+        "url": "https://en.wikipedia.org/wiki/Thai_language",
+        "retrieved": "2026-09-03",
+        "for": "die 11 belegten Konsonantenverbindungen - im ersten Artikel nicht enthalten (AE-38)"
+      }
+    ],
+    "consonants": {
+      "total": 44,
+      "mid": 9,
+      "high": 11,
+      "low": 24
+    },
+    "vowelPatterns": 59,
+    "clusters": "11 Lautverbindungen, 15 Schreibungen; Lehnwoerter bewusst ausgeschlossen",
+    "uncertain": [
+      "ล: Schlusslaut '/n/ or /w/' laut Quelle - beide Sonoranten, die Tonregel aendert sich dadurch nicht",
+      "impliziter Vokal (zwei Konsonanten ohne Vokalzeichen): kurzes /o/ oder langes /ɔː/, der Schrift nicht anzusehen - steht im UI"
+    ],
+    "derivation": "src/lib/reading/syllable.ts - nur einsilbig; liefert die sieben Schritte mit, raet nichts",
+    "crossCheck": "69 von 69 einsilbigen Grundstock-Eintraegen richtig hergeleitet, 0 falsch; alle 15 mehrsilbigen mit benanntem Grund abgewiesen",
+    "drill": "toneRule ('Ton herleiten'), Richtung de_to_th, neben der Hoer-Uebung aus Phase 6",
+    "notBuilt": "Handschrift/Strichfolge (kein Ziel); Segmentierung mehrsilbiger Woerter (AE-8); nachschlagbare Konsonantentafel im UI"
   }
 }

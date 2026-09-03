@@ -10,6 +10,7 @@ import { useToneColor } from '@/hooks/use-theme';
 import { isLanguageAvailable, playPronunciation } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
+import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
 
 /**
@@ -219,6 +220,9 @@ export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => v
             <ThemedText type="small" themeColor="textSecondary">
               {question.explanation}
             </ThemedText>
+            {question.derivation ? (
+              <DerivationBlock steps={question.derivation} uncertain={question.uncertain} />
+            ) : null}
           </ThemedView>
         ) : null}
       </ThemedView>
@@ -304,7 +308,66 @@ function Button({ label, onPress }: { label: string; onPress: () => void }) {
   );
 }
 
+/**
+ * Die Herleitung Schritt fuer Schritt (Phase 13).
+ *
+ * Der eigentliche Zweck der Uebung „Ton herleiten": Nicht die richtige
+ * Antwort zaehlt, sondern der Weg. Deshalb steht hier jeder Schritt mit
+ * seinem Wert und seiner Begruendung — wer das dreimal gelesen hat, bestimmt
+ * den Ton eines unbekannten Wortes selbst.
+ *
+ * Als Liste mit `list`-Rolle, damit ein Screenreader die Schritte als
+ * zusammenhaengende Folge ansagt und nicht als lose Textfetzen (Phase 9).
+ */
+function DerivationBlock({
+  steps,
+  uncertain,
+}: {
+  steps: DerivationStep[];
+  uncertain?: string | null;
+}) {
+  return (
+    <View role="list" accessibilityLabel="Herleitung des Tons" style={styles.derivation}>
+      {steps.map((step) => (
+        <View key={step.label} role="listitem" style={styles.derivationStep}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.derivationLabel}>
+            {step.label}
+          </ThemedText>
+          <View style={styles.derivationBody}>
+            <ThemedText type="smallBold">{step.value}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {step.detail}
+            </ThemedText>
+          </View>
+        </View>
+      ))}
+      {uncertain ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          ⚠ {uncertain}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  derivation: {
+    gap: Spacing.two,
+    marginTop: Spacing.two,
+  },
+  derivationStep: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+    alignItems: 'flex-start',
+  },
+  /** Feste Breite, damit die Schritte als Spalte lesbar sind. */
+  derivationLabel: {
+    width: 120,
+  },
+  derivationBody: {
+    flex: 1,
+    gap: 2,
+  },
   /**
    * Mindestgroesse eines Tippziels. WCAG 2.2 verlangt in 2.5.8 (AA) 24x24
    * CSS-Pixel; Apple und Google empfehlen 44 bzw. 48. Gemessen wurde im
