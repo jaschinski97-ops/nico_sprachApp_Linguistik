@@ -1,4 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { createTextClient } from '../providers/text';
+import { ProviderId, TextClient } from '../providers/types';
 
 import {
   ConversationSituation,
@@ -9,14 +10,18 @@ import {
 } from './types';
 
 /**
- * Erzeugt eine einzelne Sprachsituation über die Anthropic-API.
+ * Erzeugt eine einzelne Sprachsituation über ein Sprachmodell.
  *
  * Der Aufruf geht direkt vom Gerät bzw. Browser an die API — es gibt keinen
- * eigenen Server, und der Schlüssel verlässt das Gerät nur in Richtung
- * Anthropic. Im Web-Build setzt `dangerouslyAllowBrowser: true` genau den
- * Header `anthropic-dangerous-direct-browser-access: true`, ohne den CORS die
- * Anfrage blockieren würde (im SDK nachgesehen, nicht angenommen). Nativ ist
- * der Header wirkungslos, aber unschädlich.
+ * eigenen Server, und der Schlüssel verlässt das Gerät nur in Richtung des
+ * gewählten Anbieters.
+ *
+ * SEIT PHASE 10 IST DER ANBIETER WÄHLBAR (Claude, ChatGPT, Gemini). Was sich
+ * dadurch **nicht** ändert: der Prompt, die strenge Prüfung der Antwort und
+ * das Verhalten des Batch-Laufs. Diese Datei kennt keinen Anbieter mehr,
+ * sondern nur noch einen `TextClient` — wie der Text zustande kommt, steht in
+ * `lib/providers/text.ts`. Voreingestellt bleibt Claude: den Standard still zu
+ * wechseln wäre eine Verhaltensänderung für alle, die nichts umstellen.
  *
  * ANTWORTFORMAT: Es wird JSON im Prompt verlangt und danach **streng
  * geprüft**, statt `output_config.format` zu benutzen. Grund: Die Pipeline
@@ -27,7 +32,14 @@ import {
  * bestätigt, sind strukturierte Ausgaben die natürliche Verbesserung.
  */
 
+/** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
 export const GENERATOR_MODEL = 'claude-opus-5';
+
+/**
+ * Antwortlänge. Großzügig, weil ein abgeschnittenes JSON den ganzen Eintrag
+ * kostet und ein Fehlschlag teurer ist als ein paar ungenutzte Token.
+ */
+export const GENERATOR_MAX_TOKENS = 16000;
 
 export type GenerationClient = {
   generate(spec: SituationSpec): Promise<ConversationSituation>;
@@ -163,38 +175,42 @@ export function parseSituation(
   };
 }
 
-export function createAnthropicClient(apiKey: string): GenerationClient {
-  const anthropic = new Anthropic({
-    apiKey,
-    // Setzt den Header `anthropic-dangerous-direct-browser-access: true`.
-    // Ohne ihn blockiert CORS den Web-Build; nativ ist er wirkungslos.
-    dangerouslyAllowBrowser: true,
-  });
-
+/**
+ * Verbindet den Prompt dieser Datei mit einem beliebigen Textanbieter.
+ *
+ * Das ist die ganze Anbieter-Anbindung: eine Anfrage, eine Antwort, der
+ * vorhandene Parser. Ein vierter Anbieter bräuchte hier keine Zeile.
+ */
+export function createSituationClient(text: TextClient): GenerationClient {
   return {
     async generate(spec) {
-      const response = await anthropic.messages.create({
-        model: GENERATOR_MODEL,
-        max_tokens: 16000,
-        // Ein kurzer A1/A2-Dialog in vorgegebenem JSON ist eine einfache
-        // Aufgabe. Bei 512 Aufrufen im vollen Lauf schlägt der Unterschied
-        // zwischen niedrigem und hohem Aufwand spürbar auf Kosten und Dauer
-        // durch, ohne dass das Ergebnis darunter litte.
-        output_config: { effort: 'low' },
+      const response = await text.complete({
         system: systemPrompt(),
-        messages: [{ role: 'user', content: userPrompt(spec) }],
+        user: userPrompt(spec),
+        maxTokens: GENERATOR_MAX_TOKENS,
       });
-
-      const text = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map((block) => block.text)
-        .join('\n');
-
-      if (!text.trim()) {
-        throw new Error(`Leere Antwort (stop_reason: ${response.stop_reason}).`);
-      }
-
-      return parseSituation(text, spec, response.model ?? GENERATOR_MODEL);
+      return parseSituation(response.text, spec, response.model);
     },
   };
+}
+
+export function createGenerationClient(
+  provider: ProviderId,
+  apiKey: string,
+  model: string = GENERATOR_MODEL
+): GenerationClient {
+  return createSituationClient(createTextClient(provider, apiKey, model));
+}
+
+/**
+ * Der Weg aus Phase 4, unverändert erreichbar.
+ *
+ * Bleibt erhalten, damit „die bestehenden Generatoren laufen weiter" nicht nur
+ * eine Behauptung im Protokoll ist, sondern am Aufruf ablesbar.
+ */
+export function createAnthropicClient(
+  apiKey: string,
+  model: string = GENERATOR_MODEL
+): GenerationClient {
+  return createGenerationClient('claude', apiKey, model);
 }

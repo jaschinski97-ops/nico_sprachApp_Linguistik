@@ -1,15 +1,18 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { createTextClient } from '../providers/text';
+import { ProviderId, TextClient } from '../providers/types';
 
 import { ExamSpec } from './plan';
 import { certificateFor, ExamItem, ExamModule, ExamStimulus, SKILL_LABELS } from './types';
 
 /**
- * Erzeugt eine zusätzliche Lese- oder Höraufgabe über die Anthropic-API.
+ * Erzeugt eine zusätzliche Lese- oder Höraufgabe über ein Sprachmodell.
  *
- * Derselbe Aufbau wie der Dialog-Generator aus Phase 4 — offizieller SDK,
- * JSON im Prompt verlangt und streng geprüft, ein Fehlschlag kostet den Lauf
- * nichts. Der Batch-Läufer darunter ist derselbe wie bei Sprachsituationen und
- * Bildern (`lib/generation/batch.ts`).
+ * Derselbe Aufbau wie der Dialog-Generator aus Phase 4 — JSON im Prompt
+ * verlangt und streng geprüft, ein Fehlschlag kostet den Lauf nichts. Der
+ * Batch-Läufer darunter ist derselbe wie bei Sprachsituationen und Bildern
+ * (`lib/generation/batch.ts`), und seit Phase 10 ist es auch derselbe
+ * Anbieter-Vertrag (`lib/providers/text.ts`) — der Anbieter ist getrennt von
+ * dem der Sprachsituationen wählbar.
  *
  * DER PROMPT ZITIERT DIE RECHERCHIERTE STRUKTUR, nicht eine Vorstellung davon:
  * Textsorten und Dauer kommen aus dem Zertifikat, das in `types.ts` mit Quelle
@@ -17,7 +20,10 @@ import { certificateFor, ExamItem, ExamModule, ExamStimulus, SKILL_LABELS } from
  * Prüfungsform nicht, sondern bekommt sie vorgegeben.
  */
 
+/** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
 export const EXAM_GENERATOR_MODEL = 'claude-opus-5';
+
+export const EXAM_MAX_TOKENS = 16000;
 
 export type ExamGenerationClient = {
   generate(spec: ExamSpec): Promise<ExamModule>;
@@ -185,29 +191,31 @@ export function parseExamModule(
   };
 }
 
-export function createExamClient(apiKey: string): ExamGenerationClient {
-  const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-
+export function createExamModuleClient(text: TextClient): ExamGenerationClient {
   return {
     async generate(spec) {
-      const response = await anthropic.messages.create({
-        model: EXAM_GENERATOR_MODEL,
-        max_tokens: 16000,
-        output_config: { effort: 'low' },
+      const response = await text.complete({
         system: systemPrompt(),
-        messages: [{ role: 'user', content: buildExamPrompt(spec) }],
+        user: buildExamPrompt(spec),
+        maxTokens: EXAM_MAX_TOKENS,
       });
-
-      const text = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map((block) => block.text)
-        .join('\n');
-
-      if (!text.trim()) {
-        throw new Error(`Leere Antwort (stop_reason: ${response.stop_reason}).`);
-      }
-
-      return parseExamModule(text, spec, response.model ?? EXAM_GENERATOR_MODEL);
+      return parseExamModule(response.text, spec, response.model);
     },
   };
+}
+
+export function createExamGenerationClient(
+  provider: ProviderId,
+  apiKey: string,
+  model: string = EXAM_GENERATOR_MODEL
+): ExamGenerationClient {
+  return createExamModuleClient(createTextClient(provider, apiKey, model));
+}
+
+/** Der Weg aus Phase 7, unverändert erreichbar. */
+export function createExamClient(
+  apiKey: string,
+  model: string = EXAM_GENERATOR_MODEL
+): ExamGenerationClient {
+  return createExamGenerationClient('claude', apiKey, model);
 }

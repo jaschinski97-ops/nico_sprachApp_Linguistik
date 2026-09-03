@@ -1,9 +1,9 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-09-01",
-  "currentPhase": 9,
-  "currentPhaseName": "QA & Abschluss",
+  "lastUpdated": "2026-09-03",
+  "currentPhase": 10,
+  "currentPhaseName": "KI-Anbieter-Auswahl in den Einstellungen",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -500,6 +500,73 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "392 Tests in 14 Suites gruen; npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 10,
+      "criterion": "Alle drei Generator-Gruppen zeigen Anbieter-Auswahl und Modell-Textfeld",
+      "done": true,
+      "verifiedHow": "Im Web-Build geprueft: Sprachsituationen, Bilder und Pruefungsaufgaben haben je eine Anbieterreihe und ein Modell-Freitextfeld. Umstellen wirkt sofort auf Modellvorschlag, Schluesselplatzhalter und die Beschriftung des Schluesselfeldes ('API-Schluessel fuer Google') und NUR auf die eigene Gruppe. Statt eines Aufklappfeldes eine Knopfreihe - Begruendung in AE-28 (React Native hat kein plattformweites Dropdown; @expo/ui ist nativ-only)."
+    },
+    {
+      "phase": 10,
+      "criterion": "Gemini-CORS-Befund gemessen und dokumentiert",
+      "done": true,
+      "verifiedHow": "AE-26. Aus dem laufenden Web-Build am 2026-09-03: generateContent (Text), gemini-2.5-flash-image, imagen-4.0:predict und GET /v1beta/models kommen alle durch (HTTP 400, lesbar), mit Schluessel im Header wie als Query-Parameter. Kontrollen: Anthropic mit/ohne Header wie in AE-12; example.com und goethe.de scheitern - die CORS-Pruefung war also scharf. Genommen wurde der Header, weil eine URL in Verlaufslisten landet. Haken: mit ungueltigem Schluessel antwortet Google auf ALLES 'API key not valid', auch auf ein erfundenes Modell - Anfrage- und Antwortform sind damit vor dem ersten bezahlten Aufruf nicht belegbar."
+    },
+    {
+      "phase": 10,
+      "criterion": "ChatGPT im Web-Build klar als eingeschraenkt gekennzeichnet",
+      "done": true,
+      "verifiedHow": "AE-27. Die Messung bestaetigt eine Einschraenkung, aber mit anderer Ursache als in AE-13 vermutet: Ein POST an api.openai.com mit einem Schluessel, der mit 'sk-' beginnt, bekommt eine Antwort ohne Access-Control-Allow-Origin; mit 'SK-' oder 'xk-' kommt dieselbe Anfrage durch, beim GET greift die Regel nicht. Da jeder echte OpenAI-Schluessel mit 'sk-' beginnt, bleibt die Konsequenz aus Phase 5 dieselbe. Warnung steht in der Oberflaeche, aber nur hinter Platform.OS === 'web' - nativ gibt es kein CORS. Zwei andere Verdaechtige (Anmeldedaten, Anfragekoerper) wurden geprueft und verworfen."
+    },
+    {
+      "phase": 10,
+      "criterion": "Provider-Abstraktion statt dritter Kopie",
+      "done": true,
+      "verifiedHow": "AE-28: TextClient und ImageClient in src/lib/providers/. Die bestehenden Anthropic- und Stability-Umsetzungen haengen dahinter, nicht daneben; Prompts, Parser, Bauplan und der Batch-Laeufer aus Phase 5 wurden nicht angefasst. createAnthropicClient und createStabilityImageClient bleiben als Aufruf erhalten. Ein Test belegt, dass beide Textgeneratoren denselben anbieterfreien Prompt schicken."
+    },
+    {
+      "phase": 10,
+      "criterion": "Key-Speicherung je Anbieter nach dem AE-10-Muster",
+      "done": true,
+      "verifiedHow": "api-key.ts von zwei auf vier Anbieter erweitert, Muster unveraendert (nativ Keychain, Web nur Sitzung, Weiche ueber isAvailableAsync). Tests mit einer nachgebildeten sicheren Ablage: vier Schluessel getrennt, Loeschen eines Anbieters laesst die anderen stehen, und der Claude-Schluessel liegt weiterhin unter dem alten Namen 'anthropic-api-key' - ihn umzubenennen haette gespeicherte Schluessel unauffindbar gemacht."
+    },
+    {
+      "phase": 10,
+      "criterion": "Modellname nicht validiert (Freitext, kein Katalog)",
+      "done": true,
+      "verifiedHow": "Pflicht 5. Ein Test faehrt vier beliebige Namen durch, darunter '../etwas', und erwartet sie unveraendert zurueck. Leeres Feld nimmt den Vorschlag des Anbieters; ein Anbieterwechsel zieht den Modellnamen mit. Bei Gemini und Stability fuellt der Name den Pfad und wird kodiert, damit ein Tippfehler mit Schraegstrich keine fremde Adresse baut. Im Browser mit 'gemini-99-voellig-ausgedacht' geprueft, inklusive Neuladen."
+    },
+    {
+      "phase": 10,
+      "criterion": "Bestehende Anthropic-/Stability-Generatoren laufen unveraendert weiter (Regressionstest)",
+      "done": true,
+      "verifiedHow": "Zweifach belegt. Testebene: alle 392 Tests aus Phase 0-9 laufen unveraendert gruen; zusaetzlich prueft ein Test, dass die Voreinstellungen (Claude/claude-opus-5, Stability/stable-image-core) und die in AE-13 gemessene Endpunktadresse sich nicht verschoben haben. Netzebene, aus der Oberflaeche mit ungueltigem Schluessel: Sprachsituationen ueber Claude 16/16 mit '401 authentication_error - API key is invalid' (wortgleich Phase 4/7), Bilder ueber Stability 5/5 mit 'HTTP 401: authorization: invalid or missing header value' (wortgleich Phase 5). Bestand danach unveraendert."
+    },
+    {
+      "phase": 10,
+      "criterion": "Lauf durch den echten Netzwerkpfad je neuem Anbieter (ungueltiger Schluessel)",
+      "done": true,
+      "verifiedHow": "Sprachsituationen ueber Gemini: 16/16 verarbeitet, 0 erzeugt, 16 x 'HTTP 400: API key not valid. - INVALID_ARGUMENT'. Pruefungsaufgaben ueber Gemini: 8/8, Bestand bleibt bei den 8 mitgelieferten. Bilder ueber ChatGPT: 5/5, 5 x 'Keine Antwort von api.openai.com' mit CORS-Erklaerung. Nach jedem Lauf 0 gespeichert."
+    },
+    {
+      "phase": 10,
+      "criterion": "Auswahlzustand ist fuer Screenreader ablesbar (Nebenbefund)",
+      "done": true,
+      "verifiedHow": "AE-29, nicht Auftrag dieser Phase, beim Nachmessen gefunden: accessibilityState={{selected}} erzeugt in dieser React-Native-Web-Fassung GAR KEIN ARIA-Attribut, und accessibilityRole 'radio' + accessibilityState {{checked}} liefert zwar role=radio, aber kein aria-checked. Betraf auch Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Behoben durch direkt gesetztes aria-checked plus radiogroup; nachgemessen 18 von 18 Auswahlknoepfen mit Zustand, davon 7 auf true, und kein Aktionsknopf mit falscher Rolle."
+    },
+    {
+      "phase": 10,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "437 Tests in 15 Suites gruen (vorher 392 in 14); npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 10,
+      "criterion": "Antwortform von ChatGPT und Gemini gegen die laufende API belegt",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-6 - beide Anbieter pruefen den Schluessel VOR der Anfrageform und antworten auf jede Anfrage mit demselben Auth-Fehler. Anders als bei Stability (AE-13) liess sich deshalb nichts ohne bezahlten Schluessel festklopfen. Die Parser nennen im Fehlerfall die gelieferten Feldnamen, damit ein Formwechsel sofort in der Fehlerliste steht."
     }
   ],
   "architectureDecisions": [
@@ -627,6 +694,26 @@
       "id": "AE-25",
       "title": "Dokumente werden auch beim LESEN geprueft, nicht nur beim Schreiben",
       "rationale": "Die Batch-Laeufe pruefen die Antwort des Modells streng, bevor sie speichern. Beim Lesen wurde dagegen blind vertraut - eine Annahme, die nur bis zur zweiten Version der App haelt. Ein Dokument aus einem aelteren Schema oder ein halb geschriebener Eintrag liess den Pruefungs- und den Gespraech-Screen abstuerzen, und zwar mit einer weissen Seite statt einer Meldung. isValidExamModule und isValidSituation filtern jetzt an der Lesegrenze. Beschaedigtes wird ausgelassen, aber nicht geloescht: vielleicht kann eine spaetere Version mehr damit anfangen, und stilles Loeschen von Nutzerdaten ist die schlechtere Voreinstellung."
+    },
+    {
+      "id": "AE-26",
+      "title": "Gemini kommt durch CORS, verraet ohne Schluessel aber nichts",
+      "rationale": "Am 2026-09-03 aus dem Web-Build gemessen: generateContent fuer Text, gemini-2.5-flash-image und imagen-4.0:predict fuer Bilder sowie GET /v1beta/models kommen alle durch (HTTP 400, lesbar), mit dem Schluessel im Header wie als Query-Parameter. Genommen wird der Header, weil eine URL in Verlaufslisten, Server-Protokollen und Fehlermeldungen landet. Kontrollen (Anthropic mit/ohne Sonderheader, zwei Gegenstellen ohne CORS-Header) belegen, dass die Pruefung des Browsers scharf war. Der Preis: mit ungueltigem Schluessel antwortet Google auf ALLES 'API key not valid' - erfundenes Modell, fehlendes Pflichtfeld, sogar GET auf die Modellliste. Anfrage- und Antwortform sind damit vor dem ersten bezahlten Aufruf nicht belegbar; die Parser nennen deshalb die gelieferten Feldnamen, und am Modellfeld steht, dass ein Tippfehler nicht vom falschen Schluessel zu unterscheiden ist."
+    },
+    {
+      "id": "AE-27",
+      "title": "Der OpenAI-Blocker aus AE-13 ist echt, die Ursache war aber eine andere",
+      "rationale": "Die Kontrollmessung widersprach dem Protokoll (POST kam mit lesbarem 401 zurueck), der erste echte Lauf scheiterte trotzdem fuenfmal. Eingekreist statt geraten: Anmeldedaten (credentials omit aenderte nichts) und Anfragekoerper (kurz statt lang aenderte nichts) ausgeschlossen; ausschlaggebend ist das Praefix des Schluessels. Ein POST mit 'sk-...' bekommt eine Antwort ohne Access-Control-Allow-Origin, mit 'SK-' oder 'xk-' kommt dieselbe Anfrage durch, und beim GET greift die Regel nicht - genau das erklaert, warum AE-13 GET und POST unterschiedlich sah. Die Tabelle aus Phase 5 stimmt also, nur die Deutung war zu grob, und die Konsequenz bleibt dieselbe, weil jeder echte OpenAI-Schluessel mit 'sk-' beginnt. Offen bleibt, ob ein GUELTIGER Schluessel die Ausnahme ist; die Anfrage geht dabei hinaus und koennte berechnet werden, ohne dass die Antwort ankommt. ChatGPT bleibt waehlbar, weil es nativ kein CORS gibt - die Warnung steht nur hinter Platform.OS === 'web'."
+    },
+    {
+      "id": "AE-28",
+      "title": "Eine Naht fuer alle Anbieter, an der Stelle, wo sie anbieterfrei ist",
+      "rationale": "TextClient ('System- und Nutzertext rein, Text raus') und ImageClient ('Prompt rein, Bilddaten raus') in src/lib/providers/; die bestehenden Anthropic- und Stability-Umsetzungen haengen dahinter statt daneben. Vorher stand der Netzaufruf dreimal fast gleich neben Prompt und Parser. Temperatur, Werkzeuge und Streaming bleiben bewusst draussen - ein Vertrag, der jede Faehigkeit jedes Anbieters abbildet, ist eine Vereinigungsmenge und keine Abstraktion. Drei getrennte Einstellungen je Generator-Gruppe, weil Claude keine Bilder und Stability keinen Text erzeugt; eine app-weite Wahl haette die einzige sinnvolle Kombination unmoeglich gemacht. Stability bleibt fuer Bilder waehlbar, obwohl die Vorgabe nur drei Anbieter nennt: Claude faellt fuer Bilder aus, ChatGPT ist im Web unbrauchbar (AE-27) und von Gemini liess sich nichts belegen (AE-26) - ohne Stability haette die Bild-Gruppe keinen einzigen gemessenen Weg mehr. Das ist eine bewusste Auslegung, kein Versehen. Modellname als Freitext ohne Katalog (Pflicht 5); Voreinstellungen bleiben Claude und Stability, damit sich der Standard nicht still verschiebt. Statt eines Aufklappfeldes eine Knopfreihe, weil React Native keins hat und @expo/ui nativ-only ist."
+    },
+    {
+      "id": "AE-29",
+      "title": "aria-checked wird direkt gesetzt, weil React Native Web es nicht uebersetzt",
+      "rationale": "Im DOM nachgemessen: accessibilityState={{selected}} erzeugt gar kein ARIA-Attribut, und accessibilityRole 'radio' plus accessibilityState {{checked}} liefert zwar role=radio, aber kein aria-checked - was schlechter waere als gar keine Rolle, weil sie einen Zustand verspricht, den niemand abfragen kann. Erst das direkt gesetzte Attribut kam an: 18 von 18 Auswahlknoepfen mit Zustand, davon 7 auf true. Betroffen war nicht nur die neue Anbieterwahl, sondern auch Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Die Pruefung in Phase 9 hat Beschriftung, Tippziel und Fokus gemessen, den Zustand aber nicht - 'Label vorhanden' ist nicht dasselbe wie 'Zustand ablesbar'. Knoepfe ohne selected bleiben role=button."
     }
   ],
   "openBlockers": [
@@ -637,10 +724,11 @@
         3,
         4,
         5,
-        6
+        6,
+        10
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist.",
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht.",
       "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
     },
     {
@@ -662,14 +750,26 @@
       "needsUser": true,
       "note": "Gemessen, nicht vermutet: 'npx eas-cli whoami' -> 'Not logged in'; selbst 'eas config' bricht mit 'An Expo user account is required to proceed' ab. Es gibt also keinen Teil von EAS, den ich stellvertretend pruefen koennte. Fremde Konten lege ich nicht an - dieselbe Linie wie bei den API-Schluesseln. Der freie Tarif reicht (15 Android- und 15 iOS-Builds). ENTSCHEIDUNG 2026-09-01: Dem Nutzer wurden drei Wege vorgelegt - (a) Account anlegen und einloggen, danach haette ich die Builds selbst gestartet, (b) JDK und Android-SDK lokal installieren und ohne EAS bauen, (c) Phase mit offenen Kriterien abschliessen. Gewaehlt wurde (c). Es ist also nachweislich KEIN Build gelaufen.",
       "steps": "npm install --global eas-cli ; eas login ; eas build --platform android --profile preview (beim ersten Lauf 'Generate new keystore' bestaetigen, dann APK ueber den QR-Code aufs Handy). Danach eas build --platform ios --profile preview fuer den Simulator-Build."
+    },
+    {
+      "id": "B-6",
+      "title": "Antwortform von ChatGPT und Gemini ist ohne gueltigen Schluessel nicht belegbar",
+      "affectsPhases": [
+        10
+      ],
+      "needsUser": true,
+      "note": "Beide Anbieter pruefen den Schluessel VOR der Anfrageform: OpenAI beantwortet auch einen voellig leeren Koerper mit invalid_api_key, Google jede Anfrage mit 'API key not valid' - sogar ein erfundenes Modell und ein GET auf die Modellliste. Anders als bei Stability (AE-13, Pflichtfelder und Enums vor der Authentifizierung) liess sich deshalb weder Anfrage- noch Antwortform festklopfen. Vorsorge im Code: die Parser nennen im Fehlerfall die tatsaechlich gelieferten Feldnamen. Fremde Schluessel gebe ich nicht ein - dieselbe Linie wie bei B-4. Bei ChatGPT kommt hinzu, dass ein Versuch im Browser berechnet werden koennte, ohne dass die Antwort ankommt (AE-27).",
+      "steps": "Einstellungen -> Gruppe waehlen -> Anbieter Gemini -> gueltigen Google-Schluessel eintragen -> Probelauf -> Start. Erwartung: Situationen bzw. Aufgaben werden erzeugt. Bei Fehlschlaegen nennt die Meldung die gelieferten Feldnamen; anzupassen sind dann parseGeminiText / parseGeminiImage in src/lib/providers/."
     }
   ],
   "nextUp": {
     "phase": null,
-    "name": "Der urspruengliche Plan ist abgearbeitet",
+    "name": "Phase 10 abgeschlossen; offen ist, was einen Schluessel oder ein Geraet des Nutzers braucht",
     "tasks": [
+      "B-6: Probelauf mit gueltigem Gemini-Schluessel - belegt Anfrage- UND Antwortform, die sich sonst nicht pruefen lassen",
       "B-5: EAS-Konto, dann Android-APK bauen (schliesst B-2 fuer Android mit)",
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
+      "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27)",
       "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen",
       "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen"
     ]
@@ -807,6 +907,31 @@
     "kontrastMinimum": "alle Tonfarben >= 4,5:1 gegen background, backgroundElement und backgroundSelected in beiden Modi",
     "enforcedBy": "src/constants/tones.test.ts",
     "tippziele": "kein Bedienelement unter 24x24; Vorlesetasten 44x44",
-    "tastatur": "alle Bedienelemente fokussierbar, Tab-Reihenfolge und Fokusring geprueft; Ausloesung per Enter mit dem Automatisierungswerkzeug nicht nachweisbar (Kontrollversuch mit gewoehnlichem HTML-Knopf schlug ebenso fehl)"
+    "tastatur": "alle Bedienelemente fokussierbar, Tab-Reihenfolge und Fokusring geprueft; Ausloesung per Enter mit dem Automatisierungswerkzeug nicht nachweisbar (Kontrollversuch mit gewoehnlichem HTML-Knopf schlug ebenso fehl)",
+    "auswahlzustand": "aria-checked wird direkt gesetzt (AE-29); React Native Web uebersetzt weder accessibilityState.selected noch .checked. 18 von 18 Auswahlknoepfen tragen den Zustand, Auswahlreihen sind radiogroup."
+  },
+  "providers": {
+    "selectable": [
+      "claude",
+      "chatgpt",
+      "gemini",
+      "stability"
+    ],
+    "note": "claude/chatgpt/gemini sind die drei geforderten; stability ist der Bestandsanbieter aus AE-13 und bleibt fuer Bilder waehlbar - Begruendung in AE-28.",
+    "capabilities": {
+      "claude": "nur Text",
+      "chatgpt": "Text und Bild; im Web-Build gekennzeichnet (AE-27)",
+      "gemini": "Text und Bild",
+      "stability": "nur Bild"
+    },
+    "defaults": {
+      "situations": "claude / claude-opus-5",
+      "exam": "claude / claude-opus-5",
+      "images": "stability / stable-image-core"
+    },
+    "storedIn": "meta/generators (Dokumentspeicher); Schluessel getrennt davon je Anbieter nach AE-10",
+    "modelField": "Freitext ohne Validierung (Pflicht 5); leeres Feld nimmt den Platzhalter des Anbieters",
+    "corsMeasured": "2026-09-03, aus dem laufenden Web-Build",
+    "transport": "Claude ueber den offiziellen SDK (AE-12); ChatGPT, Gemini und Stability ueber eigenes fetch - kein weiterer Node-SDK im Browser-Bundle"
   }
 }

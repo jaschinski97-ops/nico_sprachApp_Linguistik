@@ -1,23 +1,32 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
+import { Button, ChoiceRow, GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { runGenerationBatch } from '@/lib/conversation/batch';
-import { createAnthropicClient, GENERATOR_MODEL } from '@/lib/conversation/generator';
+import { createGenerationClient } from '@/lib/conversation/generator';
 import { FULL_RUN, planSituations } from '@/lib/conversation/plan';
 import { runExamBatch } from '@/lib/exam/batch';
-import { createExamClient, EXAM_GENERATOR_MODEL } from '@/lib/exam/generator';
+import { createExamGenerationClient } from '@/lib/exam/generator';
 import { EXAM_FULL_RUN, EXAM_TEST_RUN, planExamModules } from '@/lib/exam/plan';
 import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store';
 import { runImageBatch } from '@/lib/images/batch';
-import { createStabilityImageClient, IMAGE_MODEL } from '@/lib/images/generator';
+import { createImageGenerationClient } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
 import { Direction } from '@/lib/fsrs/types';
 import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
+import {
+  defaultSettings,
+  GeneratorChoice,
+  GeneratorGroupId,
+  GeneratorSettings,
+  loadGeneratorSettings,
+  setGeneratorChoice,
+  setGeneratorProvider,
+} from '@/lib/providers/settings';
 import {
   clearGeneratedExamModules,
   clearSituations,
@@ -30,9 +39,13 @@ import {
 import { DIRECTION_LABELS, DIRECTIONS } from '@/lib/review-session';
 
 /**
- * Beide Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`) und
- * darunter denselben Batch-Läufer; unterschiedlich sind nur Anbieter,
- * Bauplan und Ablage.
+ * Alle drei Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`),
+ * darunter denselben Batch-Läufer und seit Phase 10 auch denselben
+ * Anbieter-Vertrag; unterschiedlich sind nur Bauplan und Ablage.
+ *
+ * Die Anbieterwahl liegt **je Gruppe** getrennt (`meta/generators`), weil
+ * genau das der Punkt ist: Claude erzeugt keine Bilder, also muss man Dialoge
+ * und Bilder verschieden einstellen können.
  */
 
 const SITUATION_RUNS: RunOption[] = [
@@ -82,6 +95,7 @@ export default function SettingsScreen() {
   const [blobBackend, setBlobBackend] = useState<string | null>(null);
   const [exams, setExams] = useState<{ total: number; generated: number } | null>(null);
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
+  const [generators, setGenerators] = useState<GeneratorSettings>(defaultSettings());
 
   const refreshSituations = useCallback(async () => {
     setSituations(await countSituations());
@@ -103,48 +117,74 @@ export default function SettingsScreen() {
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
     getImageBlobStore().then(() => setBlobBackend(getActiveBlobBackend()));
     loadProfile().then(setProfile);
+    loadGeneratorSettings().then(setGenerators);
   }, [refreshSituations, refreshImages, refreshExams]);
 
   const chooseDefaultDirection = useCallback(async (direction: Direction | null) => {
     setProfile(await setDefaultDirection(direction));
   }, []);
 
-  const startSituations = useCallback(async ({ optionId, apiKey, onProgress, shouldCancel }: StartArgs) => {
+  /**
+   * Ein Anbieterwechsel zieht den Modellnamen mit (siehe `setGeneratorProvider`),
+   * eine Modelleingabe nicht — sonst würde jeder Tastendruck den Anbieter
+   * zurücksetzen.
+   */
+  const changeGenerator = useCallback(
+    async (group: GeneratorGroupId, change: Partial<GeneratorChoice>) => {
+      setGenerators(
+        change.provider !== undefined
+          ? await setGeneratorProvider(group, change.provider)
+          : await setGeneratorChoice(group, change)
+      );
+    },
+    []
+  );
+
+  const startSituations = useCallback(
+    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
     const specs = planSituations(optionId === 'full' ? FULL_RUN : { variantsPerCombo: 1 });
     await runGenerationBatch({
       specs,
-      client: createAnthropicClient(apiKey),
+      client: createGenerationClient(provider, apiKey, model),
       onProgress,
       shouldCancel,
       // Kleine Pause zwischen den Aufrufen, damit ein langer Lauf nicht
       // unnötig ins Rate-Limit rennt.
       delayMs: 400,
     });
-  }, []);
+  },
+    []
+  );
 
-  const startImages = useCallback(async ({ optionId, apiKey, onProgress, shouldCancel }: StartArgs) => {
+  const startImages = useCallback(
+    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
     const specs = planImages(optionId === 'full' ? {} : { limit: IMAGE_TEST_RUN });
     await runImageBatch({
       specs,
-      client: createStabilityImageClient(apiKey),
+      client: createImageGenerationClient(provider, apiKey, model),
       onProgress,
       shouldCancel,
       // Bildaufrufe dauern deutlich länger als Textaufrufe; die Pause darf
       // entsprechend größer sein.
       delayMs: 800,
     });
-  }, []);
+  },
+    []
+  );
 
-  const startExams = useCallback(async ({ optionId, apiKey, onProgress, shouldCancel }: StartArgs) => {
-    const specs = planExamModules(optionId === 'full' ? EXAM_FULL_RUN : EXAM_TEST_RUN);
-    await runExamBatch({
-      specs,
-      client: createExamClient(apiKey),
-      onProgress,
-      shouldCancel,
-      delayMs: 400,
-    });
-  }, []);
+  const startExams = useCallback(
+    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
+      const specs = planExamModules(optionId === 'full' ? EXAM_FULL_RUN : EXAM_TEST_RUN);
+      await runExamBatch({
+        specs,
+        client: createExamGenerationClient(provider, apiKey, model),
+        onProgress,
+        shouldCancel,
+        delayMs: 400,
+      });
+    },
+    []
+  );
 
   return (
     <ScreenScaffold title="Einstellungen" subtitle="Lernprofil, Inhalte erzeugen, API-Schlüssel">
@@ -156,7 +196,7 @@ export default function SettingsScreen() {
           wenn du beide Richtungen lernst. Die jeweils andere Richtung bleibt
           immer über „Richtung wechseln" erreichbar.
         </ThemedText>
-        <View style={styles.buttonRow}>
+        <ChoiceRow label="Standard-Lernrichtung">
           <Button
             label="Immer fragen"
             onPress={() => chooseDefaultDirection(null)}
@@ -172,15 +212,16 @@ export default function SettingsScreen() {
               disabled={profile === null}
             />
           ))}
-        </View>
+        </ChoiceRow>
       </ThemedView>
 
       <GeneratorCard
         heading="Generator: Sprachsituationen"
         description="Dialoge werden einmalig erzeugt und lokal gespeichert. Danach funktioniert das Üben ohne Internet und ohne Schlüssel — es gibt bewusst keinen Live-Chat."
-        provider="anthropic"
-        keyPlaceholder="sk-ant-…"
-        statusLine={`Im Speicher: ${situations === null ? '…' : `${situations} Situationen`} · Modell ${GENERATOR_MODEL}`}
+        group="situations"
+        choice={generators.situations}
+        onChoiceChange={(change) => changeGenerator('situations', change)}
+        statusLine={`Im Speicher: ${situations === null ? '…' : `${situations} Situationen`}`}
         runOptions={SITUATION_RUNS}
         onStart={startSituations}
         onDelete={clearSituations}
@@ -192,9 +233,10 @@ export default function SettingsScreen() {
       <GeneratorCard
         heading="Generator: Bilder"
         description="Ein Bild je konkreter Vokabel, einmalig erzeugt und lokal gespeichert — danach offline auf der Karteikarte. Abstrakte Wörter, Partikeln und Funktionswörter bekommen bewusst kein Bild: ein Bild zu „nicht“ wäre keine Merkhilfe."
-        provider="stability"
-        keyPlaceholder="sk-…"
-        statusLine={`Im Speicher: ${images === null ? '…' : `${images} von ${IMAGE_CANDIDATES} Bildern`} · Modell ${IMAGE_MODEL} · Ablage ${blobBackend ?? '…'}`}
+        group="images"
+        choice={generators.images}
+        onChoiceChange={(change) => changeGenerator('images', change)}
+        statusLine={`Im Speicher: ${images === null ? '…' : `${images} von ${IMAGE_CANDIDATES} Bildern`} · Ablage ${blobBackend ?? '…'}`}
         runOptions={IMAGE_RUNS}
         onStart={startImages}
         onDelete={clearVocabImages}
@@ -206,9 +248,10 @@ export default function SettingsScreen() {
       <GeneratorCard
         heading="Generator: Prüfungsaufgaben"
         description="Zusätzliche Lese- und Höraufgaben für die Goethe-Zertifikate A1 und A2. Die mitgelieferten Aufgaben bleiben immer erhalten; erzeugt wird nur, was dazukommt. Schreiben und Sprechen werden bewusst nicht erzeugt — dort gäbe es keine geprüfte Musterlösung."
-        provider="anthropic"
-        keyPlaceholder="sk-ant-…"
-        statusLine={`Im Speicher: ${exams === null ? '…' : `${exams.total} Aufgaben, davon ${exams.generated} erzeugt`} · Modell ${EXAM_GENERATOR_MODEL}`}
+        group="exam"
+        choice={generators.exam}
+        onChoiceChange={(change) => changeGenerator('exam', change)}
+        statusLine={`Im Speicher: ${exams === null ? '…' : `${exams.total} Aufgaben, davon ${exams.generated} erzeugt`}`}
         runOptions={EXAM_RUNS}
         onStart={startExams}
         onDelete={clearGeneratedExamModules}
@@ -218,10 +261,22 @@ export default function SettingsScreen() {
       />
 
       <ThemedText type="small" themeColor="textSecondary">
-        Die Generatoren brauchen verschiedene Anbieter: Anthropic
-        erzeugt Dialoge und Prüfungsaufgaben, aber keine Bilder — die kommen
-        von Stability AI. Beide Schlüssel liegen getrennt und werden nur für
-        Generierungsläufe gebraucht, nie zum Lernen.
+        Jede Gruppe hat ihren eigenen Anbieter und ihren eigenen Schlüssel. Das
+        ist kein Selbstzweck: Claude erzeugt überhaupt keine Bilder, deshalb
+        stehen dort andere Anbieter zur Wahl als bei Dialogen und
+        Prüfungsaufgaben. Voreingestellt bleibt, was bisher lief — Claude für
+        Text, Stability AI für Bilder. Schlüssel werden nur für
+        Generierungsläufe gebraucht, nie zum Lernen: Wer nichts erzeugt,
+        braucht keinen einzigen.
+      </ThemedText>
+
+      <ThemedText type="small" themeColor="textSecondary">
+        Am 03.09.2026 aus diesem Web-Build gemessen: Claude (mit seinem
+        Sonderheader), Gemini und Stability AI antworten direkt aus dem Browser
+        — jeweils mit einem lesbaren Fehler statt einer CORS-Blockade. Bei
+        ChatGPT ist es der umgekehrte Fall; die Begründung steht bei der
+        Anbieterwahl. Auf dem Gerät (Android/iOS) gibt es CORS nicht, dort
+        gelten diese Einschränkungen alle nicht.
       </ThemedText>
     </ScreenScaffold>
   );

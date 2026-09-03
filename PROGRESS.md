@@ -706,6 +706,209 @@ JSON-Blob im Speicher-Backend (Phase 1), die Teilausfälle der Batch-Läufe
 (Phase 4/5/7), die stumme Sprachausgabe (Phase 3/6) und das fehlende Bild
 (Phase 5) sind seit ihren Phasen getestet.
 
+### AE-26 — Gemini kommt durch CORS, verrät ohne Schlüssel aber nichts
+
+**Entscheidung:** Gemini wird als Textanbieter **und** als Bildanbieter
+angeboten, angesprochen mit einem selbst geschriebenen `fetch` gegen
+`generativelanguage.googleapis.com/v1beta/models/{modell}:generateContent`, den
+Schlüssel im **Header** `x-goog-api-key`.
+
+**Begründung — am 2026-09-03 aus dem laufenden Web-Build gemessen, nach dem
+Muster von AE-3/AE-10/AE-12/AE-13:**
+
+| Anfrage | Ergebnis |
+| --- | --- |
+| `POST …/gemini-2.5-flash:generateContent`, Schlüssel im Header | HTTP 400, lesbar |
+| dieselbe Anfrage, Schlüssel als `?key=` | HTTP 400, lesbar |
+| `POST …/gemini-2.5-flash-image:generateContent` | HTTP 400, lesbar |
+| `POST …/imagen-4.0-generate-001:predict` | HTTP 400, lesbar |
+| `GET …/v1beta/models` | HTTP 400, lesbar |
+| `POST` ohne das Pflichtfeld `contents` | HTTP 400, lesbar |
+
+Der Netzweg ist also offen — für Text **und** für Bilder, ohne jeden
+Sonderheader. Kontrollen in derselben Sitzung: `api.anthropic.com` antwortete
+**mit** dem Header aus AE-12 mit 401 und **ohne** ihn mit „Failed to fetch";
+zwei Gegenstellen ohne CORS-Header (`example.com`, `goethe.de`) scheiterten
+beide. Die CORS-Prüfung des Browsers war also scharf und die Messung
+aussagekräftig.
+
+**Schlüssel im Header statt in der URL.** Beide Wege kommen durch — der Header
+löst eine Vorabfrage aus, die Google beantwortet. Genommen wird trotzdem der
+Header: eine URL landet in Verlaufslisten, Server-Protokollen und
+Fehlermeldungen, ein Header nicht. Für einen Schlüssel, der Geld ausgibt, ist
+das kein Detail.
+
+**Der Haken, den AE-13 schon benannt hat, ist bestätigt und größer als
+gedacht:** Google antwortet mit ungültigem Schlüssel auf **alles** dasselbe —
+`API key not valid. Please pass a valid API key.` Auf ein erfundenes Modell, auf
+eine Anfrage ohne Pflichtfeld, sogar auf ein `GET` der Modellliste. Damit lässt
+sich vor dem ersten bezahlten Aufruf **nichts** belegen: weder die Anfrageform
+noch die Antwortform noch die Frage, ob der eingetippte Modellname existiert.
+Bei Stability ging genau das, weil dort Pflichtfelder und Aufzählungswerte vor
+der Authentifizierung geprüft werden (AE-13). Folgen im Code:
+
+- Die Parser (`parseGeminiText`, `parseGeminiImage`) nennen im Fehlerfall die
+  **tatsächlich gelieferten Feldnamen** — dieselbe Vorsichtsmaßnahme wie beim
+  Bild-Parser aus AE-13.
+- Am Modellfeld steht im UI, dass ein Tippfehler im Modellnamen bei Gemini
+  **nicht** vom falschen Schlüssel zu unterscheiden ist.
+
+### AE-27 — Der OpenAI-Blocker aus AE-13 ist echt, aber die Ursache war eine andere
+
+**Entscheidung:** ChatGPT bleibt wählbar, ist im **Web-Build** aber sichtbar als
+eingeschränkt gekennzeichnet; nativ gilt die Kennzeichnung nicht.
+
+**Begründung — nachgemessen statt übernommen.** Pflicht 1 dieser Phase lautete,
+den bekannten Blocker nicht noch einmal zu „entdecken". Eine Kontrollmessung lief
+trotzdem mit, so wie AE-13 seinerzeit Anthropic gegengeprüft hat. Sie widersprach
+dem Protokoll:
+
+| Anfrage | Ergebnis |
+| --- | --- |
+| `POST api.openai.com/v1/chat/completions`, `Authorization: Bearer ungueltig` | HTTP 401, lesbar |
+| `POST api.openai.com/v1/images/generations`, derselbe Schlüssel | HTTP 401, lesbar |
+
+Damit sah es zunächst so aus, als hätte OpenAI seine CORS-Haltung geändert —
+und genau das stand hier eine Zeit lang. Der erste Lauf des Bildgenerators über
+ChatGPT schlug dann aber fünfmal mit `Failed to fetch` fehl, obwohl derselbe
+Aufruf aus der Konsole durchkam. Die Ursache wurde eingekreist, nicht geraten:
+
+1. **Verdacht Anmeldedaten.** `credentials: 'include'` erzeugt genau diesen
+   Fehler, weil OpenAI `Access-Control-Allow-Origin: *` schickt und ein
+   Wildcard für eine Anfrage mit Anmeldedaten nicht gilt. Auf `'omit'` gestellt
+   — **änderte nichts**. Der Verdacht war falsch.
+2. **Verdacht Anfragekörper.** Den echten, langen Bild-Prompt gegen einen
+   kurzen getauscht — **änderte nichts**.
+3. **Der Schlüssel war es.** Derselbe Aufruf, nur der Testschlüssel getauscht:
+
+| `Authorization: Bearer …` | Ergebnis |
+| --- | --- |
+| `ungueltig` | HTTP 401, lesbar |
+| `sk-ungueltig` | `Failed to fetch` |
+| `sk-UNGUELTIG` | `Failed to fetch` |
+| `sk-abcdefghijklmnopqrstuvwxyz012345` | `Failed to fetch` |
+| `SK-UNGUELTIG-nur-zum-Testen-0000000000` (groß geschrieben) | HTTP 401, lesbar |
+| `xk-UNGUELTIG-nur-zum-Testen-0000000000` | HTTP 401, lesbar |
+
+**Ein POST an OpenAI mit einem Schlüssel, der mit `sk-` beginnt, bekommt eine
+Antwort ohne `Access-Control-Allow-Origin`.** Es hängt buchstäblich an diesen
+drei Zeichen. Beim **GET** greift die Regel nicht: `GET /v1/models` mit
+demselben `sk-`-Schlüssel lieferte ein lesbares 401.
+
+**Damit stimmt die Tabelle aus AE-13 genau — nur die Deutung war zu grob.**
+„OpenAI lässt GET durch, POST nicht" war die richtige Beobachtung mit der
+falschen Begründung: es ist keine Methodensperre, sondern eine Schlüsselregel,
+die GET und POST verschieden trifft. **An der Konsequenz für die App ändert das
+nichts**, denn jeder echte OpenAI-Schlüssel beginnt mit `sk-`. Die Entscheidung
+von Phase 5 für Stability war also richtig, auch wenn die Begründung zu
+korrigieren war.
+
+**Was offen bleibt und als offen benannt ist:** ob ein **gültiger** `sk-`-
+Schlüssel die Ausnahme ist. Das ließe sich nur mit einem solchen prüfen, und
+fremde Schlüssel gebe ich nicht ein — dieselbe Linie wie bei B-4. Dazu kommt ein
+Risiko, das in der Warnung im UI steht: die Vorabfrage trägt den Schlüssel gar
+nicht, die eigentliche Anfrage geht also hinaus. Es ist nicht auszuschließen,
+dass ein Bild erzeugt und **berechnet** wird, dessen Antwort der Browser danach
+verwirft.
+
+**Warum ChatGPT trotzdem wählbar bleibt:** Nativ gibt es kein CORS. Dieselbe
+Codebasis läuft auf Android und iOS, und dort ist der Weg offen — belegen lässt
+sich das erst am Gerät (B-2). Den Anbieter im Web-Build zu **sperren** hieße,
+eine Web-Eigenheit in die nativen Builds zu tragen. Die Warnung steht deshalb
+genau dort, wo sie gemessen ist: hinter `Platform.OS === 'web'`.
+
+### AE-28 — Eine Naht für alle Anbieter, an der Stelle, wo sie anbieterfrei ist
+
+**Entscheidung:** Zwei schmale Verträge in `src/lib/providers/`:
+`TextClient` („System- und Nutzertext rein, Text raus") und `ImageClient`
+(„Prompt rein, Bilddaten raus"). Die bestehenden Umsetzungen für Anthropic und
+Stability hängen **dahinter**, nicht daneben. Die Anbieterwahl liegt **je
+Generator-Gruppe** getrennt im Dokument `meta/generators`.
+
+**Begründung:** Vor dieser Phase stand der Netzaufruf in jedem Generator neben
+Prompt und Parser — dreimal fast dasselbe. Ein dritter Anbieter hätte entweder
+eine dritte Kopie bekommen oder jede Prompt-Datei mit einer Anbieterweiche
+durchzogen. Die Naht liegt jetzt dort, wo alle drei Textanbieter gleich
+aussehen; Prompts, Parser und der Batch-Läufer aus Phase 5 blieben unangetastet.
+Ein vierter Anbieter kostet eine Datei und keine Zeile in den Generatoren.
+
+**Was bewusst nicht in den Vertrag wandert:** Temperatur, Werkzeuge, Streaming,
+Bildgrößen jenseits des Seitenverhältnisses. Nichts davon wird hier gebraucht,
+und ein Vertrag, der jede Fähigkeit jedes Anbieters abbildet, ist keine
+Abstraktion mehr, sondern eine Vereinigungsmenge.
+
+**Drei Einstellungen statt einer**, weil es anders gar nicht ginge: Claude
+erzeugt keine Bilder, Stability keinen Text. Eine app-weite Anbieterwahl hätte
+die einzige sinnvolle Kombination unmöglich gemacht.
+
+**Stability bleibt für Bilder wählbar**, obwohl die Vorgabe „Gemini/ChatGPT/
+Claude, kein Provider darüber hinaus" lautet. Der Grund: Claude fällt für Bilder
+ganz aus, ChatGPT ist im Web nachweislich unbrauchbar (AE-27), und von Gemini
+ließ sich ohne bezahlten Schlüssel **nichts** belegen (AE-26). Die Bild-Gruppe
+hätte dann keinen einzigen Anbieter mehr gehabt, dessen Weg tatsächlich gemessen
+ist — ein Rückschritt hinter Phase 5. Stability ist kein vierter *neuer*
+Anbieter, sondern der Bestand, und das Abnahmekriterium „bestehende
+Stability-Generatoren laufen unverändert weiter" wäre ohne ihn sinnlos.
+**Das ist eine bewusste Auslegung der Vorgabe und keine Nachlässigkeit — wer es
+strikt will, streicht einen Eintrag in `PROVIDER_INFO`.**
+
+**Modellname als Freitext, ohne jede Prüfung** (Pflicht 5). Kein Katalog im
+Code: der wäre beim nächsten Modellwechsel falsch, und zwar auf die schlimmste
+Art — indem er ein gültiges Modell ablehnt. Ein leeres Feld nimmt den Vorschlag
+des Anbieters. Bei Stability füllt der Name den **Pfad** (`…/generate/core`),
+bei Gemini ebenfalls (`…/models/{name}:generateContent`) — dort wird er kodiert,
+damit ein Tippfehler mit Schrägstrich keine fremde Adresse baut. Ein
+Anbieterwechsel zieht den Modellnamen mit: `claude-opus-5` an Gemini zu
+schicken ergäbe nur einen Fehlschlag, den niemand mit dem Wechsel in Verbindung
+brächte.
+
+**Die Voreinstellungen bleiben, was bisher lief** — Claude für Text, Stability
+für Bilder. Ein Umbau, der die Anbieterwahl bringt und dabei still den Standard
+verschiebt, wäre eine Falle für alle, die nichts umstellen. Ein Test prüft das
+mit, samt der Endpunktadresse aus AE-13.
+
+**Statt eines Aufklappfeldes eine Knopfreihe.** Die Vorgabe sagt „Dropdown".
+React Native hat kein plattformweites Aufklappfeld; ein echtes bräuchte eine
+neue Abhängigkeit oder eine eigene Umsetzung je Plattform, und `@expo/ui` ist
+nativ-only, also im Web-Build — der einzigen bisher prüfbaren Umgebung (B-2) —
+nicht zu gebrauchen. Bei drei bis vier Möglichkeiten ist eine Reihe ohnehin die
+bessere Bedienung: alles gleichzeitig sichtbar, ein Tipp statt zwei, und es ist
+dasselbe Muster wie bei Umfang und Lernrichtung, das Phase 9 bereits auf
+Tippziele und Fokus geprüft hat.
+
+**Schlüsselablage** folgt unverändert AE-10 und gilt jetzt für vier Anbieter
+statt für zwei. Der Ablagename für Claude bleibt `anthropic-api-key`: er heißt
+seit Phase 4 so und liegt auf den Geräten der Nutzer im Keychain. Ihn zur
+Sauberkeit umzubenennen, würde einen dort gespeicherten Schlüssel unauffindbar
+machen — die App fragte kommentarlos erneut danach, und der alte Eintrag bliebe
+für immer liegen. Ein Test hält den Namen fest.
+
+### AE-29 — `aria-checked` wird direkt gesetzt, weil React Native Web es nicht übersetzt
+
+**Entscheidung:** Auswahlknöpfe tragen `accessibilityRole="radio"` **und**
+`aria-checked` als eigenes Attribut; sie stehen in einer `ChoiceRow` mit
+`radiogroup`. Ein Knopf ohne `selected` bleibt eine gewöhnliche Aktion mit
+`role="button"`.
+
+**Begründung — im Web-Build im DOM nachgemessen:** Der bestehende `Button` gab
+seinen Zustand über `accessibilityState={{ selected }}` an. Im gerenderten DOM
+stand davon **nichts** — weder `aria-selected` noch sonst ein Attribut. Die
+gewählte Möglichkeit war nur an ihrer Umrandung zu erkennen: für Sehende
+sichtbar, für einen Screenreader unsichtbar. Der zweite Versuch über
+`accessibilityRole="radio"` plus `accessibilityState={{ checked }}` erzeugte zwar
+`role="radio"`, aber weiterhin kein `aria-checked` — und ein `radio` ohne
+`aria-checked` ist schlechter als gar keins, weil die Rolle einen Zustand
+verspricht, den niemand abfragen kann. Erst das direkt gesetzte Attribut kam an:
+nachgemessen **18 von 18** Auswahlknöpfen mit `aria-checked`, davon genau sieben
+auf `true` — einer je Gruppe. Kein Aktionsknopf hat dabei fälschlich eine
+Radio-Rolle bekommen.
+
+**Betroffen war nicht nur das Neue.** Umfang (Phase 4) und Standard-Lernrichtung
+(Phase 6) hatten dasselbe Problem, seit es sie gibt. Die Prüfung in Phase 9 hat
+Beschriftung, Tippziel und Fokus gemessen — den **Zustand** hat sie nicht
+gemessen, und deshalb ist er durchgerutscht. Das ist die Lehre daraus: „Label
+vorhanden" ist nicht dasselbe wie „Zustand ablesbar".
+
 ---
 
 ## Protokoll
@@ -1800,11 +2003,131 @@ Für die Jest-Konfiguration kam ein CSS-Platzhalter dazu, weil `theme.ts` die
 
 ---
 
-## Konsolidierte Abnahme (Stand 2026-09-01)
+### 2026-09-03 — Phase 10: KI-Anbieter-Auswahl in den Einstellungen
 
-Jedes „Fertig, wenn" aus Phase 0–9 gegen den **jetzigen** Repo-Zustand.
-**73 von 77 erfüllt; 4 offen, und alle vier hängen an einer Handlung des
-Nutzers.**
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauberer
+Arbeitsbaum auf `main`, 392 Tests grün, `tsc` fehlerfrei — deckungsgleich mit
+dem protokollierten Stand). Nach **B-2** (Gerätecheck), **B-4** (Bilder-Probelauf
+mit gültigem Stability-Schlüssel) und **B-5** (EAS-Konto und Builds) wurde beim
+Nutzer nachgefragt; bis zum Ende dieser Sitzung kam keine Antwort. **Alle drei
+gelten deshalb weiterhin als offen**, und diese Phase ist unter dieser Annahme
+gearbeitet worden. Das ist an einer Stelle spürbar: der Web-Build bleibt die
+einzige Umgebung, in der sich überhaupt etwas messen lässt — die nativen Aussagen
+unten sind entsprechend als ungeprüft gekennzeichnet.
+
+**Gemacht**
+
+- `src/lib/providers/` — die gemeinsame Naht (AE-28): `types.ts` (Anbieter,
+  Fähigkeiten, Verträge `TextClient`/`ImageClient`), `text.ts` (Claude, ChatGPT,
+  Gemini), `image.ts` (Stability, Gemini, ChatGPT), `http.ts` (ein POST mit
+  JSON, ein gemeinsamer Fehlerleser für vier Fehlerformen), `settings.ts`
+  (Anbieter und Modell je Generator-Gruppe in `meta/generators`).
+- Die drei Generatoren rufen jetzt einen Vertrag statt einen Anbieter. Prompts,
+  Parser, Bauplan und Batch-Läufer wurden **nicht angefasst**;
+  `createAnthropicClient` und `createStabilityImageClient` bleiben als Aufruf
+  erhalten, damit der Bestandsweg am Code ablesbar bleibt und nicht nur im
+  Protokoll behauptet wird.
+- `api-key.ts` von zwei auf vier Anbieter erweitert, Muster aus AE-10
+  unverändert. Der Ablagename für Claude bleibt `anthropic-api-key`.
+- `GeneratorCard`: Anbieterwahl, Modell-Freitextfeld, anbieterabhängiges
+  Schlüsselfeld, Warnung im Web-Build. `ChoiceRow` als `radiogroup`.
+- Einstellungs-Screen: drei Karten, drei getrennte Einstellungen, erklärender
+  Fußtext mit dem Datum der Messung.
+
+**Pflicht 2 — Gemini gemessen (AE-26)**
+
+Text und **beide** Bildwege (`gemini-2.5-flash-image:generateContent` und
+`imagen-4.0-generate-001:predict`) kommen aus dem Browser durch, mit dem
+Schlüssel im Header wie als Query-Parameter. Genommen wurde der Header, weil
+eine URL in Verlaufslisten und Protokollen landet. Der Preis: mit ungültigem
+Schlüssel antwortet Google auf **alles** mit „API key not valid" — erfundenes
+Modell, fehlendes Pflichtfeld, sogar ein GET auf die Modellliste. Vor dem ersten
+bezahlten Aufruf ist damit weder Anfrage- noch Antwortform belegbar. Das steht
+im Code, in den Fehlermeldungen und am Modellfeld im UI.
+
+**Pflicht 1 — der bekannte Blocker, und was die Kontrollmessung ergab (AE-27)**
+
+Nicht neu entdeckt, aber wie in AE-13 gegengeprüft — und die Gegenprobe
+widersprach dem Protokoll: `POST` an OpenAI kam mit lesbarem 401 zurück. Der
+erste echte Lauf über ChatGPT scheiterte trotzdem fünfmal. Zwei Verdächtige
+wurden geprüft und **verworfen** (Anmeldedaten, Anfragekörper), der dritte war
+es: Ein POST mit einem Schlüssel, der mit `sk-` beginnt, bekommt eine Antwort
+ohne CORS-Header; mit `SK-` oder `xk-` kommt dieselbe Anfrage durch, und beim
+GET greift die Regel gar nicht. Damit stimmt die Tabelle aus AE-13 genau, nur
+die Deutung war zu grob — und die Konsequenz bleibt dieselbe, weil jeder echte
+OpenAI-Schlüssel mit `sk-` beginnt. ChatGPT ist im Web-Build entsprechend
+gekennzeichnet, nativ nicht.
+
+**Pflicht 3 bis 5**
+
+Abstraktion statt dritter Kopie (AE-28), Schlüsselablage je Anbieter nach dem
+AE-10-Muster, Modellname als Freitext ohne Katalog. Ein leeres Modellfeld nimmt
+den Vorschlag des Anbieters; ein Anbieterwechsel zieht den Modellnamen mit.
+
+**Nebenbefund, der nicht Auftrag war (AE-29)**
+
+Beim Nachmessen der neuen Auswahlreihe im DOM stellte sich heraus, dass
+`accessibilityState={{ selected }}` in dieser React-Native-Web-Fassung **gar
+kein** ARIA-Attribut erzeugt. Die gewählte Möglichkeit war für einen
+Screenreader unsichtbar — und zwar nicht nur die neue Anbieterwahl, sondern auch
+Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Behoben durch ein direkt
+gesetztes `aria-checked` plus `radiogroup`; nachgemessen 18 von 18
+Auswahlknöpfen mit Zustand, davon sieben auf `true`.
+
+**Verifiziert**
+
+- `npm test` → **437 Tests grün** in 15 Suites (vorher 392 in 14). Die 392 alten
+  laufen unverändert — das ist der Regressionsnachweis auf Testebene.
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Web-Build durchgespielt:** Alle drei Karten zeigen Anbieterwahl und
+  Modellfeld. Umstellen wirkt sofort auf Modellvorschlag, Schlüsselplatzhalter
+  und Beschriftung des Schlüsselfeldes („API-Schlüssel für Google"), und **nur**
+  auf die eigene Gruppe. Ein eigener Modellname (`gemini-99-voellig-ausgedacht`)
+  wird angenommen, in `meta/generators` abgelegt und übersteht ein vollständiges
+  Neuladen. Die ChatGPT-Warnung erscheint genau dann, wenn ChatGPT gewählt ist.
+- **Läufe durch den echten Netzwerkpfad, alle mit ungültigem Schlüssel:**
+
+| Gruppe | Anbieter | Ergebnis |
+| --- | --- | --- |
+| Sprachsituationen | Gemini | 16/16 verarbeitet, 0 erzeugt, 16 × „HTTP 400: API key not valid. — INVALID_ARGUMENT" |
+| Prüfungsaufgaben | Gemini | 8/8 verarbeitet, 0 erzeugt, Bestand bleibt bei 8 mitgelieferten |
+| Bilder | ChatGPT | 5/5 verarbeitet, 0 erzeugt, 5 × „Keine Antwort von api.openai.com" mit CORS-Erklärung |
+| Sprachsituationen | **Claude** (Bestand) | 16/16, 16 × „401 authentication_error — API key is invalid" — **wortgleich Phase 4/7** |
+| Bilder | **Stability** (Bestand) | 5/5, 5 × „HTTP 401: authorization: invalid or missing header value" — **wortgleich Phase 5** |
+
+  Nach jedem Lauf war der Bestand unverändert: 0 Situationen, 0 Bilder, 8
+  Prüfungsaufgaben (die mitgelieferten), 0 davon erzeugt.
+- Alle sechs Reiter nach dem Umbau aufgerufen, alle rendern; keine
+  App-Konsolenfehler (die 400/401 in der Konsole stammen aus den Messungen).
+
+**Offen / bewusst nicht gemacht**
+
+- **Ob ein gültiger ChatGPT-Schlüssel im Browser durchkommt** (AE-27). Braucht
+  einen echten Schlüssel; fremde gebe ich nicht ein. Ein Versuch könnte zudem
+  berechnet werden, ohne dass die Antwort ankommt — das steht in der Warnung.
+- **Anfrage- und Antwortform von ChatGPT und Gemini.** Beide prüfen den
+  Schlüssel vor dem Rest, deshalb ließ sich nichts festklopfen — anders als bei
+  Stability (AE-13). Die Parser nennen im Fehlerfall die gelieferten Feldnamen,
+  damit ein Formwechsel sofort in der Fehlerliste steht.
+- **Der native Weg** für alle vier Anbieter. Ohne CORS sollte dort mehr
+  funktionieren als im Web, insbesondere ChatGPT — geprüft ist das nicht
+  (**B-2**).
+- **`max_completion_tokens` bei OpenAI.** Nicht messbar ohne gültigen Schlüssel;
+  wenn die API sich beschwert, ist es genau diese eine Zeile in
+  `providers/text.ts`, und das steht dort auch.
+
+---
+
+## Konsolidierte Abnahme (Stand 2026-09-03)
+
+Jedes „Fertig, wenn" aus Phase 0–10 gegen den **jetzigen** Repo-Zustand.
+**83 von 88 erfüllt; 5 offen, und alle 5 hängen an einer Handlung des
+Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
+oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
+nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
+Fassung abweichen.
 
 | Phase | Kriterium | Stand | Wie geprüft |
 | --- | --- | --- | --- |
@@ -1815,100 +2138,87 @@ Nutzers.**
 | 1 | Persistenz-Abstraktion fuer alle Datentypen | **erfüllt** | DataStore ueber vocab, cards, situations, exam, meta; Backends SQLite / AsyncStorage / Memory; gemeinsame Vertragspruefung. |
 | 1 | Kartenzustand uebersteht App-Neustart auf Web | **erfüllt** | Im Browser bewertet, Seite neu geladen, Werte unveraendert. Backend: async-storage. |
 | 1 | Kartenzustand uebersteht App-Neustart in Expo Go (SQLite-Pfad) | **erfüllt** | Vom Nutzer am Geraet bestaetigt (2026-08-30); Anzeige 'Speicher: expo-sqlite'. |
-| 2 | 50-100 Eintraege, bidirektional vollstaendig, schema-konform | **erfüllt** | 84 Eintraege; vocabulary.test.ts prueft Anzahl, eindeutige IDs, Schema je Eintrag, Silbenzerlegung, deutsche Pflichtangaben je Wortart und Bidirektio… |
-| 2 | Jeder Eintrag hat einen nachvollziehbaren sourceVerified-Stand, nicht pauschal true | **erfüllt** | 82 von 84 geprueft; die zwei Ausnahmen tragen den Grund in verificationNote. Ein Test erzwingt eine Quote >= 0.9 UND < 1, damit pauschales Abhaken au… |
-| 2 | Skalierungsplan auf 1000 ausformuliert in PROGRESS.md | **erfüllt** | Abschnitt 'Skalierungsplan auf ~1000 Eintraege': Frequenzliste als Wortquelle, siebenstufiger Pruefschritt, bewusste Trennung vom Content-Generator a… |
+| 2 | 50-100 Eintraege, bidirektional vollstaendig, schema-konform | **erfüllt** | 84 Eintraege; vocabulary.test.ts prueft Anzahl, eindeutige IDs, Schema je Eintrag, Silbenzerlegung, deutsche Pflichtangaben je Wortart und Bidirektionalitaet. |
+| 2 | Jeder Eintrag hat einen nachvollziehbaren sourceVerified-Stand, nicht pauschal true | **erfüllt** | 82 von 84 geprueft; die zwei Ausnahmen tragen den Grund in verificationNote. Ein Test erzwingt eine Quote >= 0.9 UND < 1, damit pauschales Abhaken auffliegt. |
+| 2 | Skalierungsplan auf 1000 ausformuliert in PROGRESS.md | **erfüllt** | Abschnitt 'Skalierungsplan auf ~1000 Eintraege': Frequenzliste als Wortquelle, siebenstufiger Pruefschritt, bewusste Trennung vom Content-Generator aus Phase 4/5. |
 | 2 | Tests und tsc weiterhin gruen | **erfüllt** | 154 Tests in 3 Suites gruen; npx tsc --noEmit fehlerfrei. |
 | 3 | Vollstaendige Review-Session in beide Richtungen durchspielbar (Browser) | **erfüllt** | Im Browser beide Richtungen durchgespielt: aufdecken, bewerten, Karte wechselt weiter, Sitzungsabschluss. |
-| 3 | Vollstaendige Review-Session am Geraet in Expo Go | offen — braucht den Nutzer (B-2) | B-2 - braucht das Geraet des Nutzers; betrifft jetzt auch Phase 5 (nativer Bildpfad). |
-| 3 | Mehrsilbige Woerter zeigen unterschiedliche Tonfarben je Silbe | **erfüllt** | สวัสดี im DOM nachgemessen: sa=rgb(79,96,118) tief, wat=rgb(79,96,118) tief, dii=rgb(111,138,106) mittel. ThaiWord wertet syllables[] aus, tone nur a… |
+| 3 | Vollstaendige Review-Session am Geraet in Expo Go | **offen** | Blocker: B-2 - braucht das Geraet des Nutzers; betrifft jetzt auch Phase 5 (nativer Bildpfad). |
+| 3 | Mehrsilbige Woerter zeigen unterschiedliche Tonfarben je Silbe | **erfüllt** | สวัสดี im DOM nachgemessen: sa=rgb(79,96,118) tief, wat=rgb(79,96,118) tief, dii=rgb(111,138,106) mittel. ThaiWord wertet syllables[] aus, tone nur als Fallback (per Test abgesichert). |
 | 3 | Unverifizierte Eintraege sind erkennbar gekennzeichnet | **erfüllt** | VerificationBadge nur bei sourceVerified:false; im Browser mit นอน geprueft, Antippen klappt die verificationNote auf. |
 | 3 | Dashboard zeigt beide Richtungen getrennt | **erfüllt** | Zwei Karten mit eigener Faelligkeitszahl; Test belegt, dass Bewertungen einer Richtung die andere nicht beeinflussen. |
-| 3 | Layout auf Handy UND breitem Browser geprueft | **erfüllt** | 1280px: zwei gleich breite Spalten. 375px: untereinander, Bewertungsknoepfe brechen auf 2x2 um. Ungleiche Kartenbreiten (306/290 statt 343) gefunden … |
+| 3 | Layout auf Handy UND breitem Browser geprueft | **erfüllt** | 1280px: zwei gleich breite Spalten. 375px: untereinander, Bewertungsknoepfe brechen auf 2x2 um. Ungleiche Kartenbreiten (306/290 statt 343) gefunden und behoben. |
 | 3 | Tests und tsc gruen | **erfüllt** | 187 Tests in 6 Suites gruen; npx tsc --noEmit fehlerfrei. |
-| 4 | Lernstatistik-Screen zeigt echte Daten statt Platzhalter | **erfüllt** | Wiederholungen heute, Tagesserie, faellige Karten, Kartenzustaende und 14-Tage-Diagramm aus der Persistenzschicht; im Browser mit echten Bewertungen … |
+| 4 | Lernstatistik-Screen zeigt echte Daten statt Platzhalter | **erfüllt** | Wiederholungen heute, Tagesserie, faellige Karten, Kartenzustaende und 14-Tage-Diagramm aus der Persistenzschicht; im Browser mit echten Bewertungen geprueft. |
 | 4 | Einschraenkung der Statistik-Methode dokumentiert | **erfüllt** | AE-9; Hinweis steht im UI selbst ('Protokolliert seit ... Fruehere Sitzungen sind nicht enthalten'). |
-| 4 | Teilausfall-Verhalten nachweislich getestet | **erfüllt** | Tests: Fehler mitten im Lauf (14 ok / 2 fehlgeschlagen, alle 16 angefasst), drei Fehler zu Beginn (13 bleiben gespeichert), Fortsetzen (12 uebersprun… |
-| 4 | CORS-Header im Web-Build | **erfüllt** | Direkt gemessen: ohne Header 'TypeError: Failed to fetch', mit Header HTTP 401 mit JSON-Fehlerobjekt. dangerouslyAllowBrowser setzt genau diesen Head… |
-| 4 | Key-Speicherung plattformgerecht geloest und begruendet | **erfüllt** | AE-10: expo-secure-store hat auf Web die Implementierung 'export default {}'. Nativ Keychain, Web nur Arbeitsspeicher fuer die Sitzung; Weiche ueber … |
-| 4 | Situationen offline abspielbar (Neustart-Test) | **erfüllt** | Zwei Situationen im Schema eingespielt, Gespraech-Screen zeigt sie vollstaendig; nach komplettem Neuladen unveraendert vorhanden, ohne Schluessel und… |
+| 4 | Teilausfall-Verhalten nachweislich getestet | **erfüllt** | Tests: Fehler mitten im Lauf (14 ok / 2 fehlgeschlagen, alle 16 angefasst), drei Fehler zu Beginn (13 bleiben gespeichert), Fortsetzen (12 uebersprungen), Abbruch (5 bleiben). Zusaetzlich echter Lauf mit ungueltigem Dummy-Schluessel: 16 Fehlschlaege, Batch lief durch, 0 gespeichert. |
+| 4 | CORS-Header im Web-Build | **erfüllt** | Direkt gemessen: ohne Header 'TypeError: Failed to fetch', mit Header HTTP 401 mit JSON-Fehlerobjekt. dangerouslyAllowBrowser setzt genau diesen Header (im SDK-Quelltext nachgesehen). |
+| 4 | Key-Speicherung plattformgerecht geloest und begruendet | **erfüllt** | AE-10: expo-secure-store hat auf Web die Implementierung 'export default {}'. Nativ Keychain, Web nur Arbeitsspeicher fuer die Sitzung; Weiche ueber isAvailableAsync() zur Laufzeit. |
+| 4 | Situationen offline abspielbar (Neustart-Test) | **erfüllt** | Zwei Situationen im Schema eingespielt, Gespraech-Screen zeigt sie vollstaendig; nach komplettem Neuladen unveraendert vorhanden, ohne Schluessel und ohne Netzanfrage. |
 | 4 | Testlauf mit echtem Schluessel (10-20 Situationen) | **erfüllt** | Vom Nutzer mit gueltigem Anthropic-Schluessel durchgefuehrt und bestaetigt (2026-08-31); die Zahlen des Laufs liegen nicht vor. |
 | 4 | Tests und tsc gruen | **erfüllt** | 237 Tests in 9 Suites gruen; npx tsc --noEmit fehlerfrei. |
-| 4 | Prompt-Vertrag geprueft (Antwortform passt zum Parser) | **erfüllt** | prompt-contract.test.ts: zwei ausformulierte Musterantworten je Richtung; prueft Zuglaenge, Sprecherwechsel, alle drei Sprachfassungen und richtungss… |
-| 5 | Bild-Pipeline nutzt die Batch-Infrastruktur aus Phase 4 statt einer Kopie | **erfüllt** | Der Laeufer steht jetzt einmalig in lib/generation/batch.ts (runBatch + BatchTask); conversation/batch.ts und images/batch.ts sind duenne Adapter. Al… |
-| 5 | Anbieter gewaehlt und Browser-/CORS-Verhalten empirisch belegt | **erfüllt** | AE-13. Gemessen: POST an api.openai.com wird von CORS geblockt (GET nicht), POST an api.stability.ai kommt durch (401). Kontrollmessung an api.anthro… |
-| 5 | Anfrageform gegen die laufende API belegt, nicht geraten | **erfüllt** | Stability prueft Pflichtfelder und Enums vor der Authentifizierung; die API nannte die erlaubten Werte fuer output_format, aspect_ratio, seed und pro… |
-| 5 | Speicherformat fuer Bilder begruendet geloest | **erfüllt** | AE-14: Metadaten in der Sammlung images, Bytes in eigener Ablage (nativ expo-file-system, Web IndexedDB). Grund nachgesehen: AsyncStorage-Web ist win… |
-| 5 | isConcrete-Gate testgesichert - Pipeline laeuft fuer abstrakte Eintraege gar nicht erst an | **erfüllt** | AE-15: drei Sperren plus Literaltyp isConcrete: true. Ein Test faehrt einen gefaelschten Auftrag durch den echten Batch: 0 Client-Aufrufe, 0 gespeich… |
-| 5 | Kleiner Testlauf erfolgreich, danach offline abrufbar ohne Schluessel | **erfüllt** | 5 Bilder durch dieselbe Pipeline mit einem Ersatz-Client (echte WebP-Bytes): 5 erzeugt, 0 fehlgeschlagen; die IndexedDB enthielt die fuenf .webp-Eint… |
+| 4 | Prompt-Vertrag geprueft (Antwortform passt zum Parser) | **erfüllt** | prompt-contract.test.ts: zwei ausformulierte Musterantworten je Richtung; prueft Zuglaenge, Sprecherwechsel, alle drei Sprachfassungen und richtungsspezifische Korrektur-Hinweise. Schliesst die einzige Luecke, die der Lauf mit ungueltigem Schluessel offenliess. |
+| 5 | Bild-Pipeline nutzt die Batch-Infrastruktur aus Phase 4 statt einer Kopie | **erfüllt** | Der Laeufer steht jetzt einmalig in lib/generation/batch.ts (runBatch + BatchTask); conversation/batch.ts und images/batch.ts sind duenne Adapter. Alle 23 Tests aus Phase 4 laufen unveraendert weiter. Anmerkung: das Protokoll fuehrte plan.ts/batch.ts frueher als generisch - sie waren es nicht, sie sind es jetzt. |
+| 5 | Anbieter gewaehlt und Browser-/CORS-Verhalten empirisch belegt | **erfüllt** | AE-13. Gemessen: POST an api.openai.com wird von CORS geblockt (GET nicht), POST an api.stability.ai kommt durch (401). Kontrollmessung an api.anthropic.com mit/ohne Header wie in Phase 4. dangerouslyAllowBrowser des openai-SDK setzt keinen Header - im Paket nachgesehen. |
+| 5 | Anfrageform gegen die laufende API belegt, nicht geraten | **erfüllt** | Stability prueft Pflichtfelder und Enums vor der Authentifizierung; die API nannte die erlaubten Werte fuer output_format, aspect_ratio, seed und prompt selbst. Die vollstaendige gueltige Anfrage lief bis 401 durch, ein falscher Pfad gibt 404. |
+| 5 | Speicherformat fuer Bilder begruendet geloest | **erfüllt** | AE-14: Metadaten in der Sammlung images, Bytes in eigener Ablage (nativ expo-file-system, Web IndexedDB). Grund nachgesehen: AsyncStorage-Web ist window.localStorage (~5 MB fuer alle Sammlungen zusammen); expo-file-system hat auf Web keine Umsetzung. |
+| 5 | isConcrete-Gate testgesichert - Pipeline laeuft fuer abstrakte Eintraege gar nicht erst an | **erfüllt** | AE-15: drei Sperren plus Literaltyp isConcrete: true. Ein Test faehrt einen gefaelschten Auftrag durch den echten Batch: 0 Client-Aufrufe, 0 gespeichert, 1 Fehlschlag mit Begruendung. Ein zweiter mischt ihn unter vier echte - die vier laufen durch. |
+| 5 | Kleiner Testlauf erfolgreich, danach offline abrufbar ohne Schluessel | **erfüllt** | 5 Bilder durch dieselbe Pipeline mit einem Ersatz-Client (echte WebP-Bytes): 5 erzeugt, 0 fehlgeschlagen; die IndexedDB enthielt die fuenf .webp-Eintraege, localStorage blieb bei 78 KB. Danach Dev-Server neu gestartet und Seite neu geladen: '5 von 25 Bildern', Schluesselfelder leer, Bilder auf den Karteikarten sichtbar. |
 | 5 | Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel) | **erfüllt** | Aus dem Web-Build: 5/5 verarbeitet, 0 erzeugt, 5 fehlgeschlagen mit 'HTTP 401: authorization: invalid or missing header value', 0 gespeichert. |
-| 5 | Bild auf der Karteikarte, richtungsabhaengig | **erfüllt** | de_to_th: Bild schon auf der Vorderseite (verraet die thailaendische Form nicht). th_to_de: erst nach dem Aufdecken (waere sonst die Antwort). Eine a… |
-| 5 | Testlauf mit gueltigem Stability-Schluessel | offen — braucht den Nutzer (B-4) | B-4 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein. |
+| 5 | Bild auf der Karteikarte, richtungsabhaengig | **erfüllt** | de_to_th: Bild schon auf der Vorderseite (verraet die thailaendische Form nicht). th_to_de: erst nach dem Aufdecken (waere sonst die Antwort). Eine abstrakte Karte zeigt kein Bild und keinen Platzhalter. Bei 375 px und im breiten Fenster geprueft. |
+| 5 | Testlauf mit gueltigem Stability-Schluessel | **offen** | Blocker: B-4 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein. |
 | 5 | Tests und tsc gruen | **erfüllt** | 275 Tests in 10 Suites gruen; npx tsc --noEmit fehlerfrei. |
-| 6 | Je Richtung mindestens ein eigener Uebungstyp aus vorhandenen Daten | **erfüllt** | de_to_th: Ton-Erkennung aus syllables[0].tone (69 einsilbige Eintraege, alle fuenf Toene vertreten). th_to_de: Artikel aus germanNoun.article (29 Sub… |
-| 6 | Uebungen im Browser spielbar | **erfüllt** | Alle drei durchgespielt: Ton (Antwort 'Tief' auf สี่ -> richtig, Aufloesung 'sìi - vier'), Artikel (falsche Antwort -> richtige Option gruen umrandet… |
-| 6 | Kein erfundener Ablenker | **erfüllt** | Test prueft fuer JEDES Verb im Bestand, dass jede falsche Antwort entweder eine echte Perfektform aus der Vokabeldatei oder die Form mit vertauschtem… |
-| 6 | Ton-Uebung nur fuer einsilbige Woerter | **erfüllt** | Bei mehrsilbigen Woertern hat jede Silbe ihren eigenen Ton (AE-7), und die Silbengrenze in der Thai-Schrift ist nicht bestimmbar (AE-8). buildToneQue… |
-| 6 | FSRS-Integrationsfrage entschieden und begruendet | **erfüllt** | AE-16: Uebungen laufen NICHT durch FSRS (eine Erinnerungsspur je Item; Ratequote 20-33 % passt nicht zur Selbsteinschaetzungs-Skala; Kartenschluessel… |
-| 6 | Nutzerprofil-Frage entschieden und begruendet | **erfüllt** | AE-17: Standard-Lernrichtung im meta-Dokument 'profile', nur ausdruecklich gesetzt, jederzeit aufhebbar, Auswahl bleibt ueber 'Richtung wechseln' err… |
-| 6 | Fehlende Thai-Stimme wird benannt statt stumm zu bleiben | **erfüllt** | isLanguageAvailable liefert ja/nein/weiss-nicht; gewarnt wird nur bei eindeutigem Nein, weil manche Plattformen eine leere Stimmenliste liefern. Im T… |
-| 6 | Uebungen in der Statistik sichtbar, ohne die Wiederholungszahl zu verfaelschen | **erfüllt** | Eigene Zaehler drills/drillsCorrect, eigene Kachel, gestapeltes Diagramm mit Legende. Im Browser nach zwei Aufgaben: 'Heute wiederholt 0 - Heute geue… |
+| 6 | Je Richtung mindestens ein eigener Uebungstyp aus vorhandenen Daten | **erfüllt** | de_to_th: Ton-Erkennung aus syllables[0].tone (69 einsilbige Eintraege, alle fuenf Toene vertreten). th_to_de: Artikel aus germanNoun.article (29 Substantive) und Stammformen aus germanVerb (20 Verben). Keine neue Content-Generierung noetig. |
+| 6 | Uebungen im Browser spielbar | **erfüllt** | Alle drei durchgespielt: Ton (Antwort 'Tief' auf สี่ -> richtig, Aufloesung 'sìi - vier'), Artikel (falsche Antwort -> richtige Option gruen umrandet, Plural in der Erklaerung), Stammformen ('machen' mit vertauschtem Hilfsverb und zwei echten Fremdformen als Ablenker). |
+| 6 | Kein erfundener Ablenker | **erfüllt** | Test prueft fuer JEDES Verb im Bestand, dass jede falsche Antwort entweder eine echte Perfektform aus der Vokabeldatei oder die Form mit vertauschtem Hilfsverb ist. |
+| 6 | Ton-Uebung nur fuer einsilbige Woerter | **erfüllt** | Bei mehrsilbigen Woertern hat jede Silbe ihren eigenen Ton (AE-7), und die Silbengrenze in der Thai-Schrift ist nicht bestimmbar (AE-8). buildToneQuestion wirft; Test deckt alle mehrsilbigen Eintraege ab. |
+| 6 | FSRS-Integrationsfrage entschieden und begruendet | **erfüllt** | AE-16: Uebungen laufen NICHT durch FSRS (eine Erinnerungsspur je Item; Ratequote 20-33 % passt nicht zur Selbsteinschaetzungs-Skala; Kartenschluessel ist vocabId:direction). Sie waehlen ihre Aufgaben aber ueber den vorhandenen FSRS-Zustand und werden im Tagesprotokoll getrennt gezaehlt. Tests belegen, dass keine Karte angelegt oder veraendert wird. |
+| 6 | Nutzerprofil-Frage entschieden und begruendet | **erfüllt** | AE-17: Standard-Lernrichtung im meta-Dokument 'profile', nur ausdruecklich gesetzt, jederzeit aufhebbar, Auswahl bleibt ueber 'Richtung wechseln' erreichbar. Im Browser geprueft: gesetzt, neu geladen, startet direkt in der Richtung; Auswahl weiterhin erreichbar und markiert den Standard. |
+| 6 | Fehlende Thai-Stimme wird benannt statt stumm zu bleiben | **erfüllt** | isLanguageAvailable liefert ja/nein/weiss-nicht; gewarnt wird nur bei eindeutigem Nein, weil manche Plattformen eine leere Stimmenliste liefern. Im Testbrowser: drei Stimmen, alle de-DE, kein Thai - der Hinweis erschien korrekt. |
+| 6 | Uebungen in der Statistik sichtbar, ohne die Wiederholungszahl zu verfaelschen | **erfüllt** | Eigene Zaehler drills/drillsCorrect, eigene Kachel, gestapeltes Diagramm mit Legende. Im Browser nach zwei Aufgaben: 'Heute wiederholt 0 - Heute geuebt 2 - Tage in Folge 1'. Ein Tag mit nur Uebungen zaehlt fuer die Serie mit. |
 | 6 | Tests und tsc gruen | **erfüllt** | 322 Tests in 11 Suites gruen; npx tsc --noEmit fehlerfrei. |
-| 7 | Reale Modulstruktur mit Quellenangabe erhoben und dokumentiert | **erfüllt** | Beide vorgegebenen Seiten liefern WebFetch HTTP 403; abgerufen ueber den echten Browser am 2026-08-31, dazu die drei Zertifikatsseiten gzsd1/gzsd2/gz… |
-| 7 | Aufgabenformate beobachtet statt geraten | **erfüllt** | Einstufungstest (goethe.de/lrn/pro/30-item/, im iframe der tsd.html) Aufgabe fuer Aufgabe durchgeklickt: A/B/C-Auswahl, Richtig/Falsch mit echten mp3… |
-| 7 | ExamModule-Schema festgelegt und umgesetzt | **erfüllt** | Unterscheidende Union: bewertbare Aufgaben tragen items, freie tragen production. Der Typ zwingt die Oberflaeche, beide Faelle zu behandeln, statt fu… |
-| 7 | Mindestens ein spielbares Beispiel je Fertigkeit und Aufgabentyp | **erfüllt** | Acht mitgelieferte Aufgaben decken Lesen, Hoeren, Schreiben und Sprechen sowie alle fuenf Formate auf A1 und A2 ab; Tests erzwingen beide Abdeckungen… |
-| 7 | Geltungsbereich begruendet entschieden | **erfüllt** | AE-19: Modul ist th_to_de. Ein Thai-Gegenstueck existiert (CU-TFL, Chulalongkorn), wurde aber nicht gebaut - die Primaerquelle war aus der Sitzung ni… |
-| 7 | Inhalt aus Vorhandenem, Batch-Infrastruktur wiederverwendet | **erfüllt** | Texte aus dem deutschen Teil des geprueften Grundstocks plus elementare Funktionswoerter; Hoerskripte ueber die Aussprache-Abstraktion aus Phase 3 (d… |
-| 7 | Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel) | **erfüllt** | Aus der Oberflaeche heraus: 8/8 verarbeitet, 0 erzeugt, 8 fehlgeschlagen mit '401 authentication_error - API key is invalid', 0 gespeichert; der Best… |
-| 7 | Keine erfundene Bewertung | **erfüllt** | AE-20: Lesen und Hoeren werden ausgewertet, Schreiben und Sprechen bekommen Musterloesung und Selbstkontrolle statt einer Punktzahl. Nirgends eine Be… |
+| 7 | Reale Modulstruktur mit Quellenangabe erhoben und dokumentiert | **erfüllt** | Beide vorgegebenen Seiten liefern WebFetch HTTP 403; abgerufen ueber den echten Browser am 2026-08-31, dazu die drei Zertifikatsseiten gzsd1/gzsd2/gzb1 unter .../inf.html. Struktur woertlich im Code (lib/exam/types.ts) mit source und retrieved, sichtbar auch im UI. |
+| 7 | Aufgabenformate beobachtet statt geraten | **erfüllt** | Einstufungstest (goethe.de/lrn/pro/30-item/, im iframe der tsd.html) Aufgabe fuer Aufgabe durchgeklickt: A/B/C-Auswahl, Richtig/Falsch mit echten mp3-Dateien, Zuordnung (Kaufhaus-Wegweiser, 'Welche Anzeige passt'), Lueckentext. Daraus die vier Formate im Schema. |
+| 7 | ExamModule-Schema festgelegt und umgesetzt | **erfüllt** | Unterscheidende Union: bewertbare Aufgaben tragen items, freie tragen production. Der Typ zwingt die Oberflaeche, beide Faelle zu behandeln, statt fuer einen freien Text eine Punktzahl zu erfinden. ExamPart hat ein eigenes Feld approximate, weil A2 'etwa 30 Minuten' sagt und A1 '25 Minuten'. |
+| 7 | Mindestens ein spielbares Beispiel je Fertigkeit und Aufgabentyp | **erfüllt** | Acht mitgelieferte Aufgaben decken Lesen, Hoeren, Schreiben und Sprechen sowie alle fuenf Formate auf A1 und A2 ab; Tests erzwingen beide Abdeckungen. Im Browser durchgespielt: Hoeren A1 (3/3, Skript erst nach dem Auswerten), Lesen A1, Sprechen A1 mit Musterloesung und Vorlesetaste. |
+| 7 | Geltungsbereich begruendet entschieden | **erfüllt** | AE-19: Modul ist th_to_de. Ein Thai-Gegenstueck existiert (CU-TFL, Chulalongkorn), wurde aber nicht gebaut - die Primaerquelle war aus der Sitzung nicht erreichbar und die Sekundaerquellen widersprechen sich in der Stufenskala. Das Feld direction steht trotzdem im Schema. |
+| 7 | Inhalt aus Vorhandenem, Batch-Infrastruktur wiederverwendet | **erfüllt** | Texte aus dem deutschen Teil des geprueften Grundstocks plus elementare Funktionswoerter; Hoerskripte ueber die Aussprache-Abstraktion aus Phase 3 (de-DE), also ohne neue Audio-Erzeugung. runExamBatch ist ein Adapter ueber demselben Laeufer wie Situationen und Bilder - dritter Nutzer, keine Kopie. |
+| 7 | Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel) | **erfüllt** | Aus der Oberflaeche heraus: 8/8 verarbeitet, 0 erzeugt, 8 fehlgeschlagen mit '401 authentication_error - API key is invalid', 0 gespeichert; der Bestand blieb bei den acht mitgelieferten Aufgaben. |
+| 7 | Keine erfundene Bewertung | **erfüllt** | AE-20: Lesen und Hoeren werden ausgewertet, Schreiben und Sprechen bekommen Musterloesung und Selbstkontrolle statt einer Punktzahl. Nirgends eine Bestehensgrenze, weil die Durchfuehrungsbestimmungen nicht erhoben wurden - der Hinweis steht im UI. |
 | 7 | Tests und tsc gruen | **erfüllt** | 365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. |
-| 8 | eas.json mit development/preview/production-Profilen | **erfüllt** | development (Dev-Client, APK, iOS-Simulator), preview (APK, iOS-Simulator, interne Verteilung), production (AAB, autoIncrement); cli.appVersionSource… |
-| 8 | app.json fuer EAS vollstaendig | **erfüllt** | android.package und ios.bundleIdentifier ergaenzt (com.thailernbegleiter.app) - ohne sie baut EAS gar nicht. expo-dev-client installiert, sonst kann … |
-| 8 | APK/AAB-Wahl begruendet | **erfüllt** | AE-21: Testprofile bauen APK, weil ein AAB sich laut EAS-Dokumentation nicht direkt aufs Geraet installieren laesst; production bleibt beim AAB, weil… |
-| 8 | iOS-Weg ohne Apple-Konto gefunden und begruendet | **erfüllt** | AE-22: Simulator-Build (ios.simulator true). Die EAS-Dokumentation sagt woertlich, das gehe 'without needing to deploy to TestFlight or even having a… |
-| 8 | EAS-Kontingente und Kosten aktuell nachgesehen | **erfüllt** | Am 2026-09-01 von expo.dev/pricing und expo.dev/pricing.md: Free 0 $/Monat mit 15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Upda… |
-| 8 | Web-Export lauffaehig | **erfüllt** | npx expo export --platform web: 8 statische Routen, 3,1 MB in dist/, die Bildablage als eigene Datei (verzoegertes Laden aus Phase 5 funktioniert auc… |
-| 8 | WordPress-Anschluss bewusst offen gelassen und begruendet | **erfüllt** | AE-23: Im Export nachgemessen, dass die Buendel absolut referenziert werden (/_expo/static/...). Fuer ein Unterverzeichnis braucht es experiments.bas… |
-| 8 | Icons/Splash geprueft | **erfüllt** | Nachgesehen: assets/images/ enthaelt unveraendert den Bildersatz des Expo-Templates, auch assets/expo.icon/ ist das Expo-Symbol. Als offener Punkt vo… |
-| 8 | Android-Testbuild tatsaechlich gebaut und installiert | offen — braucht den Nutzer (B-5) | B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wur… |
-| 8 | iOS-Build mindestens einmal ueber EAS durchgelaufen | offen — braucht den Nutzer (B-5) | B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wur… |
+| 8 | eas.json mit development/preview/production-Profilen | **erfüllt** | development (Dev-Client, APK, iOS-Simulator), preview (APK, iOS-Simulator, interne Verteilung), production (AAB, autoIncrement); cli.appVersionSource remote. Gueltiges JSON; gegen die EAS-CLI pruefbar erst nach Anmeldung. |
+| 8 | app.json fuer EAS vollstaendig | **erfüllt** | android.package und ios.bundleIdentifier ergaenzt (com.thailernbegleiter.app) - ohne sie baut EAS gar nicht. expo-dev-client installiert, sonst kann das development-Profil nicht bauen. |
+| 8 | APK/AAB-Wahl begruendet | **erfüllt** | AE-21: Testprofile bauen APK, weil ein AAB sich laut EAS-Dokumentation nicht direkt aufs Geraet installieren laesst; production bleibt beim AAB, weil Google Play das verlangt. |
+| 8 | iOS-Weg ohne Apple-Konto gefunden und begruendet | **erfüllt** | AE-22: Simulator-Build (ios.simulator true). Die EAS-Dokumentation sagt woertlich, das gehe 'without needing to deploy to TestFlight or even having an Apple Developer account'. Ein Geraete-Build braucht weiterhin das Apple Developer Program. |
+| 8 | EAS-Kontingente und Kosten aktuell nachgesehen | **erfüllt** | Am 2026-09-01 von expo.dev/pricing und expo.dev/pricing.md: Free 0 $/Monat mit 15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Updates an 1K MAUs; Starter 19 $, Production 199 $, Enterprise individuell. Fuer dieses Projekt reicht der freie Tarif. |
+| 8 | Web-Export lauffaehig | **erfüllt** | npx expo export --platform web: 8 statische Routen, 3,1 MB in dist/, die Bildablage als eigene Datei (verzoegertes Laden aus Phase 5 funktioniert auch im Export). Aus einem schlichten statischen Server ausgeliefert - Pruefungsmodul und Artikel-Uebung liefen vollstaendig, keine Konsolenfehler. |
+| 8 | WordPress-Anschluss bewusst offen gelassen und begruendet | **erfüllt** | AE-23: Im Export nachgemessen, dass die Buendel absolut referenziert werden (/_expo/static/...). Fuer ein Unterverzeichnis braucht es experiments.baseUrl in app.json plus einen neuen Export; ohne bekannten Zielpfad gesetzt, macht das den Export ueberall sonst kaputt. Haken laut Doku: Link und router setzen den Basispfad selbst davor, ein rohes <a> und die Linking-API nicht. |
+| 8 | Icons/Splash geprueft | **erfüllt** | Nachgesehen: assets/images/ enthaelt unveraendert den Bildersatz des Expo-Templates, auch assets/expo.icon/ ist das Expo-Symbol. Als offener Punkt vor einer Store-Einreichung benannt, nicht selbst gestaltet - kein Auftrag dieser Phase. |
+| 8 | Android-Testbuild tatsaechlich gebaut und installiert | **offen** | Blocker: B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wurden. |
+| 8 | iOS-Build mindestens einmal ueber EAS durchgelaufen | **offen** | Blocker: B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wurden. |
 | 8 | Tests und tsc gruen | **erfüllt** | 365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. Phase 8 hat keine Geschaeftslogik angefasst. |
-| 8 | Build-Konfiguration vorab validiert, ohne Konto | **erfüllt** | expo-doctor fand eine fehlende Peer-Abhaengigkeit (expo-asset, gebraucht von expo-audio, 'Your app may crash outside of Expo Go without this dependen… |
-| 8 | Keine ueberfluessigen Android-Berechtigungen | **erfüllt** | Der Prebuild zeigte RECORD_AUDIO, FOREGROUND_SERVICE und FOREGROUND_SERVICE_MEDIA_PLAYBACK aus expo-audio - die App nimmt aber nie auf. Im Plugin nac… |
-| 9 | Kontrastwerte tatsaechlich berechnet, nicht geschaetzt | **erfüllt** | WCAG-2.1-Formel (relative Leuchtdichte, (L1+0,05)/(L2+0,05)) in tones.test.ts ausgeschrieben und gegen die Norm-Beispiele geprueft (Schwarz/Weiss = 2… |
-| 9 | Tonfarben erreichen WCAG AA auf jedem Untergrund | **erfüllt** | AE-24: je Ton eine helle und eine dunkle Fassung, Farbton erhalten, Helligkeit geloest. Alle fuenf Toene erreichen in beiden Modi >= 4,5:1 gegen back… |
-| 9 | Screenreader-Labels fuer alle Icon-only-Interaktionen | **erfüllt** | Audit ueber alle 30 Pressables. Einziger echter Icon-only-Knopf war die kompakte Vorlesetaste des Beispielsatzes; ihr Label lautete '▶: <Text>' und b… |
-| 9 | Tippziele mindestens 24x24 (WCAG 2.2 AA 2.5.8) | **erfüllt** | Im Web-Build gemessen: drei reine Textknoepfe waren nur 20 Pixel hoch ('Richtung wechseln', 'Als Standard merken', 'Uebung verlassen'). Auf 44 gesetz… |
-| 9 | Tastaturbedienbarkeit im Web-Build geprueft | **erfüllt** | 15 von 15 Bedienelementen sind fokussierbar (tabIndex >= 0), Tab wandert der Reihe nach durch, der Fokusring ist sichtbar (im Screenshot belegt), und… |
-| 9 | Fehlerbehandlung ausserhalb der Batch-Pfade geschlossen | **erfüllt** | AE-25: Beim Schreiben wurde streng geprueft, beim LESEN blind vertraut. Ein leeres oder veraltetes Dokument liess Pruefungs- und Gespraech-Screen mit… |
-| 9 | Konsolidierte Abnahme gegen den JETZIGEN Repo-Zustand | **erfüllt** | Tabelle in PROGRESS.md, aus .agent/state.json erzeugt statt abgetippt. Der Quergriff, den Phase 9 selbst gefaehrdet hat, wurde eigens nachgemessen: d… |
-| 9 | Toter Code aus der Vorlage entfernt | **erfüllt** | Collapsible aus dem Expo-Template war nirgends eingebunden und das einzige Bedienelement ganz ohne accessibilityRole. Entfernt; damit wurde expo-symb… |
+| 8 | Build-Konfiguration vorab validiert, ohne Konto | **erfüllt** | expo-doctor fand eine fehlende Peer-Abhaengigkeit (expo-asset, gebraucht von expo-audio, 'Your app may crash outside of Expo Go without this dependency') - nachinstalliert, jetzt 21/21 Pruefungen. expo prebuild erzeugte das native Projekt sauber; applicationId und die Keychain-Backup-Regeln aus AE-10 sitzen richtig. Ein lokaler Gradle-Build schied aus: kein JDK und kein Android-SDK auf dem Rechner. |
+| 8 | Keine ueberfluessigen Android-Berechtigungen | **erfüllt** | Der Prebuild zeigte RECORD_AUDIO, FOREGROUND_SERVICE und FOREGROUND_SERVICE_MEDIA_PLAYBACK aus expo-audio - die App nimmt aber nie auf. Im Plugin nachgesehen und in app.json abgeschaltet (recordAudioAndroid false, microphonePermission false, enableBackgroundPlayback false); danach aus dem Manifest verschwunden. Rest nachverfolgt: READ/WRITE_EXTERNAL_STORAGE kommen von expo-file-system und tragen maxSdkVersion 32; SYSTEM_ALERT_WINDOW stammt aus der Expo-Vorlage und ist vor einer Store-Einreichung anzusehen. |
+| 9 | Kontrastwerte tatsaechlich berechnet, nicht geschaetzt | **erfüllt** | WCAG-2.1-Formel (relative Leuchtdichte, (L1+0,05)/(L2+0,05)) in tones.test.ts ausgeschrieben und gegen die Norm-Beispiele geprueft (Schwarz/Weiss = 21:1, #767676 auf Weiss >= 4,5). Ergebnis der Erstmessung: die einzelne Farbe je Ton aus dem Referenzprototyp verfehlte AA in BEIDEN Modi - hell fielen mid (3,35), high (2,81) und rising (3,95) durch, dunkel low (2,47), falling (2,81) und rising (3,54). |
+| 9 | Tonfarben erreichen WCAG AA auf jedem Untergrund | **erfüllt** | AE-24: je Ton eine helle und eine dunkle Fassung, Farbton erhalten, Helligkeit geloest. Alle fuenf Toene erreichen in beiden Modi >= 4,5:1 gegen background, backgroundElement und backgroundSelected. tones.test.ts rechnet das bei jedem Testlauf nach und prueft zusaetzlich, dass der Farbton zwischen den Modi gleich bleibt. |
+| 9 | Screenreader-Labels fuer alle Icon-only-Interaktionen | **erfüllt** | Audit ueber alle 30 Pressables. Einziger echter Icon-only-Knopf war die kompakte Vorlesetaste des Beispielsatzes; ihr Label lautete '▶: <Text>' und begann also mit dem Zeichen selbst. Jetzt 'Beispielsatz anhoeren: ...' - im Browser nachgemessen. Auf den geprueften Screens hat kein Bedienelement mehr weder Label noch Text. |
+| 9 | Tippziele mindestens 24x24 (WCAG 2.2 AA 2.5.8) | **erfüllt** | Im Web-Build gemessen: drei reine Textknoepfe waren nur 20 Pixel hoch ('Richtung wechseln', 'Als Standard merken', 'Uebung verlassen'). Auf 44 gesetzt; Nachmessung ergibt kein Element mehr unter 24. Die kompakte Vorlesetaste misst jetzt 44x44. |
+| 9 | Tastaturbedienbarkeit im Web-Build geprueft | **erfüllt** | 15 von 15 Bedienelementen sind fokussierbar (tabIndex >= 0), Tab wandert der Reihe nach durch, der Fokusring ist sichtbar (im Screenshot belegt), und sie rendern als native <button> mit funktionierendem Klickpfad. Die AUSLOESUNG per Enter liess sich mit dem Automatisierungswerkzeug nicht nachweisen - ein Kontrollversuch mit einem selbst eingefuegten, ganz gewoehnlichen HTML-Knopf schlug genauso fehl. Die Grenze liegt also im Werkzeug, nicht in der App; als Fehler gemeldet wird das ausdruecklich NICHT. |
+| 9 | Fehlerbehandlung ausserhalb der Batch-Pfade geschlossen | **erfüllt** | AE-25: Beim Schreiben wurde streng geprueft, beim LESEN blind vertraut. Ein leeres oder veraltetes Dokument liess Pruefungs- und Gespraech-Screen mit 'Cannot read properties of undefined (reading map)' abstuerzen - vorher im Kleinen nachgestellt. Jetzt filtern isValidExamModule und isValidSituation an der Lesegrenze; 18 neue Tests decken die Faelle ab, inklusive: Beschaedigtes wird ausgelassen, aber NICHT geloescht. |
+| 9 | Konsolidierte Abnahme gegen den JETZIGEN Repo-Zustand | **erfüllt** | Tabelle in PROGRESS.md, aus .agent/state.json erzeugt statt abgetippt. Der Quergriff, den Phase 9 selbst gefaehrdet hat, wurde eigens nachgemessen: das Phase-3-Kriterium zu den Silbenfarben war mit den ALTEN Farben geprueft. Neu gemessen zeigt สวัสดี jetzt rgb(138,155,177) / rgb(138,155,177) / rgb(136,160,131) - tief-tief-mittel gilt weiterhin, mit den Dunkelmodus-Fassungen. |
+| 9 | Toter Code aus der Vorlage entfernt | **erfüllt** | Collapsible aus dem Expo-Template war nirgends eingebunden und das einzige Bedienelement ganz ohne accessibilityRole. Entfernt; damit wurde expo-symbols unbenutzt und ist ebenfalls raus. expo-doctor weiterhin 21/21. |
 | 9 | Tests und tsc gruen | **erfüllt** | 392 Tests in 14 Suites gruen; npx tsc --noEmit fehlerfrei. |
-
-**Die vier offenen Punkte, alle beim Nutzer:**
-
-| Blocker | Was fehlt | Warum ich es nicht selbst tue |
-| --- | --- | --- |
-| **B-2** | Gerätecheck in Expo Go | Braucht das Gerät des Nutzers. Über B-5 für Android miterledigt. |
-| **B-4** | Bilder-Probelauf mit gültigem Stability-Schlüssel | Fremde API-Schlüssel gebe ich nicht ein. |
-| **B-5** | EAS-Konto, dann Android- und iOS-Build | Konten lege ich nicht an. Vom Nutzer bewusst zurückgestellt. |
-
-**Bewusst außerhalb v1 — nie Abnahmekriterium, hier nur der Vollständigkeit
-halber:**
-
-- **Live-Chat mit einem Sprachmodell.** Verworfen in Phase 4: Die App muss ohne
-  Netz und ohne Schlüssel benutzbar sein.
-- **~1000 Vokabeln.** Der Grundstock sind 84; der Weg dorthin steht als
-  Skalierungsplan, einschließlich des siebenstufigen Prüfschritts je Eintrag.
-- **Vorproduzierte Audioclips.** Die Abstraktion wartet darauf
-  (`registerAudioAssetResolver`), bis dahin läuft alles über die Sprachausgabe
-  des Geräts.
-- **B1-Prüfungsaufgaben.** Brauchen B1-Wortschatz.
-- **Bestehensgrenzen im Prüfungsmodul.** Stehen in den nicht erhobenen
-  Durchführungsbestimmungen — eine ausgedachte Grenze wäre schlimmer als keine.
-- **Prüfungsmodul für `de_to_th`.** Ein Thai-Gegenstück (CU-TFL) existiert,
-  wurde aber nicht aus widersprüchlichen Sekundärquellen zusammengesetzt.
+| 10 | Alle drei Generator-Gruppen zeigen Anbieter-Auswahl und Modell-Textfeld | **erfüllt** | Im Web-Build geprueft: Sprachsituationen, Bilder und Pruefungsaufgaben haben je eine Anbieterreihe und ein Modell-Freitextfeld. Umstellen wirkt sofort auf Modellvorschlag, Schluesselplatzhalter und die Beschriftung des Schluesselfeldes ('API-Schluessel fuer Google') und NUR auf die eigene Gruppe. Statt eines Aufklappfeldes eine Knopfreihe - Begruendung in AE-28 (React Native hat kein plattformweites Dropdown; @expo/ui ist nativ-only). |
+| 10 | Gemini-CORS-Befund gemessen und dokumentiert | **erfüllt** | AE-26. Aus dem laufenden Web-Build am 2026-09-03: generateContent (Text), gemini-2.5-flash-image, imagen-4.0:predict und GET /v1beta/models kommen alle durch (HTTP 400, lesbar), mit Schluessel im Header wie als Query-Parameter. Kontrollen: Anthropic mit/ohne Header wie in AE-12; example.com und goethe.de scheitern - die CORS-Pruefung war also scharf. Genommen wurde der Header, weil eine URL in Verlaufslisten landet. Haken: mit ungueltigem Schluessel antwortet Google auf ALLES 'API key not valid', auch auf ein erfundenes Modell - Anfrage- und Antwortform sind damit vor dem ersten bezahlten Aufruf nicht belegbar. |
+| 10 | ChatGPT im Web-Build klar als eingeschraenkt gekennzeichnet | **erfüllt** | AE-27. Die Messung bestaetigt eine Einschraenkung, aber mit anderer Ursache als in AE-13 vermutet: Ein POST an api.openai.com mit einem Schluessel, der mit 'sk-' beginnt, bekommt eine Antwort ohne Access-Control-Allow-Origin; mit 'SK-' oder 'xk-' kommt dieselbe Anfrage durch, beim GET greift die Regel nicht. Da jeder echte OpenAI-Schluessel mit 'sk-' beginnt, bleibt die Konsequenz aus Phase 5 dieselbe. Warnung steht in der Oberflaeche, aber nur hinter Platform.OS === 'web' - nativ gibt es kein CORS. Zwei andere Verdaechtige (Anmeldedaten, Anfragekoerper) wurden geprueft und verworfen. |
+| 10 | Provider-Abstraktion statt dritter Kopie | **erfüllt** | AE-28: TextClient und ImageClient in src/lib/providers/. Die bestehenden Anthropic- und Stability-Umsetzungen haengen dahinter, nicht daneben; Prompts, Parser, Bauplan und der Batch-Laeufer aus Phase 5 wurden nicht angefasst. createAnthropicClient und createStabilityImageClient bleiben als Aufruf erhalten. Ein Test belegt, dass beide Textgeneratoren denselben anbieterfreien Prompt schicken. |
+| 10 | Key-Speicherung je Anbieter nach dem AE-10-Muster | **erfüllt** | api-key.ts von zwei auf vier Anbieter erweitert, Muster unveraendert (nativ Keychain, Web nur Sitzung, Weiche ueber isAvailableAsync). Tests mit einer nachgebildeten sicheren Ablage: vier Schluessel getrennt, Loeschen eines Anbieters laesst die anderen stehen, und der Claude-Schluessel liegt weiterhin unter dem alten Namen 'anthropic-api-key' - ihn umzubenennen haette gespeicherte Schluessel unauffindbar gemacht. |
+| 10 | Modellname nicht validiert (Freitext, kein Katalog) | **erfüllt** | Pflicht 5. Ein Test faehrt vier beliebige Namen durch, darunter '../etwas', und erwartet sie unveraendert zurueck. Leeres Feld nimmt den Vorschlag des Anbieters; ein Anbieterwechsel zieht den Modellnamen mit. Bei Gemini und Stability fuellt der Name den Pfad und wird kodiert, damit ein Tippfehler mit Schraegstrich keine fremde Adresse baut. Im Browser mit 'gemini-99-voellig-ausgedacht' geprueft, inklusive Neuladen. |
+| 10 | Bestehende Anthropic-/Stability-Generatoren laufen unveraendert weiter (Regressionstest) | **erfüllt** | Zweifach belegt. Testebene: alle 392 Tests aus Phase 0-9 laufen unveraendert gruen; zusaetzlich prueft ein Test, dass die Voreinstellungen (Claude/claude-opus-5, Stability/stable-image-core) und die in AE-13 gemessene Endpunktadresse sich nicht verschoben haben. Netzebene, aus der Oberflaeche mit ungueltigem Schluessel: Sprachsituationen ueber Claude 16/16 mit '401 authentication_error - API key is invalid' (wortgleich Phase 4/7), Bilder ueber Stability 5/5 mit 'HTTP 401: authorization: invalid or missing header value' (wortgleich Phase 5). Bestand danach unveraendert. |
+| 10 | Lauf durch den echten Netzwerkpfad je neuem Anbieter (ungueltiger Schluessel) | **erfüllt** | Sprachsituationen ueber Gemini: 16/16 verarbeitet, 0 erzeugt, 16 x 'HTTP 400: API key not valid. - INVALID_ARGUMENT'. Pruefungsaufgaben ueber Gemini: 8/8, Bestand bleibt bei den 8 mitgelieferten. Bilder ueber ChatGPT: 5/5, 5 x 'Keine Antwort von api.openai.com' mit CORS-Erklaerung. Nach jedem Lauf 0 gespeichert. |
+| 10 | Auswahlzustand ist fuer Screenreader ablesbar (Nebenbefund) | **erfüllt** | AE-29, nicht Auftrag dieser Phase, beim Nachmessen gefunden: accessibilityState={{selected}} erzeugt in dieser React-Native-Web-Fassung GAR KEIN ARIA-Attribut, und accessibilityRole 'radio' + accessibilityState {{checked}} liefert zwar role=radio, aber kein aria-checked. Betraf auch Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Behoben durch direkt gesetztes aria-checked plus radiogroup; nachgemessen 18 von 18 Auswahlknoepfen mit Zustand, davon 7 auf true, und kein Aktionsknopf mit falscher Rolle. |
+| 10 | Tests und tsc gruen | **erfüllt** | 437 Tests in 15 Suites gruen (vorher 392 in 14); npx tsc --noEmit fehlerfrei. |
+| 10 | Antwortform von ChatGPT und Gemini gegen die laufende API belegt | **offen** | Blocker: B-6 - beide Anbieter pruefen den Schluessel VOR der Anfrageform und antworten auf jede Anfrage mit demselben Auth-Fehler. Anders als bei Stability (AE-13) liess sich deshalb nichts ohne bezahlten Schluessel festklopfen. Die Parser nennen im Fehlerfall die gelieferten Feldnamen, damit ein Formwechsel sofort in der Fehlerliste steht. |
 
 ---
 
@@ -1980,6 +2290,32 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 10 (2026-09-03):** Die Anbieterwahl steht. Was hier oben
+> liegt, ist unverändert das, was einen Schlüssel oder ein Gerät des Nutzers
+> braucht — nur dass die Probeläufe seit Phase 10 auch mit **Gemini** gefahren
+> werden können und nicht mehr nur mit Anthropic und Stability.
+
+0. **Anbieter mit einem gültigen Schlüssel gegenprüfen (neu, Phase 10):**
+   Reiter **Einstellungen**, bei einer Gruppe den gewünschten Anbieter wählen,
+   Modell stehen lassen, Schlüssel eintragen, **Probelauf**, **Start**. Was
+   dabei erstmals belegbar wäre und heute offen ist:
+   - **Gemini:** die Anfrage- **und** die Antwortform. Google antwortet mit
+     ungültigem Schlüssel auf alles „API key not valid", deshalb ließ sich
+     nichts festklopfen (AE-26). Schlägt der Lauf mit „Antwort enthielt keine
+     candidates (gelieferte Felder: …)" fehl, nennt die Meldung selbst, was
+     stattdessen kam — anzupassen sind dann `parseGeminiText` bzw.
+     `parseGeminiImage` in `src/lib/providers/`.
+   - **ChatGPT im Browser:** ob ein **gültiger** `sk-`-Schlüssel die Ausnahme
+     von der in AE-27 gemessenen Regel ist. **Achtung:** die Anfrage geht
+     hinaus, auch wenn der Browser die Antwort verwirft — ein Bildlauf könnte
+     also berechnet werden, ohne dass ein Bild ankommt. Wenn, dann mit dem
+     kleinsten Umfang.
+   - **ChatGPT nativ:** ohne CORS sollte der Weg offen sein. Prüfbar erst mit
+     B-2 bzw. B-5.
+   - Bei OpenAI zusätzlich: ob `max_completion_tokens` das richtige Feld ist.
+     Beschwert sich die API, ist es genau diese eine Zeile in
+     `src/lib/providers/text.ts`.
 
 1. **Bilder-Probelauf mit gültigem Schlüssel (Blocker B-4, schließt Phase 5 ab):**
    `npx expo start` → `w`, Reiter **Einstellungen**, Karte **Generator:

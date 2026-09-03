@@ -1,30 +1,46 @@
+import { describeHttpError } from '../providers/http';
+import {
+  createImageProvider,
+  parseStabilityImage,
+  stabilityEndpoint,
+} from '../providers/image';
+import { ImageClient, ProviderId } from '../providers/types';
+
 import { assertConcreteSpec } from './plan';
 import { GeneratedImage, ImageFormat, ImageSpec } from './types';
 
 /**
- * Erzeugt ein einzelnes Vokabelbild über die Bild-API von Stability AI.
+ * Erzeugt ein einzelnes Vokabelbild.
+ *
+ * SEIT PHASE 10 IST DER ANBIETER WÄHLBAR (Stability, Gemini, ChatGPT — Claude
+ * erzeugt keine Bilder). Der Prompt, das isConcrete-Tor und die zweiteilige
+ * Ablage bleiben davon unberührt; wie ein Bild über die Leitung kommt, steht
+ * in `lib/providers/image.ts`. Voreingestellt bleibt Stability, und der Grund
+ * dafür steht unten: es ist der einzige der drei, dessen Anfrageform sich ohne
+ * bezahlten Schlüssel überhaupt belegen ließ.
  *
  * ANBIETERWAHL (AE-13) — gemessen, nicht angenommen. Die Anthropic-API aus
  * Phase 4 erzeugt keine Bilder, es musste also ein zweiter Anbieter her.
  * Zuerst war OpenAI Images gesetzt (offizieller SDK, wie in AE-12). Aus dem
- * laufenden Web-Build heraus gemessen ergab sich:
+ * laufenden Web-Build heraus zeigte sich: `GET api.openai.com/v1/models` war
+ * lesbar, `POST` auf `/v1/images/generations` und `/v1/chat/completions`
+ * dagegen `TypeError: Failed to fetch`, während Stability mit einem lesbaren
+ * 401 antwortete. Damit fiel OpenAI aus, und Stability wurde gesetzt.
  *
- * | Anfrage                                   | Ergebnis                    |
- * | ----------------------------------------- | --------------------------- |
- * | `GET  api.openai.com/v1/models`           | HTTP 401, lesbar            |
- * | `POST api.openai.com/v1/images/generations` | `TypeError: Failed to fetch` |
- * | `POST api.openai.com/v1/chat/completions` | `TypeError: Failed to fetch` |
- * | `POST api.stability.ai/…/generate/core`   | HTTP 401, lesbar            |
+ * PHASE 10 HAT DAS NACHGEMESSEN UND DEN GRUND GEFUNDEN (AE-27): Es ist nicht
+ * „POST ist gesperrt". Ausschlaggebend ist das **Präfix des Schlüssels**. Ein
+ * POST mit `Authorization: Bearer ungueltig` kommt mit lesbarem 401 zurück;
+ * derselbe POST mit `Bearer sk-…` bekommt eine Antwort ohne
+ * `Access-Control-Allow-Origin`, die der Browser verwirft. `SK-` in
+ * Großbuchstaben und `xk-` kommen wieder durch — es hängt buchstäblich an
+ * diesen drei Zeichen. Beim GET greift die Regel nicht, was genau erklärt,
+ * warum die Tabelle aus Phase 5 GET und POST unterschiedlich sah.
  *
- * Zur Kontrolle in derselben Sitzung: `api.anthropic.com` antwortete mit dem
- * Header aus AE-12 mit 401 und ohne ihn mit „Failed to fetch" — das Netz war
- * also offen und die Messung aussagekräftig. `api.openai.com` lässt Browsern
- * demnach **GET** durch, **POST** aber nicht; und der `dangerouslyAllowBrowser`-
- * Schalter des OpenAI-SDK hilft dagegen nicht, weil er (im Paket nachgesehen)
- * nur eine Selbstsperre des SDK aufhebt und keinen Header setzt, wie es
- * `anthropic-dangerous-direct-browser-access` tut. Damit war OpenAI für den
- * Web-Build unbrauchbar — und der Web-Build ist derzeit die einzige Umgebung,
- * in der geprüft werden kann (Gerätecheck B-2 steht aus).
+ * FÜR DIE APP ÄNDERT DAS NICHTS AN DER ENTSCHEIDUNG: Jeder echte
+ * OpenAI-Schlüssel beginnt mit `sk-`. Ob ein **gültiger** Schlüssel die
+ * Ausnahme ist, ließ sich ohne einen solchen nicht prüfen — und ein Versuch
+ * würde womöglich berechnet, ohne dass die Antwort ankommt. ChatGPT ist
+ * deshalb im Web-Build als eingeschränkt gekennzeichnet und nativ offen.
  *
  * KEIN SDK, SONDERN `fetch` — anders als in AE-12 und mit Grund: für Stability
  * gibt es **keinen** offiziellen JavaScript-SDK (nachgesehen: `stability-sdk`
@@ -46,9 +62,9 @@ import { GeneratedImage, ImageFormat, ImageSpec } from './types';
  *     Endpunkt gibt.
  */
 
-export const IMAGE_ENDPOINT = 'https://api.stability.ai/v2beta/stable-image/generate/core';
+export const IMAGE_ENDPOINT = stabilityEndpoint('core');
 
-/** Nur zur Anzeige und fürs Protokoll — das Modell steckt im Pfad. */
+/** Voreinstellung — bei Stability steckt das Modell im Pfad (`…/generate/core`). */
 export const IMAGE_MODEL = 'stable-image-core';
 
 /**
@@ -93,25 +109,14 @@ export function buildImagePrompt(spec: ImageSpec): string {
   );
 }
 
-function looksLikeBase64(value: string): boolean {
-  return value.length > 100 && /^[A-Za-z0-9+/=\s]+$/.test(value);
-}
-
-/** Liest die Fehlerform von Stability (`{"errors":[…],"name":"…"}`) aus. */
-export function describeApiError(status: number, body: string): string {
-  try {
-    const parsed = JSON.parse(body) as { errors?: unknown; name?: unknown };
-    if (Array.isArray(parsed.errors) && parsed.errors.length > 0) {
-      return `HTTP ${status}: ${parsed.errors.join('; ')}`;
-    }
-    if (typeof parsed.name === 'string') {
-      return `HTTP ${status}: ${parsed.name}`;
-    }
-  } catch {
-    // Keine JSON-Antwort - dann eben der Rohtext.
-  }
-  return `HTTP ${status}: ${body.slice(0, 200) || 'ohne Inhalt'}`;
-}
+/**
+ * Liest die Fehlerform von Stability (`{"errors":[…],"name":"…"}`) aus.
+ *
+ * Seit Phase 10 tut das der gemeinsame Fehlerleser aller Anbieter — was in der
+ * Fehlerliste eines Laufs landet, soll bei allen vier gleich aussehen. Der
+ * Name hier bleibt, weil er an mehreren Stellen geprüft wird.
+ */
+export const describeApiError = describeHttpError;
 
 /**
  * Prüft die Antwort, bevor sie abgelegt wird.
@@ -129,64 +134,50 @@ export function parseImageResponse(
   format: ImageFormat = IMAGE_FORMAT,
   model: string = IMAGE_MODEL
 ): GeneratedImage {
-  if (typeof payload !== 'object' || payload === null) {
-    throw new Error('Antwort war kein JSON-Objekt.');
-  }
-  const data = payload as Record<string, unknown>;
-
-  // Stability liefert bei ausgefiltertem Inhalt ein absichtlich unscharfes
-  // Bild statt eines Fehlers. Das gehoert nicht in den Bestand.
-  if (data.finish_reason === 'CONTENT_FILTERED') {
-    throw new Error('Antwort wurde vom Anbieter gefiltert (finish_reason: CONTENT_FILTERED).');
-  }
-
-  const image = data.image;
-  if (typeof image !== 'string' || image.trim() === '') {
-    throw new Error(
-      `Antwort enthielt kein Feld "image" (gelieferte Felder: ${Object.keys(data).join(', ') || 'keine'}).`
-    );
-  }
-  const base64 = image.trim();
-  if (!looksLikeBase64(base64)) {
-    throw new Error('Bilddaten sind kein brauchbares Base64.');
-  }
-
-  return { base64, format, model, prompt };
+  const image = parseStabilityImage(payload, format, model);
+  return { ...image, prompt };
 }
 
-export function createStabilityImageClient(apiKey: string): ImageGenerationClient {
+/**
+ * Verbindet den Prompt dieser Datei mit einem beliebigen Bildanbieter.
+ *
+ * HIER SITZT DIE DRITTE SPERRE DES isConcrete-TORS (AE-15) — unmittelbar vor
+ * dem Aufruf, der Geld kostet, und jetzt an **einer** Stelle für alle drei
+ * Anbieter statt dreimal kopiert. Der Zweck ist unverändert: eine einzelne
+ * Sperre wird irgendwann durch einen neuen Aufrufer umgangen, und ein neuer
+ * Anbieter ist genau so ein neuer Aufrufer.
+ */
+export function createImageClient(provider: ImageClient): ImageGenerationClient {
   return {
     async generate(spec) {
-      // Dritte Sperre des isConcrete-Tors: unmittelbar vor dem Aufruf, der
-      // Geld kostet.
       assertConcreteSpec(spec);
 
       const prompt = buildImagePrompt(spec);
-
-      const form = new FormData();
-      form.append('prompt', prompt);
-      form.append('negative_prompt', NEGATIVE_PROMPT);
-      form.append('aspect_ratio', IMAGE_ASPECT_RATIO);
-      form.append('output_format', IMAGE_FORMAT);
-      form.append('style_preset', IMAGE_STYLE_PRESET);
-
-      const response = await fetch(IMAGE_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          // Ohne diesen Header liefert die API die rohen Bildbytes; mit ihm
-          // ein JSON-Objekt mit Base64 - genau das, was fuer die Offline-Ablage
-          // gebraucht wird.
-          Accept: 'application/json',
-        },
-        body: form,
+      const image = await provider.create({
+        prompt,
+        negativePrompt: NEGATIVE_PROMPT,
+        preferredFormat: IMAGE_FORMAT,
+        aspectRatio: IMAGE_ASPECT_RATIO,
+        stylePreset: IMAGE_STYLE_PRESET,
       });
 
-      if (!response.ok) {
-        throw new Error(describeApiError(response.status, await response.text()));
-      }
-
-      return parseImageResponse(await response.json(), prompt, IMAGE_FORMAT, IMAGE_MODEL);
+      return { base64: image.base64, format: image.format, model: image.model, prompt };
     },
   };
+}
+
+export function createImageGenerationClient(
+  provider: ProviderId,
+  apiKey: string,
+  model: string = IMAGE_MODEL
+): ImageGenerationClient {
+  return createImageClient(createImageProvider(provider, apiKey, model));
+}
+
+/** Der Weg aus Phase 5, unverändert erreichbar. */
+export function createStabilityImageClient(
+  apiKey: string,
+  model: string = IMAGE_MODEL
+): ImageGenerationClient {
+  return createImageGenerationClient('stability', apiKey, model);
 }

@@ -1,5 +1,7 @@
 import * as SecureStore from 'expo-secure-store';
 
+import { PROVIDERS, ProviderId } from './providers/types';
+
 /**
  * Ablage der API-Schlüssel.
  *
@@ -23,24 +25,40 @@ import * as SecureStore from 'expo-secure-store';
  * so verhält sich der Code richtig, falls eine Plattform die sichere Ablage
  * unerwartet nicht anbietet.
  *
- * SEIT PHASE 5 ZWEI ANBIETER: Anthropic erzeugt die Sprachsituationen,
- * Stability AI die Bilder (AE-13). Beide Schlüssel liegen getrennt und nach genau
+ * SEIT PHASE 5 MEHRERE ANBIETER: Anthropic erzeugte die Sprachsituationen,
+ * Stability AI die Bilder (AE-13). Die Schlüssel liegen getrennt und nach genau
  * demselben Muster — ein gemeinsamer Schlüssel wäre schon deshalb falsch,
- * weil die beiden Läufe unabhängig voneinander gestartet werden können und
- * niemand einen Schlüssel eintippen soll, den er gar nicht braucht.
+ * weil die Läufe unabhängig voneinander gestartet werden können und niemand
+ * einen Schlüssel eintippen soll, den er gar nicht braucht.
+ *
+ * SEIT PHASE 10 SIND ES VIER (Pflicht 4). Am Muster ändert das nichts: nativ
+ * Keychain, im Web nur Arbeitsspeicher für die Sitzung, Weiche über
+ * `isAvailableAsync()`. Es gilt jetzt **je Anbieter** statt einmalig — die
+ * Liste der Anbieter kommt aus `providers/types.ts`, damit es nicht zwei
+ * Wahrheiten darüber gibt, welche es gibt.
+ *
+ * DER ABLAGENAME FÜR CLAUDE BLEIBT `anthropic-api-key`. Er heißt seit Phase 4
+ * so und liegt auf den Geräten der Nutzer im Keychain; ihn zur Sauberkeit
+ * umzubenennen, würde einen dort gespeicherten Schlüssel unauffindbar machen —
+ * die App fragte kommentarlos erneut danach, und der alte Eintrag bliebe für
+ * immer liegen.
  */
 
-export const PROVIDERS = ['anthropic', 'stability'] as const;
-export type Provider = (typeof PROVIDERS)[number];
+export type Provider = ProviderId;
+export { PROVIDERS };
 
 const KEY_NAMES: Record<Provider, string> = {
-  anthropic: 'anthropic-api-key',
+  claude: 'anthropic-api-key',
+  chatgpt: 'openai-api-key',
+  gemini: 'gemini-api-key',
   stability: 'stability-api-key',
 };
 
 /** Nur für die laufende Sitzung, wenn keine sichere Ablage vorhanden ist. */
 const sessionOnlyKeys: Record<Provider, string | null> = {
-  anthropic: null,
+  claude: null,
+  chatgpt: null,
+  gemini: null,
   stability: null,
 };
 
@@ -60,7 +78,7 @@ export async function getKeyStorageMode(): Promise<KeyStorageMode> {
   return cachedMode;
 }
 
-export async function loadApiKey(provider: Provider = 'anthropic'): Promise<string | null> {
+export async function loadApiKey(provider: Provider): Promise<string | null> {
   if ((await getKeyStorageMode()) === 'session-only') {
     return sessionOnlyKeys[provider];
   }
@@ -71,10 +89,7 @@ export async function loadApiKey(provider: Provider = 'anthropic'): Promise<stri
   }
 }
 
-export async function saveApiKey(
-  key: string,
-  provider: Provider = 'anthropic'
-): Promise<void> {
+export async function saveApiKey(key: string, provider: Provider): Promise<void> {
   const trimmed = key.trim();
   if ((await getKeyStorageMode()) === 'session-only') {
     sessionOnlyKeys[provider] = trimmed || null;
@@ -87,7 +102,7 @@ export async function saveApiKey(
   await SecureStore.setItemAsync(KEY_NAMES[provider], trimmed);
 }
 
-export async function clearApiKey(provider: Provider = 'anthropic'): Promise<void> {
+export async function clearApiKey(provider: Provider): Promise<void> {
   sessionOnlyKeys[provider] = null;
   if ((await getKeyStorageMode()) === 'session-only') return;
   try {

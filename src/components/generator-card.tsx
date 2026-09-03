@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
@@ -13,19 +13,39 @@ import {
   KeyStorageMode,
   loadApiKey,
   looksLikeApiKey,
-  Provider,
   saveApiKey,
 } from '@/lib/api-key';
 import { BatchProgress } from '@/lib/generation/batch';
+import {
+  GeneratorChoice,
+  GeneratorGroupId,
+  GENERATOR_GROUP_INFO,
+  providersForGroup,
+} from '@/lib/providers/settings';
+import { PROVIDER_INFO, ProviderId } from '@/lib/providers/types';
 
 /**
- * Eine Generator-Karte: Schlüsselfeld, Umfangwahl, Start/Anhalten,
- * Fortschritt, Fehlerliste, Löschen.
+ * Eine Generator-Karte: Anbieterwahl, Modellfeld, Schlüsselfeld, Umfangwahl,
+ * Start/Anhalten, Fortschritt, Fehlerliste, Löschen.
  *
- * Seit Phase 5 gibt es zwei Generatoren (Sprachsituationen und Bilder) mit
- * unterschiedlichen Anbietern, aber demselben Ablauf. Die Karte ist deshalb
- * hier einmal gebaut und wird zweimal benutzt — genauso, wie der Batch-Läufer
- * darunter nur einmal existiert.
+ * Seit Phase 5 gibt es mehrere Generatoren mit unterschiedlichen Anbietern,
+ * aber demselben Ablauf. Die Karte ist deshalb hier einmal gebaut und wird
+ * dreimal benutzt — genauso, wie der Batch-Läufer darunter nur einmal
+ * existiert.
+ *
+ * WARUM DIE ANBIETERWAHL EINE KNOPFREIHE IST UND KEIN AUFKLAPPFELD: Die
+ * Vorgabe von Phase 10 sagt „Dropdown". React Native hat kein plattformweites
+ * Aufklappfeld — ein echtes bräuchte eine zusätzliche Abhängigkeit oder eine
+ * eigene Umsetzung je Plattform, und `@expo/ui` ist nativ-only, also im
+ * Web-Build (der einzigen bisher prüfbaren Umgebung, B-2) nicht zu gebrauchen.
+ * Bei drei bis vier Möglichkeiten ist eine Reihe ohnehin die bessere Bedienung:
+ * alles ist gleichzeitig sichtbar, es braucht einen Tipp statt zwei, und es
+ * ist genau das Muster, das in dieser App schon für Umfang und Lernrichtung
+ * benutzt und in Phase 9 auf Tippziele, Fokus und Beschriftung geprüft wurde.
+ *
+ * DER SCHLÜSSEL HÄNGT AM ANBIETER, nicht an der Karte: Wer von Claude auf
+ * Gemini umstellt, sieht sofort das Schlüsselfeld für Gemini — und der
+ * Claude-Schlüssel bleibt liegen, wo er war (AE-10, jetzt je Anbieter).
  */
 
 export type RunOption = {
@@ -37,6 +57,9 @@ export type RunOption = {
 export type StartArgs = {
   optionId: string;
   apiKey: string;
+  provider: ProviderId;
+  /** Freitext aus dem Modellfeld — ungeprüft, siehe Pflicht 5. */
+  model: string;
   onProgress: (progress: BatchProgress) => void;
   shouldCancel: () => boolean;
 };
@@ -44,10 +67,13 @@ export type StartArgs = {
 type Props = {
   heading: string;
   description: string;
-  /** Welcher Schlüssel gebraucht wird — Ablage je Anbieter getrennt. */
-  provider: Provider;
-  keyPlaceholder: string;
-  /** Eine Zeile mit Bestand und Modell. */
+  /** Welche Generator-Gruppe — bestimmt, welche Anbieter überhaupt taugen. */
+  group: GeneratorGroupId;
+  /** Aktuell gewählter Anbieter und Modellname. */
+  choice: GeneratorChoice;
+  /** Wird beim Umstellen aufgerufen und legt die Wahl dauerhaft ab. */
+  onChoiceChange: (change: Partial<GeneratorChoice>) => void | Promise<void>;
+  /** Eine Zeile mit Bestand. */
   statusLine: string;
   runOptions: RunOption[];
   onStart: (args: StartArgs) => Promise<void>;
@@ -62,8 +88,9 @@ type Props = {
 export function GeneratorCard({
   heading,
   description,
-  provider,
-  keyPlaceholder,
+  group,
+  choice,
+  onChoiceChange,
   statusLine,
   runOptions,
   onStart,
@@ -85,6 +112,11 @@ export function GeneratorCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const cancelRef = useRef(false);
+
+  const groupInfo = GENERATOR_GROUP_INFO[group];
+  const provider = choice.provider;
+  const providerInfo = PROVIDER_INFO[provider];
+  const choices = providersForGroup(group);
 
   useEffect(() => {
     (async () => {
@@ -126,6 +158,10 @@ export function GeneratorCard({
       await onStart({
         optionId: runOption,
         apiKey,
+        provider,
+        // Leeres Feld heisst „nimm den Vorschlag" - kein Grund fuer eine
+        // Fehlermeldung, und geprueft wird der Name ohnehin nicht (Pflicht 5).
+        model: choice.model.trim() || providerInfo.modelPlaceholder[groupInfo.needs],
         onProgress: setProgress,
         shouldCancel: () => cancelRef.current,
       });
@@ -135,7 +171,7 @@ export function GeneratorCard({
       setRunning(false);
       await onFinished();
     }
-  }, [key, provider, runOption, onStart, onFinished]);
+  }, [key, provider, providerInfo, groupInfo, choice.model, runOption, onStart, onFinished]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
@@ -166,11 +202,65 @@ export function GeneratorCard({
       </ThemedText>
 
       <View style={styles.field}>
-        <ThemedText type="small">API-Schlüssel</ThemedText>
+        <ThemedText type="small">Anbieter</ThemedText>
+        <ChoiceRow label={`Anbieter für ${heading}`}>
+          {choices.map((info) => (
+            <Button
+              key={info.id}
+              label={info.label}
+              onPress={() => onChoiceChange({ provider: info.id })}
+              selected={provider === info.id}
+              disabled={running}
+            />
+          ))}
+        </ChoiceRow>
+        <ThemedText type="small" themeColor="textSecondary">
+          {providerInfo.label === providerInfo.vendor
+            ? `${providerInfo.label}: Schlüssel von ${providerInfo.keySource}.`
+            : `${providerInfo.label} kommt von ${providerInfo.vendor}; Schlüssel von ${providerInfo.keySource}.`}
+          {' '}
+          Zur Auswahl stehen nur Anbieter, die {groupInfo.needs === 'image' ? 'Bilder' : 'Text'}{' '}
+          erzeugen — Claude kann keine Bilder, Stability AI keinen Text.
+        </ThemedText>
+        {/* Nur im Web: nativ gibt es kein CORS, dort gilt der Hinweis nicht. */}
+        {Platform.OS === 'web' && providerInfo.webWarning ? (
+          <ThemedView type="backgroundSelected" style={styles.warning}>
+            <ThemedText type="small">⚠ {providerInfo.webWarning}</ThemedText>
+          </ThemedView>
+        ) : null}
+      </View>
+
+      <View style={styles.field}>
+        <ThemedText type="small">Modell</ThemedText>
+        <TextInput
+          value={choice.model}
+          onChangeText={(value) => onChoiceChange({ model: value })}
+          placeholder={providerInfo.modelPlaceholder[groupInfo.needs]}
+          placeholderTextColor={theme.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!running}
+          accessibilityLabel={`Modellname für ${heading}`}
+          style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          Freitext, bewusst ohne Prüfung: Modellnamen wechseln zu oft, um sie in
+          der App festzuschreiben. Leer lassen nimmt „
+          {providerInfo.modelPlaceholder[groupInfo.needs]}".
+          {provider === 'gemini'
+            ? ' Bei Gemini ist ein Tippfehler im Namen nicht vom falschen Schlüssel zu unterscheiden — die API meldet beides als „API key not valid" (gemessen, AE-26).'
+            : ''}
+        </ThemedText>
+      </View>
+
+      <View style={styles.field}>
+        <ThemedText type="small">API-Schlüssel für {providerInfo.vendor}</ThemedText>
         <TextInput
           value={key}
           onChangeText={setKey}
-          placeholder={keyStored ? 'gespeichert — zum Ersetzen neu eingeben' : keyPlaceholder}
+          placeholder={
+            keyStored ? 'gespeichert — zum Ersetzen neu eingeben' : providerInfo.keyPlaceholder
+          }
           placeholderTextColor={theme.textSecondary}
           secureTextEntry
           autoCapitalize="none"
@@ -182,7 +272,7 @@ export function GeneratorCard({
         />
         <ThemedText type="small" themeColor="textSecondary">
           {mode === 'secure-store'
-            ? 'Wird verschlüsselt auf dem Gerät abgelegt (Keychain/Keystore) und übersteht Neustarts.'
+            ? `Wird verschlüsselt auf dem Gerät abgelegt (Keychain/Keystore) und übersteht Neustarts. Jeder Anbieter hat seinen eigenen Platz — der Wechsel hierüber löscht keinen anderen Schlüssel.`
             : mode === 'session-only'
               ? 'Im Browser gibt es keine sichere Ablage — der Schlüssel bleibt nur für diese Sitzung im Arbeitsspeicher und ist nach dem Neuladen weg. Das ist Absicht (AE-10).'
               : '…'}
@@ -195,7 +285,7 @@ export function GeneratorCard({
 
       <View style={styles.field}>
         <ThemedText type="small">Umfang</ThemedText>
-        <View style={styles.buttonRow}>
+        <ChoiceRow label={`Umfang für ${heading}`}>
           {runOptions.map((option) => (
             <Button
               key={option.id}
@@ -205,7 +295,7 @@ export function GeneratorCard({
               disabled={running}
             />
           ))}
-        </View>
+        </ChoiceRow>
         <ThemedText type="small" themeColor="textSecondary">
           {activeOption.hint}
         </ThemedText>
@@ -306,6 +396,43 @@ function Counter({ label, value, color }: { label: string; value: number; color:
   );
 }
 
+/**
+ * Eine Reihe, in der genau eine Möglichkeit gewählt ist.
+ *
+ * Sie trägt `radiogroup`, damit ein Screenreader die Knöpfe darin als
+ * **zusammengehörige Auswahl** ansagt („1 von 3") statt als drei einzelne
+ * Knöpfe, zwischen denen kein Zusammenhang erkennbar wäre.
+ */
+export function ChoiceRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View accessibilityRole="radiogroup" accessibilityLabel={label} style={styles.buttonRow}>
+      {children}
+    </View>
+  );
+}
+
+/**
+ * Knopf — als Aktion, oder als eine Möglichkeit unter mehreren.
+ *
+ * IM WEB-BUILD NACHGEMESSEN (Phase 10): `accessibilityState={{ selected }}`
+ * erzeugt in dieser React-Native-Web-Fassung **gar kein** ARIA-Attribut. Die
+ * gewählte Möglichkeit war also nur an ihrer Umrandung zu erkennen — für
+ * Sehende sichtbar, für einen Screenreader unsichtbar. Betroffen war nicht nur
+ * die neue Anbieterwahl, sondern auch Umfang und Standard-Lernrichtung, die
+ * seit Phase 4 bzw. 6 bestehen; die Prüfung in Phase 9 hat Beschriftung,
+ * Tippziel und Fokus gemessen, aber nicht den Zustand.
+ *
+ * `radio` + `checked` wird dagegen zu `role="radio"` und `aria-checked`
+ * übersetzt — nachgemessen, nicht angenommen. Ein Knopf **ohne** `selected`
+ * bleibt eine gewöhnliche Aktion (Start, Löschen) und behält `role="button"`;
+ * ein Aktionsknopf als Radiobutton wäre die falsche Auskunft.
+ */
 export function Button({
   label,
   onPress,
@@ -315,17 +442,25 @@ export function Button({
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  /** Gesetzt heißt: eine Möglichkeit unter mehreren, nicht eine Aktion. */
   selected?: boolean;
 }) {
   const toneColor = useToneColor();
+  const istWahl = selected !== undefined;
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled}
-      accessibilityRole="button"
+      accessibilityRole={istWahl ? 'radio' : 'button'}
       accessibilityLabel={label}
-      accessibilityState={{ disabled: Boolean(disabled), selected: Boolean(selected) }}
+      // `aria-checked` DIREKT, nicht ueber accessibilityState: im Web-Build
+      // gemessen, dass React Native Web weder `selected` noch `checked` aus
+      // accessibilityState in ein ARIA-Attribut uebersetzt. Ein `role="radio"`
+      // ohne `aria-checked` waere schlechter als gar keins - die Rolle
+      // verspricht einen Zustand, den niemand abfragen kann.
+      aria-checked={istWahl ? Boolean(selected) : undefined}
+      accessibilityState={{ disabled: Boolean(disabled) }}
       style={({ pressed }) => [pressed && styles.pressed, disabled && styles.disabled]}>
       <ThemedView
         type={selected ? 'backgroundSelected' : 'backgroundElement'}
@@ -355,6 +490,10 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.three,
+  },
+  warning: {
+    borderRadius: Spacing.two,
+    padding: Spacing.two,
   },
   field: {
     gap: Spacing.two,
