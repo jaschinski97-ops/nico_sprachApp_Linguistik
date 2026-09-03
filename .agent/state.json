@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-03",
-  "currentPhase": 11,
-  "currentPhaseName": "Natives Audio (Hoeren)",
+  "currentPhase": 12,
+  "currentPhaseName": "Sprechen (Mikrofon + Aussprachekorrektur)",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -628,6 +628,55 @@
       "done": false,
       "verifiedHow": null,
       "blocker": "B-6 - beide geben ohne gueltigen Schluessel kein Audio her. Das Messwerkzeug (scripts/tone-contour.html) nimmt Dateien oder ein Manifest entgegen; Anleitung im TODO."
+    },
+    {
+      "phase": 12,
+      "criterion": "Getrennte lokale Aufnahmewege fuer Web und nativ, Grenze gemessen dokumentiert",
+      "done": true,
+      "verifiedHow": "Nativ useAudioStream aus expo-audio 57 (Int16-PCM), Web getUserMedia/Web Audio, weil der installierte AudioStream.web-Stub null liefert. Beide Hook-Lebenszyklen mit API-Doubles getestet; kein fetch, Anbieter, Schluessel, Datei- oder Repository-Schreibpfad. Der In-App-Browser blieb am nicht bedienbaren Mikrofon-Prompt, reales natives PCM bleibt B-2 - AE-34 nennt beide Grenzen."
+    },
+    {
+      "phase": 12,
+      "criterion": "Sollkontur nachweislich aus verifizierten Tondaten, nie aus TTS",
+      "done": true,
+      "verifiedHow": "Nur sourceVerified und genau eine Silbe; targetTone = syllables[0].tone. Gegenprobe mit widerspruechlichem entry.tone und falschem audioAssetId bleibt beim Silbenton; SpeakingPrompt enthaelt kein Audiofeld. Hoerclip ist im UI separat und wird vor Aufnahme gestoppt."
+    },
+    {
+      "phase": 12,
+      "criterion": "Phase-8-Mikrofonentscheidung bewusst und minimal umgekehrt",
+      "done": true,
+      "verifiedHow": "AE-33. recordAudioAndroid true und iOS-Zwecktext; Hintergrundaufnahme/-wiedergabe false. Android-Prebuild: RECORD_AUDIO vorhanden, kein FOREGROUND_SERVICE_MICROPHONE/Recording Service. Laufzeitabfrage nach UI-Begruendung erst im start()-Pfad, per Hook-Test belegt."
+    },
+    {
+      "phase": 12,
+      "criterion": "F0-Verfahren aus tone-contour.html samt Oktavgrenze wiederverwendet",
+      "done": true,
+      "verifiedHow": "40/10 ms, 70-400 Hz, RMS/Korrelation, Medianfilter, laengste Strecke, einmalige 1,8-fache Oktavkorrektur, 8 Prozent Beschnitt und sechs Halbtonpunkte. Tests fuer 48->8 kHz, Oktavsprung, genau einen Durchgang, Stille und eine steigende PCM-Kurve; verbleibender Oktavfehler steht im UI."
+    },
+    {
+      "phase": 12,
+      "criterion": "Bewertung bleibt ehrlich und ohne Aussprache-Score",
+      "done": true,
+      "verifiedHow": "UI nennt Konsonanten, Vokallaenge, Aspiration, F0-/Oktavfehler. Nur relative Steig-/Fallform bekommt ohne Baseline ein binaeres Kontururteil; mittel/tief/hoch melden Register offen. Kein score/correct-Feld, keine Behauptung vollstaendiger Aussprache."
+    },
+    {
+      "phase": 12,
+      "criterion": "FSRS-Entscheidung begruendet und ohne Schreibzugriff umgesetzt",
+      "done": true,
+      "verifiedHow": "AE-35. Kartenzustand wird nur fuer die Auswahl schwacher Woerter gelesen; Session-Test vergleicht den Kartenbestand vor/nach dem Bau. Keine Karte, Bewertung oder Statistik wird geschrieben."
+    },
+    {
+      "phase": 12,
+      "criterion": "Physische Aufnahme und Konturauswertung auf Android/iOS-Geraet",
+      "done": false,
+      "verifiedHow": null,
+      "blocker": "B-2 - installierte Paketquellen, Manifest, Typen, native Hook-Lebenszyklen und PCM-Dekodierung sind belegt; tatsaechliche Hardware-Rate, Mikrofonberechtigung und F0-Kontur brauchen ein Geraet/Preview-Build. Das ist eine dokumentierte Abnahmegrenze, nicht still als bestanden markiert."
+    },
+    {
+      "phase": 12,
+      "criterion": "Tests, TypeScript und Web-Export gruen",
+      "done": true,
+      "verifiedHow": "508 Tests in 22 Suites gruen (vorher 469/16); npx tsc --noEmit fehlerfrei; Expo-Web-Export mit acht statischen Routen erfolgreich; gerenderter Sprechscreen ohne Browser-Konsolenfehler."
     }
   ],
   "architectureDecisions": [
@@ -785,6 +834,26 @@
       "id": "AE-31",
       "title": "Die Thai-Toene der TTS-Stimmen sind gemessen, und die Grenze der Messung ist benannt",
       "rationale": "Ob ein TTS-Modell die fuenf Toene realisiert, steht in keiner Doku und laesst sich hier nicht hoeren (kein Thai auf Windows noch im Browser). Deshalb ein Messwerkzeug (F0 ueber normierte Autokorrelation, Oktavkorrektur, Kontur in Halbtoenen, schwellenfreie Ordnungspruefung) an Minimalpaaren aus dem Grundstock, angewendet auf drei Stimmen zweier Engines. Befund: keine Stimme trifft alle fuenf Toene ueberzeugend - Google laesst den steigenden Ton fallen, Microsoft trennt mittel und hoch kaum. Die App-Anbieter selbst konnten nicht gemessen werden (B-6); das Werkzeug liegt im Repo dafuer bereit. Konsequenz: synthetic: true als Literaltyp, 'KI-Stimme' beim Abspielen, nirgends ein Versprechen ueber Toene. Kein fuenfter Anbieter: kein Bestand wie bei Stability, Gemini gemessen offen, ein Spezialanbieter waere neu; edge-tts ist ein nachgebauter Zugang ohne API - gut zum Messen, untauglich fuer die App. Ein Oktavfehler der ersten Werkzeugfassung (+5 Halbtoene am Silbenanfang) ist als Methodenfehler festgehalten, nicht als Ton."
+    },
+    {
+      "id": "AE-32",
+      "title": "Die Sollkontur kommt aus der verifizierten Silbe, nie aus der Stimme",
+      "rationale": "Sprechprompts entstehen nur aus sourceVerified-Eintraegen mit genau einer Silbe; targetTone ist ausschliesslich syllables[0].tone. Mehrsilbige Woerter bleiben ohne gepruefte Audio-Silbengrenzen draussen. Weder TTS noch audioAssetId gehoeren zum Prompt oder Vergleich; ein absichtlich widerspruechlicher Test belegt das. Der Clip bleibt nur ein klar gekennzeichnetes Hoerbeispiel."
+    },
+    {
+      "id": "AE-33",
+      "title": "RECORD_AUDIO ist die ausdruecklich begruendete Umkehr von Phase 8",
+      "rationale": "Phase 8 schaltete Mikrofonrechte ab, weil die App nie aufnahm. Phase 12 nimmt lokal auf: recordAudioAndroid true und konkreter iOS-Zwecktext; enableBackgroundRecording und enableBackgroundPlayback bleiben false. Die Laufzeitabfrage erfolgt erst nach der sichtbaren Begruendung beim Startknopf. Android-Prebuild bestaetigt RECORD_AUDIO ohne Mikrofon-Foreground-Service oder Recording Service."
+    },
+    {
+      "id": "AE-34",
+      "title": "Ein lokaler PCM-Kern, zwei gemessene Aufnahmewege",
+      "rationale": "Das installierte expo-audio 57 liefert useAudioStream nur nativ; AudioStream.web ist ein null-Stub. Daher Android/iOS ueber mono Int16-PCM aus useAudioStream, Web ueber getUserMedia plus AudioWorklet/ScriptProcessor. Hoechstens vier Sekunden bleiben nur im Speicher; nach der Analyse bleiben nur Kontur und Dauer, ohne fetch, Anbieter, Schluessel, Datei oder Repository-Schreiben. Der F0-Kern aus tone-contour.html bleibt mit Autokorrelation, Medianfilter, laengster Strecke, einmaliger 1,8-facher Oktavkorrektur, Randbeschnitt und Halbtoenen erhalten; Downsampling auf hoechstens 8 kHz ist die einzige App-Vorverarbeitung. Physisches Web-/Native-PCM bleibt als gemessene Browser-/B-2-Grenze offen."
+    },
+    {
+      "id": "AE-35",
+      "title": "Die Sprechuebung schreibt nicht in den bestehenden FSRS-Karteikasten",
+      "rationale": "Eine F0-Kontur ist objektiver als Raten, misst aber weder lexikalischen Abruf noch Konsonanten, Aspiration oder Vokallaenge und kann irren. Sie darf das Intervall einer ganzen Vokabel nicht aendern. FSRS wird nur fuer die Auswahl schwacher Woerter gelesen; es gibt weder Karte noch Score noch Statistik-Schreibzugriff. Ohne persoenliche Referenz werden nur relative Steig-/Fallformen beurteilt; mittel/tief/hoch melden ehrlich Register offen."
     }
   ],
   "openBlockers": [
@@ -797,11 +866,12 @@
         5,
         6,
         10,
-        11
+        11,
+        12
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht. SEIT PHASE 11: Native Clip-Ablage (Paths.document/audio/) und Wiedergabe ueber expo-audio sind nur typgeprueft.",
-      "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'."
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht. SEIT PHASE 11: Native Clip-Ablage (Paths.document/audio/) und Wiedergabe ueber expo-audio sind nur typgeprueft. SEIT PHASE 12: useAudioStream, PCM-Dekodierung, Berechtigungszeitpunkt, Auto-Stopp und Aufraeumen sind paketquellen-, typ- und Hook-getestet; ein echtes Android/iOS-Mikrofon samt tatsaechlicher Abtastrate und F0-Kontur wurde nicht ausgefuehrt.",
+      "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'; danach Deutsch -> Thai -> Sprechen, Mikrofon erst am Knopf freigeben, steigendes und fallendes Wort aufnehmen, Kontur pruefen, Auto-Stopp und erloschenen Mikrofonindikator bestaetigen."
     },
     {
       "id": "B-4",
@@ -837,12 +907,13 @@
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 11 abgeschlossen; Phase 12 (Sprechen) baut auf den Clips auf",
+    "name": "Phase 12 abgeschlossen; echte Mikrofon-Hardware bleibt als dokumentierte Grenze",
     "tasks": [
+      "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2), inklusive Auto-Stopp und sofortigem Ende des Mikrofonindikators",
       "B-6: Probelauf Hoerclips mit gueltigem Gemini-Schluessel - danach die zehn Clips in scripts/tone-contour.html ziehen und die Toene messen (AE-31)",
       "B-5: EAS-Konto, dann Android-APK bauen (schliesst B-2 fuer Android mit)",
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
-      "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27)",
+      "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27), und physisches PCM der Sprechuebung pruefen (AE-34)",
       "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen",
       "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen"
     ]
@@ -970,7 +1041,7 @@
     "easFreeTier": "15 Android- und 15 iOS-Builds, niedrige Prioritaet, 60 min CI/CD, Updates an 1K MAUs",
     "placeholders": "App-Symbol und Splash sind noch die Expo-Template-Platzhalter",
     "doctor": "21/21 Pruefungen bestanden (nach Nachinstallation von expo-asset)",
-    "androidPermissions": "INTERNET, MODIFY_AUDIO_SETTINGS, READ/WRITE_EXTERNAL_STORAGE (maxSdkVersion 32), VIBRATE, SYSTEM_ALERT_WINDOW; RECORD_AUDIO bewusst abgeschaltet",
+    "androidPermissions": "INTERNET, MODIFY_AUDIO_SETTINGS, READ/WRITE_EXTERNAL_STORAGE (maxSdkVersion 32), RECORD_AUDIO, VIBRATE, SYSTEM_ALERT_WINDOW. RECORD_AUDIO in Phase 12 als dokumentierte Umkehr von Phase 8 nur fuer lokale Sprechaufnahme eingeschaltet; kein FOREGROUND_SERVICE_MICROPHONE und kein Recording Service.",
     "nativeDirs": "android/ und ios/ sind gitignoriert (schon seit Phase 0, Expo-Vorlage) - EAS erzeugt sie im Build selbst"
   },
   "phase8Note": "Phase 8 gilt als abgeschlossen, aber ZWEI von sechs Abnahmekriterien sind offen: der installierbare Android-Build und ein iOS-Durchlauf. Beide brauchen ein Expo-Konto (B-5). Vorbereitung, Vorab-Validierung und Web-Export sind fertig und geprueft.",
@@ -1038,5 +1109,22 @@
       "notMeasured": "Gemini und ChatGPT (B-6)"
     },
     "note": "Zehn Ersatz-Clips wurden zum Pruefen von Ablage, Offline-Abruf, Wiedergabe und Kennzeichnung eingespielt und danach wieder entfernt."
+  },
+  "speaking": {
+    "direction": "de_to_th",
+    "sessionSize": 10,
+    "candidates": "sourceVerified und genau eine Silbe",
+    "target": "ausschliesslich syllables[0].tone; targetSource verified-vocabulary-syllables; nie TTS/audioAssetId",
+    "capture": {
+      "native": "expo-audio 57 useAudioStream, mono Int16, 16 kHz angefordert, tatsaechliche Rate/Kanaele ausgewertet",
+      "web": "getUserMedia + Web Audio; AudioWorklet, ScriptProcessor-Fallback; eigener Weg wegen AudioStream.web null-Stub",
+      "maxDurationMs": 4000,
+      "retention": "nur fluechtiges PCM im Arbeitsspeicher; nach Analyse nur Dauer und Kontur; kein Datei-, Anbieter-, Netzwerk- oder Repository-Pfad"
+    },
+    "analysis": "F0-Kern aus scripts/tone-contour.html; 40/10 ms, 70-400 Hz, RMS 0.08, Korrelation 0.6, Medianfilter, laengste Strecke, einmalige 1.8-Oktavkorrektur, 8 Prozent Randbeschnitt, sechs Halbtonpunkte; App-Vorverarbeitung bis 8 kHz",
+    "feedback": "qualitativ ohne Score; relative rising/falling-Form pruefbar; mid/low/high ohne Sprecherbaseline register-uncalibrated; Konsonanten, Vokallaenge, Aspiration und Messfehler sichtbar unbewertet",
+    "fsrs": "nur fuer Aufgabenauswahl gelesen; keine Karte, Bewertung oder Statistik geschrieben (AE-35)",
+    "permission": "Phase-8-Umkehr (AE-33): RECORD_AUDIO und iOS-Zwecktext an; Runtime-Frage erst im start-Pfad nach UI-Begruendung; Hintergrundaufnahme/-wiedergabe aus",
+    "verification": "508 Tests in 22 Suites, tsc, Web-Export 8 Routen, Web-DOM ohne Konsolenfehler; physisches In-App-Browser-Mikrofon und natives Geraet als AE-34/B-2-Grenze offen"
   }
 }

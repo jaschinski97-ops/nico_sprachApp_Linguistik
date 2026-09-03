@@ -1,0 +1,193 @@
+/**
+ * Fachliche Regeln der Sprechuebung.
+ *
+ * Die Sollkontur kommt ausschliesslich aus dem verifizierten
+ * `syllables[0].tone` des Vokabeleintrags. TTS-Clips duerfen die Oberflaeche
+ * spaeter als gekennzeichnetes Hoerbeispiel abspielen, sind aber weder Eingabe
+ * dieses Moduls noch Bewertungsmassstab.
+ */
+
+import { Tone, TONE_KEYS, TONES } from '@/constants/tones';
+import { VocabEntry } from '@/data/vocabulary';
+
+import { matchesTone, matchesToneShape, ToneContourMeasurement } from './analysis';
+
+/** Muss im UI neben jeder Rueckmeldung sichtbar sein. */
+export const SPEAKING_LIMITATIONS = [
+  'Bewertet wird nur die Tonhöhenkontur.',
+  'Konsonanten, Vokallänge und Aspiration werden nicht geprüft.',
+  'Die lokale F0-Messung ist eine Heuristik und kann besonders bei Rauschen, Nasalen und sehr kurzen Silben irren.',
+  'Die einmalige 1,8-fache Oktavkorrektur fängt nur grobe Einzelsprünge; mehrere oder überwiegende Oktavfehler können bestehen bleiben.',
+  'Ohne eine persönliche Referenz aus mehreren Aufnahmen wird nur die Konturform verglichen; die absolute Lage von mittel, tief und hoch ist dann nicht kalibriert.',
+] as const;
+
+/** Textbaustein fuer die Begruendung unmittelbar vor der Mikrofonfreigabe. */
+export const SPEAKING_PRIVACY_NOTICE =
+  'Die Aufnahme bleibt auf diesem Gerät. Die Auswertung läuft lokal und sendet keine Audiodaten an einen Anbieter.';
+
+export type SpeakingPrompt = {
+  id: string;
+  vocabId: string;
+  thai: string;
+  romanization: string;
+  german: string;
+  source: string | null;
+  sourceVerified: true;
+  syllableIndex: 0;
+  syllableRomanization: string;
+  /** Sollton aus `syllables[0].tone`, niemals aus einem Audio-Clip. */
+  targetTone: Tone;
+  targetSource: 'verified-vocabulary-syllables';
+};
+
+export type ToneContourVerdict =
+  | 'compatible'
+  | 'needs-work'
+  | 'register-uncalibrated'
+  | 'unmeasurable';
+
+/**
+ * Qualitative Rueckmeldung ohne Punktzahl und ohne Behauptung, die gesamte
+ * Aussprache sei richtig oder falsch.
+ */
+export type ToneContourFeedback = {
+  kind: 'tone-contour-feedback';
+  scope: 'tone-contour-only';
+  verdict: ToneContourVerdict;
+  targetTone: Tone;
+  targetLabel: string;
+  comparisonBasis: 'shape-only' | 'speaker-baseline';
+  message: string;
+  limitations: typeof SPEAKING_LIMITATIONS;
+};
+
+/**
+ * Das HTML-Verfahren bewertet eine einzelne zusammenhaengende stimmhafte
+ * Strecke. Ohne gepruefte Silbengrenzen kann es ein mehrsilbiges Wort deshalb
+ * nicht ehrlich mehreren Solltoenen zuordnen (AE-7/AE-8).
+ */
+export function canBuildSpeakingPrompt(entry: VocabEntry): boolean {
+  return (
+    entry.sourceVerified === true &&
+    Array.isArray(entry.syllables) &&
+    entry.syllables.length === 1 &&
+    TONE_KEYS.includes(entry.syllables[0].tone)
+  );
+}
+
+export function buildSpeakingPrompt(entry: VocabEntry): SpeakingPrompt {
+  if (entry.sourceVerified !== true) {
+    throw new Error(
+      `"${entry.id}" ist nicht vollständig quellengeprüft — daraus wird keine Sollkontur gebaut.`
+    );
+  }
+  if (!Array.isArray(entry.syllables) || entry.syllables.length !== 1) {
+    throw new Error(
+      `"${entry.id}" ist nicht einsilbig — die Aufnahme kann ohne geprüfte Silbengrenzen keinem einzelnen Sollton zugeordnet werden.`
+    );
+  }
+
+  const syllable = entry.syllables[0];
+  if (!TONE_KEYS.includes(syllable.tone)) {
+    throw new Error(`"${entry.id}" hat keinen bekannten, geprüften Sollton.`);
+  }
+
+  return {
+    id: `speaking:${entry.id}`,
+    vocabId: entry.id,
+    thai: entry.thai,
+    romanization: entry.romanization,
+    german: entry.german,
+    source: entry.source ?? null,
+    sourceVerified: true,
+    syllableIndex: 0,
+    syllableRomanization: syllable.roman,
+    targetTone: syllable.tone,
+    targetSource: 'verified-vocabulary-syllables',
+  };
+}
+
+export function buildSpeakingPrompts(entries: readonly VocabEntry[]): SpeakingPrompt[] {
+  return entries.filter(canBuildSpeakingPrompt).map(buildSpeakingPrompt);
+}
+
+const NEEDS_WORK: Record<Tone, string> = {
+  mid: 'Die gemessene Kontur war bewegter als die erwartete mittlere Form.',
+  low: 'Die gemessene Kontur entsprach noch nicht der tiefen, ebenen bis fallenden Form.',
+  falling: 'Die Tonhöhe fiel noch nicht deutlich genug von einem hohen Anfang ab.',
+  high: 'Das Ende lag noch nicht in der erwarteten hohen beziehungsweise steigenden Form.',
+  rising: 'Nach der Senke stieg die Tonhöhe noch nicht deutlich genug an.',
+};
+
+export function feedbackForMeasurement(
+  prompt: SpeakingPrompt,
+  measurement: ToneContourMeasurement
+): ToneContourFeedback {
+  const targetLabel = TONES[prompt.targetTone].label;
+
+  if (measurement.status === 'unmeasurable') {
+    return {
+      kind: 'tone-contour-feedback',
+      scope: 'tone-contour-only',
+      verdict: 'unmeasurable',
+      targetTone: prompt.targetTone,
+      targetLabel,
+      comparisonBasis: 'shape-only',
+      message:
+        'Keine ausreichend lange zusammenhängende Tonhöhe messbar. Bitte in ruhiger Umgebung noch einmal sprechen.',
+      limitations: SPEAKING_LIMITATIONS,
+    };
+  }
+
+  const comparisonBasis =
+    measurement.referenceKind === 'speaker-baseline' ? 'speaker-baseline' : 'shape-only';
+  const compatible =
+    comparisonBasis === 'speaker-baseline'
+      ? matchesTone(prompt.targetTone, measurement.summary)
+      : matchesToneShape(prompt.targetTone, measurement.summary);
+
+  if (compatible === null) {
+    return {
+      kind: 'tone-contour-feedback',
+      scope: 'tone-contour-only',
+      verdict: 'register-uncalibrated',
+      targetTone: prompt.targetTone,
+      targetLabel,
+      comparisonBasis,
+      message:
+        `Die Kontur wurde gemessen. Ohne persönliche Referenz lässt sich der Sollton „${targetLabel}“ ` +
+        'aber nicht zuverlässig von den anderen Registertönen mittel, tief und hoch unterscheiden.',
+      limitations: SPEAKING_LIMITATIONS,
+    };
+  }
+
+  if (compatible) {
+    return {
+      kind: 'tone-contour-feedback',
+      scope: 'tone-contour-only',
+      verdict: 'compatible',
+      targetTone: prompt.targetTone,
+      targetLabel,
+      comparisonBasis,
+      message:
+        comparisonBasis === 'speaker-baseline'
+          ? `Die gemessene Tonhöhenkontur ist mit dem Sollton „${targetLabel}“ vereinbar.`
+          : `Die gemessene Konturform ist mit dem Sollton „${targetLabel}“ vereinbar; die absolute Sprechlage wurde nicht bewertet.`,
+      limitations: SPEAKING_LIMITATIONS,
+    };
+  }
+
+  return {
+    kind: 'tone-contour-feedback',
+    scope: 'tone-contour-only',
+    verdict: 'needs-work',
+    targetTone: prompt.targetTone,
+    targetLabel,
+    comparisonBasis,
+    message:
+      comparisonBasis === 'shape-only'
+        ? `${NEEDS_WORK[prompt.targetTone]} Bewertet wurde nur die relative Form, nicht die absolute Sprechlage.`
+        : NEEDS_WORK[prompt.targetTone],
+    limitations: SPEAKING_LIMITATIONS,
+  };
+}

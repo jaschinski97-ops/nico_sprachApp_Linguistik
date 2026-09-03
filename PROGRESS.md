@@ -1067,6 +1067,109 @@ AE-27: mit `Bearer ungueltig` ein lesbares 401, mit `Bearer sk-…` „Failed to
 fetch". ChatGPT ist damit auch für Sprachausgabe im Web-Build gekennzeichnet,
 nativ offen. Die Voreinstellung der Gruppe ist Gemini.
 
+### AE-32 — Die Sollkontur kommt aus der verifizierten Silbe, nie aus der Stimme
+
+**Entscheidung:** Eine Sprechaufgabe entsteht nur für einen Eintrag mit
+`sourceVerified === true` und genau einer Silbe. Ihr Sollton ist wortwörtlich
+`syllables[0].tone`; weder `audioAssetId` noch ein TTS-Clip noch dessen
+gemessene Kurve gelangen in den Prompt oder den Vergleich. Das synthetische
+Hörbeispiel bleibt ein eigener, ausdrücklich so beschrifteter Knopf.
+
+Das ist absichtlich strenger als nur `entry.tone` zu lesen. Bei mehrsilbigen
+Wörtern beschreibt das Feld nur die erste Silbe; ohne geprüfte zeitliche
+Silbengrenzen könnte die längste stimmhafte Strecke nicht ehrlich einem der
+mehreren Solltöne zugeordnet werden. Solche Wörter bleiben deshalb aus dieser
+ersten Sprechübung heraus, statt eine Grenze zu raten.
+
+**Gegenprobe:** Der Test baut einen verifizierten Eintrag mit drei absichtlich
+widersprüchlichen Angaben (`tone: falling`, `syllables[0].tone: rising`, ein
+Clip mit „falschem Ton"). Der Prompt bleibt `rising`, trägt
+`targetSource: verified-vocabulary-syllables` und enthält überhaupt kein
+Audiofeld. Damit würde auch ein nachweislich falscher TTS-Ton den Maßstab nicht
+verschieben.
+
+### AE-33 — RECORD_AUDIO ist die ausdrücklich begründete Umkehr von Phase 8
+
+Phase 8 schaltete `recordAudioAndroid` und `microphonePermission` bewusst aus:
+Die App nahm damals nie auf, also wäre die Berechtigung irreführend gewesen.
+Phase 12 ändert genau diese Tatsachengrundlage. `recordAudioAndroid` ist nun
+`true`, iOS erhält den Zwecktext „nur für die lokale Sprechübung; keine
+Übertragung". `enableBackgroundRecording` und `enableBackgroundPlayback`
+bleiben ausdrücklich `false`.
+
+Die statische Berechtigung bedeutet nicht, dass die App beim Start fragt. Vor
+dem Aufnahme-Knopf steht die Begründung samt lokaler Verarbeitung; erst dessen
+ausdrücklicher Nutzer-Klick ruft nativ
+`requestRecordingPermissionsAsync()` beziehungsweise im Web
+`getUserMedia()` auf. Ein Hook-Test belegt „Mounten fragt nicht", den
+Ablehnungsweg und das Freigeben beim Abbau.
+
+Mit `expo prebuild --platform android --no-install` nachgemessen: Das erzeugte
+Manifest enthält `android.permission.RECORD_AUDIO`, aber weder
+`FOREGROUND_SERVICE_MICROPHONE` noch den Audio-Aufnahmedienst. Der generierte
+Ordner wurde danach wieder entfernt; `package.json` blieb in seiner
+vorherigen Form.
+
+### AE-34 — Ein lokaler PCM-Kern, zwei gemessene Aufnahmewege
+
+Das installierte `expo-audio@57.0.4` ist nicht plattformgleich: Die native
+Implementierung von `useAudioStream` liefert unter Android/iOS echte
+PCM-Puffer samt tatsächlicher Abtastrate und Kanalzahl; die installierte
+`AudioStream.web.ts` liefert nur `stream: null`. Deshalb gibt es bewusst zwei
+Hooks hinter demselben Vertrag:
+
+- Android/iOS: `useAudioStream`, mono, Int16, gewünschte 16 kHz; das wirklich
+  gelieferte little-endian PCM und die echte Rate werden ausgewertet.
+- Web: `getUserMedia` + Web Audio; bevorzugt `AudioWorklet`, mit lokalem
+  `ScriptProcessor`-Fallback. `MediaRecorder` wird nicht benutzt, weil er nur
+  eine codierte Datei und keinen gemeinsamen Echtzeit-PCM-Kern liefert.
+
+Beide Wege halten höchstens vier Sekunden Mono-PCM im Arbeitsspeicher, stoppen
+Tracks/Stream danach und behalten im Ergebnis nur Dauer und Kontur. Es gibt in
+diesem Pfad keinen `fetch`, Anbieter, Schlüssel, Blob-Speicher oder
+Repository-Schreibzugriff. Auch ein noch laufender Hörclip wird vor dem
+Mikrofonstart geordnet gestoppt und freigegeben, damit TTS nicht in die
+Lernendenmessung überspricht. Die Auswertung bleibt damit offline und auf dem
+Gerät.
+
+Der Rechenkern ist aus `scripts/tone-contour.html` übertragen: normierte
+Autokorrelation (40/10 ms, 70–400 Hz, Schwellen 0,08/0,6), Medianfilter,
+längste stimmhafte Strecke, **einmalige** 1,8-fache Oktavkorrektur, 8 %
+Randbeschnitt und sechs Halbton-Stützstellen. Vorher wird PCM nur auf höchstens
+8 kHz blockgemittelt, damit vier Sekunden im UI berechenbar bleiben; 400 Hz
+liegen weiter weit unter Nyquist. Tests decken den dokumentierten
+Oktavsprung, den absichtlich nur einen Korrekturdurchgang, 48→8 kHz und eine
+steigende PCM-Kurve durch die gesamte Pipeline ab.
+
+**Gemessene Grenze:** Im laufenden Expo-Web-Build war der vollständige Screen
+fehlerfrei sichtbar; der Start wechselte erst nach dem Klick in
+„Mikrofonfreigabe wird angefragt". Der einzige verfügbare Codex-In-App-Browser
+stellte jedoch keinen bedienbaren Mikrofon-Dialog bereit, sodass dort kein
+physisches PCM entstand. Web-API, PCM, Ablehnung und Aufräumen sind daher mit
+einem echten Hook plus Browser-API-Doubles geprüft; ein normaler Chrome/Edge-
+Mikrofonlauf bleibt ein Geräte-/Browsercheck. Nativ sind Hook, installiertes
+Android-/iOS-Paket, Manifest, Typen und Lebenszyklus getestet; echtes
+Hardware-PCM bleibt B-2. Das ist die gemessene Grenze, keine Behauptung eines
+nicht ausgeführten Gerätetests.
+
+### AE-35 — Die Sprechübung schreibt nicht in den bestehenden FSRS-Karteikasten
+
+Eine gemessene Tonkontur ist weniger zufällig als Multiple Choice aus AE-16,
+aber noch keine Bewertung derselben Fähigkeit wie eine Vokabelkarte:
+Konsonanten, Aspiration, Vokallänge und lexikalischer Abruf fehlen; F0 kann bei
+Rauschen, Nasalen, kurzen Silben und verbleibenden Oktavfehlern irren. Ein
+solcher Teilbefund darf das Intervall einer vollständigen Vokabel weder
+verlängern noch verkürzen.
+
+FSRS wird deshalb **nur gelesen**, um schwächere Wörter für eine Runde zu
+priorisieren. Die Sprechübung erzeugt und bewertet keine Karte und schreibt
+auch keinen Ersatz-Score. Die Rückmeldung lautet qualitativ „Kontur
+vereinbar", „noch nicht vereinbar", „nicht messbar" oder — bei mittel, tief
+und hoch ohne persönliche Mehrfachaufnahme — „Register offen". Nur steigende
+und fallende Formen sind aus einer einzelnen medianbezogenen Aufnahme relativ
+entscheidbar. Ein eigener Ausspracheplan wäre später ein eigener Skill mit
+validierter Skala, nicht ein stiller Schreibzugriff auf `vocabId:direction`.
+
 ---
 
 ## Protokoll
@@ -2405,10 +2508,95 @@ steht am Knopf, die Ist-Summe in der Statuszeile.
 
 ---
 
+### 2026-09-03 — Phase 12: Sprechen (Mikrofon + Aussprachekorrektur)
+
+**Vorbedingung und Rückfragen**
+
+`PROGRESS.md` und `.agent/state.json` vollständig im relevanten Stand gelesen;
+Repo zunächst sauber auf `main` bei `2580f39`. Der Ausgangsgate war **469
+Tests in 16 Suites**, `npx tsc --noEmit` fehlerfrei. Vor dem ersten Code wurden
+die exakten Expo-57-Seiten und danach die Quellen des tatsächlich installierten
+`expo-audio@57.0.4` gelesen.
+
+Wie verlangt wurde nicht blockierend nachgefragt:
+
+- **B-2:** Steht ein Android-/iOS-Gerät für Aufnahme und Konturmessung bereit?
+- **B-4:** Kann der Bilder-Probelauf mit lokal eingetragenem Stability-Schlüssel
+  erfolgen, ohne den Schlüssel zu teilen?
+- **B-5:** Soll die zurückgestellte EAS-Anmeldung für Preview-Builds nun
+  erfolgen?
+- **B-6:** Stehen gültige Gemini-/OpenAI-Schlüssel für die kleinsten lokalen
+  Probeläufe bereit, ohne sie zu teilen?
+
+Bis zum Abschluss kam keine Antwort; **B-2/B-4/B-5/B-6 bleiben offen**. B-4
+und B-6 sind für die rein lokale Sprechbewertung absichtlich ohne Einfluss.
+B-2 umfasst nun zusätzlich physisches Mikrofon-PCM auf Android/iOS; B-5 wäre
+ein möglicher Weg zum Android-Preview-Build.
+
+**Gebaut**
+
+- Neuer Modus **Sprechen** in Deutsch → Thai, zehn vollständig verifizierte,
+  einsilbige Wörter, nach schwachem FSRS-Zustand ausgewählt, aber ohne
+  FSRS-Schreibzugriff.
+- Sollform ausschließlich aus `syllables[0].tone` (AE-32). Hörclip/TTS ist
+  getrennt beschriftet und wird nie an die Analyse übergeben; vor Aufnahme
+  wird jede Wiedergabe gestoppt und ihr Player freigegeben.
+- Native Aufnahme über `expo-audio`-PCM; Web-Aufnahme getrennt über
+  `getUserMedia`/Web Audio. Vier-Sekunden-Grenze, ausschließlich flüchtiges
+  Mono-PCM, kein Netzwerk, keine Datei und kein Anbieter (AE-34).
+- F0-Kern aus `scripts/tone-contour.html` samt Autokorrelation,
+  Medianfilter, längster Strecke, einmaliger 1,8-facher Oktavkorrektur,
+  Randbeschnitt und Halbtonkontur portiert.
+- Qualitative Rückmeldung und Kurvengrafik ohne Score. Steigend/fallend können
+  als relative Form verglichen werden; mittel/tief/hoch bleiben ohne
+  persönliche Referenz ausdrücklich „Register offen". Konsonanten,
+  Vokallänge, Aspiration, F0- und Oktavfehler stehen direkt im Ergebnis.
+- Phase-8-Entscheidung sichtbar umgekehrt: `RECORD_AUDIO`/iOS-Zwecktext an,
+  Hintergrundaufnahme und Hintergrundwiedergabe weiter aus (AE-33).
+
+**Plattformnachweise**
+
+- Installiertes Paket: `useAudioStream` ist nativ implementiert; Android nutzt
+  `AudioRecord` mit Raten-Fallback, iOS `AVAudioEngine`/Konvertierung. Der
+  Web-Stub liefert dagegen `null` — Grund für den getrennten Browserpfad.
+- Android-Prebuild erzeugt und geprüft: `RECORD_AUDIO` vorhanden, keine
+  Mikrofon-Foreground-Service-Berechtigung und kein Recording Service. Der
+  generierte, ignorierte Ordner wurde danach kontrolliert entfernt.
+- Web-Hook-Test mit Web-Audio-Doubles: kein `getUserMedia` beim Mounten,
+  lokales PCM nach Start, Ablehnung als eigener Zustand, Tracks und
+  `AudioContext` werden beendet. Native Hook-Tests prüfen dieselben
+  Lebenszyklusregeln, tatsächliches Int16-Dekodieren und Auto-Stopp.
+- Laufender Web-Build: Modus und alle Datenschutz-/Quellen-/FSRS-Texte im DOM,
+  keine Konsolenfehler; erst der Start-Klick wechselte in die Freigabe. Der
+  In-App-Testbrowser stellte keinen bedienbaren Mikrofon-Prompt bereit und
+  blieb dort offen — deshalb kein vorgetäuschter physischer Web-Audiolauf.
+
+**Abschlussgate**
+
+- `npm test -- --runInBand` → **508 Tests in 22 Suites grün** (vorher 469/16).
+- `npx tsc --noEmit` → fehlerfrei.
+- `npm run export:web` → erfolgreich, acht statische Routen, Web-Bundle baut.
+- `git diff --check` → keine Whitespace-Fehler.
+- Der optionale `npm run lint` ist weiterhin kein eingerichteter Repo-Gate:
+  Expo wollte beim ersten Lauf eine ESLint-Konfiguration nachinstallieren und
+  scheiterte am gesperrten Netz (`ECONNREFUSED 127.0.0.1:9`); es entstand
+  keine Datei- oder Paketänderung.
+
+**Offen / bewusst nicht als ausgeführt behauptet**
+
+- Physischer Web-Mikrofonlauf in einem normalen Browser und Android/iOS-
+  Hardwarelauf. Die Implementierung und API-Lebenszyklen sind getestet; die
+  reale Gerätecharakteristik gehört zu B-2 beziehungsweise zum unten
+  priorisierten Browsercheck.
+- B-4, B-5 und B-6 unverändert. Keine Schlüssel, Konten oder Aufnahmen wurden
+  übertragen.
+
+---
+
 ## Konsolidierte Abnahme (Stand 2026-09-03)
 
-Jedes „Fertig, wenn" aus Phase 0–10 gegen den **jetzigen** Repo-Zustand.
-**92 von 98 erfüllt; 6 offen, und alle 6 hängen an einer Handlung des
+Jedes „Fertig, wenn" aus Phase 0–12 gegen den **jetzigen** Repo-Zustand.
+**99 von 106 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -2514,6 +2702,14 @@ Fassung abweichen.
 | 11 | Screens fuer den Resolver-Pfad nicht angefasst | **erfüllt** | Die Screens rufen weiter playPronunciation({ text, language }); der Clip wird ueber Text und Sprache gefunden (Thai ohne Leerraum, AE-30). Geaendert wurden Screens NUR fuer die Kennzeichnung nach Pflicht 4 (SpeakButton, TurnSpeakButton) - nicht, damit Clips spielen. |
 | 11 | Tests und tsc gruen | **erfüllt** | 469 Tests in 16 Suites gruen (vorher 437 in 15); npx tsc --noEmit fehlerfrei. |
 | 11 | Tonqualitaet der App-Anbieter selbst gemessen (Gemini, ChatGPT) | **offen** | Blocker: B-6 - beide geben ohne gueltigen Schluessel kein Audio her. Das Messwerkzeug (scripts/tone-contour.html) nimmt Dateien oder ein Manifest entgegen; Anleitung im TODO. |
+| 12 | Getrennte lokale Aufnahmewege fuer Web und nativ, Grenze gemessen dokumentiert | **erfüllt** | Nativ useAudioStream aus expo-audio 57 (Int16-PCM), Web getUserMedia/Web Audio, weil der installierte AudioStream.web-Stub null liefert. Beide Hook-Lebenszyklen mit API-Doubles getestet; kein fetch, Anbieter, Schluessel, Datei- oder Repository-Schreibpfad. Der In-App-Browser blieb am nicht bedienbaren Mikrofon-Prompt, reales natives PCM bleibt B-2 - AE-34 nennt beide Grenzen. |
+| 12 | Sollkontur nachweislich aus verifizierten Tondaten, nie aus TTS | **erfüllt** | Nur sourceVerified und genau eine Silbe; targetTone = syllables[0].tone. Gegenprobe mit widerspruechlichem entry.tone und falschem audioAssetId bleibt beim Silbenton; SpeakingPrompt enthaelt kein Audiofeld. Hoerclip ist im UI separat und wird vor Aufnahme gestoppt. |
+| 12 | Phase-8-Mikrofonentscheidung bewusst und minimal umgekehrt | **erfüllt** | AE-33. recordAudioAndroid true und iOS-Zwecktext; Hintergrundaufnahme/-wiedergabe false. Android-Prebuild: RECORD_AUDIO vorhanden, kein FOREGROUND_SERVICE_MICROPHONE/Recording Service. Laufzeitabfrage nach UI-Begruendung erst im start()-Pfad, per Hook-Test belegt. |
+| 12 | F0-Verfahren aus tone-contour.html samt Oktavgrenze wiederverwendet | **erfüllt** | 40/10 ms, 70-400 Hz, RMS/Korrelation, Medianfilter, laengste Strecke, einmalige 1,8-fache Oktavkorrektur, 8 Prozent Beschnitt und sechs Halbtonpunkte. Tests fuer 48->8 kHz, Oktavsprung, genau einen Durchgang, Stille und eine steigende PCM-Kurve; verbleibender Oktavfehler steht im UI. |
+| 12 | Bewertung bleibt ehrlich und ohne Aussprache-Score | **erfüllt** | UI nennt Konsonanten, Vokallaenge, Aspiration, F0-/Oktavfehler. Nur relative Steig-/Fallform bekommt ohne Baseline ein binaeres Kontururteil; mittel/tief/hoch melden Register offen. Kein score/correct-Feld, keine Behauptung vollstaendiger Aussprache. |
+| 12 | FSRS-Entscheidung begruendet und ohne Schreibzugriff umgesetzt | **erfüllt** | AE-35. Kartenzustand wird nur fuer die Auswahl schwacher Woerter gelesen; Session-Test vergleicht den Kartenbestand vor/nach dem Bau. Keine Karte, Bewertung oder Statistik wird geschrieben. |
+| 12 | Physische Aufnahme und Konturauswertung auf Android/iOS-Geraet | **offen** | B-2 - installierte Paketquellen, Manifest, Typen, native Hook-Lebenszyklen und PCM-Dekodierung sind belegt; tatsächliche Hardware-Rate, Mikrofonberechtigung und F0-Kontur brauchen ein Gerät/Preview-Build. Das ist eine dokumentierte Abnahmegrenze, nicht still als bestanden markiert. |
+| 12 | Tests, TypeScript und Web-Export gruen | **erfüllt** | 508 Tests in 22 Suites gruen (vorher 469/16); npx tsc --noEmit fehlerfrei; Expo-Web-Export mit acht statischen Routen erfolgreich; gerenderter Sprechscreen ohne Browser-Konsolenfehler. |
 ## Skalierungsplan auf ~1000 Einträge
 
 Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
@@ -2583,11 +2779,28 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 
 ## TODO — priorisiert
 
-> **Neu aus Phase 11 (2026-09-03):** Hörclips stehen; die Karteikarte, der
-> Beispielsatz und die Gesprächszüge spielen sie bevorzugt und sagen „KI-Stimme"
-> dazu. Was oben steht, braucht weiterhin einen Schlüssel oder ein Gerät.
+> **Neu aus Phase 12 (2026-09-03):** Die lokale Sprechübung steht vollständig
+> im Code und im automatisierten Gate. Offen sind nur die ausdrücklich
+> gemessenen Hardwaregrenzen: ein physischer Browser-Mikrofonlauf und natives
+> PCM auf Android/iOS. TTS bleibt Hörbeispiel, nie Bewertungsmaßstab.
 
-0. **Hörclips mit gültigem Gemini-Schlüssel erzeugen und die Töne messen
+0. **Sprechübung mit echtem Mikrofon abnehmen (Phase 12; nativ Teil von B-2):**
+   Zuerst in Chrome/Edge `npm run web`, **Lernen → Deutsch → Thai → Sprechen**.
+   Prüfen: Begründung steht vor dem Knopf; Systemdialog erst nach „Aufnahme
+   starten"; vier Sekunden oder manuell stoppen; Kontur/Rückmeldung erscheint;
+   Browser-Mikrofonindikator endet; Neuladen behält keine Aufnahme. Für
+   Android/iOS denselben Lauf über Expo Go oder das Preview-APK wiederholen.
+   Besonders notieren: tatsächliche Abtastrate, ob mindestens je ein klar
+   steigendes und fallendes Wort messbar ist, und ob der Audioindikator nach
+   Stoppen sofort erlischt. Mittel/tief/hoch müssen ohne persönliche Referenz
+   „Register offen" melden — ein „passt" wäre ein Fehler. Netzwerk kann dabei
+   aus sein; keine Aufnahme darf im Audio-/Bildspeicher auftauchen.
+
+> **Weiter offen aus Phase 11:** Hörclips stehen; die Karteikarte, der
+> Beispielsatz und die Gesprächszüge spielen sie bevorzugt und sagen „KI-Stimme"
+> dazu. Der echte Anbieter-/Tonlauf braucht weiterhin B-6.
+
+0a. **Hörclips mit gültigem Gemini-Schlüssel erzeugen und die Töne messen
    (neu, Phase 11 — schließt B-6 für Audio):** Reiter **Einstellungen**, Karte
    **Generator: Hörclips**, Anbieter Gemini, Modell und Stimme stehen lassen,
    Schlüssel eintragen, **Probelauf**, **Start**. Erwartung: 10 von 10 erzeugt,
@@ -2609,7 +2822,7 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 > braucht — nur dass die Probeläufe seit Phase 10 auch mit **Gemini** gefahren
 > werden können und nicht mehr nur mit Anthropic und Stability.
 
-0a. **Anbieter mit einem gültigen Schlüssel gegenprüfen (Phase 10):**
+0b. **Anbieter mit einem gültigen Schlüssel gegenprüfen (Phase 10):**
    Reiter **Einstellungen**, bei einer Gruppe den gewünschten Anbieter wählen,
    Modell stehen lassen, Schlüssel eintragen, **Probelauf**, **Start**. Was
    dabei erstmals belegbar wäre und heute offen ist:
@@ -2649,11 +2862,13 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
    gegen die laufende API, Fehlerverhalten, Batch, Ablage, Offline-Abruf und
    Anzeige.
 2. **Gerätecheck in Expo Go (Blocker B-2, offen, vom Nutzer zurückgestellt):**
-   Betrifft Phase 3, 4 und 5 auf iOS/Android; der Apple-Signierweg ist dem
+   Betrifft Phase 3, 4, 5 und nun Phase 12 auf iOS/Android; der Apple-Signierweg ist dem
    Nutzer derzeit zu aufwendig. Im Web-Build ist alles geprüft. Auf **Android**
    wäre der Weg über Expo Go deutlich einfacher, falls das später relevant
    wird. Für Phase 5 kommt dazu: der native Bildpfad (`expo-file-system`,
-   Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft.
+   Datei je Bild unter `Paths.document`) ist bisher nur typgeprüft. Für Phase
+   12: Mikrofonfreigabe, tatsächliches `expo-audio`-PCM, lokale Konturmessung
+   und sofortiges Freigeben nach Stoppen wie in Punkt 0 prüfen.
 3. **Restliche 20 Bilder**, sobald der Probelauf sitzt: „Alle konkreten
    Vokabeln" statt „Probelauf". Der Lauf überspringt, was schon da ist.
 > **Der ursprüngliche Plan (Phase 0–9) ist abgearbeitet.** Was hier noch steht,

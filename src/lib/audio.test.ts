@@ -119,6 +119,30 @@ describe('playPronunciation', () => {
     await expect(playPronunciation({ text: 'ไก่', language: 'th' })).resolves.toBe('tts');
     expect(calls.some((c) => c.kind === 'speak')).toBe(true);
   });
+
+  it('ordnet einen Stopp hinter einen noch aufloesenden Clip, damit nichts spaeter startet', async () => {
+    let resolveUri!: (uri: string) => void;
+    let markResolverStarted!: () => void;
+    const resolverStarted = new Promise<void>((resolve) => {
+      markResolverStarted = resolve;
+    });
+    registerAudioAssetResolver(
+      () => new Promise<string>((resolve) => {
+        markResolverStarted();
+        resolveUri = resolve;
+      })
+    );
+
+    const play = playPronunciation({ text: 'ไก่', language: 'th', audioAssetId: 'gai-01' });
+    // Der erste Backend-Stopp laeuft vor dem asynchronen Aufloeser.
+    await resolverStarted;
+    const stop = stopPronunciation();
+    resolveUri('file:///gai-01.m4a');
+
+    await expect(play).resolves.toBe('asset');
+    await expect(stop).resolves.toBeUndefined();
+    expect(calls.map((call) => call.kind)).toEqual(['stop', 'playAsset', 'stop']);
+  });
 });
 
 describe('stopPronunciation', () => {

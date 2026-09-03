@@ -40,8 +40,9 @@
       [
         "expo-audio",
         {
-          "recordAudioAndroid": false,
-          "microphonePermission": false,
+          "recordAudioAndroid": true,
+          "microphonePermission": "Thai Lernbegleiter nutzt das Mikrofon nur für die lokale Sprechübung. Aufnahmen werden nicht übertragen.",
+          "enableBackgroundRecording": false,
           "enableBackgroundPlayback": false
         }
       ],

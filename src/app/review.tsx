@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { DrillRunner } from '@/components/drill-runner';
 import { Flashcard } from '@/components/flashcard';
 import { ScreenScaffold } from '@/components/screen-scaffold';
+import { SpeakingRunner } from '@/components/speaking-runner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ToneLegend } from '@/components/tone-legend';
@@ -25,7 +26,7 @@ import {
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
 /** Karteikarten oder eine der richtungseigenen Übungen. */
-type Mode = 'cards' | DrillId;
+type Mode = 'cards' | DrillId | 'speaking';
 
 function isDirection(value: unknown): value is Direction {
   return value === 'de_to_th' || value === 'th_to_de';
@@ -33,7 +34,22 @@ function isDirection(value: unknown): value is Direction {
 
 function parseMode(value: unknown, direction: Direction): Mode {
   const drills: string[] = DRILLS_BY_DIRECTION[direction];
+  if (direction === 'de_to_th' && value === 'speaking') return 'speaking';
   return typeof value === 'string' && drills.includes(value) ? (value as Mode) : 'cards';
+}
+
+function modesForDirection(direction: Direction): Mode[] {
+  return [
+    'cards',
+    ...DRILLS_BY_DIRECTION[direction],
+    ...(direction === 'de_to_th' ? (['speaking'] as const) : []),
+  ];
+}
+
+function modeLabel(mode: Mode): string {
+  if (mode === 'cards') return 'Karteikarten';
+  if (mode === 'speaking') return 'Sprechen';
+  return DRILL_META[mode].label;
 }
 
 export default function ReviewScreen() {
@@ -100,6 +116,11 @@ export default function ReviewScreen() {
 
       {mode === 'cards' ? (
         <CardSession direction={direction} key={direction} />
+      ) : mode === 'speaking' ? (
+        <SpeakingRunner
+          key={`${direction}:speaking`}
+          onExit={() => router.setParams({ direction, mode: undefined })}
+        />
       ) : (
         <DrillRunner
           drill={mode}
@@ -142,7 +163,7 @@ function DirectionPicker({
             </ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               Karteikarten ·{' '}
-              {DRILLS_BY_DIRECTION[direction].map((drill) => DRILL_META[drill].label).join(' · ')}
+              {modesForDirection(direction).slice(1).map(modeLabel).join(' · ')}
             </ThemedText>
           </ThemedView>
         </Pressable>
@@ -162,13 +183,13 @@ function ModeBar({
   mode: Mode;
   onPick: (mode: Mode) => void;
 }) {
-  const modes: Mode[] = ['cards', ...DRILLS_BY_DIRECTION[direction]];
+  const modes = modesForDirection(direction);
   const toneColor = useToneColor();
 
   return (
     <View style={styles.modeBar}>
       {modes.map((candidate) => {
-        const label = candidate === 'cards' ? 'Karteikarten' : DRILL_META[candidate].label;
+        const label = modeLabel(candidate);
         const selected = candidate === mode;
         return (
           <Pressable

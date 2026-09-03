@@ -1,4 +1,5 @@
 import * as Speech from 'expo-speech';
+import type { AudioPlayer } from 'expo-audio';
 
 /**
  * Aussprache-Wiedergabe.
@@ -79,6 +80,30 @@ export type PronunciationBackend = {
   availableLocales(): Promise<string[]>;
 };
 
+type ActiveAssetPlayback = {
+  player: AudioPlayer;
+  subscription: { remove(): void } | null;
+};
+
+let activeAssetPlayback: ActiveAssetPlayback | null = null;
+
+function releaseAssetPlayback(expected?: ActiveAssetPlayback): void {
+  const active = activeAssetPlayback;
+  if (!active || (expected && active !== expected)) return;
+  activeAssetPlayback = null;
+  active.subscription?.remove();
+  try {
+    active.player.pause();
+  } catch {
+    // `remove` gibt die Ressource auch frei, wenn Pause bereits unmoeglich ist.
+  }
+  try {
+    active.player.remove();
+  } catch {
+    // Ein bereits freigegebener Player braucht nichts mehr.
+  }
+}
+
 const defaultBackend: PronunciationBackend = {
   async playAsset(uri) {
     // `expo-audio` wird erst hier geladen, nicht beim Import des Moduls.
@@ -87,12 +112,20 @@ const defaultBackend: PronunciationBackend = {
     // dieser Zweig wird also vorerst nie betreten.
     const { createAudioPlayer } = await import('expo-audio');
     const player = createAudioPlayer({ uri });
+    const playback: ActiveAssetPlayback = { player, subscription: null };
+    activeAssetPlayback = playback;
+    playback.subscription = player.addListener('playbackStatusUpdate', (status) => {
+      if (status.didJustFinish) releaseAssetPlayback(playback);
+    });
     player.play();
   },
   async speak(text, language, rate) {
     Speech.speak(text, { language, rate });
   },
   async stop() {
+    // Wichtig fuer die Sprechuebung: Ein lokaler KI-Clip darf beim Start der
+    // Mikrofonaufnahme nicht weiterlaufen und in die Messung uebersprechen.
+    releaseAssetPlayback();
     await Speech.stop();
   },
   async availableLocales() {
@@ -103,6 +136,19 @@ const defaultBackend: PronunciationBackend = {
 
 let backend = defaultBackend;
 
+// Wiedergabe- und Stoppvorgaenge laufen geordnet. Sonst koennte ein langsamer
+// Clip-Aufloeser *nach* einem bereits angeforderten Stopp doch noch starten.
+let playbackQueue: Promise<void> = Promise.resolve();
+
+function enqueuePlayback<T>(operation: () => Promise<T>): Promise<T> {
+  const result = playbackQueue.then(operation, operation);
+  playbackQueue = result.then(
+    () => undefined,
+    () => undefined
+  );
+  return result;
+}
+
 /** Nur für Tests. */
 export function setPronunciationBackend(next: PronunciationBackend | null): void {
   backend = next ?? defaultBackend;
@@ -112,7 +158,7 @@ export function setPronunciationBackend(next: PronunciationBackend | null): void
  * Spielt die Aussprache ab. Eine laufende Ausgabe wird vorher abgebrochen —
  * sonst stapeln sich die Äußerungen, wenn schnell mehrfach getippt wird.
  */
-export async function playPronunciation(
+async function playPronunciationNow(
   request: PronunciationRequest
 ): Promise<PlaybackKind> {
   const text = request.text.trim();
@@ -142,8 +188,14 @@ export async function playPronunciation(
   return 'tts';
 }
 
-export async function stopPronunciation(): Promise<void> {
-  await backend.stop().catch(() => {});
+export function playPronunciation(request: PronunciationRequest): Promise<PlaybackKind> {
+  return enqueuePlayback(() => playPronunciationNow(request));
+}
+
+export function stopPronunciation(): Promise<void> {
+  return enqueuePlayback(async () => {
+    await backend.stop().catch(() => {});
+  });
 }
 
 /**
