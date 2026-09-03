@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-03",
-  "currentPhase": 13,
-  "currentPhaseName": "Thai-Schrift (Lesen)",
+  "currentPhase": 14,
+  "currentPhaseName": "Freies Schreiben und FSRS-Anbindung",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -713,6 +713,48 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "545 Tests in 23 Suites gruen (vorher 508 in 22); npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 14,
+      "criterion": "Freie Produktion in beide Richtungen spielbar, ohne Schluessel nutzbar",
+      "done": true,
+      "verifiedHow": "Uebungstyp 'Schreiben' in BEIDEN Richtungen (anders als die Auswahluebungen, die je Richtung verschieden sind). Im Web-Build durchgespielt: th_to_de หนึ่ง mit 'eins' -> genau richtig; de_to_th 'machen' ueber die Zeichenpalette als ทำ zusammengesetzt -> genau richtig, darunter die Stammformen. Ohne Schluessel und ohne Netz - ein Test liest den Quelltext aller fuenf Module des Schreibpfads und faellt um, sobald dort fetch(, providers/ oder api-key auftaucht."
+    },
+    {
+      "phase": 14,
+      "criterion": "Thai-Eingabeweg gemessen entschieden und begruendet",
+      "done": true,
+      "verifiedHow": "AE-39. Gemessen: auf diesem Rechner ist genau eine Belegung aktiv (Deutsch, 00000407); Windows bringt vier Thai-Belegungen mit, keine ist eingeschaltet; navigator.keyboard.getLayoutMap() liefert im Web-Build NULL Tasten, die App kann Tastaturverfuegbarkeit also nicht einmal feststellen. Thai wird dargestellt (Schriftbreite 46 gegen 90 bei Ersatzkaestchen) und im Eingabefeld angenommen. Entscheidung: eingebaute Zeichenpalette aus den Daten von Phase 13. Umschrift-Eingabe geprueft und VERWORFEN - nach Entfernen der Tondiakritika bleiben vier Buchstaben (ɔ ʉ ɛ ə, 35 Vorkommen), fuer die eine ASCII-Ersatzschreibung eine erfundene Umschrift waere."
+    },
+    {
+      "phase": 14,
+      "criterion": "Grossschreibung, Umlaute und Tonzeichen werden nachweislich nicht wegtoleriert",
+      "done": true,
+      "verifiedHow": "AE-41. Der Abgleich prueft geschuetzte Unterschiede VOR der Toleranz; sie gelten nie als Tippfehler. Getestet am ganzen Bestand: alle 12 Eintraege mit Umlaut oder ss in entschaerfter Form, alle 28 Thai-Eintraege ohne ihr Tonzeichen - jeder faellt als benannter Fehler durch. Dazu Einzelfaelle: 'das haus' (Grossschreibung), 'schon' fuer 'schoen' (Abstand 1, laege ohne Schutz in der Toleranz), 'gross' fuer 'gross mit sz', 'Haus' ohne Artikel, 'der Haus' mit falschem. Im Web-Build gesehen: 'hoflichkeitspartikel' ergab die Meldung zum Umlaut und die Bewertung Nochmal."
+    },
+    {
+      "phase": 14,
+      "criterion": "FSRS-Abbildung entschieden, begruendet und getestet",
+      "done": true,
+      "verifiedHow": "AE-40. Genau richtig -> Gut (3), Tippfehler -> Schwer (2), falsch -> Nochmal (1), Leicht NIE - 'Leicht' ist eine Aussage ueber Muehe, die eine getippte Antwort nicht misst; die Antwortzeit waere die falsche Kruecke, weil Palette und Handy langsamer sind. Derselbe Kartenschluessel wie die Karteikarte (vocabId:direction), kein eigener - AE-16 begruendet den Schluessel mit 'eine Erinnerungsspur je Item'. Tests: kein dritter Schluesselteil, Gegenrichtung unberuehrt, 'Gut' traegt die Karte weiter als 'Schwer', Zaehlung als Wiederholung statt als Uebung. Im Web-Build nachgemessen: Schluessel nueng:th_to_de und khrap:th_to_de, nach der falschen Antwort lapses 1, Tagesprotokoll total 2 mit byRating {1:1, 3:1}."
+    },
+    {
+      "phase": 14,
+      "criterion": "AE-16 und AE-35 bleiben gueltig, nicht ueberschrieben",
+      "done": true,
+      "verifiedHow": "AE-16 hat die freie Eingabe selbst als den sauberen Weg zu FSRS benannt ('Dann gaebe es kein Rateproblem, und die Antwort waere ein echter Abruf') - diese Phase loest das ein, statt es zu widerrufen. Die drei Auswahluebungen aus Phase 6 und die Tonkonturmessung aus Phase 12 (AE-35) schreiben unveraendert nichts; ihre Gruende (Ratequote 20-33 Prozent, Teilmessung der Aussprache) gelten weiter."
+    },
+    {
+      "phase": 14,
+      "criterion": "Barrierefreiheit auf dem Niveau von Phase 9 gehalten",
+      "done": true,
+      "verifiedHow": "Pflicht 5, im Web-Build gemessen: 63 Bedienelemente auf dem Schreibscreen, keines ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknoepfe der Palette mit aria-checked, das Eingabefeld beschriftet. Jede der 44 Zeichentasten traegt ihren akrophonischen Namen aus den Phase-13-Daten - ein Screenreader laese sonst nur ein einzelnes Zeichen vor. Rechtschreibhilfe im Eingabefeld abgeschaltet, weil sie genau die Fehler wegkorrigieren wuerde, um die es geht. Keine Konsolenfehler."
+    },
+    {
+      "phase": 14,
+      "criterion": "Tests und tsc gruen",
+      "done": true,
+      "verifiedHow": "582 Tests in 24 Suites gruen (vorher 545 in 23); npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -905,6 +947,21 @@
       "id": "AE-38",
       "title": "Ohne Verbindungsliste liest eine Analyse ตลาด als eine Silbe",
       "rationale": "In der Gegenprobe gefunden, nicht vorhergesehen: Wenn ein einzelner Anfangskonsonant nicht aufging, wurden zwei probiert - damit war jedes Konsonantenpaar eine Verbindung, auch ตล, das keine ist, und dem zweisilbigen ตลาด waere ein Ton zugeschrieben worden. Der Artikel 'Thai script' fuehrt keine Verbindungsliste; 'Thai language' fuehrt sie (11 Lautverbindungen, 15 Schreibungen). Mit dieser Schranke scheitert ตลาด richtig und alle 69 einsilbigen Eintraege gehen weiter auf. Lehnwort-Verbindungen (ทร, ฟร) stehen bewusst nicht dabei - eine offene Liste haette denselben Fehler wie gar keine. Das ist ausdruecklich KEIN Segmentierungsansatz, sondern das Gegenteil: eine Schranke, die verhindert, dass eine Silbengrenze erraten wird. AE-8 gilt unveraendert."
+    },
+    {
+      "id": "AE-39",
+      "title": "Thai tippen geht nicht ohne Hilfe, und die App kann nicht einmal fragen",
+      "rationale": "Gemessen: genau eine aktive Tastaturbelegung (Deutsch), vier mitgelieferte Thai-Belegungen allesamt ausgeschaltet, und navigator.keyboard.getLayoutMap() liefert null Tasten - es gibt also keinen Weg, vorher zu wissen, ob jemand Thai tippen kann. Also darf die Eingabe nicht davon abhaengen: eingebaute Zeichenpalette aus den Daten von Phase 13, mit dem akrophonischen Namen je Taste. Umschrift-Eingabe verworfen, weil nach Entfernen der Tondiakritika vier Buchstaben bleiben (ɔ ʉ ɛ ə), fuer die eine ASCII-Schreibung eine erfundene Umschrift waere - verboten seit Phase 2. Die Palette ist keine Kruecke, sondern eine Tastatur: Wer 'Haus' tippt, sieht die Buchstaben auch; der Unterschied zur Auswahlaufgabe bleibt, weil Auswahl UND Reihenfolge selbst zu kennen sind. Fuer Deutsch dieselbe Ueberlegung im Kleinen: sieben Umlaut-Tasten, damit die Strenge aus Pflicht 3 fair ist."
+    },
+    {
+      "id": "AE-40",
+      "title": "Freies Schreiben speist FSRS, und zwar dieselbe Karte",
+      "rationale": "Einloesung von AE-16, nicht dessen Widerruf: Dort steht die freie Eingabe woertlich als der saubere Weg zu FSRS. Abbildung: genau richtig Gut, Tippfehler Schwer, falsch Nochmal, Leicht nie - 'Leicht' misst Muehe, nicht Richtigkeit, und die Antwortzeit waere die falsche Kruecke, weil sie langsame Tipper bestrafen wuerde. Tippfehler als Schwer und nicht als Gut, sonst waere die Toleranz eine stille Gleichsetzung von sicher und unsicher. Derselbe Schluessel wie die Karteikarte, weil eine Schreibaufgabe dieselbe Tatsache abfragt wie die Karte derselben Richtung; ein zweiter Schluessel waere ein zweiter Zeitplan fuer dieselbe Erinnerung. Die Schreibaufgabe ist dabei der bessere Messpunkt als die Karteikarte, die nur eine Selbsteinschaetzung abfragt. Folge: zaehlt als Wiederholung, nicht als Uebung. Auswahluebungen (AE-16) und Tonmessung (AE-35) schreiben weiterhin nichts."
+    },
+    {
+      "id": "AE-41",
+      "title": "Toleriert wird der Vertipper, nie das Lernziel",
+      "rationale": "Drei Stufen: exakt, dann geschuetzte Unterschiede (Grossschreibung, Umlaute, ss, Artikel, Tonzeichen - immer benannter Fehler), erst danach Tippfehler-Toleranz. Grund: der Abstand zwischen 'schon' und 'schoen' ist eins und laege damit in jeder ueblichen Toleranz - eine Aehnlichkeitspruefung wuerde ausgerechnet den Fehler wegraeumen, um den es geht. Der Artikel wird eigenstaendig und vor der Toleranz geprueft; das kam aus dem Test, weil 'der Haus' sonst als nichtssagendes 'anderes Wort' endete. Toleranz: Thai null (jedes Zeichen traegt, und die Palette verrutscht nicht wie eine Tastatur), Deutsch ein Zeichen ab fuenf Zeichen Laenge (21 der 84 Stichwoerter liegen darunter), Vertauschung als ein Schritt statt zwei. Offline-first ist im Code verankert, nicht behauptet: ein Test liest den Quelltext und faellt um bei fetch(, providers/ oder api-key."
     }
   ],
   "openBlockers": [
@@ -958,7 +1015,7 @@
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 13 abgeschlossen; Lesen/Hoeren/Sprechen stehen, Schreiben fehlt noch",
+    "name": "Phase 14 abgeschlossen; alle vier Fertigkeiten stehen (Lesen, Hoeren, Sprechen, Schreiben)",
     "tasks": [
       "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2), inklusive Auto-Stopp und sofortigem Ende des Mikrofonindikators",
       "B-6: Probelauf Hoerclips mit gueltigem Gemini-Schluessel - danach die zehn Clips in scripts/tone-contour.html ziehen und die Toene messen (AE-31)",
@@ -967,7 +1024,8 @@
       "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27), und physisches PCM der Sprechuebung pruefen (AE-34)",
       "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen",
       "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen",
-      "Frei: Konsonantentafel zum Nachschlagen aus den Daten von Phase 13; Segmentierung mehrsilbiger Woerter braucht eine Quelle fuer Leitkonsonant gegen Verbindung (AE-38)"
+      "Frei: Konsonantentafel zum Nachschlagen aus den Daten von Phase 13; Segmentierung mehrsilbiger Woerter braucht eine Quelle fuer Leitkonsonant gegen Verbindung (AE-38)",
+      "Frei: Stammformen und Plural als eigene Schreibaufgabe; KI-Korrektur fuer freie Saetze als optionale Ergaenzung mit Schluessel (AE-41)"
     ]
   },
   "situations": {
@@ -1024,7 +1082,7 @@
       "verbForms": 20,
       "toneRule": 69
     },
-    "fsrs": "bewusst nicht angebunden - siehe AE-16; Aufgabenauswahl nutzt aber den vorhandenen Kartenzustand",
+    "fsrs": "Auswahluebungen weiterhin NICHT angebunden (AE-16); seit Phase 14 speist der Uebungstyp 'Schreiben' FSRS ueber denselben Kartenschluessel (AE-40)",
     "logging": "eigene Zaehler drills/drillsCorrect im Tagesprotokoll, getrennt von total"
   },
   "profile": {
@@ -1214,5 +1272,42 @@
     "crossCheck": "69 von 69 einsilbigen Grundstock-Eintraegen richtig hergeleitet, 0 falsch; alle 15 mehrsilbigen mit benanntem Grund abgewiesen",
     "drill": "toneRule ('Ton herleiten'), Richtung de_to_th, neben der Hoer-Uebung aus Phase 6",
     "notBuilt": "Handschrift/Strichfolge (kein Ziel); Segmentierung mehrsilbiger Woerter (AE-8); nachschlagbare Konsonantentafel im UI"
+  },
+  "writing": {
+    "directions": [
+      "de_to_th",
+      "th_to_de"
+    ],
+    "input": {
+      "thai": "eingebaute Zeichenpalette aus data/thai-script.ts (44 Konsonanten, 17 Vokalzeichen, 4 Tonzeichen); Systemtastatur zusaetzlich nutzbar",
+      "german": "Tastatur plus sieben Tasten fuer Umlaute und sz",
+      "measured": "eine aktive Belegung (de-DE); vier Thai-Belegungen vorhanden, keine aktiv; getLayoutMap() leer",
+      "rejected": "Umschrift-Eingabe mit getrennter Tonwahl - vier nicht tippbare Buchstaben (ɔ ʉ ɛ ə) haetten eine erfundene ASCII-Umschrift verlangt"
+    },
+    "tolerance": {
+      "protected": [
+        "Grossschreibung",
+        "Umlaute",
+        "sz gegen ss",
+        "deutscher Artikel",
+        "Thai-Tonzeichen"
+      ],
+      "thai": 0,
+      "german": "1 Zeichen ab 5 Zeichen Laenge; Vertauschung zaehlt als 1 (Damerau)",
+      "offline": "per Test im Quelltext verankert: kein fetch, kein providers/, kein api-key"
+    },
+    "fsrs": {
+      "writes": true,
+      "cardKey": "vocabId:direction - derselbe wie die Karteikarte",
+      "mapping": {
+        "exact": 3,
+        "typo": 2,
+        "wrong": 1,
+        "easy": "nie vergeben"
+      },
+      "countsAs": "Wiederholung, nicht Uebung",
+      "decision": "AE-40"
+    },
+    "notBuilt": "KI-Korrektur fuer freie Saetze (optional erlaubt, nicht gebaut); Stammformen und Plural als eigene Schreibaufgabe; Schreibmarke in der Zeichenpalette"
   }
 }

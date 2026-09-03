@@ -9,6 +9,7 @@ import { SpeakingRunner } from '@/components/speaking-runner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { ToneLegend } from '@/components/tone-legend';
+import { WritingRunner } from '@/components/writing-runner';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
 import { DRILL_META, DrillId, DRILLS_BY_DIRECTION } from '@/lib/drills/types';
@@ -26,7 +27,7 @@ import {
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
 /** Karteikarten oder eine der richtungseigenen Übungen. */
-type Mode = 'cards' | DrillId | 'speaking';
+type Mode = 'cards' | DrillId | 'speaking' | 'writing';
 
 function isDirection(value: unknown): value is Direction {
   return value === 'de_to_th' || value === 'th_to_de';
@@ -35,6 +36,9 @@ function isDirection(value: unknown): value is Direction {
 function parseMode(value: unknown, direction: Direction): Mode {
   const drills: string[] = DRILLS_BY_DIRECTION[direction];
   if (direction === 'de_to_th' && value === 'speaking') return 'speaking';
+  // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
+  // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
+  if (value === 'writing') return 'writing';
   return typeof value === 'string' && drills.includes(value) ? (value as Mode) : 'cards';
 }
 
@@ -43,12 +47,14 @@ function modesForDirection(direction: Direction): Mode[] {
     'cards',
     ...DRILLS_BY_DIRECTION[direction],
     ...(direction === 'de_to_th' ? (['speaking'] as const) : []),
+    'writing',
   ];
 }
 
 function modeLabel(mode: Mode): string {
   if (mode === 'cards') return 'Karteikarten';
   if (mode === 'speaking') return 'Sprechen';
+  if (mode === 'writing') return 'Schreiben';
   return DRILL_META[mode].label;
 }
 
@@ -116,6 +122,12 @@ export default function ReviewScreen() {
 
       {mode === 'cards' ? (
         <CardSession direction={direction} key={direction} />
+      ) : mode === 'writing' ? (
+        <WritingRunner
+          key={`${direction}:writing`}
+          direction={direction}
+          onExit={() => router.setParams({ direction, mode: undefined })}
+        />
       ) : mode === 'speaking' ? (
         <SpeakingRunner
           key={`${direction}:speaking`}

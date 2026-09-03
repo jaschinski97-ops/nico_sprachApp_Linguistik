@@ -1329,6 +1329,178 @@ Leitkonsonant (อักษรนำ) bei den Paaren, die beides sein können, u
 braucht es eine Quelle, die diese Wörter aufzählt. ผล ist genau so ein Fall:
 in der Verbindungsliste als /pʰl/, in ผลไม้ dagegen zweisilbig (pǒn-lá-).
 
+### AE-39 — Thai tippen geht nicht ohne Hilfe, und die App kann nicht einmal fragen
+
+**Entscheidung:** Freies Schreiben auf Thai läuft über ein gewöhnliches
+Eingabefeld **plus eine eingebaute Zeichenpalette** aus den in Phase 13
+erhobenen Daten. Die Umschrift-Eingabe mit getrennter Tonwahl wurde geprüft
+und **verworfen**.
+
+**Begründung — gemessen, nicht angenommen (Muster AE-3/10/13/26/27):**
+
+Auf diesem Rechner ist genau **eine** Tastaturbelegung aktiv:
+
+```
+HKCU\Keyboard Layout\Preload → 1: 00000407 → German
+Get-WinUserLanguageList      → de-DE, InputMethodTips: 0407:00000407
+```
+
+Windows **bringt** vier Thai-Belegungen mit (Kedmanee, Pattachote und deren
+non-ShiftLock-Varianten), aber keine davon ist eingeschaltet. Thai zu tippen
+setzt also einen Eingriff in die Systemeinstellungen voraus — genau die Hürde,
+die die Vorgabe benennt.
+
+Schlimmer: **die App kann es nicht einmal feststellen.** Im laufenden Web-Build
+gemessen:
+
+| Messung | Ergebnis |
+| --- | --- |
+| Eingabefeld nimmt Thai an | ja, สวัสดี als 6 Codepunkte |
+| Tonzeichen hängt als eigenes Zeichen an | ja, ก + ่ = 2 Codepunkte |
+| Thai wird dargestellt (Schriftart da) | ja, Breite 46 gegen 90 bei Ersatzkästchen |
+| `navigator.keyboard.getLayoutMap()` | **leer**, 0 Tasten |
+| `navigator.languages` | `de`, `de-DE` — sagt nichts über Belegungen |
+| Zeichen an der Schreibmarke einfügen | funktioniert |
+
+Ein leeres `getLayoutMap()` heißt: Es gibt keinen Weg, vorher zu wissen, ob
+jemand Thai tippen kann. Also darf die Eingabe nicht davon abhängen. Dieselbe
+Lage wie bei der fehlenden Thai-Stimme in Phase 6 — nur dass es hier nicht
+reicht, den Mangel zu benennen: Ohne Eingabe gäbe es die Übung nicht.
+
+**Warum die Zeichenpalette und keine Umschrift-Eingabe.** Die Umschrift wäre
+der bequemere Weg und scheitert an den Daten. Im Grundstock gemessen: Nach dem
+Entfernen aller Tondiakritika (die sich sauber über NFD abtrennen lassen)
+bleiben **vier** Buchstaben übrig, die keine Tastatur hat — ɔ (17×), ʉ (9×),
+ɛ (8×), ə (1×). Für sie eine ASCII-Ersatzschreibung festzulegen (`ɔ` als „or"?
+„aw"? „o"?) hieße, eine **Umschrift zu erfinden**, und genau das verbietet die
+Linie seit Phase 2. Der Grundstock hat kein ASCII-Umschriftfeld, das man
+stattdessen prüfen könnte.
+
+**Die Palette ist keine Krücke, sondern eine Tastatur.** Wer „Haus" tippt,
+sieht die Buchstaben auch vor sich; niemand nennt das Abschreiben. Der
+Unterschied zu einer Auswahlaufgabe bleibt bestehen: Hier stehen alle Zeichen,
+nicht fünf fertige Antworten — Auswahl **und** Reihenfolge muss die lernende
+Person selbst kennen. Im Web-Build durchgespielt: ทำ aus ท und ำ
+zusammengesetzt, ohne Systemtastatur, als „genau richtig" gewertet.
+
+Die Zeichen kommen aus `data/thai-script.ts` (Phase 13), nicht aus einer
+zweiten Liste. Jede Taste trägt den akrophonischen Namen als Beschriftung
+(„ก ไก่, ko kai") — ein Screenreader läse sonst ein einzelnes Zeichen vor, das
+niemandem etwas sagt.
+
+**Für Deutsch dieselbe Überlegung im Kleinen:** ä, ö, ü, ß und die großen
+Umlaute stehen als sieben Tasten bereit. Sie sind nicht Bequemlichkeit, sondern
+Voraussetzung dafür, dass die Strenge aus Pflicht 3 fair ist: Wenn „schon" für
+„schön" als Fehler zählt, muss ö erreichbar sein — und eine thailändische
+Belegung hat keine Umlaute.
+
+### AE-40 — Freies Schreiben speist FSRS, und zwar dieselbe Karte
+
+**Entscheidung:** Der Übungstyp „Schreiben" schreibt den Kartenzustand fort —
+als erster und bisher einziger. Er benutzt **denselben Schlüssel** wie die
+Karteikarte (`vocabId:direction`), keinen eigenen. Die Abbildung: genau richtig
+→ **Gut (3)**, richtig mit toleriertem Tippfehler → **Schwer (2)**, falsch →
+**Nochmal (1)**. **Leicht (4) wird nie vergeben.**
+
+**Das ist die Einlösung von AE-16, nicht dessen Widerruf.** Dort steht
+wörtlich, der saubere Weg wäre „ein Aufgabentyp mit **freier Eingabe** statt
+Auswahl (Wort tippen, Artikel schreiben). Dann gäbe es kein Rateproblem, und
+die Antwort wäre ein echter Abruf." Genau das ist gebaut. Die drei
+Auswahlübungen aus Phase 6 und die Tonkonturmessung aus Phase 12 (AE-35)
+schreiben unverändert **nichts** — ihre Gründe gelten weiter.
+
+**Warum dieselbe Karte und nicht ein eigener Schlüssel.** Die Frage stellt die
+Vorgabe ausdrücklich. Eine Schreibaufgabe in Richtung `de_to_th` fragt
+„Deutsch gesehen, Thai hervorbringen" — Wort für Wort dieselbe Tatsache, die
+die Karteikarte derselben Richtung abfragt. AE-16 begründet den Kartenschlüssel
+damit, dass FSRS „eine Erinnerungsspur je Item" modelliert; ein zweiter
+Schlüssel wäre ein zweiter Zeitplan für dieselbe Erinnerung, mit auseinander-
+laufenden Intervallen. Das Dashboard zählt weiterhin genau eine Karte je
+Vokabel und Richtung. Ein Test prüft, dass kein dritter Schlüsselteil entsteht
+und die Gegenrichtung unberührt bleibt.
+
+**Die Schreibaufgabe ist dabei der bessere Messpunkt als die Karteikarte.**
+Die fragt hinterher „wie gut saß das?" — eine Selbsteinschätzung, die man sich
+schön reden kann. Hier steht vorher fest, was richtig ist, und die Person hat
+es getippt oder eben nicht.
+
+**Warum „Leicht" nie vergeben wird.** Die Skala misst nicht Richtigkeit,
+sondern **Mühe**: „Leicht" heißt „kam sofort und ohne Anstrengung". Eine
+getippte Antwort sagt darüber nichts. Die naheliegende Krücke wäre die
+Antwortzeit, und sie wäre falsch: Tippen auf einem Handy dauert länger als auf
+einer Tastatur, und die Zeichenpalette dauert noch einmal länger. Ein
+automatisches „Leicht" würde also ausgerechnet bei den langsamsten Tippern die
+Intervalle strecken. Lieber eine Stufe ungenutzt lassen als sie falsch
+vergeben.
+
+**Warum ein Tippfehler „Schwer" ist und nicht „Gut".** Auch das fragt die
+Vorgabe. „Gut" würde das Intervall genauso strecken wie eine fehlerfreie
+Antwort; dann wäre die Toleranz aus AE-41 keine Nachsicht mehr, sondern eine
+stille Gleichsetzung von sicher und unsicher. Ein Test belegt, dass eine
+fehlerfreie Antwort die Karte weiter trägt als eine mit Tippfehler.
+
+**Warum ein Lernzielfehler nicht härter zählt als ein anderer Fehler.** Ein
+fehlender Artikel und ein völlig anderes Wort ergeben beide „Nochmal". Eine
+Stufe unter „Nochmal" gibt es in FSRS nicht, und die Unterscheidung gehört in
+die **Rückmeldung**, die sie benennt, nicht in den Wiederholungsplan.
+
+**Folge für die Statistik:** Weil `rateCard` das Tagesprotokoll fortschreibt,
+zählt eine beantwortete Schreibaufgabe als **Wiederholung** und nicht als
+Übung. Das ist richtig herum — sie ist eine. Doppelt zu zählen würde die
+Zahlen aufblähen. Im Web-Build nachgemessen: nach zwei Aufgaben stand
+`total: 2` mit `byRating {1: 1, 3: 1}` und `drills` unverändert.
+
+### AE-41 — Toleriert wird der Vertipper, nie das Lernziel
+
+**Entscheidung:** Der Abgleich läuft in drei Stufen: erst **exakt**, dann auf
+**geschützte Unterschiede** (die immer als benannter Fehler gelten), und erst
+danach **Tippfehler-Toleranz**. Geschützt sind: Groß- und Kleinschreibung,
+Umlaute, ß gegen ss, der deutsche Artikel und die thailändischen Tonzeichen.
+
+**Begründung:** Eine Ähnlichkeitsprüfung, die „schon" für „schön" durchwinkt,
+ist hier schädlicher als gar keine Toleranz — sie würde ausgerechnet den
+Fehler wegräumen, um den es geht. Der Editierabstand zwischen beiden ist
+**eins**, läge also genau in der üblichen Toleranz. Deshalb die Reihenfolge:
+Was nach dem Entfernen der geschützten Merkmale gleich wird, ist per
+Definition ein Lernzielfehler und kommt gar nicht erst zur Toleranzprüfung.
+
+Die Rückmeldung benennt, **welcher** Fehler es war: „Groß- und
+Kleinschreibung", „Umlaut", „ß gegen ss", „Der Artikel fehlt" samt richtigem
+Artikel, „Tonzeichen". Ein bloßes „falsch" hätte den Lerneffekt verschenkt.
+
+**Der Artikel wird eigenständig geprüft**, und zwar **vor** der Toleranz. Das
+kam aus dem Test: „der Haus" gegen „das Haus" hat Abstand zwei, wäre also
+ohnehin über der Toleranz gelandet — aber als nichtssagendes „anderes Wort".
+Jetzt heißt es „Falscher Artikel. Richtig ist ‚das'."
+
+**Die Toleranzgrenzen, und warum sie so liegen:**
+
+- **Thai: null.** Jedes Zeichen einer Silbe trägt; ein ausgetauschter
+  Konsonant ergibt ein anderes Wort, keinen Ausrutscher. Und die Eingabe läuft
+  über die Palette (AE-39), wo nichts so verrutscht wie auf einer Tastatur.
+- **Deutsch: ein Zeichen, aber erst ab fünf Zeichen Länge.** Bei „gut", „neu"
+  oder „acht" ist ein Zeichen Unterschied fast immer ein anderes Wort; bei
+  „Höflichkeitspartikel" wäre Nulltoleranz Schikane. 21 der 84 Stichwörter
+  liegen unter der Grenze.
+- **Vertauschungen zählen als ein Schritt** (Damerau statt reinem
+  Levenshtein). „Huas" für „Haus" ist der häufigste Tippfehler überhaupt; ihn
+  doppelt zu zählen hieße, ausgerechnet den typischsten Ausrutscher am
+  härtesten zu bestrafen.
+
+**Offline-first (Pflicht 2), und das ist im Code verankert.** Der Abgleich ist
+reine Rechnung gegen den quellengeprüften Grundstock — kein Netzaufruf, kein
+Anbieter, kein Schlüssel. Ein Test **liest den Quelltext** aller fünf Module
+des Schreibpfads und schlägt fehl, sobald dort `fetch(`, ein Import aus
+`providers/` oder `api-key` auftaucht. Eine Zusicherung über Verhalten ließe
+sich mit einem Mock erschleichen; diese hier nicht. Eine KI-Korrektur für
+freie Sätze ist damit weiterhin möglich, aber sie wäre eine **Ergänzung** und
+liegt außerhalb dieses Pfades.
+
+**Was Klammern angeht:** Der Grundstock schreibt Erläuterungen wie „ich
+(männlicher Sprecher)". Die fallen für die Zielform weg — wer sie mittippen
+müsste, übte Abschreiben statt Produzieren — und stehen danach vollständig in
+der Auflösung. Bei mehreren Bedeutungen („ja, richtig") zählt jede.
+
 ---
 
 ## Protokoll
@@ -2849,10 +3021,115 @@ Kontrastprüfung aus Phase 9 unverändert weiter.
 
 ---
 
+### 2026-09-03 — Phase 14: Freies Schreiben und die FSRS-Lücke
+
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauber auf
+`main` bei `555276e`, 545 Tests in 23 Suites grün, `npx tsc --noEmit`
+fehlerfrei). Nach **B-2**, **B-4**, **B-5** und **B-6** erneut gefragt, B-2
+weiterhin mit besonderem Gewicht, weil die F0-Messung aus Phase 12 ohne echte
+Stimme unbelegt bleibt. Keine Antwort bis zum Ende der Sitzung; **alle vier
+bleiben offen**. Für diese Phase ohne Einfluss: Der Schreibpfad kommt ohne
+Schlüssel und ohne Netz aus, und das ist per Test verankert.
+
+**Damit sind die vier Fertigkeiten geschlossen** — Lesen (Phase 13), Hören
+(Phase 11), Sprechen (Phase 12), Schreiben (hier).
+
+**Gemacht**
+
+- `src/lib/writing/` — `compare.ts` (Abgleich in drei Stufen, AE-41),
+  `prompt.ts` (Zielformen aus dem Grundstock), `rating.ts` (die
+  FSRS-Abbildung, AE-40), `session.ts` (Runde bauen, Antwort bewerten und die
+  Karte fortschreiben).
+- `src/components/character-palette.tsx` — Thai-Zeichenpalette aus den Daten
+  von Phase 13 und die deutschen Umlaute (AE-39).
+- `src/components/writing-runner.tsx` — die Übung, in **beiden** Richtungen
+  erreichbar. Anders als die Auswahlübungen, die je Richtung verschieden sind.
+
+**Pflicht 1 — der Thai-Eingabeweg, gemessen**
+
+Auf diesem Rechner ist genau eine Belegung aktiv (Deutsch); Windows bringt
+vier Thai-Belegungen mit, keine ist eingeschaltet. Und
+`navigator.keyboard.getLayoutMap()` liefert im Web-Build **null Tasten** — die
+App kann also nicht einmal feststellen, ob jemand Thai tippen kann. Deshalb die
+eingebaute Palette. Die Umschrift-Eingabe wurde geprüft und verworfen: Nach dem
+Entfernen aller Tondiakritika bleiben vier Buchstaben (ɔ ʉ ɛ ə, 35 Vorkommen),
+für die eine ASCII-Ersatzschreibung eine **erfundene Umschrift** wäre.
+
+**Pflicht 2 — offline-first**
+
+Der Abgleich läuft gegen den Grundstock aus Phase 2, ohne Netz. Ein Test liest
+den Quelltext aller fünf Module und schlägt fehl, sobald dort `fetch(`, ein
+Import aus `providers/` oder `api-key` auftaucht — eine Zusicherung über
+Verhalten ließe sich mit einem Mock erschleichen, diese nicht.
+
+**Pflicht 3 — was Lernziel ist, wird nicht wegtoleriert**
+
+Geschützt sind Großschreibung, Umlaute, ß, Artikel und Tonzeichen. Sie kommen
+**vor** der Toleranzprüfung und gelten nie als Tippfehler. Getestet wird nicht
+nur an Beispielen, sondern am ganzen Bestand: alle Einträge mit Umlaut oder ß
+(12) in ihrer entschärften Form, alle Thai-Einträge mit Tonzeichen (28) ohne
+Zeichen. Jeder einzelne muss als benannter Fehler durchfallen.
+
+Beim Bauen fand der Test eine Lücke: „der Haus" landete bei „anderes Wort"
+statt bei „falscher Artikel", weil der Abstand über der Toleranz lag. Der
+Artikel wird seitdem eigenständig geprüft und die Meldung nennt den richtigen.
+
+**Pflicht 4 — die FSRS-Anbindung**
+
+Erstmals schreibt ein Übungstyp den Kartenzustand: genau richtig → Gut,
+Tippfehler → Schwer, falsch → Nochmal, **Leicht nie**. Derselbe Schlüssel wie
+die Karteikarte, kein eigener. Begründung in AE-40; AE-16 und AE-35 bleiben
+unverändert gültig, die Auswahlübungen und die Tonmessung schreiben weiterhin
+nichts.
+
+**Verifiziert**
+
+- `npm test` → **582 Tests grün** in 24 Suites (vorher 545 in 23).
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Web-Build durchgespielt, beide Richtungen:**
+  - Thai → Deutsch: หนึ่ง mit „eins" beantwortet → „✓ Genau richtig",
+    bewertet als „Gut". Dann ครับ mit „hoflichkeitspartikel" → „✗ Nicht ganz",
+    Meldung „Umlaut: ä, ö und ü unterscheiden Bedeutungen — schon ist nicht
+    schön", bewertet als „Nochmal".
+  - Deutsch → Thai: „machen" über die Palette als ทำ zusammengesetzt (ท aus
+    den Konsonanten, ำ aus den Vokalzeichen) → „✓ Genau richtig", darunter die
+    Stammformen „macht · machte · hat gemacht".
+- **FSRS nachgemessen:** Die Kartenschlüssel heißen unverändert
+  `nueng:th_to_de` und `khrap:th_to_de` — kein dritter Bestandteil. Nach der
+  falschen Antwort stand `lapses: 1`, `state: 'learning'`. Das Tagesprotokoll
+  zeigte `total: 2` mit `byRating {1: 1, 3: 1}`, `drills` unverändert — also
+  als Wiederholung gezählt, nicht als Übung.
+- **Barrierefreiheit (Pflicht 5):** 63 Bedienelemente auf dem Schreibscreen,
+  keines ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknöpfe der
+  Palette mit `aria-checked`, das Eingabefeld beschriftet. Jede Zeichentaste
+  trägt ihren akrophonischen Namen („ก ไก่, ko kai"). Keine Konsolenfehler.
+
+**Offen / bewusst nicht gemacht**
+
+- **KI-Korrektur für freie Sätze.** Die Vorgabe erlaubt sie als optionale
+  Ergänzung mit Schlüssel. Nicht gebaut: Der Grundstock trägt Einzelwörter,
+  und für die ist der Abgleich gegen geprüfte Daten die bessere Auskunft als
+  das Urteil eines Modells. Für ganze Sätze wäre sie sinnvoll — dann aber als
+  eigener Aufgabentyp, nicht als zweiter Weg durch dieselbe Prüfung.
+- **Stammformen und Plural als eigene Schreibaufgabe.** Die Daten liegen vor
+  (`germanVerb`, `germanNoun`) und stehen bereits in der Auflösung; abgefragt
+  wird bisher nur das Stichwort mit Artikel.
+- **Die Zeichenpalette kennt keine Schreibmarke.** Ein Zeichen wird ans Ende
+  angehängt. Für einsilbige Wörter reicht das; wer mitten im Wort einfügen
+  will, muss die Tastatur benutzen. Ausbaufähig, aber nicht nötig für den
+  Grundstock.
+- **Nativ ungeprüft** (B-2): Ob eine Systemtastatur auf Android/iOS Thai
+  anbietet, ließ sich hier nicht messen. Die Palette macht die Übung davon
+  unabhängig — genau deshalb gibt es sie.
+
+---
+
 ## Konsolidierte Abnahme (Stand 2026-09-03)
 
-Jedes „Fertig, wenn" aus Phase 0–13 gegen den **jetzigen** Repo-Zustand.
-**105 von 112 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
+Jedes „Fertig, wenn" aus Phase 0–14 gegen den **jetzigen** Repo-Zustand.
+**112 von 119 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -2972,6 +3249,13 @@ Fassung abweichen.
 | 13 | Silbengrenzen bleiben ungeloest - mehrsilbige Woerter werden abgewiesen | **erfüllt** | AE-8 gilt weiter. analyzeSyllable nimmt genau eine Silbe entgegen; ein Test faehrt alle 15 mehrsilbigen Eintraege durch und verlangt fuer jeden einen benannten Fehlschlag. Dabei kam ein Befund heraus: ตลาด wurde zunaechst als eine Silbe gelesen, weil jedes Konsonantenpaar als Verbindung durchging. Behoben ueber die belegte Verbindungsliste (zweite Quelle) - eine Schranke gegen das Raten, ausdruecklich kein Segmentierungsansatz (AE-38). |
 | 13 | Konsistenz mit Bestehendem: Tonfarben, Konturglyphen, Barrierefreiheit | **erfüllt** | Pflicht 4. Die Antwortoptionen tragen nur den Ton; Farbe und Kontur holt die Oberflaeche aus constants/tones.ts. Im Web-Build nachgemessen: exakt die dort hinterlegten Dunkelmodus-Werte (#88a083, #8a9bb1, #c88b7a, #ba9443, #82a097) und Konturpfade - keine zweite Darstellung, keine neuen Farben, also gilt die Kontrastpruefung aus Phase 9 unveraendert. Herleitung als role=list mit sieben role=listitem; kein Bedienelement ohne Beschriftung, kein Tippziel unter 24 Punkten, keine Konsolenfehler. |
 | 13 | Tests und tsc gruen | **erfüllt** | 545 Tests in 23 Suites gruen (vorher 508 in 22); npx tsc --noEmit fehlerfrei. |
+| 14 | Freie Produktion in beide Richtungen spielbar, ohne Schluessel nutzbar | **erfüllt** | Uebungstyp 'Schreiben' in BEIDEN Richtungen (anders als die Auswahluebungen, die je Richtung verschieden sind). Im Web-Build durchgespielt: th_to_de หนึ่ง mit 'eins' -> genau richtig; de_to_th 'machen' ueber die Zeichenpalette als ทำ zusammengesetzt -> genau richtig, darunter die Stammformen. Ohne Schluessel und ohne Netz - ein Test liest den Quelltext aller fuenf Module des Schreibpfads und faellt um, sobald dort fetch(, providers/ oder api-key auftaucht. |
+| 14 | Thai-Eingabeweg gemessen entschieden und begruendet | **erfüllt** | AE-39. Gemessen: auf diesem Rechner ist genau eine Belegung aktiv (Deutsch, 00000407); Windows bringt vier Thai-Belegungen mit, keine ist eingeschaltet; navigator.keyboard.getLayoutMap() liefert im Web-Build NULL Tasten, die App kann Tastaturverfuegbarkeit also nicht einmal feststellen. Thai wird dargestellt (Schriftbreite 46 gegen 90 bei Ersatzkaestchen) und im Eingabefeld angenommen. Entscheidung: eingebaute Zeichenpalette aus den Daten von Phase 13. Umschrift-Eingabe geprueft und VERWORFEN - nach Entfernen der Tondiakritika bleiben vier Buchstaben (ɔ ʉ ɛ ə, 35 Vorkommen), fuer die eine ASCII-Ersatzschreibung eine erfundene Umschrift waere. |
+| 14 | Grossschreibung, Umlaute und Tonzeichen werden nachweislich nicht wegtoleriert | **erfüllt** | AE-41. Der Abgleich prueft geschuetzte Unterschiede VOR der Toleranz; sie gelten nie als Tippfehler. Getestet am ganzen Bestand: alle 12 Eintraege mit Umlaut oder ss in entschaerfter Form, alle 28 Thai-Eintraege ohne ihr Tonzeichen - jeder faellt als benannter Fehler durch. Dazu Einzelfaelle: 'das haus' (Grossschreibung), 'schon' fuer 'schoen' (Abstand 1, laege ohne Schutz in der Toleranz), 'gross' fuer 'gross mit sz', 'Haus' ohne Artikel, 'der Haus' mit falschem. Im Web-Build gesehen: 'hoflichkeitspartikel' ergab die Meldung zum Umlaut und die Bewertung Nochmal. |
+| 14 | FSRS-Abbildung entschieden, begruendet und getestet | **erfüllt** | AE-40. Genau richtig -> Gut (3), Tippfehler -> Schwer (2), falsch -> Nochmal (1), Leicht NIE - 'Leicht' ist eine Aussage ueber Muehe, die eine getippte Antwort nicht misst; die Antwortzeit waere die falsche Kruecke, weil Palette und Handy langsamer sind. Derselbe Kartenschluessel wie die Karteikarte (vocabId:direction), kein eigener - AE-16 begruendet den Schluessel mit 'eine Erinnerungsspur je Item'. Tests: kein dritter Schluesselteil, Gegenrichtung unberuehrt, 'Gut' traegt die Karte weiter als 'Schwer', Zaehlung als Wiederholung statt als Uebung. Im Web-Build nachgemessen: Schluessel nueng:th_to_de und khrap:th_to_de, nach der falschen Antwort lapses 1, Tagesprotokoll total 2 mit byRating {1:1, 3:1}. |
+| 14 | AE-16 und AE-35 bleiben gueltig, nicht ueberschrieben | **erfüllt** | AE-16 hat die freie Eingabe selbst als den sauberen Weg zu FSRS benannt ('Dann gaebe es kein Rateproblem, und die Antwort waere ein echter Abruf') - diese Phase loest das ein, statt es zu widerrufen. Die drei Auswahluebungen aus Phase 6 und die Tonkonturmessung aus Phase 12 (AE-35) schreiben unveraendert nichts; ihre Gruende (Ratequote 20-33 Prozent, Teilmessung der Aussprache) gelten weiter. |
+| 14 | Barrierefreiheit auf dem Niveau von Phase 9 gehalten | **erfüllt** | Pflicht 5, im Web-Build gemessen: 63 Bedienelemente auf dem Schreibscreen, keines ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknoepfe der Palette mit aria-checked, das Eingabefeld beschriftet. Jede der 44 Zeichentasten traegt ihren akrophonischen Namen aus den Phase-13-Daten - ein Screenreader laese sonst nur ein einzelnes Zeichen vor. Rechtschreibhilfe im Eingabefeld abgeschaltet, weil sie genau die Fehler wegkorrigieren wuerde, um die es geht. Keine Konsolenfehler. |
+| 14 | Tests und tsc gruen | **erfüllt** | 582 Tests in 24 Suites gruen (vorher 545 in 23); npx tsc --noEmit fehlerfrei. |
 ## Skalierungsplan auf ~1000 Einträge
 
 Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
@@ -3040,6 +3324,12 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 14 (2026-09-03):** Mit dem freien Schreiben sind alle vier
+> Fertigkeiten geschlossen — Lesen, Hören, Sprechen, Schreiben. Der Schreibpfad
+> braucht weder Schlüssel noch Netz; was hier oben liegt, braucht beides oder
+> ein Gerät.
+
 
 > **Neu aus Phase 13 (2026-09-03):** Die Schriftregeln stehen als geprüfte
 > Daten, und „Ton herleiten" trainiert sie gegen den Grundstock. Was hier oben
