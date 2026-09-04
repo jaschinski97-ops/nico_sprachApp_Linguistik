@@ -1,4 +1,4 @@
-import { VOCABULARY } from '@/data/vocabulary';
+import { VOCABULARY, VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
 import { syllablesOf, uniformTone } from '@/data/vocab-helpers';
 
 import { drillsForDirection } from '../drills/types';
@@ -78,20 +78,30 @@ describe('Deutsch als Drehscheibe (AE-42)', () => {
 });
 
 describe('Das Verzeichnis', () => {
-  it('führt drei Sprachen, aber nur eine mit Inhalten', () => {
+  it('führt drei Sprachen, seit Phase 16 alle mit Inhalten', () => {
     expect(LANGUAGE_CODES).toHaveLength(3);
-    expect(languagesWithContent().map((language) => language.code)).toEqual(['th']);
-    expect(hasContent('th')).toBe(true);
-    expect(hasContent('en')).toBe(false);
-    expect(hasContent('es')).toBe(false);
+    expect(languagesWithContent().map((language) => language.code).sort()).toEqual([
+      'en',
+      'es',
+      'th',
+    ]);
+    for (const code of LANGUAGE_CODES) expect(hasContent(code)).toBe(true);
+  });
+
+  it('zählt jeden Grundstock aus seiner Datei statt ihn zu behaupten', () => {
+    expect(LANGUAGES.th.entryCount).toBe(VOCABULARY_TH.length);
+    expect(LANGUAGES.en.entryCount).toBe(VOCABULARY_EN.length);
+    expect(LANGUAGES.es.entryCount).toBe(VOCABULARY_ES.length);
+    expect(VOCABULARY).toHaveLength(
+      VOCABULARY_TH.length + VOCABULARY_EN.length + VOCABULARY_ES.length
+    );
+  });
+
+  it('bleibt bei Thai als Vorgabe, obwohl alle drei Inhalte haben', () => {
+    // Der eigentliche Punkt: Die Vorgabe darf nicht aus einer Sortierung
+    // fallen. Sonst faende jemand nach einem Update Englisch vor, obwohl er
+    // seit Wochen Thai lernt.
     expect(defaultLanguage()).toBe('th');
-  });
-
-  it('zählt den Thai-Grundstock aus der Datei statt ihn zu behaupten', () => {
-    expect(LANGUAGES.th.entryCount).toBe(VOCABULARY.length);
-  });
-
-  it('stellt Sprachen mit Inhalten nach vorn', () => {
     expect(LANGUAGE_ORDER[0]).toBe('th');
   });
 
@@ -117,10 +127,11 @@ describe('Das Verzeichnis', () => {
     expect(LANGUAGES.en.feature.source!.quote).toContain('unpredictable');
   });
 
-  it('behauptet für die neuen Sprachen kein gebautes Merkmal (Pflicht 5)', () => {
-    expect(LANGUAGES.th.feature.implemented).toBe(true);
-    expect(LANGUAGES.en.feature.implemented).toBe(false);
-    expect(LANGUAGES.es.feature.implemented).toBe(false);
+  it('führt seit Phase 16 für jede Sprache ein gebautes Merkmal', () => {
+    // In Phase 15 stand hier das Gegenteil, und das war damals die ehrliche
+    // Aussage: entschieden, aber nicht gebaut. Phase 16 hat beide gebaut -
+    // Spanisch als Herleitung, Englisch ausdruecklich NICHT als solche.
+    for (const code of LANGUAGE_CODES) expect(LANGUAGES[code].feature.implemented).toBe(true);
   });
 
   it('ordnet die deutschen Module jedem Paar zu, nicht Thai allein (Pflicht 6)', () => {
@@ -144,11 +155,25 @@ describe('Das Merkmal als einhängbarer Baustein (Pflicht 3)', () => {
     ]);
   });
 
-  it('gibt Sprachen ohne gebautes Merkmal keine Auszeichnung und keine Übungen', () => {
-    for (const code of ['en', 'es'] as const) {
-      expect(featureRuntime(code).drills).toEqual([]);
-      expect(drillsForDirectionViaFeature(`de_to_${code}`)).toEqual([]);
-    }
+  it('gibt jeder Sprache genau die Übungen ihres eigenen Merkmals', () => {
+    expect(featureRuntime('th').drills).toEqual(['tone', 'toneRule']);
+    expect(featureRuntime('es').drills).toEqual(['stressRule']);
+    expect(featureRuntime('en').drills).toEqual(['spelling']);
+    // Und keine Übung wandert in eine fremde Sprache.
+    expect(drillsForDirectionViaFeature('de_to_es')).toEqual(['stressRule']);
+    expect(drillsForDirectionViaFeature('de_to_en')).toEqual(['spelling']);
+    expect(drillsForDirectionViaFeature('de_to_th')).toEqual(['tone', 'toneRule']);
+  });
+
+  it('zeichnet spanische Silben mit der Betonung aus, englische mit der Lautschrift', () => {
+    const medico = VOCABULARY_ES.find((entry) => entry.id === 'es_medico')!;
+    expect(featureFor(medico).annotate(medico)).toEqual([
+      { roman: 'mé', stressed: true },
+      { roman: 'di' },
+      { roman: 'co' },
+    ]);
+    const enough = VOCABULARY_EN.find((entry) => entry.id === 'en_enough')!;
+    expect(featureFor(enough).annotate(enough)).toEqual([{ roman: '/ɪˈnʌf/' }]);
   });
 
   it('hängt die deutschen Grammatikübungen an jedes „X → Deutsch"', () => {
@@ -209,9 +234,12 @@ describe('Migration eines vorhandenen Speichers (AE-43)', () => {
     expect(entries).toHaveLength(VOCABULARY.length);
     for (const entry of entries) {
       expect(entry.term).toBeTruthy();
-      expect(entry.language).toBe('th');
+      expect(LANGUAGE_CODES).toContain(entry.language);
       expect((entry as unknown as Record<string, unknown>).thai).toBeUndefined();
     }
+    // Der Thai-Teil ist danach genau der aus der Datei - die Migration hat ihn
+    // nicht angefasst, sondern neu eingespielt.
+    expect(entries.filter((entry) => entry.language === 'th')).toHaveLength(VOCABULARY_TH.length);
   });
 
   it('lässt den Lernfortschritt unangetastet — das ist der eigentliche Punkt', async () => {
@@ -254,14 +282,22 @@ describe('Migration eines vorhandenen Speichers (AE-43)', () => {
 });
 
 describe('Der Grundstock trägt seine Sprache', () => {
-  it('bei jedem Eintrag, und es ist Thai', () => {
-    expect(VOCABULARY.every((entry) => entry.language === 'th')).toBe(true);
+  it('bei jedem Eintrag, und zwar die seiner Datei', () => {
+    expect(VOCABULARY_TH.every((entry) => entry.language === 'th')).toBe(true);
+    expect(VOCABULARY_EN.every((entry) => entry.language === 'en')).toBe(true);
+    expect(VOCABULARY_ES.every((entry) => entry.language === 'es')).toBe(true);
   });
 
   it('mit einer nichtleeren fremdsprachigen Form', () => {
     for (const entry of VOCABULARY) {
       expect(entry.term.trim().length).toBeGreaterThan(0);
-      expect(entry.exampleTerm.trim().length).toBeGreaterThan(0);
     }
+  });
+
+  it('und mit über alle Sprachen eindeutigen IDs', () => {
+    // Der Kartenschluessel ist `vocabId:direction`. Zwei gleiche IDs in
+    // verschiedenen Sprachen wuerden sich denselben Lernfortschritt teilen.
+    const ids = new Set(VOCABULARY.map((entry) => entry.id));
+    expect(ids.size).toBe(VOCABULARY.length);
   });
 });

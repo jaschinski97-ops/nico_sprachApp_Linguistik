@@ -42,7 +42,7 @@ function NavBar(props: { children?: React.ReactNode }) {
     <ThemedView type="backgroundElement" style={styles.bar}>
       <View style={styles.barInner}>
         <ThemedText type="smallBold" style={styles.brand}>
-          Thai ↔ Deutsch
+          Lernbegleiter
         </ThemedText>
         <View style={styles.links}>{props.children}</View>
       </View>

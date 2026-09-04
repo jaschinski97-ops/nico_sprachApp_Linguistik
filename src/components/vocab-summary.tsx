@@ -5,7 +5,8 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { VOCABULARY } from '@/data/vocabulary';
+import { vocabularyFor } from '@/data/vocabulary';
+import { LanguageCode } from '@/lib/languages/types';
 import { loadVocabulary, seedVocabulary } from '@/lib/repository';
 
 type Summary = {
@@ -21,7 +22,7 @@ type Summary = {
  * Persistenzschicht, nicht direkt aus dem Modul. Phase 3 ersetzt das durch das
  * richtige Dashboard mit fälligen Karten.
  */
-export function VocabSummary() {
+export function VocabSummary({ language }: { language: LanguageCode }) {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +31,9 @@ export function VocabSummary() {
     (async () => {
       try {
         await seedVocabulary();
-        const entries = await loadVocabulary();
+        // Nur der Grundstock der gewaehlten Sprache: Eine Zahl ueber alle drei
+        // haette hier keine Bedeutung - gelernt wird immer ein Paar.
+        const entries = (await loadVocabulary()).filter((e) => e.language === language);
         if (cancelled) return;
 
         const counts = new Map<string, number>();
@@ -51,7 +54,7 @@ export function VocabSummary() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language]);
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -81,9 +84,10 @@ export function VocabSummary() {
           <ThemedText type="small" themeColor="textSecondary">
             {summary.byPos.map(([pos, n]) => `${pos} ${n}`).join(' · ')}
           </ThemedText>
-          {summary.total !== VOCABULARY.length ? (
+          {summary.total !== vocabularyFor(language).length ? (
             <ThemedText type="small" themeColor="textSecondary">
-              Achtung: im Speicher {summary.total}, im Modul {VOCABULARY.length}.
+              Achtung: im Speicher {summary.total}, im Modul{' '}
+              {vocabularyFor(language).length}.
             </ThemedText>
           ) : null}
         </>

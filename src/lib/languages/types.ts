@@ -18,6 +18,8 @@
  * migriert werden muss, ist allein der **Vokabel**-Datensatz — siehe AE-43.
  */
 
+import { Tone } from '@/constants/tones';
+
 /** Die Drehscheibe. Steht auf einer Seite jedes Sprachpaars. */
 export const HUB_LANGUAGE = 'de' as const;
 export type HubLanguage = typeof HUB_LANGUAGE;
@@ -50,6 +52,26 @@ export function languageOfDirection(direction: Direction): LanguageCode {
 export function producesTargetLanguage(direction: Direction): boolean {
   return direction.startsWith(`${HUB_LANGUAGE}_to_`);
 }
+
+/**
+ * Eine Silbe mit dem, was das Merkmal über sie sagt.
+ *
+ * SEIT PHASE 16 HIER statt in `feature.ts`: Der Vokabeltyp braucht ihn, und
+ * `feature.ts` importiert den Vokabeltyp — der Zirkel wäre sonst unvermeidlich.
+ *
+ * Die Felder sind bewusst optional und schließen sich nicht aus: Thai trägt
+ * einen `tone`, Spanisch ein `stressed`, Englisch keines von beiden. Ein
+ * Pflichtfeld hier hieße, jede Sprache müsse das Merkmal jeder anderen
+ * mitschleppen.
+ */
+export type SyllableAnnotation = {
+  /** Die Silbe in Umschrift, Schreibung oder Lautschrift. */
+  roman: string;
+  /** Thai: der Ton — er wird zur Farbe und zur Konturglyphe. */
+  tone?: Tone;
+  /** Spanisch: trägt diese Silbe die Betonung? */
+  stressed?: boolean;
+};
 
 /**
  * Was die App über eine Sprache weiß, unabhängig davon, ob es schon Inhalte

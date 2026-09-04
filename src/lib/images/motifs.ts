@@ -52,8 +52,41 @@ export const IMAGE_MOTIFS: Record<string, string> = {
   nangsue: 'a single closed book lying flat',
 };
 
+/**
+ * Ein paar Motive nennen Thailand ausdrücklich — die gelten nur dort.
+ *
+ * „a small Thai street food stall" ist für ร้าน richtig und für „la tienda"
+ * falsch. Statt drei Listen zu führen, tragen die wenigen Einträge, bei denen
+ * der Begriff kulturell gefärbt ist, hier eine eigene Fassung.
+ */
+const MOTIF_OVERRIDES: Record<string, string> = {
+  es_tienda: 'a small neighbourhood shop with a shop window',
+  en_shop: 'a small neighbourhood shop with a shop window',
+  es_dinero: 'euro banknotes and coins lying on a table',
+  en_money: 'euro banknotes and coins lying on a table',
+  es_comida: 'a plate of simple food, rice with vegetables',
+  en_food: 'a plate of simple food, rice with vegetables',
+};
+
+/**
+ * Unter welchem Schlüssel das Motiv zu diesem Eintrag steht.
+ *
+ * Ein Bildmotiv gehört zum **Begriff**, nicht zur Sprache: „a small simple
+ * house" passt zu บ้าน, casa und house gleich gut. Deshalb greift ein
+ * englischer oder spanischer Eintrag über sein `concept` auf das Motiv des
+ * Thai-Eintrags zurück, an dem der Begriff zuerst formuliert wurde (AE-46) —
+ * es sei denn, für ihn steht eine eigene Fassung oben.
+ */
+export function motifKey(entry: { id: string; concept?: string }): string {
+  if (Object.prototype.hasOwnProperty.call(MOTIF_OVERRIDES, entry.id)) return entry.id;
+  return entry.concept ?? entry.id;
+}
+
 export function hasMotif(vocabId: string): boolean {
-  return Object.prototype.hasOwnProperty.call(IMAGE_MOTIFS, vocabId);
+  return (
+    Object.prototype.hasOwnProperty.call(IMAGE_MOTIFS, vocabId) ||
+    Object.prototype.hasOwnProperty.call(MOTIF_OVERRIDES, vocabId)
+  );
 }
 
 /**
@@ -65,7 +98,7 @@ export function hasMotif(vocabId: string): boolean {
  * fehlende Zeile hier zeigt.
  */
 export function motifFor(vocabId: string): string {
-  const motif = IMAGE_MOTIFS[vocabId];
+  const motif = MOTIF_OVERRIDES[vocabId] ?? IMAGE_MOTIFS[vocabId];
   if (!motif) {
     throw new Error(
       `Für "${vocabId}" ist kein Bildmotiv hinterlegt (src/lib/images/motifs.ts).`

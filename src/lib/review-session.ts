@@ -3,7 +3,7 @@ import { VocabEntry } from '@/data/vocabulary';
 import { createCardState, dueCards, retrievability } from './fsrs/fsrs';
 import { Direction, FSRSCardState } from './fsrs/types';
 import { directionLabel, directionPrompt } from './languages/registry';
-import { directionsFor } from './languages/types';
+import { directionsFor, LanguageCode, languageOfDirection } from './languages/types';
 import { loadCardStatesForDirection, loadVocabulary, seedVocabulary } from './repository';
 import { DataStore, getStore } from './storage';
 
@@ -46,12 +46,20 @@ export async function ensureCardStates(
 ): Promise<{ entries: VocabEntry[]; cards: FSRSCardState[] }> {
   const db = store ?? (await getStore());
 
-  let entries = await loadVocabulary(db);
-  if (entries.length === 0) {
+  let alle = await loadVocabulary(db);
+  if (alle.length === 0) {
     // Erster Start: Grundstock ist noch nicht im Speicher.
     await seedVocabulary(db);
-    entries = await loadVocabulary(db);
+    alle = await loadVocabulary(db);
   }
+
+  // SEIT PHASE 16 DIE ENTSCHEIDENDE ZEILE. Der Speicher traegt jetzt drei
+  // Grundstoecke; ohne diesen Filter bekaeme eine Thai-Sitzung Karten fuer
+  // spanische Vokabeln, und die Faelligkeitszahl auf der Uebersicht waere die
+  // Summe ueber alle Sprachen. Die Sprache steht in der Richtung - es braucht
+  // dafuer keinen zusaetzlichen Parameter, den ein Aufrufer vergessen koennte.
+  const sprache = languageOfDirection(direction);
+  const entries = alle.filter((entry) => entry.language === sprache);
 
   const existing = await loadCardStatesForDirection(direction, db);
   const byVocabId = new Map(existing.map((card) => [card.vocabId, card]));
@@ -124,12 +132,20 @@ export async function summarizeDirection(
   };
 }
 
+/**
+ * Kennzahlen beider Richtungen einer Sprache.
+ *
+ * SEIT PHASE 16 MIT SPRACHE: Ohne sie zeigte die Uebersicht nach einem Wechsel
+ * auf Spanisch weiter die Thai-Zahlen - und zwar ohne dass etwas kaputt
+ * aussaehe, was die schlimmere Art Fehler ist.
+ */
 export async function summarizeAllDirections(
+  language: LanguageCode = 'th',
   store?: DataStore,
   now: number = Date.now()
 ): Promise<DirectionSummary[]> {
   const summaries: DirectionSummary[] = [];
-  for (const direction of DIRECTIONS) {
+  for (const direction of directionsFor(language)) {
     summaries.push(await summarizeDirection(direction, store, now));
   }
   return summaries;

@@ -1,9 +1,9 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-09-03",
-  "currentPhase": 15,
-  "currentPhaseName": "Mehrsprachigkeit: Fundament und Sprachauswahl",
+  "lastUpdated": "2026-09-04",
+  "currentPhase": 16,
+  "currentPhaseName": "Inhalte fuer Englisch und Spanisch",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -15,8 +15,17 @@
     "testRunner": "jest + jest-expo"
   },
   "vocabulary": {
-    "entries": 84,
-    "sourceVerified": 82,
+    "total": 248,
+    "perLanguage": {
+      "th": 84,
+      "en": 85,
+      "es": 79
+    },
+    "sourceVerified": {
+      "th": 82,
+      "en": 85,
+      "es": 79
+    },
     "unverified": [
       {
         "id": "raan",
@@ -29,9 +38,16 @@
         "reason": "Thai-Definition lautet nur 'to lie or lay down'; 'schlafen' erscheint nur in der Proto-Tai-Etymologie. Eindeutig schlafen ist นอนหลับ."
       }
     ],
-    "isConcrete": 25,
-    "source": "en.wiktionary.org, Thai-Abschnitt ueber die Sections-API; Ton aus der IPA-Tonkontur abgeleitet",
-    "sourceNote": "thai-language.com war geplant, ist aber ueber HTTPS nicht abrufbar (selbstsigniertes Zertifikat)."
+    "isConcrete": {
+      "th": 25,
+      "en": 28,
+      "es": 25
+    },
+    "source": "en.wiktionary.org, jeweils der Sprachabschnitt ueber die MediaWiki-API im Rohtext. Thai-Ton aus der IPA-Tonkontur abgeleitet (Phase 2); spanische Betonung aus der engen IPA mit Silbengrenzen gegengeprueft (Phase 16); englische Lautschrift RP, wo die Quelle sie fuehrt.",
+    "sourceNote": "thai-language.com war geplant, ist aber ueber HTTPS nicht abrufbar (selbstsigniertes Zertifikat).",
+    "glossCheck": "Jede behauptete Bedeutung musste woertlich in einer Definition des jeweiligen Sprachabschnitts vorkommen; 164 von 164 belegt. Wo die erste Formulierung nicht vorkam, wurde sie an die Quelle angepasst statt umgekehrt.",
+    "germanSide": "Fuer jeden Eintrag mit `concept` aus dem in Phase 2 geprueften Thai-Eintrag uebernommen (AE-42); ein Test vergleicht Genus, Plural, Stammformen und Steigerung Feld fuer Feld. Elf neue deutsche Woerter gegen de.wiktionary geprueft.",
+    "examples": "Nur bei spanischen Substantiven, und dort nur die Wortgruppe aus Artikel und Wort (el libro). Fuer Englisch keine - erfundene Saetze gibt es nicht (Pflicht 1)."
   },
   "acceptanceCriteria": [
     {
@@ -803,6 +819,36 @@
       "criterion": "Tests und tsc gruen",
       "done": true,
       "verifiedHow": "606 Tests in 25 Suites gruen (vorher 582 in 24); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler."
+    },
+    {
+      "phase": 16,
+      "criterion": "Beide Sprachpaare mit verifiziertem Grundstock nutzbar, Anzahl und sourceVerified-Quote dokumentiert",
+      "done": true,
+      "verifiedHow": "85 englische und 79 spanische Eintraege, sourceVerified 85/85 und 79/79. Jede behauptete Bedeutung musste woertlich in einer Definition des jeweiligen Sprachabschnitts vorkommen (164/164); wo die erste Formulierung nicht vorkam, wurde sie an die Quelle angepasst. Quelle je Eintrag abschnittsgenau verankert (#Spanish / #English). Im Web-Build beide Paare durchgespielt."
+    },
+    {
+      "phase": 16,
+      "criterion": "Merkmal je Sprache umgesetzt und ueber das Phase-15-Plugin eingehaengt",
+      "done": true,
+      "verifiedHow": "Spanisch: lib/stress mit Herleitungsuebung nach dem Muster von Phase 13, Gegenprobe 79/79 gegen die enge IPA aus Wiktionary (AE-45). Englisch: lib/spelling mit Vergleichsuebung statt Herleitung (AE-47). Beide haengen ueber featureRuntime am Plugin aus Phase 15; kein zweites Darstellungssystem - Tonfarben bleiben in constants/tones.ts, die spanische Betonung wird ueber Schriftschnitt und Unterstreichung gezeigt, nicht ueber eine neue Farbe."
+    },
+    {
+      "phase": 16,
+      "criterion": "Bestehende Uebungstypen greifen fuer die neuen Paare",
+      "done": true,
+      "verifiedHow": "Karteikarten, Artikel, Stammformen und freies Schreiben laufen fuer beide neuen Paare; im Web-Build angeklickt. DrillMeta traegt side statt einer festen Richtung, ensureCardStates filtert nach der Sprache der Richtung, und ein Test belegt, dass eine spanische Artikelsitzung keine Thai-Vokabel enthaelt. Die Schreibuebung schuetzt im Spanischen den Akut wie im Thai das Tonzeichen und bietet eine Akzentpalette."
+    },
+    {
+      "phase": 16,
+      "criterion": "Thai<->Deutsch nachweislich unveraendert funktionsfaehig (Regressionstest)",
+      "done": true,
+      "verifiedHow": "Die Tests aus Phase 0-15 zeigen ueber eine umbenannte Importzeile jetzt auf VOCABULARY_TH; unterhalb dieser Zeile wurde in keiner Datei eine Zusicherung geaendert. Dazu ein eigener Block: 84 Eintraege mit Ton und Beispielsatz, สวัสดี weiter tief-tief-mittel, kein Thai-Eintrag traegt ein Feld einer anderen Sprache und kein neuer Eintrag einen Ton. Im Web-Build zeigt die Uebersicht nach dem Zuruecksetzen wieder 84 faellige Karten je Richtung."
+    },
+    {
+      "phase": 16,
+      "criterion": "Tests und tsc gruen, PROGRESS ergaenzt, TODO aktualisiert, Commit",
+      "done": true,
+      "verifiedHow": "689 Tests in 30 Suites gruen (vorher 606 in 25); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler."
     }
   ],
   "architectureDecisions": [
@@ -1025,6 +1071,26 @@
       "id": "AE-44",
       "title": "Das Merkmal ist einhaengbar, und fuer Englisch und Spanisch entschieden statt geraten",
       "rationale": "LanguageFeature liefert Silbenauszeichnung und Merkmalsuebungen; die Darstellung (Farben, Glyphen, Schriftregeln) bleibt bewusst draussen, sonst entstuende ein zweites Darstellungssystem neben dem in Phase 9 kontrastgeprueften. Nachweis: syllablesOf laeuft durch das Merkmal, alle Thai-Tests unveraendert gruen. Die deutschen Uebungen haengen an jedem X_to_de (Pflicht 6). Recherche am 2026-09-03: Spanisch ist laut Quelle 'marked unequivocally through a series of orthographic rules' - also ableitbar wie der Thai-Ton, mit Herleitungsuebung als passendem Baustein (Haken: braucht Silbenzaehlung mit Diphthong-Regeln). Englisch ist das Gegenteil: 'unpredictable even for educated native speakers', ⟨ough⟩ mit mindestens zehn Lesarten - eine Herleitungsuebung waere dort sachlich falsch, das Merkmal muss je Wort hinterlegt werden. Der Unterschied steht als Feld kind im Modell, damit spaetere Phasen ihn nicht uebersehen."
+    },
+    {
+      "id": "AE-45",
+      "title": "Die spanische Betonung wird hergeleitet, und die Gegenprobe kommt von aussen",
+      "rationale": "lib/stress leitet Silbentrennung und Betonung aus der Schreibung ab; die Regeln stehen als zitierte Daten in data/spanish-stress.ts (Wikipedia \"Spanish orthography\", Abschnitte Stress and accentuation sowie Syllabification, abgerufen 2026-09-04). DIE GEGENPROBE WAERE ZIRKULAER, wenn sie gegen die aus der Regel erzeugten Daten liefe. Deshalb traegt jeder spanische Eintrag die ENGE IPA aus Wiktionary (ipaSyllables, z.B. [ˈme.ð̞i.ko]) - dort markiert die Quelle die Silbengrenzen selbst, wobei der Betonungsstrich eine Grenze mitvertritt. Ein Test faehrt alle 79 Eintraege dagegen: 79 von 79 stimmen in Silbenzahl UND betonter Silbe ueberein, wie in Phase 13 die 69 von 69. Ein zweiter Test haelt Daten und Regel zusammen, damit sie nicht auseinanderlaufen. Die Silbenzaehlung war der eigentliche Aufwand und der in AE-44 schon benannte Haken: Diphthonge, Hiatus durch Akut auf i/u, stummes h, stummes u in que/qui/gue/gui, unteilbare Anlautverbindungen (b,c,d,f,g,k,p,t + r/l) und die Digraphen ch/ll/rr. ⟨tl⟩ wird zurueckgewiesen statt geraten, weil die Quelle dort ausdruecklich zwei Trennungen zulaesst. Der unterscheidende Akut (donde/dónde, si/sí) liefert die richtige Antwort mit der falschen Begruendung - solche Woerter tragen deshalb einen benannten Vorbehalt (uncertain), dieselbe Mechanik wie in Phase 13. Der Ton am Vokabeleintrag ist seit dieser Phase optional: Ein spanischer Eintrag mit tone: 'mid' waere eine Behauptung ueber eine Sprache ohne Toene."
+    },
+    {
+      "id": "AE-46",
+      "title": "Der gemeinsame Begriff traegt die deutsche Seite und das Bildmotiv",
+      "rationale": "Jeder englische und spanische Eintrag mit einem Gegenstueck im Thai-Grundstock traegt dessen ID im Feld concept. Zwei Dinge haengen daran. ERSTENS die deutsche Seite: Genus, Plural, Stammformen und Steigerung wurden nicht neu erhoben, sondern aus dem in Phase 2 geprueften Eintrag uebernommen - das ist der eingeloeste Nutzen der Drehscheibe aus AE-42, und ein Test vergleicht beide Seiten Feld fuer Feld. ZWEITENS das Bildmotiv: Ein Motiv gehoert zum BEGRIFF, nicht zur Sprache (\"a small simple house\" passt zu บ้าน, casa und house gleich gut), also greift der Bildgenerator ueber concept auf das bereits formulierte Motiv zurueck statt es dreimal zu erfinden. Drei Motive nennen Thailand ausdruecklich (Strassenstand, Thai-Banknoten, Thai-Essen) und tragen fuer die anderen Sprachen eine eigene Fassung - eine kulturell gefaerbte Beschreibung unter spanischer Flagge waere schlechter als gar keine."
+    },
+    {
+      "id": "AE-47",
+      "title": "Fuer Englisch wird verglichen, nicht hergeleitet - und das ist die Umsetzung des Befunds",
+      "rationale": "AE-44 hat belegt, dass die englische Aussprache nicht aus der Schreibung folgt. Die Uebung setzt genau das um: Woerter des Grundstocks, die dasselbe Schriftstueck tragen, es aber verschieden aussprechen, bilden eine Gruppe. Gefragt wird nach dem Laut, und die falschen Antworten sind die ECHTEN Lesarten der anderen Woerter derselben Gruppe - nichts ist erfunden. Vier Gruppen mit je mehreren Lesarten: ough (enough /ʌf/, through /uː/, though /əʊ/, thought /ɔː/), ea (eat /iː/, bread /ɛ/, great /eɪ/, year /ɪə/), oo (food /uː/, book /ʊ/, blood /ʌ/), o (not /ɒ/, who /uː/, go /əʊ/, one/love /ʌ/). DASS DAS GEHT, IST EINE EIGENSCHAFT DES GRUNDSTOCKS: Die Gruppen wurden bei der Auswahl der Woerter mit angelegt; ohne sie haette Englisch ein entschiedenes Merkmal ohne Uebungsstoff. Ein Test prueft mechanisch, dass jeder angegebene Laut woertlich in der Lautschrift seines Wortes steht - die Zerlegung ist meine Analyse, die Lautschrift die der Quelle. Das Wort wird VOR der Antwort nicht vorgesprochen: Es zu hoeren waere die Antwort. Und als Beispiel an einer Antwort steht nie das gefragte Wort selbst. 'read' ist der Beleg im Kleinen: gleiche Schreibung, /ɹiːd/ und /ɹɛd/, innerhalb desselben Verbs."
+    },
+    {
+      "id": "AE-48",
+      "title": "Sprachparametrisiert heisst nicht sprachfaehig - was fehlt, steht dran",
+      "rationale": "Pflicht 4 verlangte, die Generatoren aus Phase 4/5/11 nachzuziehen statt zu duplizieren. Getan: planImages, planClips und planSituations nehmen jetzt eine Sprache. ABER DIE PARAMETRISIERUNG MACHT NOCH KEINEN INHALT. Der Aufgabentext des Situationsgenerators verlangt ausdruecklich Paiboon-Umschrift und den konsequenten Gebrauch der thailaendischen Hoeflichkeitspartikel ครับ/ค่ะ; fuer Spanisch oder Englisch braucht es einen eigenen Text mit eigener Recherche (welche Anredeformen dort verbindlich sind, ist eine Frage wie die aus Phase 7). Deshalb LEHNT planSituations andere Sprachen ab, statt thailaendische Vorgaben unter spanischer Flagge zu erzeugen. Die Einstellungen schreiben \"(Thai)\" an die Laufumfaenge, weil eine Zahl ohne Sprache dort eine stille Falschaussage waere. Ebenso die Sprechuebung: Das F0-Verfahren aus Phase 12 misst Tonhoehenkonturen. Ob dasselbe Werkzeug spanische Betonung erkennen kann, ist eine offene Frage und keine Selbstverstaendlichkeit - Betonung ist im Spanischen ueber Dauer, Lautstaerke UND Tonhoehe realisiert, und welcher Anteil messbar durchschlaegt, ist nicht gemessen. Die Uebung bleibt deshalb auf Thai beschraenkt, statt eine Bewertung zu liefern, deren Grundlage niemand geprueft hat."
     }
   ],
   "openBlockers": [
@@ -1078,18 +1144,20 @@
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 15 abgeschlossen; Fundament fuer Mehrsprachigkeit steht, Inhalte je Sprache stehen aus",
+    "name": "Phase 16 abgeschlossen; drei Sprachpaare nutzbar, drei Merkmale gebaut",
     "tasks": [
-      "Inhalt je neuer Sprache in eigener Phase mit eigener Recherche (wie Phase 2 fuer Thai): Spanisch mit Betonungsregel-Uebung, Englisch mit Lautschrift je Wort - Merkmale sind in AE-44 entschieden und belegt",
-      "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2), inklusive Auto-Stopp und sofortigem Ende des Mikrofonindikators",
+      "Pruefungsmodule fuer Englisch und Spanisch (Cambridge/IELTS, DELE/Cervantes): eigene Recherche wie Phase 7, eigene Phase. Der Pruefungs-Screen filtert noch nicht nach Sprache.",
+      "Sprachsituationen fuer Englisch und Spanisch: der Plan ist parametrisiert, der Aufgabentext an die KI ist es nicht (Paiboon, ครับ/ค่ะ). Braucht einen eigenen Text mit eigener Recherche zu Anredeformen (AE-48).",
+      "Bilder und Hoerclips fuer die neuen Sprachen: Motive liegen ueber den gemeinsamen Begriff vor (AE-46), aber die Einstellungen bieten die Sprachwahl noch nicht an - dort steht derzeit ausdruecklich \"(Thai)\".",
+      "Beispielsaetze fuer Englisch und Spanisch mit der Disziplin aus Phase 2. Bisher gibt es nur bei spanischen Substantiven die Wortgruppe aus Artikel und Wort.",
+      "Offener Befund: Ob die F0-Messung aus Phase 12 spanische Betonung erkennen kann, ist NICHT geprueft (AE-48). Vor einem Umbau der Sprechuebung messen, nicht annehmen.",
+      "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2)",
       "B-6: Probelauf Hoerclips mit gueltigem Gemini-Schluessel - danach die zehn Clips in scripts/tone-contour.html ziehen und die Toene messen (AE-31)",
       "B-5: EAS-Konto, dann Android-APK bauen (schliesst B-2 fuer Android mit)",
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
       "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27), und physisches PCM der Sprechuebung pruefen (AE-34)",
       "Vor einer Store-Einreichung: App-Symbol und Splash ersetzen, Bundle-Identifier bestaetigen",
-      "Danach frei: Wortschatz auf ~1000 nach dem Skalierungsplan, Uebungstyp mit freier Eingabe, Durchfuehrungsbestimmungen fuer echte Bestehensgrenzen",
-      "Frei: Konsonantentafel zum Nachschlagen aus den Daten von Phase 13; Segmentierung mehrsilbiger Woerter braucht eine Quelle fuer Leitkonsonant gegen Verbindung (AE-38)",
-      "Frei: Stammformen und Plural als eigene Schreibaufgabe; KI-Korrektur fuer freie Saetze als optionale Ergaenzung mit Schluessel (AE-41)"
+      "Frei: Wortschatz je Sprache aufstocken nach dem Skalierungsplan; Konsonantentafel zum Nachschlagen aus den Daten von Phase 13; Segmentierung mehrsilbiger Thai-Woerter (AE-38)"
     ]
   },
   "situations": {
@@ -1139,14 +1207,39 @@
       "article",
       "verbForms"
     ],
+    "de_to_es": [
+      "stressRule"
+    ],
+    "es_to_de": [
+      "article",
+      "verbForms"
+    ],
+    "de_to_en": [
+      "spelling"
+    ],
+    "en_to_de": [
+      "article",
+      "verbForms"
+    ],
     "sessionSize": 10,
     "candidates": {
       "tone": 69,
-      "article": 29,
-      "verbForms": 20,
-      "toneRule": 69
+      "toneRule": 69,
+      "article": {
+        "th": 29,
+        "es": 30,
+        "en": 33
+      },
+      "verbForms": {
+        "th": 20,
+        "es": 18,
+        "en": 19
+      },
+      "stressRule": 65,
+      "spelling": 23
     },
-    "fsrs": "Auswahluebungen weiterhin NICHT angebunden (AE-16); seit Phase 14 speist der Uebungstyp 'Schreiben' FSRS ueber denselben Kartenschluessel (AE-40)",
+    "direction": "Seit Phase 16 aus Uebung UND Sprache gerechnet (directionForDrill); DrillMeta traegt side und feature statt einer festen Richtung.",
+    "fsrs": "Auswahluebungen weiterhin NICHT angebunden (AE-16); seit Phase 14 speist der Uebungstyp Schreiben FSRS ueber denselben Kartenschluessel (AE-40)",
     "logging": "eigene Zaehler drills/drillsCorrect im Tagesprotokoll, getrennt von total"
   },
   "profile": {
@@ -1383,16 +1476,20 @@
     ],
     "model": "Direction = de_to_<X> | <X>_to_de; additive Erweiterung, alte Werte bleiben gueltig (AE-42)",
     "withContent": [
-      "th"
+      "th",
+      "en",
+      "es"
     ],
+    "defaultLanguage": "th - ausdruecklich gesetzt, nicht aus einer Sortierung abgeleitet (AE-45). Sonst faende jemand nach einem Update Englisch vor, obwohl er Thai lernt.",
     "features": {
       "th": "Toene - ableitbar, implementiert (Phase 13)",
-      "es": "Betonung - ableitbar laut Quelle ('unequivocally'), NICHT implementiert",
-      "en": "Aussprache - laut Quelle NICHT ableitbar ('unpredictable even for educated native speakers'), je Wort zu hinterlegen, NICHT implementiert"
+      "es": "Betonung - ableitbar, implementiert (Phase 16, lib/stress). Gegenprobe 79/79 gegen die enge IPA aus Wiktionary.",
+      "en": "Aussprache je Wort - NICHT ableitbar, implementiert als Vergleichsuebung statt Herleitung (Phase 16, lib/spelling). Vier Schriftstueck-Gruppen mit mehreren Lesarten."
     },
     "germanModules": "Pruefungsmodul und Grammatikuebungen gelten fuer jedes X -> Deutsch (Pflicht 6)",
     "schemaVersion": 2,
     "migration": "lib/storage/migration.ts - Vokabeln neu einspielen, Kartenzustaende unberuehrt (AE-43)",
-    "notGeneralizedYet": "ConversationTurn.thai, ImageSpec.thai, Sprechaufgabe, Pruefungs-Screen-Filter, speechLocale in der Audio-Abstraktion"
+    "languageFilter": "ensureCardStates filtert seit Phase 16 nach der Sprache der Richtung. Ohne diese Zeile bekaeme eine Thai-Sitzung Karten fuer spanische Vokabeln.",
+    "notGeneralizedYet": "ConversationTurn.thai und der Aufgabentext des Situationsgenerators (Paiboon, ครับ/ค่ะ) - der Plan ist sprachparametrisiert, der Prompt nicht (AE-48). Pruefungs-Screen-Filter. Sprechuebung nur Thai (F0-Konturen)."
   }
 }

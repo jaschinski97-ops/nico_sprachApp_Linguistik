@@ -40,8 +40,19 @@ export type LearnerProfile = {
 
 const EMPTY_PROFILE: LearnerProfile = { defaultDirection: null, language: defaultLanguage() };
 
+/**
+ * Ist das eine Richtung, die es wirklich gibt?
+ *
+ * SEIT PHASE 16 AUS DEM SPRACHMODELL. Vorher standen hier zwei Literale, und
+ * ein gespeichertes `de_to_es` waere beim naechsten Start still verworfen
+ * worden - der Nutzer haette seine gemerkte Richtung ohne Meldung verloren.
+ */
 function isDirection(value: unknown): value is Direction {
-  return value === 'de_to_th' || value === 'th_to_de';
+  if (typeof value !== 'string') return false;
+  const teile = value.split('_to_');
+  if (teile.length !== 2) return false;
+  const [von, nach] = teile;
+  return (von === 'de' && isLanguageCode(nach)) || (nach === 'de' && isLanguageCode(von));
 }
 
 export async function loadProfile(store?: DataStore): Promise<LearnerProfile> {

@@ -1,4 +1,7 @@
-import { VOCABULARY } from '@/data/vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
 
 import { DAY_MS, retrievability } from './fsrs/fsrs';
 import { Direction } from './fsrs/types';
@@ -38,7 +41,10 @@ describe('ensureCardStates', () => {
     expect(await store.getAll('vocab')).toHaveLength(0);
 
     await ensureCardStates('de_to_th', store, T0);
-    expect(await store.getAll('vocab')).toHaveLength(VOCABULARY.length);
+    // Eingespielt wird seit Phase 16 der ganze Grundstock (alle Sprachen);
+    // Karten bekommt nur die Sprache dieser Richtung - das prueft der
+    // naechste Block.
+    expect((await store.getAll('vocab')).length).toBeGreaterThanOrEqual(VOCABULARY.length);
   });
 
   it('legt beim zweiten Aufruf nichts Neues an', async () => {
@@ -158,7 +164,7 @@ describe('summarizeDirection', () => {
 
   it('liefert beide Richtungen getrennt, nicht als Summe', async () => {
     const store = await freshStore();
-    const summaries = await summarizeAllDirections(store, T0);
+    const summaries = await summarizeAllDirections('th', store, T0);
 
     expect(summaries.map((s) => s.direction).sort()).toEqual(
       ([...DIRECTIONS] as Direction[]).sort()

@@ -1,10 +1,9 @@
-import { Tone } from '@/constants/tones';
-import { VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
 
 import { DrillId } from '../drills/types';
 
 import { LANGUAGES } from './registry';
-import { Direction, LanguageCode, languageOfDirection } from './types';
+import { Direction, LanguageCode, languageOfDirection, SyllableAnnotation } from './types';
 
 /**
  * Der einhängbare Teil des Sprachmerkmals (Phase 15, Pflicht 3).
@@ -31,16 +30,9 @@ import { Direction, LanguageCode, languageOfDirection } from './types';
  * 3, 6 und 13 blieben ohne eine einzige Änderung grün.
  */
 
-/** Eine Silbe mit dem, was das Merkmal über sie sagt. */
-export type SyllableAnnotation = {
-  /** Die Silbe in Umschrift bzw. Lautschrift. */
-  roman: string;
-  /**
-   * Die Auszeichnung. Bei Thai der Ton — er wird zur Farbe und zur
-   * Konturglyphe. Sprachen ohne tonale Auszeichnung lassen das Feld weg.
-   */
-  tone?: Tone;
-};
+// Der Typ steht seit Phase 16 in `types.ts` - der Vokabeltyp braucht ihn,
+// und von hier aus waere es ein Zirkel.
+export type { SyllableAnnotation };
 
 export type LanguageFeatureRuntime = {
   /**
@@ -67,21 +59,38 @@ const THAI_RUNTIME: LanguageFeatureRuntime = {
 };
 
 /**
- * Sprachen ohne gebautes Merkmal.
+ * Spanisch: Betonung je Silbe (Phase 16) und die Herleitungsübung.
  *
- * Sie zerfallen in genau eine Silbe ohne Auszeichnung und bringen keine
- * eigenen Übungen mit — was ehrlich ist, solange ihr Merkmal nur entschieden
- * und nicht implementiert ist (AE-44).
+ * Die Silben stehen im Eintrag, sind aber **abgeleitet** und nicht
+ * abgeschrieben: `lib/stress` erzeugt sie aus der Schreibung, und ein Test
+ * fährt den ganzen Grundstock durch, um zu belegen, dass Daten und Regel
+ * übereinstimmen. Hier gelesen zu werden statt gerechnet, ist reine
+ * Anzeigeökonomie.
  */
-const PLAIN_RUNTIME: LanguageFeatureRuntime = {
-  annotate: (entry) => [{ roman: entry.romanization || entry.term }],
-  drills: [],
+const SPANISH_RUNTIME: LanguageFeatureRuntime = {
+  annotate(entry) {
+    if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
+    return [{ roman: entry.romanization || entry.term }];
+  },
+  drills: ['stressRule'],
+};
+
+/**
+ * Englisch: die Lautschrift am ganzen Wort, nicht je Silbe.
+ *
+ * Das ist keine Lücke, sondern der Befund aus AE-44: Die Aussprache lässt
+ * sich nicht aus der Schreibung ableiten, also gibt es auch nichts, was man
+ * Silbe für Silbe zeigen könnte. Die eine Auszeichnung ist die Lautschrift.
+ */
+const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
+  annotate: (entry) => [{ roman: entry.ipa ?? entry.romanization ?? entry.term }],
+  drills: ['spelling'],
 };
 
 const RUNTIMES: Record<LanguageCode, LanguageFeatureRuntime> = {
   th: THAI_RUNTIME,
-  en: PLAIN_RUNTIME,
-  es: PLAIN_RUNTIME,
+  en: ENGLISH_RUNTIME,
+  es: SPANISH_RUNTIME,
 };
 
 export function featureRuntime(language: LanguageCode): LanguageFeatureRuntime {
@@ -103,7 +112,12 @@ export function featureFor(entry: VocabEntry): LanguageFeatureRuntime {
  */
 export function drillsForDirectionViaFeature(direction: Direction): DrillId[] {
   if (direction.endsWith('_to_de')) return ['article', 'verbForms'];
-  return featureRuntime(languageOfDirection(direction)).drills;
+  const language = languageOfDirection(direction);
+  // Ein entschiedenes Merkmal ist noch kein gebautes. Solange
+  // `implemented: false` steht, gibt es hier keine Uebung - lieber eine
+  // leere Liste als eine Uebung ohne Stoff (Pflicht 5 aus Phase 15).
+  if (!LANGUAGES[language].feature.implemented) return [];
+  return featureRuntime(language).drills;
 }
 
 /** Ob das Merkmal dieser Sprache gebaut ist — für die Anzeige in der Auswahl. */

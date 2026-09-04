@@ -1,8 +1,11 @@
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
+import { VOCABULARY, vocabularyFor } from '@/data/vocabulary';
+
+import { LanguageCode } from '../languages/types';
 
 import { assertUniqueIds, limitPlan } from '../generation/plan';
 
-import { motifFor } from './motifs';
+import { hasMotif, motifFor, motifKey } from './motifs';
 import { ImageSpec } from './types';
 
 /**
@@ -21,7 +24,11 @@ import { ImageSpec } from './types';
 export const IMAGE_TEST_RUN = 5;
 
 export function canHaveImage(entry: VocabEntry): boolean {
-  return entry.isConcrete === true;
+  // Seit Phase 16 zusaetzlich: ein Motiv muss vorliegen. Fuer Englisch und
+  // Spanisch kommt es ueber den gemeinsamen Begriff aus dem Thai-Eintrag
+  // (AE-46); wo keines hinterlegt ist, gibt es kein Bild statt eines
+  // geratenen.
+  return entry.isConcrete === true && hasMotif(motifKey(entry));
 }
 
 /**
@@ -48,7 +55,7 @@ export function imageSpecFor(entry: VocabEntry): ImageSpec {
     partOfSpeech: entry.partOfSpeech,
     // Wirft, wenn kein Motiv hinterlegt ist - lieber ein sichtbarer Fehler
     // beim Planen als ein geratenes Bild.
-    motif: motifFor(entry.id),
+    motif: motifFor(motifKey(entry)),
     isConcrete: true,
   };
 }
@@ -73,19 +80,26 @@ export function assertConcreteSpec(spec: ImageSpec): void {
 }
 
 export type ImagePlanOptions = {
-  /** Standardmäßig der ausgelieferte Grundstock. */
+  /**
+   * Welche Sprache bebildert wird (Phase 16, Pflicht 4). Ohne diese Angabe
+   * liefe ein Lauf ueber alle drei Grundstoecke.
+   */
+  language?: LanguageCode;
+  /** Standardmäßig der Grundstock der gewaehlten Sprache. */
   entries?: VocabEntry[];
   /** Höchstzahl für einen Probelauf; ohne Angabe alle konkreten Einträge. */
   limit?: number;
 };
 
 export function planImages(options: ImagePlanOptions = {}): ImageSpec[] {
-  const entries = options.entries ?? VOCABULARY;
+  const entries = options.entries ?? vocabularyFor(options.language ?? 'th');
   const specs = entries.filter(canHaveImage).map(imageSpecFor);
   return limitPlan(assertUniqueIds(specs), options.limit);
 }
 
 /** Wie viele Vokabeln überhaupt bildfähig sind. */
-export function countImageCandidates(entries: VocabEntry[] = VOCABULARY): number {
+export function countImageCandidates(
+  entries: VocabEntry[] = vocabularyFor('th')
+): number {
   return entries.filter(canHaveImage).length;
 }

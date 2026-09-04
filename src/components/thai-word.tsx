@@ -6,7 +6,7 @@ import { ToneContour } from './tone-contour';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
 import { syllablesOf, uniformTone } from '@/data/vocab-helpers';
-import { VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
 
 /**
  * Thai-Wort mit silbenweiser Tonfarbcodierung (AE-7).
@@ -47,10 +47,14 @@ export function ThaiWord({
       <View style={styles.syllables}>
         {syllables.map((syllable, index) => (
           <View key={`${syllable.roman}-${index}`} style={styles.syllable}>
-            <ToneContour tone={syllable.tone} height={12} />
+            {/* Seit Phase 16 ist der Ton im Typ optional - Spanisch und
+                Englisch haben keinen. Hier kommen nur Thai-Eintraege an;
+                sollte doch einmal eine Silbe ohne Ton auftauchen, bleibt sie
+                ungefaerbt statt in einer geratenen Farbe. */}
+            {syllable.tone ? <ToneContour tone={syllable.tone} height={12} /> : null}
             <ThemedText
               type={size === 'large' ? 'default' : 'small'}
-              style={{ color: toneColor(syllable.tone) }}>
+              style={syllable.tone ? { color: toneColor(syllable.tone) } : null}>
               {syllable.roman}
             </ThemedText>
             {index < syllables.length - 1 ? (

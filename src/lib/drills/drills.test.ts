@@ -1,5 +1,8 @@
 import { TONE_KEYS, TONES } from '@/constants/tones';
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { createCardState } from '../fsrs/fsrs';
 import { cardKey } from '../fsrs/types';
@@ -20,7 +23,7 @@ import {
 } from './questions';
 import { seededRandom, shuffled } from './random';
 import { buildDrillSession, DRILL_SESSION_SIZE, scoreAnswers } from './session';
-import { DRILL_META, DRILLS, drillsForDirection, DrillId } from './types';
+import { directionForDrill, DRILL_META, DRILLS, drillsForDirection, DrillId } from './types';
 
 const T0 = Date.UTC(2026, 8, 1, 10);
 
@@ -208,9 +211,14 @@ describe('Stammform-Uebung', () => {
 describe('Uebungen je Richtung', () => {
   it('ordnet jede Uebung genau einer Richtung zu', () => {
     for (const drill of DRILLS) {
-      const direction = DRILL_META[drill].direction;
+      // Seit Phase 16 kommt die Richtung aus Uebung UND Sprache: Die
+      // Artikel-Uebung gilt fuer jedes "X -> Deutsch", nicht nur fuer Thai.
+      const sprache = DRILL_META[drill].feature ?? 'th';
+      const direction = directionForDrill(drill, sprache);
       expect(drillsForDirection(direction)).toContain(drill);
-      const andere = direction === 'de_to_th' ? 'th_to_de' : 'de_to_th';
+      const andere = direction.startsWith('de_to_')
+        ? (`${sprache}_to_de` as const)
+        : (`de_to_${sprache}` as const);
       expect(drillsForDirection(andere)).not.toContain(drill);
     }
   });
@@ -235,7 +243,7 @@ describe('buildDrillSession', () => {
   it('stellt eine Runde aus geeigneten Vokabeln zusammen', async () => {
     const store = await freshStore();
     for (const drill of DRILLS) {
-      const session = await buildDrillSession({ drill, store, now: T0, seed: 1 });
+      const session = await buildDrillSession({ drill, language: DRILL_META[drill].feature ?? 'th', store, now: T0, seed: 1 });
       expect(session.questions).toHaveLength(DRILL_SESSION_SIZE);
       expect(session.available).toBeGreaterThanOrEqual(DRILL_SESSION_SIZE);
       expect(session.questions.every((question) => question.drill === drill)).toBe(true);
@@ -244,14 +252,14 @@ describe('buildDrillSession', () => {
 
   it('vergibt keine Vokabel zweimal in derselben Runde', async () => {
     const store = await freshStore();
-    const session = await buildDrillSession({ drill: 'tone', store, now: T0, seed: 3 });
+    const session = await buildDrillSession({ drill: 'tone', language: 'th', store, now: T0, seed: 3 });
     const ids = session.questions.map((question) => question.vocabId);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
   it('legt keine eigenen Karten an und veraendert keine (AE-16)', async () => {
     const store = await freshStore();
-    await buildDrillSession({ drill: 'article', store, now: T0, seed: 1 });
+    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0, seed: 1 });
 
     const cards = await store.getAll<{ vocabId: string; direction: string }>('cards');
     // Genau die Vokabelkarten der Richtung, keine zusaetzliche Sorte.
@@ -262,10 +270,10 @@ describe('buildDrillSession', () => {
 
   it('schreibt keinen Kartenzustand zurueck', async () => {
     const store = await freshStore();
-    await buildDrillSession({ drill: 'article', store, now: T0, seed: 1 });
+    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0, seed: 1 });
     const before = await store.get('cards', cardKey('baan', 'th_to_de'));
 
-    await buildDrillSession({ drill: 'article', store, now: T0 + 60_000, seed: 2 });
+    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0 + 60_000, seed: 2 });
     const after = await store.get('cards', cardKey('baan', 'th_to_de'));
 
     expect(after).toEqual(before);
@@ -273,7 +281,7 @@ describe('buildDrillSession', () => {
 
   it('zieht nur aus den am schlechtesten sitzenden Kandidaten', async () => {
     const store = await freshStore();
-    await buildDrillSession({ drill: 'article', store, now: T0, seed: 1 });
+    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0, seed: 1 });
 
     // Sechs Substantive wacklig, alle uebrigen fest. Das Fenster, aus dem
     // gezogen wird, ist dreimal so gross wie die Runde - bei zwei Aufgaben
@@ -296,6 +304,7 @@ describe('buildDrillSession', () => {
     for (const seed of [1, 2, 3, 4, 5]) {
       const session = await buildDrillSession({
         drill: 'article',
+        language: 'th',
         store,
         now: T0,
         seed,
@@ -309,8 +318,8 @@ describe('buildDrillSession', () => {
 
   it('liefert mit derselben Aussaat dieselbe Runde', async () => {
     const store = await freshStore();
-    const a = await buildDrillSession({ drill: 'tone', store, now: T0, seed: 11 });
-    const b = await buildDrillSession({ drill: 'tone', store, now: T0, seed: 11 });
+    const a = await buildDrillSession({ drill: 'tone', language: 'th', store, now: T0, seed: 11 });
+    const b = await buildDrillSession({ drill: 'tone', language: 'th', store, now: T0, seed: 11 });
     expect(a.questions.map((q) => q.id)).toEqual(b.questions.map((q) => q.id));
   });
 
@@ -318,8 +327,8 @@ describe('buildDrillSession', () => {
     // Sonst bekaeme man bei jedem Start dieselben zehn Aufgaben - die
     // Uebungen veraendern den Kartenzustand ja bewusst nicht.
     const store = await freshStore();
-    const a = await buildDrillSession({ drill: 'tone', store, now: T0, seed: 11 });
-    const b = await buildDrillSession({ drill: 'tone', store, now: T0, seed: 99 });
+    const a = await buildDrillSession({ drill: 'tone', language: 'th', store, now: T0, seed: 11 });
+    const b = await buildDrillSession({ drill: 'tone', language: 'th', store, now: T0, seed: 99 });
     expect(a.questions.map((q) => q.id)).not.toEqual(b.questions.map((q) => q.id));
   });
 });

@@ -1644,6 +1644,138 @@ das über `accessibilityState.disabled` auch dem Screenreader (Pflicht 5). Sie
 lernbar aussehen zu lassen wäre dieselbe Art Unwahrheit wie ein Bild zu einem
 abstrakten Wort oder eine erfundene Bestehensgrenze.
 
+### AE-45 — Die spanische Betonung wird hergeleitet, und die Gegenprobe kommt von außen
+
+**Entscheidung:** `lib/stress` leitet Silbentrennung und Betonung aus der
+Schreibung ab; die Regeln stehen als zitierte Daten in
+`data/spanish-stress.ts` (Wikipedia, „Spanish orthography", Abschnitte *Stress
+and accentuation* und *Syllabification*, abgerufen 2026-09-04). Die
+Herleitungsübung folgt dem Muster aus Phase 13: Wort zeigen, bestimmen lassen,
+den Weg Schritt für Schritt erklären.
+
+**Warum die Gegenprobe nicht gegen die eigenen Daten laufen darf.** Die
+abgelegten Silben stammen aus derselben Regel — sie dagegen zu halten hieße,
+die Regel gegen sich selbst zu prüfen. Deshalb trägt jeder spanische Eintrag
+zusätzlich die **enge** Lautschrift aus Wiktionary (`ipaSyllables`, etwa
+`[ˈme.ð̞i.ko]`). Dort markiert die Quelle die Silbengrenzen selbst, wobei der
+Betonungsstrich eine Grenze mitvertritt. Ein Test fährt alle 79 Einträge
+dagegen: **79 von 79** stimmen in Silbenzahl *und* betonter Silbe überein —
+dieselbe Art Nachweis wie die 69 von 69 in Phase 13. Ein zweiter Test hält
+Daten und Regel zusammen, damit sie nicht auseinanderlaufen.
+
+**Der Aufwand steckte in der Silbenzählung, nicht in der Betonungsregel.** AE-44
+hatte das schon benannt. Nötig waren: Diphthonge (unbetonter hoher Vokal neben
+einem anderen), Hiatus durch einen Akut auf ⟨i⟩ oder ⟨u⟩ (`día` ist zweisilbig,
+`dia` wäre einsilbig — genau dafür steht das Zeichen), das stumme ⟨h⟩, das
+stumme ⟨u⟩ in que/qui/gue/gui, die unteilbaren Anlautverbindungen
+(b,c,d,f,g,k,p,t + r/l) und die Digraphen ⟨ch ll rr⟩. Ohne die
+Anlautverbindungen käme `ha-blar` als `hab-lar` heraus: gleiche Silbenzahl,
+gleiche Antwort, **falsche Anzeige** — ein Fehler, den nur das Auge und nicht
+das Ergebnis gefunden hätte.
+
+**Zwei Stellen sind abgegrenzt statt geraten:**
+
+- ⟨tl⟩ wird zurückgewiesen. Die Quelle lässt dort ausdrücklich zwei Trennungen
+  zu (`at-le-ta` / `a-tle-ta`).
+- Der **unterscheidende** Akut (`dónde`, `sí`, `té`) gibt die richtige Antwort
+  mit der falschen Begründung: `donde` wird auch ohne Zeichen auf `don` betont.
+  Solche Wörter tragen einen benannten Vorbehalt (`uncertain`), dieselbe
+  Mechanik wie eine unsichere Herleitung in Phase 13.
+
+**Folge fürs Datenmodell:** `tone` am Vokabeleintrag ist seit dieser Phase
+optional. Ein spanischer Eintrag mit `tone: 'mid'` wäre eine Behauptung über
+eine Sprache ohne Töne, und ein Vorgabewert wäre genau die Art stille Unwahrheit,
+die dieses Projekt sonst vermeidet.
+
+### AE-46 — Der gemeinsame Begriff trägt die deutsche Seite und das Bildmotiv
+
+**Entscheidung:** Jeder englische und spanische Eintrag mit einem Gegenstück im
+Thai-Grundstock trägt dessen ID im Feld `concept`. Zwei Dinge hängen daran.
+
+**Erstens die deutsche Seite.** Genus, Plural, Stammformen und Steigerung wurden
+nicht neu erhoben, sondern aus dem in Phase 2 geprüften Eintrag übernommen; ein
+Test vergleicht beide Seiten Feld für Feld. **Das ist der eingelöste Nutzen der
+Drehscheibe aus AE-42** — bis hierhin war sie eine Behauptung über einen
+künftigen Vorteil. Neu zu prüfen waren nur elf deutsche Wörter, und die gegen
+de.wiktionary.
+
+**Zweitens das Bildmotiv.** Ein Motiv gehört zum **Begriff**, nicht zur Sprache:
+„a small simple house" passt zu บ้าน, `casa` und `house` gleich gut. Der
+Bildgenerator greift deshalb über `concept` auf das bereits formulierte Motiv
+zurück, statt es dreimal zu erfinden. Drei Motive nennen Thailand ausdrücklich
+(Straßenstand, Thai-Banknoten, Thai-Essen) und tragen für die anderen Sprachen
+eine eigene Fassung — eine kulturell gefärbte Beschreibung unter spanischer
+Flagge wäre schlechter als gar keine.
+
+**Was `concept` nicht ist:** kein Übersetzungsschlüssel und keine Kreuzprodukt-
+Hintertür. Englisch↔Spanisch bleibt nicht vorgesehen (AE-42). Das Feld sagt nur,
+wo die deutsche Seite herkommt und welches Motiv gemeint ist.
+
+### AE-47 — Für Englisch wird verglichen, nicht hergeleitet
+
+**Entscheidung:** Das englische Merkmal ist die Lautschrift je Wort, und die
+Übung dazu ist ein **Vergleich**: Wörter des Grundstocks, die dasselbe
+Schriftstück tragen, es aber verschieden aussprechen, bilden eine Gruppe.
+Gefragt wird nach dem Laut; die falschen Antworten sind die **echten** Lesarten
+der anderen Wörter derselben Gruppe.
+
+**Begründung:** AE-44 hat belegt, dass die englische Aussprache nicht aus der
+Schreibung folgt („unpredictable even for educated native speakers"). Eine
+Herleitungsübung wäre hier nicht bloß schwierig, sondern **sachlich falsch** —
+sie würde eine Regel lehren, die es nicht gibt. Der Vergleich lehrt stattdessen
+genau das, was zutrifft: dass man hinsehen muss.
+
+| Schriftstück | Wörter im Grundstock | Lesarten |
+| --- | --- | --- |
+| ⟨ough⟩ | enough, through, though, thought | /ʌf/ /uː/ /əʊ/ /ɔː/ |
+| ⟨ea⟩ | eat, bread, great, year (+ speak, read, tea, teacher) | /iː/ /ɛ/ /eɪ/ /ɪə/ |
+| ⟨oo⟩ | food, book, blood (+ look, good, school) | /uː/ /ʊ/ /ʌ/ |
+| ⟨o⟩ | not, who, go, one, love | /ɒ/ /uː/ /əʊ/ /ʌ/ |
+
+**Dass das geht, ist eine Eigenschaft des Grundstocks und kein Zufall.** Die
+Gruppen wurden bei der Auswahl der Wörter mit angelegt; ohne sie hätte Englisch
+ein entschiedenes Merkmal ohne Übungsstoff. Eine Gruppe mit nur einer Lesart
+fliegt raus — sie belegt nichts, und die Frage hätte genau eine mögliche
+Antwort.
+
+**Wo die Analyse meine ist und wo die der Quelle:** Die Lautschrift stammt aus
+Wiktionary, die Zerlegung („in *enough* klingt ⟨ough⟩ wie /ʌf/") ist meine. Ein
+Test prüft sie mechanisch: Der angegebene Laut muss wörtlich in der Lautschrift
+dieses Wortes stehen. Genau diese Prüfung hat gemeldet, dass Wiktionary bei
+`read` ausgerechnet unter „RP" die **Vergangenheit** /ɹɛd/ führt — die Grundform
+/ɹiːd/ steht in der UK/AU/NZ-Zeile.
+
+**Zwei Details, die die Übung sonst entwertet hätten**, und beide fielen erst im
+Web-Build auf: Das Wort wird **vor** der Antwort nicht vorgesprochen — es zu
+hören *wäre* die Antwort. Und als Beispiel an einer Antwortmöglichkeit steht nie
+das gefragte Wort selbst.
+
+### AE-48 — Sprachparametrisiert heißt nicht sprachfähig
+
+**Entscheidung:** `planImages`, `planClips` und `planSituations` nehmen eine
+Sprache entgegen (Pflicht 4: nachziehen statt duplizieren). **Aber die
+Parametrisierung macht noch keinen Inhalt**, und wo er fehlt, steht es dran.
+
+**Sprachsituationen:** Der Aufgabentext an die KI verlangt ausdrücklich
+Paiboon-Umschrift und den konsequenten Gebrauch der thailändischen
+Höflichkeitspartikel ครับ/ค่ะ. Für Spanisch oder Englisch braucht es einen
+eigenen Text mit eigener Recherche — welche Anredeformen dort verbindlich sind,
+ist eine Frage wie die aus Phase 7 und keine Übersetzungsaufgabe. `planSituations`
+**lehnt** andere Sprachen deshalb ab, statt thailändische Vorgaben unter
+spanischer Flagge zu erzeugen.
+
+**Einstellungen:** Die Laufumfänge tragen sichtbar „(Thai)". Eine Zahl ohne
+Sprache wäre dort eine stille Falschaussage, und still falsche Zahlen sind
+schlimmer als sichtbar unvollständige.
+
+**Sprechübung:** Das F0-Verfahren aus Phase 12 misst Tonhöhenkonturen. Ob
+dasselbe Werkzeug spanische Betonung erkennen kann, ist eine **offene Frage und
+keine Selbstverständlichkeit**: Betonung ist im Spanischen über Dauer,
+Lautstärke *und* Tonhöhe realisiert, und welcher Anteil messbar durchschlägt,
+hat niemand gemessen. Die Übung bleibt deshalb auf Thai beschränkt, statt eine
+Bewertung zu liefern, deren Grundlage ungeprüft ist. Das ist der Befund, nicht
+ein Versäumnis — er gehört vor einen Umbau, nicht danach.
+
 ---
 
 ## Protokoll
@@ -3389,12 +3521,238 @@ jemand daran denken muss.
   hinterlegt, aber die Audio-Abstraktion liest sie noch nicht; sie kennt
   weiterhin `th` und `de`.
 
+
 ---
 
-## Konsolidierte Abnahme (Stand 2026-09-03)
+### 2026-09-04 — Phase 16: Inhalte für Englisch und Spanisch
 
-Jedes „Fertig, wenn" aus Phase 0–15 gegen den **jetzigen** Repo-Zustand.
-**120 von 127 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauber auf
+`main` bei `64e12cc`, 606 Tests in 25 Suites grün, `npx tsc --noEmit`
+fehlerfrei). Phase 15 ist abgeschlossen, die Vorbedingung damit erfüllt. Nach
+**B-2**, **B-4**, **B-5** und **B-6** erneut gefragt; keine Antwort bis zum Ende
+der Sitzung, **alle vier bleiben offen**. Für diese Phase ohne Einfluss — sie
+fasst weder Netz zur Laufzeit noch Gerät an. Die Recherche selbst lief über die
+öffentliche MediaWiki-API und brauchte keinen Schlüssel.
+
+**Was diese Phase ist**
+
+Phase 15 hatte das Modell gebaut und für Englisch und Spanisch je ein Merkmal
+**entschieden**, aber nichts gefüllt und nichts gebaut. Diese Phase füllt beide
+Grundstöcke und setzt beide Merkmale um — und weil die Quellen Gegensätzliches
+sagen, sehen die beiden Übungen entsprechend verschieden aus.
+
+**Gemacht**
+
+- `src/data/vocabulary-en.ts` (85 Einträge) und `src/data/vocabulary-es.ts`
+  (79 Einträge); `vocabulary.ts` ist jetzt der Thai-Grundstock plus die Stelle,
+  an der die drei zusammenkommen. Der Typ steht in `vocab-types.ts`.
+- `src/data/spanish-stress.ts` und `src/lib/stress/` — die Betonungsregel als
+  zitierte Daten und als Herleitung mit Schritten.
+- `src/lib/spelling/` — die Schriftstück-Gruppen für Englisch.
+- Zwei neue Übungen: **„Betonung herleiten"** (Spanisch) und **„Gleiche
+  Schreibung, anderer Laut"** (Englisch).
+- `src/components/term-word.tsx` — die Anzeige je Sprache.
+- `ensureCardStates` filtert nach der Sprache der Richtung; `DrillMeta` trägt
+  `side` statt einer festen Richtung.
+
+**Pflicht 2 — Verifikationsdisziplin: der Schritt, der den Unterschied macht**
+
+Der Fehler aus Phase 2 (ดี, Bedeutung aus dem falschen Sprachabschnitt) hat
+diesmal die **Methode** bestimmt: Jeder Eintrag wurde aus dem abschnittsgenau
+geschnittenen Rohtext des jeweiligen Sprachabschnitts gebaut, und die von mir
+behauptete Bedeutung musste **wörtlich in einer Definition dieses Abschnitts
+vorkommen**. Der Generator hat das geprüft und den Lauf abgebrochen, wenn nicht.
+
+Beim ersten Durchlauf fielen **26 von 85** englischen Behauptungen durch. Das
+waren keine Sachfehler, sondern meine Paraphrasen — „In what place" statt „In,
+at or to what place". Angepasst wurde jedes Mal **meine Formulierung an die
+Quelle**, nicht umgekehrt. Am Ende: 164 von 164 belegt.
+
+Zwei weitere mechanische Prüfungen im Generator haben je einen echten Fehler
+gefunden, den ich beim Tippen gemacht hatte:
+
+- Das behauptete Genus wurde gegen `{{es-noun|…}}` der Quelle gehalten.
+- Die Konjugationsklasse wurde gegen die Endung des Infinitivs gehalten — und
+  meldete `comer` als `-ar`-Verb. Falsch, es ist ein `-er`-Verb.
+
+**Die deutsche Seite musste kein zweites Mal erhoben werden (AE-46)**
+
+Der Grundstock wurde bewusst auf denselben Begriffen aufgebaut wie der
+thailändische. Dadurch kommen Genus, Plural, Stammformen und Steigerung aus dem
+in Phase 2 geprüften Eintrag; ein Test vergleicht beide Seiten Feld für Feld.
+Das ist der **eingelöste** Nutzen der Drehscheibe aus AE-42 — bis hierhin war
+sie eine Behauptung über einen künftigen Vorteil. Neu zu prüfen waren nur elf
+deutsche Wörter (Brot, Blut, Tür, Gedanke, Entschuldigung, kalt, großartig,
+genug, durch, obwohl, danke), und die gegen de.wiktionary.
+
+**Pflicht 3 — Spanisch: die Regel gegen eine Angabe, die nicht aus ihr stammt**
+
+Die Betonungsregel selbst ist kurz. Der Aufwand steckte in der Silbenzählung,
+die AE-44 schon als Haken benannt hatte: Diphthonge, Hiatus durch einen Akut
+auf ⟨i⟩ oder ⟨u⟩, das stumme ⟨h⟩, das stumme ⟨u⟩ in que/qui/gue/gui, die
+unteilbaren Anlautverbindungen und die Digraphen ⟨ch ll rr⟩. Wer die
+überspringt, zählt falsch und leitet folglich falsch ab.
+
+**Die Gegenprobe wäre zirkulär gewesen, wenn sie gegen die abgelegten Silben
+gelaufen wäre** — die stammen ja aus derselben Regel. Deshalb trägt jeder
+spanische Eintrag zusätzlich die **enge** Lautschrift aus Wiktionary
+(`[ˈme.ð̞i.ko]`): Dort markiert die Quelle die Silbengrenzen selbst, wobei der
+Betonungsstrich eine Grenze mitvertritt. Ergebnis: **79 von 79** stimmen in
+Silbenzahl **und** betonter Silbe überein — dieselbe Art Nachweis wie die 69 von
+69 in Phase 13. Ein zweiter Test hält Daten und Regel zusammen, damit sie nicht
+auseinanderlaufen.
+
+Zwei Stellen sind ehrlich abgegrenzt statt geraten:
+
+- ⟨tl⟩ wird **zurückgewiesen**. Die Quelle lässt dort ausdrücklich zwei
+  Trennungen zu (`at-le-ta` / `a-tle-ta`); eine Übung, die eine davon als
+  richtig ausgibt, behauptete mehr als der Beleg.
+- Der **unterscheidende** Akut (`dónde`, `sí`, `té`) liefert die richtige
+  Antwort mit der falschen Begründung — `donde` wird auch ohne Zeichen auf
+  `don` betont. Solche Wörter tragen einen benannten Vorbehalt, dieselbe
+  Mechanik wie eine unsichere Herleitung in Phase 13.
+
+**Pflicht 3 — Englisch: keine Herleitung, und das ist die Umsetzung (AE-47)**
+
+Für Englisch wäre eine Herleitungsübung nicht schwierig, sondern **sachlich
+falsch**: Es gibt die Regel nicht, die sie lehren würde. Gebaut wurde deshalb
+der Vergleich. Wörter mit demselben Schriftstück und verschiedener Aussprache
+bilden eine Gruppe; gefragt wird nach dem Laut, und die falschen Antworten sind
+die **echten** Lesarten der anderen Wörter derselben Gruppe.
+
+| Schriftstück | Wörter im Grundstock | Lesarten |
+| --- | --- | --- |
+| ⟨ough⟩ | enough, through, though, thought | /ʌf/ /uː/ /əʊ/ /ɔː/ |
+| ⟨ea⟩ | eat, bread, great, year (+ speak, read, tea, teacher) | /iː/ /ɛ/ /eɪ/ /ɪə/ |
+| ⟨oo⟩ | food, book, blood (+ look, good, school) | /uː/ /ʊ/ /ʌ/ |
+| ⟨o⟩ | not, who, go, one, love | /ɒ/ /uː/ /əʊ/ /ʌ/ |
+
+**Dass das überhaupt geht, ist eine Eigenschaft des Grundstocks und kein
+Zufall:** Die Gruppen wurden bei der Auswahl der Wörter mit angelegt. Ohne sie
+hätte Englisch ein entschiedenes Merkmal ohne Übungsstoff — man kann den Befund
+aus AE-44 nicht üben, wenn keine zwei Wörter ihn zeigen.
+
+Zwei Details, die sonst die Übung entwertet hätten: Das Wort wird **vor** der
+Antwort nicht vorgesprochen (es zu hören wäre die Antwort), und als Beispiel an
+einer Antwortmöglichkeit steht nie das gefragte Wort selbst. Beides fiel erst im
+Web-Build auf, nicht im Test.
+
+Der beste Einzelbeleg ist `read`: gleiche Schreibung, /ɹiːd/ und /ɹɛd/, im
+selben Verb. Wiktionary führt ausgerechnet unter „RP" die **Vergangenheit** —
+darauf bin ich beim automatischen Greifen der Lautschrift hereingefallen, und
+die mechanische Prüfung „steht der angegebene Laut in der Lautschrift?" hat es
+gemeldet.
+
+**Pflicht 4 — bestehende Übungstypen, und was Parametrisierung nicht ist**
+
+Karteikarten, Artikel, Stammformen und freies Schreiben greifen für beide neuen
+Paare. Dafür musste dreierlei aufhören, ein Literal zu sein: die Richtung einer
+Übung (`DrillMeta.side` statt `direction`), die Antwortsprache beim Schreiben,
+und die Auswahl der Vokabeln.
+
+Der **wichtigste** dieser Punkte ist der letzte und war ein echter Fehler in
+Wartestellung: `ensureCardStates` las den ganzen Speicher. Mit drei Grundstöcken
+darin hätte eine Thai-Sitzung Karten für spanische Vokabeln bekommen — und
+nichts hätte kaputt ausgesehen, nur die Zahlen wären falsch gewesen. Der Filter
+hängt jetzt an der Richtung, die die Sprache ohnehin trägt; ein Test belegt, dass
+eine spanische Artikelsitzung keine thailändische Vokabel enthält.
+
+Beim Schreiben ist im Spanischen der **Akut geschützt**, aus demselben Grund wie
+das Thai-Tonzeichen: „hablo" und „habló" sind verschiedene Zeitformen, „ano" und
+„año" verschiedene Wörter. Dazu eine Akzentpalette — wenn es als Fehler zählt,
+muss es tippbar sein (dieselbe Überlegung wie bei den Umlauten in Phase 14).
+
+Die Generatoren aus Phase 4/5/11 sind jetzt sprachparametrisiert. **Das macht
+sie aber noch nicht sprachfähig** (AE-48): Der Aufgabentext des
+Situationsgenerators verlangt Paiboon-Umschrift und die thailändischen
+Höflichkeitspartikel ครับ/ค่ะ. Deshalb **lehnt** `planSituations` andere
+Sprachen ab, statt thailändische Vorgaben unter spanischer Flagge zu erzeugen,
+und die Einstellungen schreiben „(Thai)" an die Laufumfänge.
+
+**Bewusst nicht Ziel, ausdrücklich notiert**
+
+- **Prüfungsmodule** für Englisch und Spanisch: eigene Recherche wie Phase 7,
+  eigene Phase. Der Prüfungs-Screen filtert noch nicht nach Sprache.
+- **Sprechübung:** Die F0-Messung aus Phase 12 ist auf Tonhöhenkonturen
+  ausgelegt. Ob dasselbe Werkzeug spanische Betonung erkennen kann, ist eine
+  **offene Frage** — Betonung ist dort über Dauer, Lautstärke *und* Tonhöhe
+  realisiert, und welcher Anteil messbar durchschlägt, hat niemand gemessen.
+  Die Übung bleibt auf Thai, statt eine Bewertung zu liefern, deren Grundlage
+  ungeprüft ist.
+- **Beispielsätze** für die neuen Sprachen. Es gibt nur bei spanischen
+  Substantiven die Wortgruppe aus Artikel und Wort (`el libro`) — das Genus ist
+  quellengeprüft, ein ganzer Satz wäre es nicht. Erfundene Sätze hätten genau
+  die „verwässerte Vollmenge" ergeben, vor der Pflicht 1 warnt.
+
+**Pflicht 1 — wo der Umfang geschrumpft ist**
+
+An zwei Stellen, beide oben benannt: keine Beispielsätze, und keine
+Sprachsituationen für die neuen Paare. Die Vokabelzahl blieb über der
+Untergrenze (85 und 79 statt der geforderten 40), weil die Prüfung mechanisiert
+war und deshalb nicht am Umfang scheiterte.
+
+**Regressionsnachweis für Thai (Pflicht: unverändert funktionsfähig)**
+
+Die Tests aus Phase 0–15 zeigen über **eine umbenannte Importzeile** jetzt auf
+`VOCABULARY_TH`. Unterhalb dieser Zeile wurde in keiner Datei eine Zusicherung
+geändert — das ist die stärkste Form des Nachweises, die hier möglich war. Vier
+Aussagen der Phase 15 mussten inhaltlich umgeschrieben werden, und zwar genau
+die, deren Sachlage diese Phase geändert hat („nur eine Sprache mit Inhalten",
+„kein gebautes Merkmal"). Dazu ein eigener Block: 84 Einträge mit Ton und
+Beispielsatz, สวัสดี weiter tief-tief-mittel, kein Thai-Eintrag mit einem Feld
+einer anderen Sprache, kein neuer Eintrag mit einem Ton.
+
+**Ein Nebenbefund: die Vorgabesprache darf nicht abgeleitet sein (AE-45)**
+
+In Phase 15 ergab sich die Standardsprache aus „die erste mit Inhalten". Das war
+eindeutig, solange es eine gab. Mit dreien lieferte dieselbe Zeile plötzlich
+**Englisch** — alphabetisch vor Spanisch und Thai. Ein Test fiel darüber, und
+das war gut so: Wer seit Wochen Thai lernt, darf nach einem Update nicht
+Englisch vorfinden. Die Vorgabe steht jetzt ausdrücklich da.
+
+**Verifiziert**
+
+- `npm test` → **689 Tests grün** in 30 Suites (vorher 606 in 25).
+- `npx tsc --noEmit` fehlerfrei.
+- **Im Web-Build durchgespielt:** Sprachauswahl mit drei anwählbaren Sprachen
+  und Zahlen aus den Dateien (84 / 85 / 79). Für Spanisch: Übersicht mit beiden
+  Richtungen zu je 79 Karten, Karteikarte mit hervorgehobener betonter Silbe
+  („**ho** · la", „betont: ho"), „Betonung herleiten" mit richtiger Antwort und
+  drei Herleitungsschritten, Schreiben mit Akzentpalette. Für Englisch:
+  Karteikarte mit Lautschrift (`hello /həˈləʊ/`), „Gleiche Schreibung, anderer
+  Laut" mit vier echten Lesarten und Beispielwörtern. Für „X → Deutsch" stehen
+  in beiden neuen Paaren Artikel und Stammformen in der Leiste.
+- **Zwei Anzeigefehler dabei gefunden und behoben:** Die Tonlegende erschien bei
+  Spanisch (die Bedingung war „ableitbar und gebaut", und das trifft seit dieser
+  Phase auch auf die Betonung zu — gemeint waren aber die Töne selbst), und die
+  Merkmalsbeschreibung im Verzeichnis stand noch im Konjunktiv aus Phase 15
+  („wäre der passende Baustein"). Dazu trug der Kopf der App den Namen eines
+  einzelnen Sprachpaars; er heißt jetzt „Lernbegleiter".
+- **Barrierefreiheit:** kein Bedienelement ohne Beschriftung, alle
+  Auswahlknöpfe mit `aria-checked`, Antwortknöpfe mit Beschriftung samt
+  Beispielwort. In einem frischen Tab keine Konsolenfehler — die zunächst
+  sichtbaren stammten aus dem Puffer der Umbauphase (ein fehlendes Komma, das
+  schon behoben war), was durch einen zweiten Tab auseinandergehalten wurde.
+- **Testzustand aufgeräumt:** Der Browserspeicher wurde nach dem Durchspielen
+  geleert; die Übersicht zeigt wieder Thai mit 84 fälligen Karten je Richtung.
+
+**Offen / bewusst nicht gemacht**
+
+- Prüfungsmodule, Sprachsituationen, Bilder- und Cliplauf für die neuen
+  Sprachen (Motive liegen über den gemeinsamen Begriff vor, die Einstellungen
+  bieten die Sprachwahl aber noch nicht an).
+- Beispielsätze für Englisch und Spanisch.
+- Ob die F0-Messung spanische Betonung erkennt — **nicht geprüft**, siehe AE-48.
+- `ConversationTurn.thai` bleibt, was es ist: ein Inhaltstyp des Thai-Paars.
+
+---
+
+## Konsolidierte Abnahme (Stand 2026-09-04)
+
+Jedes „Fertig, wenn“ aus Phase 0–16 gegen den **jetzigen** Repo-Zustand.
+**125 von 132 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -3414,7 +3772,7 @@ Fassung abweichen.
 | 2 | Skalierungsplan auf 1000 ausformuliert in PROGRESS.md | **erfüllt** | Abschnitt 'Skalierungsplan auf ~1000 Eintraege': Frequenzliste als Wortquelle, siebenstufiger Pruefschritt, bewusste Trennung vom Content-Generator aus Phase 4/5. |
 | 2 | Tests und tsc weiterhin gruen | **erfüllt** | 154 Tests in 3 Suites gruen; npx tsc --noEmit fehlerfrei. |
 | 3 | Vollstaendige Review-Session in beide Richtungen durchspielbar (Browser) | **erfüllt** | Im Browser beide Richtungen durchgespielt: aufdecken, bewerten, Karte wechselt weiter, Sitzungsabschluss. |
-| 3 | Vollstaendige Review-Session am Geraet in Expo Go | **offen** | Blocker: B-2 - braucht das Geraet des Nutzers; betrifft jetzt auch Phase 5 (nativer Bildpfad). |
+| 3 | Vollstaendige Review-Session am Geraet in Expo Go | **offen** |  |
 | 3 | Mehrsilbige Woerter zeigen unterschiedliche Tonfarben je Silbe | **erfüllt** | สวัสดี im DOM nachgemessen: sa=rgb(79,96,118) tief, wat=rgb(79,96,118) tief, dii=rgb(111,138,106) mittel. ThaiWord wertet syllables[] aus, tone nur als Fallback (per Test abgesichert). |
 | 3 | Unverifizierte Eintraege sind erkennbar gekennzeichnet | **erfüllt** | VerificationBadge nur bei sourceVerified:false; im Browser mit นอน geprueft, Antippen klappt die verificationNote auf. |
 | 3 | Dashboard zeigt beide Richtungen getrennt | **erfüllt** | Zwei Karten mit eigener Faelligkeitszahl; Test belegt, dass Bewertungen einer Richtung die andere nicht beeinflussen. |
@@ -3437,7 +3795,7 @@ Fassung abweichen.
 | 5 | Kleiner Testlauf erfolgreich, danach offline abrufbar ohne Schluessel | **erfüllt** | 5 Bilder durch dieselbe Pipeline mit einem Ersatz-Client (echte WebP-Bytes): 5 erzeugt, 0 fehlgeschlagen; die IndexedDB enthielt die fuenf .webp-Eintraege, localStorage blieb bei 78 KB. Danach Dev-Server neu gestartet und Seite neu geladen: '5 von 25 Bildern', Schluesselfelder leer, Bilder auf den Karteikarten sichtbar. |
 | 5 | Lauf durch den echten Netzwerkpfad (ungueltiger Schluessel) | **erfüllt** | Aus dem Web-Build: 5/5 verarbeitet, 0 erzeugt, 5 fehlgeschlagen mit 'HTTP 401: authorization: invalid or missing header value', 0 gespeichert. |
 | 5 | Bild auf der Karteikarte, richtungsabhaengig | **erfüllt** | de_to_th: Bild schon auf der Vorderseite (verraet die thailaendische Form nicht). th_to_de: erst nach dem Aufdecken (waere sonst die Antwort). Eine abstrakte Karte zeigt kein Bild und keinen Platzhalter. Bei 375 px und im breiten Fenster geprueft. |
-| 5 | Testlauf mit gueltigem Stability-Schluessel | **offen** | Blocker: B-4 - erfordert einen gueltigen API-Schluessel des Nutzers; fremde Schluessel gebe ich nicht ein. |
+| 5 | Testlauf mit gueltigem Stability-Schluessel | **offen** |  |
 | 5 | Tests und tsc gruen | **erfüllt** | 275 Tests in 10 Suites gruen; npx tsc --noEmit fehlerfrei. |
 | 6 | Je Richtung mindestens ein eigener Uebungstyp aus vorhandenen Daten | **erfüllt** | de_to_th: Ton-Erkennung aus syllables[0].tone (69 einsilbige Eintraege, alle fuenf Toene vertreten). th_to_de: Artikel aus germanNoun.article (29 Substantive) und Stammformen aus germanVerb (20 Verben). Keine neue Content-Generierung noetig. |
 | 6 | Uebungen im Browser spielbar | **erfüllt** | Alle drei durchgespielt: Ton (Antwort 'Tief' auf สี่ -> richtig, Aufloesung 'sìi - vier'), Artikel (falsche Antwort -> richtige Option gruen umrandet, Plural in der Erklaerung), Stammformen ('machen' mit vertauschtem Hilfsverb und zwei echten Fremdformen als Ablenker). |
@@ -3465,8 +3823,8 @@ Fassung abweichen.
 | 8 | Web-Export lauffaehig | **erfüllt** | npx expo export --platform web: 8 statische Routen, 3,1 MB in dist/, die Bildablage als eigene Datei (verzoegertes Laden aus Phase 5 funktioniert auch im Export). Aus einem schlichten statischen Server ausgeliefert - Pruefungsmodul und Artikel-Uebung liefen vollstaendig, keine Konsolenfehler. |
 | 8 | WordPress-Anschluss bewusst offen gelassen und begruendet | **erfüllt** | AE-23: Im Export nachgemessen, dass die Buendel absolut referenziert werden (/_expo/static/...). Fuer ein Unterverzeichnis braucht es experiments.baseUrl in app.json plus einen neuen Export; ohne bekannten Zielpfad gesetzt, macht das den Export ueberall sonst kaputt. Haken laut Doku: Link und router setzen den Basispfad selbst davor, ein rohes <a> und die Linking-API nicht. |
 | 8 | Icons/Splash geprueft | **erfüllt** | Nachgesehen: assets/images/ enthaelt unveraendert den Bildersatz des Expo-Templates, auch assets/expo.icon/ ist das Expo-Symbol. Als offener Punkt vor einer Store-Einreichung benannt, nicht selbst gestaltet - kein Auftrag dieser Phase. |
-| 8 | Android-Testbuild tatsaechlich gebaut und installiert | **offen** | Blocker: B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wurden. |
-| 8 | iOS-Build mindestens einmal ueber EAS durchgelaufen | **offen** | Blocker: B-5 - EAS verlangt ein Expo-Konto; fremde Konten lege ich nicht an. Vom Nutzer am 2026-09-01 bewusst zurueckgestellt, nachdem drei Wege vorgelegt wurden. |
+| 8 | Android-Testbuild tatsaechlich gebaut und installiert | **offen** |  |
+| 8 | iOS-Build mindestens einmal ueber EAS durchgelaufen | **offen** |  |
 | 8 | Tests und tsc gruen | **erfüllt** | 365 Tests in 12 Suites gruen; npx tsc --noEmit fehlerfrei. Phase 8 hat keine Geschaeftslogik angefasst. |
 | 8 | Build-Konfiguration vorab validiert, ohne Konto | **erfüllt** | expo-doctor fand eine fehlende Peer-Abhaengigkeit (expo-asset, gebraucht von expo-audio, 'Your app may crash outside of Expo Go without this dependency') - nachinstalliert, jetzt 21/21 Pruefungen. expo prebuild erzeugte das native Projekt sauber; applicationId und die Keychain-Backup-Regeln aus AE-10 sitzen richtig. Ein lokaler Gradle-Build schied aus: kein JDK und kein Android-SDK auf dem Rechner. |
 | 8 | Keine ueberfluessigen Android-Berechtigungen | **erfüllt** | Der Prebuild zeigte RECORD_AUDIO, FOREGROUND_SERVICE und FOREGROUND_SERVICE_MEDIA_PLAYBACK aus expo-audio - die App nimmt aber nie auf. Im Plugin nachgesehen und in app.json abgeschaltet (recordAudioAndroid false, microphonePermission false, enableBackgroundPlayback false); danach aus dem Manifest verschwunden. Rest nachverfolgt: READ/WRITE_EXTERNAL_STORAGE kommen von expo-file-system und tragen maxSdkVersion 32; SYSTEM_ALERT_WINDOW stammt aus der Expo-Vorlage und ist vor einer Store-Einreichung anzusehen. |
@@ -3489,7 +3847,7 @@ Fassung abweichen.
 | 10 | Lauf durch den echten Netzwerkpfad je neuem Anbieter (ungueltiger Schluessel) | **erfüllt** | Sprachsituationen ueber Gemini: 16/16 verarbeitet, 0 erzeugt, 16 x 'HTTP 400: API key not valid. - INVALID_ARGUMENT'. Pruefungsaufgaben ueber Gemini: 8/8, Bestand bleibt bei den 8 mitgelieferten. Bilder ueber ChatGPT: 5/5, 5 x 'Keine Antwort von api.openai.com' mit CORS-Erklaerung. Nach jedem Lauf 0 gespeichert. |
 | 10 | Auswahlzustand ist fuer Screenreader ablesbar (Nebenbefund) | **erfüllt** | AE-29, nicht Auftrag dieser Phase, beim Nachmessen gefunden: accessibilityState={{selected}} erzeugt in dieser React-Native-Web-Fassung GAR KEIN ARIA-Attribut, und accessibilityRole 'radio' + accessibilityState {{checked}} liefert zwar role=radio, aber kein aria-checked. Betraf auch Umfang (Phase 4) und Standard-Lernrichtung (Phase 6). Behoben durch direkt gesetztes aria-checked plus radiogroup; nachgemessen 18 von 18 Auswahlknoepfen mit Zustand, davon 7 auf true, und kein Aktionsknopf mit falscher Rolle. |
 | 10 | Tests und tsc gruen | **erfüllt** | 437 Tests in 15 Suites gruen (vorher 392 in 14); npx tsc --noEmit fehlerfrei. |
-| 10 | Antwortform von ChatGPT und Gemini gegen die laufende API belegt | **offen** | Blocker: B-6 - beide Anbieter pruefen den Schluessel VOR der Anfrageform und antworten auf jede Anfrage mit demselben Auth-Fehler. Anders als bei Stability (AE-13) liess sich deshalb nichts ohne bezahlten Schluessel festklopfen. Die Parser nennen im Fehlerfall die gelieferten Feldnamen, damit ein Formwechsel sofort in der Fehlerliste steht. |
+| 10 | Antwortform von ChatGPT und Gemini gegen die laufende API belegt | **offen** |  |
 | 11 | Kleiner Testlauf erzeugt Audio, danach offline abspielbar ohne Key | **erfüllt** | Probelauf (5 Vokabeln + 5 Beispielsaetze) durch die echte Pipeline mit einem Ersatz-Client wie in Phase 5: zehn echte Thai-Clips (Microsoft th-TH-Premwadee, mp3) fuer genau die zehn Texte. 10/10 erzeugt; IndexedDB thai-lernbegleiter-audio mit zehn th-<hash>.mp3, 105 264 Byte, localStorage nur +3 280 Zeichen Metadaten. Nach Neuladen ohne Schluessel: Statuszeile '10 Clips, 103 KB', Gespraechszug spielt den Clip (mitgeschnitten new Audio('data:audio/mpeg…') + play()), Karteikarte สวัสดี im Reiter Lernen spielt den Clip und schreibt 'KI-Stimme - keine Muttersprachler-Aufnahme' darunter. Der ECHTE Anbieterlauf (Gemini/ChatGPT) steht wegen B-6 aus. |
 | 11 | Resolver bevorzugt Asset, faellt ohne Asset weiterhin auf TTS zurueck (Test) | **erfüllt** | clips.test.ts: Clip vorhanden -> 'asset' mit data:audio/wav-Quelle, gefunden nur ueber Text und Sprache wie die Gespraech-Seite ruft; kein Clip -> 'tts' mit th-TH; Clip-Suche wirft -> 'tts'; ausdrueckliche audioAssetId hat Vortritt; Index wird nach Lauf und Loeschen verworfen. Die neun Tests aus Phase 3 (audio.test.ts) laufen unveraendert. Im Web-Build: Zug ohne Clip blieb bei der Sprachausgabe, Zug mit Clip spielte ihn. |
 | 11 | Tonqualitaets-Messung samt Grenzen dokumentiert | **erfüllt** | AE-31 und scripts/tone-contour.html. Fuenf Minimalpaar-Woerter aus dem Grundstock (มา ม้า หมา ไม่ ใหม่), drei Stimmen zweier Engines (Microsoft Premwadee/Niwat, Google), F0 ueber normierte Autokorrelation mit Oktavkorrektur, Konturen in Halbtoenen, schwellenfreie Ordnungspruefung je 7 von 8. Befund: fallend/tief ueberall klar, steigend bei Google NICHT realisiert, mittel/hoch bei Microsoft schwach getrennt - keine Stimme trifft alle fuenf. Grenze ausdruecklich: die App-Anbieter selbst (Gemini, ChatGPT) konnten ohne Schluessel nicht gemessen werden; Kontur ist keine Hoerpruefung. |
@@ -3499,14 +3857,14 @@ Fassung abweichen.
 | 11 | Ehrliche Kennzeichnung: TTS-Aufnahmen sind keine Muttersprachler-Aufnahmen | **erfüllt** | synthetic: true als Literaltyp im Dokument. Karteikarte, Beispielsatz und Gespraechszug schreiben 'KI-Stimme - keine Muttersprachler-Aufnahme' daneben, sobald ein Clip gespielt hat (auch im Screenreader-Label); bei der Sprachausgabe des Geraets nicht. Im Web-Build beobachtet: 'KI-Stimme' erschien genau am Zug mit Clip, nicht am Zug ohne. |
 | 11 | Screens fuer den Resolver-Pfad nicht angefasst | **erfüllt** | Die Screens rufen weiter playPronunciation({ text, language }); der Clip wird ueber Text und Sprache gefunden (Thai ohne Leerraum, AE-30). Geaendert wurden Screens NUR fuer die Kennzeichnung nach Pflicht 4 (SpeakButton, TurnSpeakButton) - nicht, damit Clips spielen. |
 | 11 | Tests und tsc gruen | **erfüllt** | 469 Tests in 16 Suites gruen (vorher 437 in 15); npx tsc --noEmit fehlerfrei. |
-| 11 | Tonqualitaet der App-Anbieter selbst gemessen (Gemini, ChatGPT) | **offen** | Blocker: B-6 - beide geben ohne gueltigen Schluessel kein Audio her. Das Messwerkzeug (scripts/tone-contour.html) nimmt Dateien oder ein Manifest entgegen; Anleitung im TODO. |
+| 11 | Tonqualitaet der App-Anbieter selbst gemessen (Gemini, ChatGPT) | **offen** |  |
 | 12 | Getrennte lokale Aufnahmewege fuer Web und nativ, Grenze gemessen dokumentiert | **erfüllt** | Nativ useAudioStream aus expo-audio 57 (Int16-PCM), Web getUserMedia/Web Audio, weil der installierte AudioStream.web-Stub null liefert. Beide Hook-Lebenszyklen mit API-Doubles getestet; kein fetch, Anbieter, Schluessel, Datei- oder Repository-Schreibpfad. Der In-App-Browser blieb am nicht bedienbaren Mikrofon-Prompt, reales natives PCM bleibt B-2 - AE-34 nennt beide Grenzen. |
 | 12 | Sollkontur nachweislich aus verifizierten Tondaten, nie aus TTS | **erfüllt** | Nur sourceVerified und genau eine Silbe; targetTone = syllables[0].tone. Gegenprobe mit widerspruechlichem entry.tone und falschem audioAssetId bleibt beim Silbenton; SpeakingPrompt enthaelt kein Audiofeld. Hoerclip ist im UI separat und wird vor Aufnahme gestoppt. |
 | 12 | Phase-8-Mikrofonentscheidung bewusst und minimal umgekehrt | **erfüllt** | AE-33. recordAudioAndroid true und iOS-Zwecktext; Hintergrundaufnahme/-wiedergabe false. Android-Prebuild: RECORD_AUDIO vorhanden, kein FOREGROUND_SERVICE_MICROPHONE/Recording Service. Laufzeitabfrage nach UI-Begruendung erst im start()-Pfad, per Hook-Test belegt. |
 | 12 | F0-Verfahren aus tone-contour.html samt Oktavgrenze wiederverwendet | **erfüllt** | 40/10 ms, 70-400 Hz, RMS/Korrelation, Medianfilter, laengste Strecke, einmalige 1,8-fache Oktavkorrektur, 8 Prozent Beschnitt und sechs Halbtonpunkte. Tests fuer 48->8 kHz, Oktavsprung, genau einen Durchgang, Stille und eine steigende PCM-Kurve; verbleibender Oktavfehler steht im UI. |
 | 12 | Bewertung bleibt ehrlich und ohne Aussprache-Score | **erfüllt** | UI nennt Konsonanten, Vokallaenge, Aspiration, F0-/Oktavfehler. Nur relative Steig-/Fallform bekommt ohne Baseline ein binaeres Kontururteil; mittel/tief/hoch melden Register offen. Kein score/correct-Feld, keine Behauptung vollstaendiger Aussprache. |
 | 12 | FSRS-Entscheidung begruendet und ohne Schreibzugriff umgesetzt | **erfüllt** | AE-35. Kartenzustand wird nur fuer die Auswahl schwacher Woerter gelesen; Session-Test vergleicht den Kartenbestand vor/nach dem Bau. Keine Karte, Bewertung oder Statistik wird geschrieben. |
-| 12 | Physische Aufnahme und Konturauswertung auf Android/iOS-Geraet | **offen** | Blocker: B-2 - installierte Paketquellen, Manifest, Typen, native Hook-Lebenszyklen und PCM-Dekodierung sind belegt; tatsaechliche Hardware-Rate, Mikrofonberechtigung und F0-Kontur brauchen ein Geraet/Preview-Build. Das ist eine dokumentierte Abnahmegrenze, nicht still als bestanden markiert. |
+| 12 | Physische Aufnahme und Konturauswertung auf Android/iOS-Geraet | **offen** |  |
 | 12 | Tests, TypeScript und Web-Export gruen | **erfüllt** | 508 Tests in 22 Suites gruen (vorher 469/16); npx tsc --noEmit fehlerfrei; Expo-Web-Export mit acht statischen Routen erfolgreich; gerenderter Sprechscreen ohne Browser-Konsolenfehler. |
 | 13 | Konsonanten mit Klassen, Vokalzeichen und Tonregeln als gepruefte Daten mit Quellenangabe | **erfüllt** | src/data/thai-script.ts: 44 Konsonanten (9 mittel / 11 hoch / 24 tief, per Test nachgerechnet), 59 Vokalmuster mit Laenge, vollstaendige Tonregeltabelle inklusive der Luecken bei mai tri und mai chattawa, vier Tonzeichen, ho nam, o nam. Quelle englische Wikipedia 'Thai script', abgerufen 2026-09-03 ueber die MediaWiki-API als ROHTEXT - ein erster Abruf ueber ein zusammenfassendes Werkzeug lieferte nur 28 der 44 Konsonanten. Die Konsonantenzeilen sind aus dem geparsten Rohtext erzeugt, nicht abgetippt. |
 | 13 | Unsichere Faelle gekennzeichnet statt entschieden | **erfüllt** | Zwei Stellen, Muster ร้าน/นอน aus Phase 2: ล traegt in der Quelle '/n/ or /w/' und fuehrt beide Werte samt uncertainNote; der implizite Vokal (zwei Konsonanten ohne Vokalzeichen) wird als kurzes /o/ gelesen, die Quelle kennt fuer dieselbe Schreibung auch ein langes /ɔː/ - diese Mehrdeutigkeit steht im UI der Uebung, nicht nur im Code. Ein Test haelt fest, dass genau ล gekennzeichnet ist. |
@@ -3525,10 +3883,16 @@ Fassung abweichen.
 | 15 | Migrationspfad fuer vorhandene Kartenzustaende getestet | **erfüllt** | AE-43. meta/schemaVersion; migrateStore() spielt den Vokabel-Grundstock neu ein und laesst Karten, Tagesprotokoll und Profil unangetastet - die Trennung Auslieferungsdaten gegen Nutzerdaten ist der Punkt. Der Test baut einen Speicher in der ALTEN Form (Vokabel mit thai/exampleThai, ohne language) plus eine Karte mit echtem Lernfortschritt (zweimal bewertet); nach dem Lauf ist die Karte Feld fuer Feld unveraendert (toEqual) und die Vokabeln in der neuen Form. Dazu Idempotenz, leerer Speicher, cardsTouched 0. |
 | 15 | Uebersicht bietet Sprachauswahl; gewaehlte Sprache steuert den Lernen-Bereich | **erfüllt** | LanguagePicker steht an erster Stelle der Uebersicht; die Wahl liegt im Lernprofil (meta/profile) und setzt beim Wechsel die Standard-Lernrichtung zurueck, weil sie zur alten Sprache gehoerte. Die Tonlegende erscheint nur noch, wenn das Merkmal der gewaehlten Sprache das hergibt. Im Web-Build geprueft: Thai gewaehlt mit '84 Vokabeln - Merkmal: Toene', Richtungskarten aus dem Verzeichnis gebaut. |
 | 15 | Merkmals-Plugin existiert und traegt Thai unveraendert | **erfüllt** | AE-44. lib/languages/feature.ts liefert Silbenauszeichnung und Merkmalsuebungen; syllablesOf laeuft jetzt durch featureFor(entry).annotate(entry). Fuer Thai kommt genau dasselbe heraus - alle Tests der Phasen 3, 6 und 13 blieben ohne eine einzige Aenderung gruen, einschliesslich der Aussage, dass สวัสดี tief-tief-mittel ist. Farben und Konturglyphen sind BEWUSST nicht ins Merkmal gewandert; sie bleiben in constants/tones.ts, damit kein zweites Darstellungssystem neben dem kontrastgeprueften entsteht. |
-| 15 | Merkmal je neuer Sprache recherchiert dokumentiert, nicht implementiert | **erfüllt** | AE-44, beide Quellen am 2026-09-03 ueber die MediaWiki-API im Rohtext. Spanisch: 'Stress in Spanish is marked unequivocally through a series of orthographic rules' -> ableitbar, Herleitungsuebung wie Phase 13; Haken vermerkt, dass die Regel eine Silbenzaehlung mit eigenen Diphthong-Regeln voraussetzt. Englisch: 'unpredictable even for educated native speakers' (⟨ough⟩, mindestens zehn Lesarten) -> NICHT ableitbar, Aussprache muss je Wort hinterlegt werden, Vergleichsuebung statt Herleitung. Der Unterschied steht als Feld kind: 'derivable' \| 'per-word' im Modell, nicht nur im Fliesstext. Beide implemented: false. |
+| 15 | Merkmal je neuer Sprache recherchiert dokumentiert, nicht implementiert | **erfüllt** | AE-44, beide Quellen am 2026-09-03 ueber die MediaWiki-API im Rohtext. Spanisch: 'Stress in Spanish is marked unequivocally through a series of orthographic rules' -> ableitbar, Herleitungsuebung wie Phase 13; Haken vermerkt, dass die Regel eine Silbenzaehlung mit eigenen Diphthong-Regeln voraussetzt. Englisch: 'unpredictable even for educated native speakers' (⟨ough⟩, mindestens zehn Lesarten) -> NICHT ableitbar, Aussprache muss je Wort hinterlegt werden, Vergleichsuebung statt Herleitung. Der Unterschied steht als Feld kind: 'derivable' / 'per-word' im Modell, nicht nur im Fliesstext. Beide implemented: false. |
 | 15 | Leere Sprachen ehrlich gekennzeichnet | **erfüllt** | Pflicht 5. Englisch und Spanisch stehen in der Auswahl, tragen sichtbar 'Noch keine Inhalte', sind nicht anwaehlbar und melden das ueber accessibilityState.disabled auch dem Screenreader; dazu steht ihr entschiedenes Merkmal dabei. Im Web-Build nachgelesen. |
 | 15 | Deutsche Module jedem Paar zugeordnet, nicht Thai allein | **erfüllt** | Pflicht 6. drillsForDirection gibt fuer JEDE Richtung auf _to_de die Grammatikuebungen (Artikel, Stammformen) zurueck; ein Test prueft das fuer alle drei Sprachen. hasGermanModules steht am Sprachverzeichnis. Damit sind sie fuer Englisch und Spanisch verfuegbar, sobald es dort Inhalte gibt. |
 | 15 | Tests und tsc gruen | **erfüllt** | 606 Tests in 25 Suites gruen (vorher 582 in 24); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, keines unter 24 Punkten, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler. |
+| 16 | Beide Sprachpaare mit verifiziertem Grundstock nutzbar, Anzahl und sourceVerified-Quote dokumentiert | **erfüllt** | 85 englische und 79 spanische Eintraege, sourceVerified 85/85 und 79/79. Jede behauptete Bedeutung musste woertlich in einer Definition des jeweiligen Sprachabschnitts vorkommen (164/164); wo die erste Formulierung nicht vorkam, wurde sie an die Quelle angepasst. Quelle je Eintrag abschnittsgenau verankert (#Spanish / #English). Im Web-Build beide Paare durchgespielt. |
+| 16 | Merkmal je Sprache umgesetzt und ueber das Phase-15-Plugin eingehaengt | **erfüllt** | Spanisch: lib/stress mit Herleitungsuebung nach dem Muster von Phase 13, Gegenprobe 79/79 gegen die enge IPA aus Wiktionary (AE-45). Englisch: lib/spelling mit Vergleichsuebung statt Herleitung (AE-47). Beide haengen ueber featureRuntime am Plugin aus Phase 15; kein zweites Darstellungssystem - Tonfarben bleiben in constants/tones.ts, die spanische Betonung wird ueber Schriftschnitt und Unterstreichung gezeigt, nicht ueber eine neue Farbe. |
+| 16 | Bestehende Uebungstypen greifen fuer die neuen Paare | **erfüllt** | Karteikarten, Artikel, Stammformen und freies Schreiben laufen fuer beide neuen Paare; im Web-Build angeklickt. DrillMeta traegt side statt einer festen Richtung, ensureCardStates filtert nach der Sprache der Richtung, und ein Test belegt, dass eine spanische Artikelsitzung keine Thai-Vokabel enthaelt. Die Schreibuebung schuetzt im Spanischen den Akut wie im Thai das Tonzeichen und bietet eine Akzentpalette. |
+| 16 | Thai<->Deutsch nachweislich unveraendert funktionsfaehig (Regressionstest) | **erfüllt** | Die Tests aus Phase 0-15 zeigen ueber eine umbenannte Importzeile jetzt auf VOCABULARY_TH; unterhalb dieser Zeile wurde in keiner Datei eine Zusicherung geaendert. Dazu ein eigener Block: 84 Eintraege mit Ton und Beispielsatz, สวัสดี weiter tief-tief-mittel, kein Thai-Eintrag traegt ein Feld einer anderen Sprache und kein neuer Eintrag einen Ton. Im Web-Build zeigt die Uebersicht nach dem Zuruecksetzen wieder 84 faellige Karten je Richtung. |
+| 16 | Tests und tsc gruen, PROGRESS ergaenzt, TODO aktualisiert, Commit | **erfüllt** | 689 Tests in 30 Suites gruen (vorher 606 in 25); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler. |
+
 ## Skalierungsplan auf ~1000 Einträge
 
 Die Erstellung der restlichen ~900 ist **nicht** Teil von Phase 2. Hier steht,
@@ -3597,6 +3961,23 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 16 (2026-09-04):** Alle drei Sprachpaare sind nutzbar, alle
+> drei Merkmale gebaut. Was jetzt oben liegt, braucht entweder eine eigene
+> **Recherche** (Prüfungsmodule, Aufgabentexte für Sprachsituationen,
+> Beispielsätze) oder eine Handlung des Nutzers (Schlüssel, Konto, Gerät).
+> Ausdrücklich ungeprüft und vor jedem Umbau zu messen: ob das F0-Verfahren
+> aus Phase 12 spanische Betonung erkennt (AE-48).
+
+0. **Prüfungsmodule für Englisch und Spanisch (eigene Phase):** Cambridge/IELTS
+   und DELE/Cervantes brauchen dieselbe Quellenarbeit wie Goethe in Phase 7 —
+   Stufen, Fertigkeiten, Formate, und **keine erfundenen Bestehensgrenzen**.
+   Danach den Prüfungs-Screen nach Sprache filtern.
+
+0. **Sprachsituationen für die neuen Paare:** Der Plan ist parametrisiert, der
+   Aufgabentext an die KI nicht (Paiboon, ครับ/ค่ะ). Er braucht eine eigene
+   Fassung je Sprache samt Recherche zu verbindlichen Anredeformen (AE-48);
+   `planSituations` lehnt andere Sprachen bis dahin ab.
 
 > **Neu aus Phase 15 (2026-09-03):** Das Fundament für Mehrsprachigkeit steht,
 > Thai↔Deutsch ist das erste Paar im neuen Modell. Englisch und Spanisch haben

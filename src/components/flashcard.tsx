@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ThaiWord } from './thai-word';
+import { TermWord } from './term-word';
+
+import { SpeechLanguage } from '@/lib/audio';
+import { languageOf } from '@/lib/languages/registry';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { VerificationBadge } from './verification-badge';
@@ -41,23 +44,28 @@ type Props = {
 };
 
 export function Flashcard({ entry, direction, revealed }: Props) {
-  const thaiFirst = direction === 'th_to_de';
+  // SEIT PHASE 16 AUS DER RICHTUNG STATT AUS EINEM LITERAL: Vorher stand hier
+  // `direction === 'th_to_de'`, und eine spanische Karte waere in beiden
+  // Richtungen gleich gelaufen.
+  const targetFirst = direction.endsWith('_to_de');
+  const sprache = languageOf(entry.language);
+  const anhoeren = `${sprache.label} anhören`;
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      {thaiFirst ? (
+      {targetFirst ? (
         <>
           {revealed ? (
-            <ThaiWord entry={entry} />
+            <TermWord entry={entry} />
           ) : (
             <View style={styles.frontThai}>
               <ThemedText style={styles.thaiPlain}>{entry.term}</ThemedText>
             </View>
           )}
           <SpeakButton
-            label="Thai anhören"
+            label={anhoeren}
             text={entry.term}
-            language="th"
+            language={entry.language}
             assetId={entry.audioAssetId}
           />
           {revealed ? (
@@ -73,11 +81,11 @@ export function Flashcard({ entry, direction, revealed }: Props) {
           <GermanBlock entry={entry} headline />
           {revealed ? (
             <>
-              <ThaiWord entry={entry} />
+              <TermWord entry={entry} />
               <SpeakButton
-                label="Thai anhören"
+                label={anhoeren}
                 text={entry.term}
-                language="th"
+                language={entry.language}
                 assetId={entry.audioAssetId}
               />
             </>
@@ -128,7 +136,14 @@ function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?
   );
 }
 
+/**
+ * Der Beispielblock - seit Phase 16 nur, wenn ein Beispiel vorliegt.
+ *
+ * Fuer Englisch und Spanisch gibt es keine erfundenen Saetze; die Karte zeigt
+ * dort stattdessen nichts, statt eine leere Zeile mit Lautsprechersymbol.
+ */
 function ExampleBlock({ entry }: { entry: VocabEntry }) {
+  if (!entry.exampleTerm) return null;
   return (
     <ThemedView type="backgroundSelected" style={styles.example}>
       <View style={styles.exampleRow}>
@@ -145,7 +160,7 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
           label="▶"
           spokenLabel="Beispielsatz anhören"
           text={entry.exampleTerm}
-          language="th"
+          language={entry.language}
           compact
         />
       </View>
@@ -174,7 +189,7 @@ function SpeakButton({
   /** Was der Screenreader sagt, wenn das Sichtbare nur ein Zeichen ist. */
   spokenLabel?: string;
   text: string;
-  language: 'th' | 'de';
+  language: SpeechLanguage;
   assetId?: string;
   compact?: boolean;
 }) {

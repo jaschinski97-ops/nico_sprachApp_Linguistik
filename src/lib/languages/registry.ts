@@ -1,4 +1,4 @@
-import { VOCABULARY } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
 
 import {
   Direction,
@@ -17,10 +17,11 @@ import {
  * sie hier ein und liefert ihren Grundstock — die Oberfläche, die Auswahl und
  * die Zählung ziehen von hier.
  *
- * DIE ZWEI NEUEN SPRACHEN HABEN KEINEN INHALT, und das steht auch so da
- * (Pflicht 5). Ihr Merkmal ist **entschieden und belegt**, aber nicht gebaut
- * (Pflicht 4) — der Inhalt kommt je Sprache in einer eigenen Phase mit eigener
- * Recherche, wie bei Thai in Phase 2.
+ * SEIT PHASE 16 HABEN ALLE DREI SPRACHEN INHALT. Die Zahlen stehen nicht als
+ * Literal da, sondern kommen aus den Grundstöcken selbst — eine gepflegte Zahl
+ * wäre irgendwann eine falsche. `entryCount: 0` bleibt der Weg, eine geplante
+ * Sprache ehrlich als leer zu kennzeichnen (Pflicht 5 aus Phase 15); es gibt
+ * derzeit nur keine solche mehr.
  */
 
 export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
@@ -30,7 +31,7 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
     endonym: 'ภาษาไทย',
     speechLocale: 'th-TH',
     challenge: 'Fünf Töne, die Bedeutung tragen — und eine eigene Schrift.',
-    entryCount: VOCABULARY.length,
+    entryCount: VOCABULARY_TH.length,
     hasGermanModules: true,
     feature: {
       label: 'Töne',
@@ -56,14 +57,16 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
     endonym: 'español',
     speechLocale: 'es-ES',
     challenge: 'Die Betonung ist regelhaft — wer die Regel kennt, braucht sie nicht zu merken.',
-    entryCount: 0,
+    entryCount: VOCABULARY_ES.length,
     hasGermanModules: true,
     feature: {
       label: 'Betonung',
       description:
-        'Welche Silbe betont wird, steht in der Schreibung: Wörter auf Vokal, -n oder -s werden auf der vorletzten Silbe betont, alle anderen auf der letzten; jede Abweichung trägt einen Akut. Damit ist die Betonung wie der Thai-Ton eine ableitbare Regel und kein Gedächtnisstoff — eine Herleitungsübung nach dem Muster von Phase 13 wäre der passende Baustein.',
+        'Welche Silbe betont wird, steht in der Schreibung: Wörter auf Vokal, -n oder -s werden auf der vorletzten Silbe betont, alle anderen auf der letzten; jede Abweichung trägt einen Akut. Die Betonung ist damit wie der Thai-Ton eine ableitbare Regel und kein Gedächtnisstoff — die Übung „Betonung herleiten" zeigt den Weg dorthin Schritt für Schritt.',
       kind: 'derivable',
-      implemented: false,
+      // Seit Phase 16 gebaut: lib/stress leitet die Betonung her, und die
+      // Uebung 'stressRule' zeigt den Weg dorthin.
+      implemented: true,
       source: {
         title: 'Spanish orthography',
         url: 'https://en.wikipedia.org/wiki/Spanish_orthography',
@@ -80,14 +83,17 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
     endonym: 'English',
     speechLocale: 'en-GB',
     challenge: 'Schreibung und Aussprache klaffen auseinander — Wort für Wort.',
-    entryCount: 0,
+    entryCount: VOCABULARY_EN.length,
     hasGermanModules: true,
     feature: {
       label: 'Aussprache',
       description:
-        'Anders als bei Thai und Spanisch lässt sich die Aussprache NICHT aus der Schreibung ableiten: ⟨ough⟩ allein hat mindestens zehn Lesarten. Das Merkmal muss deshalb je Wort als Lautschrift hinterlegt werden, und die passende Übung ist der Vergleich ähnlicher Schreibungen (though/tough/through), keine Herleitung.',
+        'Anders als bei Thai und Spanisch lässt sich die Aussprache NICHT aus der Schreibung ableiten: ⟨ough⟩ allein hat mindestens zehn Lesarten. Das Merkmal steht deshalb je Wort als Lautschrift, und geübt wird der Vergleich statt der Herleitung — enough, through, though und thought tragen dasselbe ⟨ough⟩ und klingen viermal verschieden.',
       kind: 'per-word',
-      implemented: false,
+      // Seit Phase 16 gebaut - aber ausdruecklich NICHT als Herleitung:
+      // lib/spelling stellt Woerter mit gleichem Schriftstueck und
+      // verschiedenem Laut gegenueber (AE-47).
+      implemented: true,
       source: {
         title: 'English orthography',
         url: 'https://en.wikipedia.org/wiki/English_orthography',
@@ -99,8 +105,26 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
   },
 };
 
-/** Reihenfolge in der Auswahl: erst was Inhalte hat, dann alphabetisch. */
+/**
+ * Die Sprache, die ohne eigene Wahl gilt.
+ *
+ * AUSDRUECKLICH THAI, NICHT ABGELEITET (Phase 16). In Phase 15 ergab sich die
+ * Vorgabe aus „die erste mit Inhalten"; das war eindeutig, solange es nur eine
+ * gab. Mit dreien wuerde jede Ableitung — alphabetisch, nach Anzahl — kippen,
+ * sobald sich ein Grundstock aendert, und dann faende jemand nach einem
+ * Update **Englisch** vor, obwohl er seit Wochen Thai lernt. Der Wechsel der
+ * gelernten Sprache ist eine Entscheidung der lernenden Person und darf nicht
+ * aus einer Sortierreihenfolge fallen.
+ *
+ * Thai ist zudem das Paar mit dem vollstaendigsten Inhalt: Beispielsaetze,
+ * Bildmotive, Hoerclips, Sprech- und Leseuebung gibt es bisher nur dort.
+ */
+export const DEFAULT_LANGUAGE: LanguageCode = 'th';
+
+/** Reihenfolge in der Auswahl: die Vorgabe zuerst, dann alphabetisch. */
 export const LANGUAGE_ORDER: LanguageCode[] = [...LANGUAGE_CODES].sort((a, b) => {
+  if (a === DEFAULT_LANGUAGE) return -1;
+  if (b === DEFAULT_LANGUAGE) return 1;
   const byContent = Number(LANGUAGES[b].entryCount > 0) - Number(LANGUAGES[a].entryCount > 0);
   return byContent !== 0 ? byContent : LANGUAGES[a].label.localeCompare(LANGUAGES[b].label);
 });
@@ -118,9 +142,10 @@ export function languagesWithContent(): LanguageDefinition[] {
   return LANGUAGE_ORDER.map(languageOf).filter((language) => language.entryCount > 0);
 }
 
-/** Die Standardsprache: die erste mit Inhalten. */
+/** Die Standardsprache — die Vorgabe, solange sie Inhalte hat. */
 export function defaultLanguage(): LanguageCode {
-  return languagesWithContent()[0]?.code ?? 'th';
+  if (hasContent(DEFAULT_LANGUAGE)) return DEFAULT_LANGUAGE;
+  return languagesWithContent()[0]?.code ?? DEFAULT_LANGUAGE;
 }
 
 /**

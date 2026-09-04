@@ -1,6 +1,7 @@
 import { CardState } from './fsrs/types';
 import { dayIsActive, drillCount, lastDays, loadReviewLog, ReviewDayLog } from './review-log';
 import { DirectionSummary, ensureCardStates, summarizeAllDirections } from './review-session';
+import { LanguageCode } from './languages/types';
 import { DataStore, getStore } from './storage';
 
 /**
@@ -84,11 +85,16 @@ export function computeStreak(days: ReviewDayLog[]): number {
 export async function loadLearningStats(
   store?: DataStore,
   now: number = Date.now(),
-  windowDays = 14
+  windowDays = 14,
+  /**
+   * Welche Sprache ausgewertet wird (Phase 16). Der Fortschritt gehoert zum
+   * Sprachpaar; eine Summe ueber alle drei waere eine Zahl ohne Bedeutung.
+   */
+  language: LanguageCode = 'th'
 ): Promise<LearningStats> {
   const db = store ?? (await getStore());
 
-  const perDirection = await summarizeAllDirections(db, now);
+  const perDirection = await summarizeAllDirections(language, db, now);
 
   const cardStates = emptyStateCounts();
   let totalCards = 0;

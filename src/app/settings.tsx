@@ -63,15 +63,19 @@ const SITUATION_RUNS: RunOption[] = [
   {
     id: 'test',
     label: 'Probelauf',
-    hint: '16 Situationen — alle Themen, Niveaus und Richtungen je einmal',
+    hint: '16 Situationen (Thai) — alle Themen, Niveaus und Richtungen je einmal',
   },
   {
     id: 'full',
     label: 'Vollständiger Lauf',
-    hint: `${planSituations(FULL_RUN).length} Situationen — kostet echtes Geld und dauert`,
+    hint: `${planSituations(FULL_RUN).length} Situationen (Thai) — kostet echtes Geld und dauert`,
   },
 ];
 
+// SEIT PHASE 16 AUSDRUECKLICH THAI. Die Planer sind sprachparametrisiert
+// (Pflicht 4), aber diese Seite bietet die Wahl noch nicht an - und eine Zahl
+// ohne Sprache waere hier eine stille Falschaussage. Was fehlt, steht in
+// PROGRESS.md unter Phase 16.
 const IMAGE_CANDIDATES = countImageCandidates();
 
 const EXAM_RUNS: RunOption[] = [
@@ -96,7 +100,7 @@ const IMAGE_RUNS: RunOption[] = [
   {
     id: 'full',
     label: 'Alle konkreten Vokabeln',
-    hint: `${IMAGE_CANDIDATES} Bilder — kostet echtes Geld und dauert`,
+    hint: `${IMAGE_CANDIDATES} Bilder (Thai) — kostet echtes Geld und dauert`,
   },
 ];
 
@@ -122,7 +126,7 @@ function clipRunOptions(
   };
   const options: RunOption[] = [
     { id: 'test', label: 'Probelauf', hint: `${plans.test.length} Clips — fünf Vokabeln samt Beispielsatz${size(plans.test)}` },
-    { id: 'vocab', label: 'Alle Vokabeln', hint: `${plans.vocab.length} Clips — jedes Wort und jeder Beispielsatz${size(plans.vocab)}` },
+    { id: 'vocab', label: 'Alle Vokabeln', hint: `${plans.vocab.length} Clips (Thai) — jedes Wort und jeder Beispielsatz${size(plans.vocab)}` },
     {
       id: 'turns',
       label: 'Gesprächszüge',

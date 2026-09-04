@@ -1,4 +1,7 @@
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
+import { vocabularyFor } from '@/data/vocabulary';
+
+import { LanguageCode } from '../languages/types';
 
 import { ConversationSituation } from '../conversation/types';
 import { assertUniqueIds, limitPlan } from '../generation/plan';
@@ -23,6 +26,15 @@ import { AudioClipSpec, clipIdFor, normalizeClipText } from './types';
 export const CLIP_TEST_RUN = 5;
 
 export type ClipPlanOptions = {
+  /**
+   * Welche Sprache vertont wird.
+   *
+   * SEIT PHASE 16 NOETIG (Pflicht 4): Ohne diese Angabe liefe ein Lauf ueber
+   * alle drei Grundstoecke und erzeugte 248 statt 84 Woerter - bezahlt und
+   * abgelegt wuerden sie trotzdem. Der Generator wurde parametrisiert und
+   * nicht dupliziert.
+   */
+  language?: LanguageCode;
   vocabulary?: VocabEntry[];
   includeWords?: boolean;
   includeExamples?: boolean;
@@ -32,7 +44,8 @@ export type ClipPlanOptions = {
 };
 
 export function planClips(options: ClipPlanOptions = {}): AudioClipSpec[] {
-  const entries = options.vocabulary ?? VOCABULARY;
+  const language = options.language ?? 'th';
+  const entries = options.vocabulary ?? vocabularyFor(language);
   const specs: AudioClipSpec[] = [];
   const seen = new Set<string>();
 
@@ -47,12 +60,15 @@ export function planClips(options: ClipPlanOptions = {}): AudioClipSpec[] {
 
   if (options.includeWords ?? true) {
     for (const entry of entries) {
-      add({ language: 'th', text: entry.term, kind: 'vocab', sourceId: entry.id });
+      add({ language: entry.language, text: entry.term, kind: 'vocab', sourceId: entry.id });
     }
   }
   if (options.includeExamples ?? true) {
     for (const entry of entries) {
-      add({ language: 'th', text: entry.exampleTerm, kind: 'example', sourceId: entry.id });
+      // Nicht jeder Eintrag hat ein Beispiel: Fuer Englisch und Spanisch
+      // gibt es keine erfundenen Saetze (Phase 16).
+      if (!entry.exampleTerm) continue;
+      add({ language: entry.language, text: entry.exampleTerm, kind: 'example', sourceId: entry.id });
     }
   }
   for (const situation of options.situations ?? []) {
@@ -65,7 +81,9 @@ export function planClips(options: ClipPlanOptions = {}): AudioClipSpec[] {
 }
 
 /** Der Probelauf: die ersten fünf Vokabeln samt Beispielsatz — zehn Clips. */
-export function planClipTestRun(entries: VocabEntry[] = VOCABULARY): AudioClipSpec[] {
+export function planClipTestRun(
+  entries: VocabEntry[] = vocabularyFor('th')
+): AudioClipSpec[] {
   return planClips({ vocabulary: entries.slice(0, CLIP_TEST_RUN) });
 }
 

@@ -1,4 +1,7 @@
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { cardKey, Direction } from '../fsrs/types';
 import { loadAllCardStates, loadCardState, seedVocabulary } from '../repository';

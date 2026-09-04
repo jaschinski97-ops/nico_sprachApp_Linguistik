@@ -10,6 +10,7 @@ import { useToneColor } from '@/hooks/use-theme';
 import { isLanguageAvailable, playPronunciation } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
+import { LanguageCode } from '@/lib/languages/types';
 import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
 
@@ -27,7 +28,15 @@ import { recordDrill } from '@/lib/review-log';
  * geraten, und dann ist die Begründung das eigentlich Nützliche.
  */
 
-export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => void }) {
+export function DrillRunner({
+  drill,
+  language,
+  onExit,
+}: {
+  drill: DrillId;
+  language: LanguageCode;
+  onExit: () => void;
+}) {
   const meta = DRILL_META[drill];
   const toneColor = useToneColor();
 
@@ -44,13 +53,13 @@ export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => v
     setIndex(0);
     setChosen(null);
     setAnswers([]);
-    buildDrillSession({ drill }).then((built) => {
+    buildDrillSession({ drill, language }).then((built) => {
       if (!cancelled) setSession(built);
     });
     return () => {
       cancelled = true;
     };
-  }, [drill, round]);
+  }, [drill, language, round]);
 
   // Nur die Ton-Uebung braucht eine Stimme. Gewarnt wird ausschliesslich bei
   // einem eindeutigen "nein" - siehe isLanguageAvailable.
@@ -194,7 +203,7 @@ export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => v
                 onPress={() => answer(optionIndex)}
                 disabled={answered}
                 accessibilityRole="button"
-                accessibilityLabel={option.label}
+                accessibilityLabel={option.hint ? `${option.label}, ${option.hint}` : option.label}
                 accessibilityState={{ selected: isChosen, disabled: answered }}
                 style={({ pressed }) => [styles.optionWrap, pressed && styles.pressed]}>
                 <ThemedView
@@ -205,6 +214,15 @@ export function DrillRunner({ drill, onExit }: { drill: DrillId; onExit: () => v
                   ]}>
                   {option.tone ? <ToneContour tone={option.tone} height={16} /> : null}
                   <ThemedText type="small">{option.label}</ThemedText>
+                  {/* Seit Phase 16 sichtbar: Bei der Betonungsuebung steht
+                      hier die Silbennummer, bei der Ausspracheuebung ein
+                      anderes Wort mit demselben Laut. Das Feld gab es seit
+                      Phase 6, nur hat es nie jemand angezeigt. */}
+                  {option.hint ? (
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {option.hint}
+                    </ThemedText>
+                  ) : null}
                 </ThemedView>
               </Pressable>
             );

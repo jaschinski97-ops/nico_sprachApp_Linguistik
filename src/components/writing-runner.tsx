@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { GermanPalette, ThaiPalette } from './character-palette';
+import { GermanPalette, SpanishPalette, ThaiPalette } from './character-palette';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
@@ -16,6 +16,7 @@ import {
   WritingResult,
   WritingSession,
 } from '@/lib/writing';
+import { WritingLanguage } from '@/lib/writing/compare';
 
 /**
  * Freies Schreiben — die einzige Übung, die den Kartenzustand fortschreibt.
@@ -27,8 +28,39 @@ import {
  * erkennbar, warum eine Vokabel wiederkommt.
  *
  * Die Eingabehilfe hängt an der Antwortsprache: Thai bekommt die
- * Zeichenpalette (AE-39), Deutsch die Umlaute.
+ * Zeichenpalette (AE-39), Deutsch die Umlaute, Spanisch die Akzentzeichen.
+ * Englisch bekommt keine — dort steht jedes Zeichen der Zielform ohnehin auf
+ * jeder lateinischen Tastatur.
  */
+
+/** Was in der Aufgabenzeile steht — je nachdem, welche Sprache getippt wird. */
+const AUFGABENTEXT: Record<WritingLanguage, string> = {
+  de: 'Wie heißt das auf Deutsch? Mit Artikel, falls es einen gibt.',
+  th: 'Wie schreibt man das auf Thai? Mit Tonzeichen.',
+  es: 'Wie schreibt man das auf Spanisch? Mit Akzentzeichen.',
+  en: 'Wie schreibt man das auf Englisch?',
+};
+
+const PLATZHALTER: Record<WritingLanguage, string> = {
+  de: 'deine Antwort',
+  th: 'ภาษาไทย',
+  es: 'tu respuesta',
+  en: 'your answer',
+};
+
+/** Die Zeichenhilfe der jeweiligen Sprache — oder keine. */
+function Palette({
+  language,
+  onInsert,
+}: {
+  language: WritingLanguage;
+  onInsert: (character: string) => void;
+}) {
+  if (language === 'th') return <ThaiPalette onInsert={onInsert} />;
+  if (language === 'de') return <GermanPalette onInsert={onInsert} />;
+  if (language === 'es') return <SpanishPalette onInsert={onInsert} />;
+  return null;
+}
 
 export function WritingRunner({
   direction,
@@ -160,9 +192,7 @@ export function WritingRunner({
 
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">
-          {prompt.language === 'de'
-            ? 'Wie heißt das auf Deutsch? Mit Artikel, falls es einen gibt.'
-            : 'Wie schreibt man das auf Thai? Mit Tonzeichen.'}
+          {AUFGABENTEXT[prompt.language]}
         </ThemedText>
 
         <View style={styles.promptBlock}>
@@ -179,7 +209,7 @@ export function WritingRunner({
           onChangeText={setDraft}
           onSubmitEditing={submit}
           editable={!answered}
-          placeholder={prompt.language === 'de' ? 'deine Antwort' : 'ภาษาไทย'}
+          placeholder={PLATZHALTER[prompt.language]}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
@@ -190,13 +220,14 @@ export function WritingRunner({
           style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
 
-        {!answered ? (
-          prompt.language === 'th' ? (
-            <ThaiPalette onInsert={(character) => setDraft((current) => current + character)} />
-          ) : (
-            <GermanPalette onInsert={(character) => setDraft((current) => current + character)} />
-          )
-        ) : null}
+        {/* Eine Zeichenhilfe nur, wo die Tastatur wirklich nicht reicht:
+            Thai braucht eine ganze Belegung, Deutsch die Umlaute, Spanisch die
+            Akzentzeichen. Englisch braucht keine — dort steht jedes Zeichen
+            der Zielform auf jeder lateinischen Tastatur. */}
+        {!answered ? <Palette
+            language={prompt.language}
+            onInsert={(character) => setDraft((current) => current + character)}
+          /> : null}
 
         {!answered ? (
           <View style={styles.row}>

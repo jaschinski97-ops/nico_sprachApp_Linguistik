@@ -4,7 +4,10 @@ import { Direction } from '@/lib/fsrs/types';
 import { loadVocabEntry, loadVocabulary, seedVocabulary } from '@/lib/repository';
 import { MemoryDataStore } from '@/lib/storage';
 
-import { findVocab, VERIFIED_VOCABULARY, VOCABULARY, VocabEntry } from './vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { VOCABULARY as ALLE_SPRACHEN, findVocab, VERIFIED_VOCABULARY, VOCABULARY_TH as VOCABULARY, VocabEntry } from './vocabulary';
 
 const DIRECTIONS: Direction[] = ['de_to_th', 'th_to_de'];
 
@@ -117,9 +120,13 @@ describe('Vokabel-Grundstock: Bidirektionalitaet', () => {
       // Thai -> Deutsch braucht Schrift, Umschrift, Ton und Bedeutung.
       expect(entry.term && entry.romanization && entry.tone && entry.german).toBeTruthy();
       // Deutsch -> Thai braucht dieselben Felder plus ein Beispiel.
-      expect(entry.exampleTerm.trim()).not.toBe('');
-      expect(entry.exampleRoman.trim()).not.toBe('');
-      expect(entry.exampleGerman.trim()).not.toBe('');
+      expect(entry.exampleTerm?.trim()).not.toBe('');
+      expect(entry.exampleRoman?.trim()).not.toBe('');
+      expect(entry.exampleGerman?.trim()).not.toBe('');
+      // Seit Phase 16 ist das Feld im Typ optional (Englisch und Spanisch
+      // haben keine erfundenen Saetze). Fuer den Thai-Grundstock gilt
+      // unveraendert: jeder Eintrag hat eines.
+      expect(entry.exampleTerm).toBeTruthy();
     });
   });
 
@@ -165,7 +172,8 @@ describe('Vokabel-Grundstock: Quellenlage', () => {
   it('ist nicht pauschal auf sourceVerified true gesetzt', () => {
     // Ein Grundstock, in dem ausnahmslos alles als geprueft gilt, ist ein
     // Warnzeichen - dann wurde die Pruefung vermutlich nicht wirklich gemacht.
-    const verifiedRatio = VERIFIED_VOCABULARY.length / VOCABULARY.length;
+    const verifiedRatio =
+      VERIFIED_VOCABULARY.filter((e) => e.language === 'th').length / VOCABULARY.length;
     expect(verifiedRatio).toBeGreaterThanOrEqual(0.9);
     expect(verifiedRatio).toBeLessThan(1);
   });
@@ -199,11 +207,14 @@ describe('Vokabel-Grundstock: laedt korrekt durch die Persistenzschicht', () => 
     const store = new MemoryDataStore();
     await store.init();
 
+    // Seit Phase 16 spielt `seedVocabulary` ALLE Sprachen ein - der
+    // Grundstock der App ist die Vereinigung. Geprueft wird hier trotzdem
+    // weiter der Thai-Teil, Eintrag fuer Eintrag.
     const count = await seedVocabulary(store);
-    expect(count).toBe(VOCABULARY.length);
+    expect(count).toBe(ALLE_SPRACHEN.length);
 
     const loaded = await loadVocabulary(store);
-    expect(loaded).toHaveLength(VOCABULARY.length);
+    expect(loaded).toHaveLength(ALLE_SPRACHEN.length);
 
     const byId = new Map(loaded.map((e) => [e.id, e]));
     VOCABULARY.forEach((entry) => {
@@ -218,7 +229,7 @@ describe('Vokabel-Grundstock: laedt korrekt durch die Persistenzschicht', () => 
     await seedVocabulary(store);
     await seedVocabulary(store);
 
-    expect(await loadVocabulary(store)).toHaveLength(VOCABULARY.length);
+    expect(await loadVocabulary(store)).toHaveLength(ALLE_SPRACHEN.length);
   });
 
   it('liefert einen einzelnen Eintrag ueber die ID', async () => {

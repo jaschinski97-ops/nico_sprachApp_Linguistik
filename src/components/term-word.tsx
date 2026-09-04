@@ -1,0 +1,114 @@
+import { StyleSheet, View } from 'react-native';
+
+import { ThaiWord } from './thai-word';
+import { ThemedText } from './themed-text';
+
+import { Spacing } from '@/constants/theme';
+import { syllablesOf } from '@/data/vocab-helpers';
+import { VocabEntry } from '@/data/vocab-types';
+
+/**
+ * Das fremdsprachige Wort mit seiner Auszeichnung (Phase 16).
+ *
+ * BIS PHASE 15 GAB ES NUR `ThaiWord`, und der Karteikasten rief ihn direkt
+ * auf. Mit drei Sprachen geht das nicht mehr: Ein spanisches Wort hat keine
+ * Töne, und ein englisches nicht einmal Silben. Diese Datei verteilt auf die
+ * jeweils richtige Darstellung.
+ *
+ * KEIN ZWEITES DARSTELLUNGSSYSTEM (Pflicht 3 aus Phase 15). Die Tonfarben
+ * bleiben, wo sie waren — `ThaiWord` ist unverändert und liest weiter aus
+ * `constants/tones.ts`. Was hier dazukommt, ist die Darstellung **anderer**
+ * Merkmale, nicht eine zweite Darstellung desselben:
+ *
+ *   Spanisch — die betonte Silbe wird hervorgehoben. Bewusst über Schriftschnitt
+ *     und Unterstreichung und **nicht** über eine neue Farbe: Eine Farbe müsste
+ *     die Kontrastprüfung aus Phase 9 bestehen und stünde neben fünf Tonfarben,
+ *     die etwas ganz anderes bedeuten.
+ *   Englisch — die Lautschrift unter dem Wort. Es gibt nichts silbenweise
+ *     auszuzeichnen, weil das Merkmal am ganzen Wort hängt (AE-44).
+ */
+export function TermWord({
+  entry,
+  size = 'large',
+}: {
+  entry: VocabEntry;
+  size?: 'large' | 'medium';
+}) {
+  if (entry.language === 'th') return <ThaiWord entry={entry} size={size} />;
+
+  const syllables = syllablesOf(entry);
+  const showsStress = syllables.some((syllable) => syllable.stressed);
+
+  return (
+    <View style={styles.wrapper}>
+      <ThemedText style={size === 'large' ? styles.termLarge : styles.termMedium}>
+        {entry.term}
+      </ThemedText>
+
+      {showsStress ? (
+        <View style={styles.syllables}>
+          {syllables.map((syllable, index) => (
+            <View key={`${syllable.roman}-${index}`} style={styles.syllable}>
+              <ThemedText
+                type={size === 'large' ? 'default' : 'small'}
+                style={syllable.stressed ? styles.stressed : null}>
+                {syllable.roman}
+              </ThemedText>
+              {index < syllables.length - 1 ? (
+                <ThemedText type="small" themeColor="textSecondary">
+                  ·
+                </ThemedText>
+              ) : null}
+            </View>
+          ))}
+        </View>
+      ) : (
+        <ThemedText type="small" themeColor="textSecondary">
+          {entry.ipa ?? entry.romanization}
+        </ThemedText>
+      )}
+
+      {showsStress ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          betont: {syllables.find((syllable) => syllable.stressed)?.roman}
+        </ThemedText>
+      ) : null}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrapper: {
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  termLarge: {
+    fontSize: 44,
+    lineHeight: 62,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  termMedium: {
+    fontSize: 28,
+    lineHeight: 40,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  syllables: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  syllable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  /** Fett und unterstrichen - zwei Merkmale, damit es auch ohne Farbe traegt. */
+  stressed: {
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
+});

@@ -25,7 +25,14 @@
  * Phase 2 und funktioniert vollständig ohne Internet.
  */
 
-export type WritingLanguage = 'de' | 'th';
+/**
+ * In welcher Sprache die Antwort getippt wird.
+ *
+ * SEIT PHASE 16 ALLE VIER. Was sich dabei je Sprache unterscheidet, ist
+ * nicht die Toleranz an sich, sondern **was geschuetzt ist** — siehe
+ * `stripProtected`.
+ */
+export type WritingLanguage = 'de' | 'th' | 'en' | 'es';
 
 /**
  * Warum eine Antwort nicht zählt — benannt, damit die Rückmeldung sagen kann,
@@ -38,6 +45,8 @@ export type MistakeKind =
   | 'article-missing'
   | 'article-wrong'
   | 'tone-mark'
+  /** Spanisch: fehlender oder falscher Akut, oder ñ statt n. */
+  | 'accent'
   | 'different';
 
 export type WritingVerdict = {
@@ -75,6 +84,11 @@ export function tidy(text: string): string {
 export function stripProtected(text: string, language: WritingLanguage): string {
   const base = tidy(text);
   if (language === 'th') return base.replace(THAI_TONE_MARKS, '');
+  // Spanisch: Der Akut ist geschuetzt, und zwar aus demselben Grund wie das
+  // Thai-Tonzeichen — er traegt Bedeutung. „hablo" (ich spreche) gegen
+  // „habló" (er sprach) ist kein Vertipper, sondern eine andere Zeitform;
+  // dasselbe gilt fuer „ano" gegen „año". Englisch hat nichts Vergleichbares
+  // und laeuft wie Deutsch.
   return base
     .toLowerCase()
     .replace(/ß/g, 'ss')
@@ -136,6 +150,8 @@ const MISTAKE_MESSAGE: Record<MistakeKind, string> = {
   'article-missing': 'Der Artikel fehlt. Er gehört zum Wort dazu.',
   'article-wrong': 'Falscher Artikel.',
   'tone-mark': 'Tonzeichen: es trägt die Bedeutung — ohne oder mit dem falschen ist es ein anderes Wort.',
+  accent:
+    'Akzentzeichen: er trägt die Bedeutung — hablo ist nicht habló, und ano ist nicht año.',
   different: 'Das ist ein anderes Wort.',
 };
 
@@ -150,6 +166,8 @@ function protectedMistake(
   language: WritingLanguage
 ): MistakeKind {
   if (language === 'th') return 'tone-mark';
+  if (language === 'es') return 'accent';
+  if (language === 'en') return 'case';
 
   const givenArticle = articleOf(given);
   const targetArticle = articleOf(target);

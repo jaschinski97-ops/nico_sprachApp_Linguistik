@@ -1,9 +1,17 @@
 import { Tone } from '@/constants/tones';
 import { featureFor } from '@/lib/languages/feature';
+import { SyllableAnnotation } from '@/lib/languages/types';
 
-import { VocabEntry } from './vocabulary';
+import { VocabEntry } from './vocab-types';
 
-export type SyllableView = { roman: string; tone: Tone };
+/**
+ * Eine Silbe, wie die Anzeige sie braucht.
+ *
+ * SEIT PHASE 16 IST DAS DIE ANNOTATION AUS DEM SPRACHMODELL. Vorher stand hier
+ * `{ roman, tone }` mit Pflicht-Ton; damit haette eine spanische Silbe einen
+ * Ton tragen muessen, den es nicht gibt.
+ */
+export type SyllableView = SyllableAnnotation;
 
 /**
  * Die Silben eines Eintrags — Grundlage der Tonfarbcodierung (AE-7).
@@ -21,7 +29,7 @@ export function syllablesOf(entry: VocabEntry): SyllableView[] {
   // Eintrag hat und wie sie ausgezeichnet sind, weiss die Sprache, nicht
   // diese Datei. Fuer Thai kommt genau dasselbe heraus wie vorher - die
   // Tests aus den Phasen 3, 6 und 13 blieben unveraendert gruen.
-  return featureFor(entry).annotate(entry) as SyllableView[];
+  return featureFor(entry).annotate(entry);
 }
 
 /**
@@ -44,5 +52,7 @@ export function isMultiSyllable(entry: VocabEntry): boolean {
 
 /** Was auf der Vorderseite steht, hängt an der Lernrichtung. */
 export function promptText(entry: VocabEntry, direction: string): string {
-  return direction === 'de_to_th' ? entry.german : entry.term;
+  // Seit Phase 16 ueber die Form der Richtung statt ueber ein Literal:
+  // 'de_to_es' verlangt dieselbe Vorderseite wie 'de_to_th'.
+  return direction.startsWith('de_to_') ? entry.german : entry.term;
 }

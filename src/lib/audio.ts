@@ -27,17 +27,29 @@ import type { AudioPlayer } from 'expo-audio';
  * synthetische Stimme ist (Pflicht 4 der Phase 11).
  */
 
-export type SpeechLanguage = 'th' | 'de';
+/**
+ * Welche Sprachen gesprochen werden können.
+ *
+ * SEIT PHASE 16 ALLE DREI ZIELSPRACHEN plus Deutsch. Die Kennungen sind
+ * dieselben wie in `lib/languages` — eine zweite Sprachliste wäre eine
+ * Stelle, an der man das Nachtragen vergisst.
+ */
+export type SpeechLanguage = 'th' | 'de' | 'en' | 'es';
 
 const LOCALE: Record<SpeechLanguage, string> = {
   th: 'th-TH',
   de: 'de-DE',
+  // Britisches Englisch, passend zur RP-Lautschrift im Grundstock (Phase 16).
+  en: 'en-GB',
+  es: 'es-ES',
 };
 
 /** Thai etwas langsamer, die Töne sind sonst kaum herauszuhören. */
 const RATE: Record<SpeechLanguage, number> = {
   th: 0.8,
   de: 0.95,
+  en: 0.95,
+  es: 0.95,
 };
 
 export type PronunciationRequest = {

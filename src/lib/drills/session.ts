@@ -1,22 +1,27 @@
-import { VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
 
 import { retrievability } from '../fsrs/fsrs';
 import { FSRSCardState } from '../fsrs/types';
+import { LanguageCode } from '../languages/types';
 import { ensureCardStates } from '../review-session';
 import { DataStore, getStore } from './../storage';
 
 import {
   buildArticleQuestion,
+  buildSpellingQuestion,
+  buildStressQuestion,
   buildToneQuestion,
   buildToneRuleQuestion,
   buildVerbFormQuestion,
   canBuildArticleQuestion,
+  canBuildSpellingQuestion,
+  canBuildStressQuestion,
   canBuildToneQuestion,
   canBuildToneRuleQuestion,
   canBuildVerbFormQuestion,
 } from './questions';
 import { Random, seededRandom, shuffled } from './random';
-import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from './types';
+import { directionForDrill, DrillAnswer, DrillId, DrillQuestion } from './types';
 
 /**
  * Eine Übungssitzung zusammenstellen.
@@ -42,6 +47,15 @@ const CANDIDATE_WINDOW = 3;
 
 export type DrillSessionOptions = {
   drill: DrillId;
+  /**
+   * Welche Sprache geuebt wird.
+   *
+   * SEIT PHASE 16 NOETIG UND BEWUSST OHNE VORGABEWERT: Die Artikel-Uebung
+   * gilt fuer jedes "X -> Deutsch" (Pflicht 6 aus Phase 15), und welches X
+   * gemeint ist, kann diese Datei nicht wissen. Ein stiller Vorgabewert
+   * 'th' wuerde spanische Sitzungen klammheimlich mit Thai-Karten fuellen.
+   */
+  language: LanguageCode;
   store?: DataStore;
   now?: number;
   size?: number;
@@ -66,6 +80,10 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildArticleQuestion(entry);
     case 'verbForms':
       return canBuildVerbFormQuestion(entry);
+    case 'stressRule':
+      return canBuildStressQuestion(entry);
+    case 'spelling':
+      return canBuildSpellingQuestion(entry);
   }
 }
 
@@ -84,6 +102,10 @@ function buildQuestion(
       return buildArticleQuestion(entry);
     case 'verbForms':
       return buildVerbFormQuestion(entry, pool, random);
+    case 'stressRule':
+      return buildStressQuestion(entry);
+    case 'spelling':
+      return buildSpellingQuestion(entry);
   }
 }
 
@@ -95,7 +117,7 @@ function weakness(card: FSRSCardState | undefined, now: number): number {
 
 export async function buildDrillSession(options: DrillSessionOptions): Promise<DrillSession> {
   const drill = options.drill;
-  const direction = DRILL_META[drill].direction;
+  const direction = directionForDrill(drill, options.language);
   const now = options.now ?? Date.now();
   const size = options.size ?? DRILL_SESSION_SIZE;
   const random = seededRandom(options.seed ?? now);

@@ -1,5 +1,10 @@
 /**
- * Vokabel-Grundstock (Phase 2).
+ * Vokabel-Grundstock Thai (Phase 2) - und die Stelle, an der die drei
+ * Grundstoecke zusammenkommen (Phase 16).
+ *
+ * Die Liste in dieser Datei ist seit Phase 16 `VOCABULARY_TH`; Englisch und
+ * Spanisch stehen in `vocabulary-en.ts` und `vocabulary-es.ts`. `VOCABULARY`
+ * ist die Vereinigung. Der Typ selbst steht in `vocab-types.ts`.
  *
  * HERKUNFT UND PRUEFUNG
  * Thai-Seite: Schreibung, Paiboon-Umschrift und Toene stammen aus dem
@@ -28,77 +33,24 @@
  * PROGRESS.md, Abschnitt "Skalierungsplan".
  */
 
-import { Tone } from '@/constants/tones';
+import {
+  PartOfSpeech,
+  Register,
+  VocabEntry,
+} from './vocab-types';
+
+import { VOCABULARY_EN } from './vocabulary-en';
+import { VOCABULARY_ES } from './vocabulary-es';
 
 import { LanguageCode } from '@/lib/languages/types';
 
-export type PartOfSpeech =
-  | 'noun'
-  | 'verb'
-  | 'adjective'
-  | 'adverb'
-  | 'pronoun'
-  | 'numeral'
-  | 'particle'
-  | 'interjection';
+// Der Typ steht seit Phase 16 in `vocab-types.ts` - er wird von allen drei
+// Grundstoecken gebraucht, und von hier aus waere es ein Zirkel. Die
+// Wiederausfuhr haelt die bestehenden Importwege gueltig.
+export type { PartOfSpeech, Register, VocabEntry };
 
-export type Register = 'neutral' | 'formal' | 'informal';
+export const VOCABULARY_TH: VocabEntry[] = [
 
-export type VocabEntry = {
-  id: string;
-  /**
-   * Welche Zielsprache (Phase 15). Deutsch ist die Drehscheibe und steht
-   * deshalb nicht hier, sondern auf der anderen Seite jedes Paars (AE-42).
-   */
-  language: LanguageCode;
-  /**
-   * Die fremdsprachige Form. Hiess bis Phase 15 `thai` - der Name war eine
-   * Festlegung auf eine Sprache, die es nicht mehr gibt (AE-43).
-   */
-  term: string;
-  /** Paiboon-Umschrift wie im englischen Wiktionary. */
-  romanization: string;
-  /**
-   * SPRACHSPEZIFISCH (Thai): Ton der ersten Silbe - bei einsilbigen Woertern
-   * also DER Ton des Wortes. Fuer mehrsilbige ist `syllables` massgeblich.
-   * Andere Sprachen bringen ihr eigenes Merkmal mit (AE-44).
-   */
-  tone: Tone;
-  /** SPRACHSPEZIFISCH (Thai): silbenweise Umschrift und Ton (Phase 3). */
-  syllables: { roman: string; tone: Tone }[];
-  german: string;
-  /** Pflicht bei Substantiven: Genus und Plural. */
-  germanNoun?: { article: 'der' | 'die' | 'das'; plural: string };
-  /** Stammformen - fuer Thai-Muttersprachler die eigentliche Huerde. */
-  germanVerb?: {
-    thirdPerson: string;
-    praeteritum: string;
-    perfekt: string;
-    irregular: boolean;
-  };
-  germanAdjective?: { comparative: string; superlative: string; irregular: boolean };
-  partOfSpeech: PartOfSpeech;
-  register: Register;
-  /** Steuert die Bild-Pipeline in Phase 5: nur konkrete Begriffe bekommen Bilder. */
-  isConcrete: boolean;
-  exampleTerm: string;
-  exampleRoman: string;
-  exampleGerman: string;
-  audioAssetId?: string;
-  imageAssetId?: string;
-  /** true nur, wenn die Quelle Ton, Umschrift UND Bedeutung deckt. */
-  sourceVerified: boolean;
-  source?: string;
-  /**
-   * Benannte Unsicherheit - nur bei `sourceVerified: false` gesetzt und in der
-   * Lernansicht als Warnhinweis sichtbar.
-   */
-  verificationNote?: string;
-  /** Lernhinweis zur Grammatik (Genus, Stammformen, Steigerung, Homonyme). */
-  note?: string;
-};
-
-export const VOCABULARY: VocabEntry[] = [
   {
     id: 'sawatdii',
     language: 'th',
@@ -1633,6 +1585,23 @@ export const VOCABULARY: VocabEntry[] = [
     source: 'https://en.wiktionary.org/wiki/น้อย',
   },
 ];
+
+/**
+ * Der gesamte ausgelieferte Grundstock, alle Sprachen zusammen.
+ *
+ * WER HIER LIEST, MUSS FAST IMMER FILTERN. Eine Lernrichtung gehoert zu genau
+ * einer Sprache; eine spanische Vokabel in einer Thai-Sitzung waere ein
+ * Fehler, kein Zufallsfund. Deshalb gibt es `vocabularyFor` - und deshalb
+ * filtert `ensureCardStates` seit Phase 16 nach der Sprache der Richtung.
+ */
+export const VOCABULARY: VocabEntry[] = [...VOCABULARY_TH, ...VOCABULARY_EN, ...VOCABULARY_ES];
+
+export { VOCABULARY_EN, VOCABULARY_ES };
+
+/** Der Grundstock einer Sprache. */
+export function vocabularyFor(language: LanguageCode): VocabEntry[] {
+  return VOCABULARY.filter((entry) => entry.language === language);
+}
 
 /** Eintraege, deren Bedeutung durch die Quelle sauber gedeckt ist. */
 export const VERIFIED_VOCABULARY = VOCABULARY.filter((entry) => entry.sourceVerified);

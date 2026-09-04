@@ -68,9 +68,14 @@ export type ToneContourFeedback = {
  */
 export function canBuildSpeakingPrompt(entry: VocabEntry): boolean {
   return (
+    // Seit Phase 16: Die Sprechuebung misst Tonhoehenkonturen und gilt damit
+    // fuer Thai. Ob dasselbe Verfahren spanische Betonung erkennen kann, ist
+    // eine offene Frage und keine Selbstverstaendlichkeit (AE-48).
+    entry.language === 'th' &&
     entry.sourceVerified === true &&
     Array.isArray(entry.syllables) &&
     entry.syllables.length === 1 &&
+    entry.syllables[0].tone !== undefined &&
     TONE_KEYS.includes(entry.syllables[0].tone)
   );
 }
@@ -88,7 +93,7 @@ export function buildSpeakingPrompt(entry: VocabEntry): SpeakingPrompt {
   }
 
   const syllable = entry.syllables[0];
-  if (!TONE_KEYS.includes(syllable.tone)) {
+  if (syllable.tone === undefined || !TONE_KEYS.includes(syllable.tone)) {
     throw new Error(`"${entry.id}" hat keinen bekannten, geprüften Sollton.`);
   }
 

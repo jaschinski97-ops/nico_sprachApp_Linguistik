@@ -1,3 +1,5 @@
+import { SpeechLanguage } from '../audio';
+
 import { BlobStore, BlobStoreConfig, extensionOf } from '../blobs/types';
 import { AudioFormat, ProviderId } from '../providers/types';
 
@@ -28,7 +30,18 @@ import { AudioFormat, ProviderId } from '../providers/types';
  * Clip, nicht zwanzig.
  */
 
-export type ClipLanguage = 'th' | 'de';
+/**
+ * Welche Sprachen vertont werden koennen.
+ *
+ * SEIT PHASE 16 DIESELBE LISTE WIE DIE SPRACHAUSGABE. Vorher stand hier
+ * `'th' | 'de'` als eigene Aufzaehlung; mit Englisch und Spanisch waeren das
+ * zwei Listen gewesen, die auseinanderlaufen - und der Aufloeser haette
+ * fuer 'en' schlicht nicht uebersetzt.
+ *
+ * ACHTUNG BEIM AENDERN: Die Kennung geht in die Clip-ID ein. Wer sie
+ * umbenennt, macht jeden bereits abgelegten Clip unauffindbar.
+ */
+export type ClipLanguage = SpeechLanguage;
 
 /** Woher der Text stammt — nur zur Anzeige und fürs Zählen. */
 export type ClipKind = 'vocab' | 'example' | 'turn';

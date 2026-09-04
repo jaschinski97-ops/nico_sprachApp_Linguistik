@@ -47,15 +47,16 @@ export default function DashboardScreen() {
     <ScreenScaffold title="Übersicht" subtitle={`${definition.label} ↔ Deutsch Lernbegleiter`}>
       <LanguagePicker selected={language} onSelect={chooseLanguage} />
 
-      <DirectionDashboard />
+      <DirectionDashboard language={language} />
 
-      {/* Nur zeigen, was die Sprache auch hat: Die Tonlegende gehoert zum
-          Thai-Merkmal und waere bei einer anderen Sprache eine Behauptung. */}
-      {featureIsImplemented(language) && definition.feature.kind === 'derivable' ? (
-        <ToneLegend />
-      ) : null}
+      {/* Die Tonlegende gehoert zum Thai-Merkmal. In Phase 15 stand hier
+          „ableitbar und gebaut" als Bedingung - seit Phase 16 trifft das auch
+          auf die spanische Betonung zu, und dort waeren fuenf Tonfarben
+          schlicht falsch. Es geht also um die Toene selbst, nicht um die Art
+          des Merkmals. */}
+      {language === 'th' && featureIsImplemented(language) ? <ToneLegend /> : null}
 
-      <VocabSummary />
+      <VocabSummary language={language} />
 
       <ThemedText type="small" themeColor="textSecondary">
         {definition.feature.description}

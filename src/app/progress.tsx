@@ -10,6 +10,8 @@ import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { directionLabel } from '@/lib/review-session';
+import { LanguageCode } from '@/lib/languages/types';
+import { loadProfile } from '@/lib/profile';
 import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
 /**
@@ -27,9 +29,17 @@ export default function ProgressScreen() {
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [language, setLanguage] = useState<LanguageCode>('th');
+
+  useEffect(() => {
+    loadProfile().then((profile) => setLanguage(profile.language));
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
-    loadLearningStats()
+    // Der Fortschritt gehoert zum Sprachpaar (Phase 16): Nach einem Wechsel
+    // auf Spanisch zeigte die Seite sonst weiter die Thai-Zahlen.
+    loadLearningStats(undefined, Date.now(), 14, language)
       .then((result) => {
         if (!cancelled) setStats(result);
       })
@@ -39,7 +49,7 @@ export default function ProgressScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language]);
 
   if (error) {
     return (

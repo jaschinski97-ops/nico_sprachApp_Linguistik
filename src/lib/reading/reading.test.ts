@@ -1,5 +1,8 @@
 import { TONE_KEYS, TONES } from '@/constants/tones';
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
 import {
   CONSONANT_BY_SYMBOL,
   HO_NAM_FOLLOWERS,
@@ -16,7 +19,7 @@ import {
   buildToneRuleQuestion,
   canBuildToneRuleQuestion,
 } from '../drills/questions';
-import { DRILL_META } from '../drills/types';
+import { directionForDrill, DRILL_META } from '../drills/types';
 
 import { analyzeSyllable, syllableShape, toneFrom } from './syllable';
 
@@ -177,7 +180,7 @@ describe('Gegenprobe gegen den Grundstock', () => {
       if (result.tone !== entry.syllables[0].tone) {
         wrong.push(
           `${shortLabel(entry)}: hergeleitet ${TONES[result.tone].label}, ` +
-            `belegt ${TONES[entry.syllables[0].tone].label}`
+            `belegt ${TONES[entry.syllables[0].tone!].label}`
         );
       }
     }
@@ -328,7 +331,7 @@ describe('Die Uebung „Ton herleiten"', () => {
       expect(question.options[question.correctIndex].tone).toBe(entry.syllables[0].tone);
       const result = question.derivation?.[question.derivation.length - 1];
       expect(result?.label).toBe('Ergebnis');
-      expect(result?.value).toBe(TONES[entry.syllables[0].tone].label);
+      expect(result?.value).toBe(TONES[entry.syllables[0].tone!].label);
     }
   });
 
@@ -388,7 +391,7 @@ describe('Die Uebung „Ton herleiten"', () => {
   });
 
   it('gehoert zur Richtung, die Thai lernt', () => {
-    expect(DRILL_META.toneRule.direction).toBe('de_to_th');
+    expect(directionForDrill('toneRule', 'th')).toBe('de_to_th');
     expect(DRILL_META.toneRule.label).toBe('Ton herleiten');
   });
 });

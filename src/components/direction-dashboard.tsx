@@ -6,6 +6,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
+import { LanguageCode } from '@/lib/languages/types';
 import {
   directionLabel,
   directionPrompt,
@@ -20,13 +21,14 @@ import {
  * Lernprobleme mit eigenem Kartenbestand. Eine gemeinsame Summe würde
  * verschleiern, dass eine Richtung schon lange liegen geblieben ist.
  */
-export function DirectionDashboard() {
+export function DirectionDashboard({ language }: { language: LanguageCode }) {
   const [summaries, setSummaries] = useState<DirectionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    summarizeAllDirections()
+    setSummaries(null);
+    summarizeAllDirections(language)
       .then((result) => {
         if (!cancelled) setSummaries(result);
       })
@@ -36,7 +38,7 @@ export function DirectionDashboard() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [language]);
 
   if (error) {
     return (

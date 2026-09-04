@@ -3,6 +3,7 @@ import { Tone } from '@/constants/tones';
 import { SpeechLanguage } from '../audio';
 import { Direction } from '../fsrs/types';
 import { drillsForDirectionViaFeature } from '../languages/feature';
+import { HUB_LANGUAGE, LanguageCode } from '../languages/types';
 import { DerivationStep } from '../reading/syllable';
 
 /**
@@ -26,12 +27,37 @@ import { DerivationStep } from '../reading/syllable';
  * abgeleitet (vertauschtes Hilfsverb).
  */
 
-export const DRILLS = ['tone', 'toneRule', 'article', 'verbForms'] as const;
+export const DRILLS = [
+  'tone',
+  'toneRule',
+  'article',
+  'verbForms',
+  /** Phase 16: das spanische Merkmal - Betonung herleiten. */
+  'stressRule',
+  /** Phase 16: das englische Merkmal - gleiche Schreibung, andere Aussprache. */
+  'spelling',
+] as const;
 export type DrillId = (typeof DRILLS)[number];
 
 export type DrillMeta = {
   id: DrillId;
-  direction: Direction;
+  /**
+   * Auf welcher Seite des Sprachpaars die Übung liegt.
+   *
+   * SEIT PHASE 16 KEINE FESTE RICHTUNG MEHR. Vorher stand hier `th_to_de`,
+   * und damit hätte die Artikel-Übung für Spanisch nicht funktioniert,
+   * obwohl sie **Deutsch** prüft und für jedes Paar gilt (Pflicht 6 aus
+   * Phase 15). Die Richtung entsteht jetzt aus Seite und gewählter Sprache.
+   *
+   *   `toHub`    — „X → Deutsch": die deutschen Grammatikübungen.
+   *   `toTarget` — „Deutsch → X": die Merkmalsübungen der Zielsprache.
+   */
+  side: 'toHub' | 'toTarget';
+  /**
+   * Zu welchem Sprachmerkmal die Übung gehört, oder `null` für die deutschen
+   * Module, die zu jedem Paar gehören.
+   */
+  feature: LanguageCode | null;
   label: string;
   /** Ein Satz, der sagt, was geübt wird und warum. */
   description: string;
@@ -39,10 +65,18 @@ export type DrillMeta = {
   prompt: string;
 };
 
+/** Die Richtung, in der diese Übung für diese Sprache läuft. */
+export function directionForDrill(drill: DrillId, language: LanguageCode): Direction {
+  return DRILL_META[drill].side === 'toHub'
+    ? (`${language}_to_${HUB_LANGUAGE}` as Direction)
+    : (`${HUB_LANGUAGE}_to_${language}` as Direction);
+}
+
 export const DRILL_META: Record<DrillId, DrillMeta> = {
   tone: {
     id: 'tone',
-    direction: 'de_to_th',
+    side: 'toTarget',
+    feature: 'th',
     label: 'Töne hören',
     description:
       'Wort anhören und den Ton bestimmen. Nur einsilbige Wörter — bei mehrsilbigen hat jede Silbe ihren eigenen Ton.',
@@ -50,7 +84,8 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   },
   toneRule: {
     id: 'toneRule',
-    direction: 'de_to_th',
+    side: 'toTarget',
+    feature: 'th',
     label: 'Ton herleiten',
     description:
       'Den Ton aus der Schrift ableiten statt ihn auswendig zu lernen: Konsonantenklasse, Vokallänge, Schlusslaut und Tonzeichen ergeben ihn. Nur einsilbige Wörter.',
@@ -58,7 +93,8 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   },
   article: {
     id: 'article',
-    direction: 'th_to_de',
+    side: 'toHub',
+    feature: null,
     label: 'Artikel',
     description:
       'Das richtige Genus zum Substantiv. Im Deutschen ist es nicht ableitbar, sondern gehört zum Wort dazu.',
@@ -66,11 +102,32 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   },
   verbForms: {
     id: 'verbForms',
-    direction: 'th_to_de',
+    side: 'toHub',
+    feature: null,
     label: 'Stammformen',
     description:
       'Das Perfekt mit dem richtigen Hilfsverb. „haben" gegen „sein" ist eine eigene Fehlerquelle.',
     prompt: 'Wie lautet das Perfekt?',
+  },
+  stressRule: {
+    id: 'stressRule',
+    side: 'toTarget',
+    feature: 'es',
+    label: 'Betonung herleiten',
+    description:
+      'Welche Silbe betont wird, steht in der Schreibung: Wortende und Akut entscheiden. ' +
+      'Wer die Regel kennt, muss sie bei keinem neuen Wort nachschlagen.',
+    prompt: 'Welche Silbe wird betont?',
+  },
+  spelling: {
+    id: 'spelling',
+    side: 'toTarget',
+    feature: 'en',
+    label: 'Gleiche Schreibung, anderer Laut',
+    description:
+      'Im Englischen lässt sich die Aussprache nicht aus der Schreibung ableiten — „ough" ' +
+      'allein hat mehrere Lesarten. Geübt wird deshalb der Vergleich, nicht die Herleitung.',
+    prompt: 'Wie klingt dieses Schriftstück hier?',
   },
 };
 

@@ -203,6 +203,49 @@ export function GermanPalette({ onInsert, disabled }: PaletteProps) {
   );
 }
 
+/**
+ * Spanische Sonderzeichen (Phase 16).
+ *
+ * DERSELBE GRUND WIE BEI DEN UMLAUTEN: Der Akut ist geschützt — „hablo" gegen
+ * „habló" ist eine andere Zeitform, „ano" gegen „año" ein anderes Wort. Wenn
+ * das als Fehler zählt, muss es auch tippbar sein. Eine deutsche Belegung hat
+ * weder á noch ñ.
+ *
+ * Die Großbuchstaben stehen bewusst nicht dabei: Anders als im Deutschen
+ * beginnt im Spanischen kein Substantiv groß, und keine Zielform dieses
+ * Grundstocks braucht sie.
+ */
+const SPANISH_SPECIALS = [
+  { character: 'á', name: 'a mit Akut' },
+  { character: 'é', name: 'e mit Akut' },
+  { character: 'í', name: 'i mit Akut' },
+  { character: 'ó', name: 'o mit Akut' },
+  { character: 'ú', name: 'u mit Akut' },
+  { character: 'ñ', name: 'n mit Tilde' },
+  { character: 'ü', name: 'u mit Trema' },
+];
+
+export function SpanishPalette({ onInsert, disabled }: PaletteProps) {
+  return (
+    <View style={styles.palette}>
+      <ThemedText type="small" themeColor="textSecondary">
+        Akzentzeichen und ñ — falls die Tastatur sie nicht hat:
+      </ThemedText>
+      <View style={styles.keys}>
+        {SPANISH_SPECIALS.map((special) => (
+          <Key
+            key={special.character}
+            label={special.character}
+            spokenLabel={special.name}
+            onPress={() => onInsert(special.character)}
+            disabled={disabled}
+          />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   palette: {
     gap: Spacing.two,

@@ -1,4 +1,7 @@
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
+import { VOCABULARY } from '@/data/vocabulary';
+
+import { HUB_LANGUAGE, languageOfDirection } from '../languages/types';
 
 import { Direction } from '../fsrs/types';
 
@@ -83,8 +86,19 @@ function extrasFor(entry: VocabEntry): string[] {
  * Ausgeschlossen wird nur, was keine tippbare Zielform hätte — etwa ein
  * Stichwort, das nach dem Entfernen der Klammer leer wäre.
  */
+/**
+ * Schreibt die lernende Person in dieser Richtung Deutsch?
+ *
+ * SEIT PHASE 16 AUS DER FORM DER RICHTUNG STATT AUS EINEM LITERAL. Vorher
+ * stand hier `direction === 'th_to_de'`, und eine spanische Schreibaufgabe
+ * waere in beiden Richtungen als „Zielsprache tippen" gelaufen.
+ */
+function writesGerman(direction: Direction): boolean {
+  return direction.endsWith(`_to_${HUB_LANGUAGE}`);
+}
+
 export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
-  if (direction === 'th_to_de') return germanTargets(entry).length > 0;
+  if (writesGerman(direction)) return germanTargets(entry).length > 0;
   return Boolean(entry.term.trim());
 }
 
@@ -93,9 +107,9 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
     throw new Error(`"${entry.id}" hat in Richtung ${direction} keine tippbare Zielform.`);
   }
 
-  if (direction === 'th_to_de') {
+  if (writesGerman(direction)) {
     return {
-      id: `writing:th_to_de:${entry.id}`,
+      id: `writing:${direction}:${entry.id}`,
       vocabId: entry.id,
       direction,
       language: 'de',
@@ -110,10 +124,10 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
   }
 
   return {
-    id: `writing:de_to_th:${entry.id}`,
+    id: `writing:${direction}:${entry.id}`,
     vocabId: entry.id,
     direction,
-    language: 'th',
+    language: languageOfDirection(direction),
     shown: typeableGerman(entry.german.split(',')[0]),
     shownHint: entry.german.includes(',') ? entry.german : null,
     targets: [entry.term],
@@ -126,5 +140,10 @@ export function writingCandidates(
   direction: Direction,
   entries: VocabEntry[] = VOCABULARY
 ): VocabEntry[] {
-  return entries.filter((entry) => canBuildWritingPrompt(entry, direction));
+  // Auch hier gilt der Filter aus Phase 16: Ein spanisches Wort in einer
+  // Thai-Schreibsitzung waere ein Fehler, kein Zufallsfund.
+  const sprache = languageOfDirection(direction);
+  return entries.filter(
+    (entry) => entry.language === sprache && canBuildWritingPrompt(entry, direction)
+  );
 }

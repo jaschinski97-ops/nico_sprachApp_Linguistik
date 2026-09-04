@@ -1,10 +1,30 @@
 import { TONE_KEYS, TONES } from '@/constants/tones';
-import { VocabEntry } from '@/data/vocabulary';
+import { VocabEntry } from '@/data/vocab-types';
 
+import { Direction } from '../fsrs/types';
+import { HUB_LANGUAGE } from '../languages/types';
 import { analyzeSyllable } from '../reading/syllable';
+import { GraphemeGroup, graphemeGroups, groupFor } from '../spelling/graphemes';
+import { analyzeStress } from '../stress/syllables';
 
 import { Random, shuffled } from './random';
 import { DRILL_META, DrillOption, DrillQuestion } from './types';
+
+/**
+ * Die Richtung, in der eine Aufgabe zu diesem Eintrag steht.
+ *
+ * SEIT PHASE 16 AUS DEM EINTRAG STATT ALS LITERAL. Vorher stand in jeder
+ * Aufgabe `'th_to_de'` beziehungsweise `'de_to_th'`; damit haette eine
+ * spanische Artikel-Aufgabe die falsche Richtung getragen und im
+ * Tagesprotokoll unter Thai gezaehlt.
+ */
+function toHub(entry: VocabEntry): Direction {
+  return `${entry.language}_to_${HUB_LANGUAGE}` as Direction;
+}
+
+function toTarget(entry: VocabEntry): Direction {
+  return `${HUB_LANGUAGE}_to_${entry.language}` as Direction;
+}
 
 /**
  * Aus geprüften Vokabeldaten werden Aufgaben — es wird nichts erfunden.
@@ -31,7 +51,9 @@ import { DRILL_META, DrillOption, DrillQuestion } from './types';
  * geraten werden müsste.
  */
 export function canBuildToneQuestion(entry: VocabEntry): boolean {
-  return entry.syllables?.length === 1;
+  // Seit Phase 16 auch die Sprache pruefen: Der Grundstock traegt jetzt
+  // drei Sprachen, und ein einsilbiges spanisches Wort hat keinen Ton.
+  return entry.language === 'th' && entry.syllables?.length === 1 && Boolean(entry.syllables[0].tone);
 }
 
 export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
@@ -41,7 +63,7 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
         'eine einzelne Antwort gäbe es nicht.'
     );
   }
-  const tone = entry.syllables[0].tone;
+  const tone = entry.syllables[0].tone!;
 
   // Feste Reihenfolge, nicht gemischt: die fünf Töne sind ein festes
   // Inventar, und wer sie übt, baut sich eine Ordnung im Kopf auf (mittel,
@@ -55,7 +77,7 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
   return {
     id: `tone:${entry.id}`,
     drill: 'tone',
-    direction: 'de_to_th',
+    direction: toTarget(entry),
     vocabId: entry.id,
     // Bewusst nichts sichtbar: Die Thai-Schrift trägt das Tonzeichen und wäre
     // die halbe Lösung, die deutsche Bedeutung erlaubt es, die Antwort aus dem
@@ -87,6 +109,7 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
  * zurueck, was sich nicht als genau eine Silbe lesen laesst.
  */
 export function canBuildToneRuleQuestion(entry: VocabEntry): boolean {
+  if (entry.language !== 'th') return false;
   if (entry.syllables?.length !== 1) return false;
   const analysis = analyzeSyllable(entry.term);
   return analysis.ok && analysis.tone === entry.syllables[0].tone;
@@ -97,7 +120,7 @@ export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
   if (!analysis.ok) {
     throw new Error(`"${entry.id}" (${entry.term}): ${analysis.reason}`);
   }
-  const tone = entry.syllables[0].tone;
+  const tone = entry.syllables[0].tone!;
   if (analysis.tone !== tone) {
     throw new Error(
       `"${entry.id}" (${entry.term}): Herleitung ergibt ${TONES[analysis.tone].label}, ` +
@@ -115,7 +138,7 @@ export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
   return {
     id: `toneRule:${entry.id}`,
     drill: 'toneRule',
-    direction: 'de_to_th',
+    direction: toTarget(entry),
     vocabId: entry.id,
     // Hier ist die Schrift die Aufgabe, nicht die halbe Loesung: Genau aus
     // ihr soll der Ton abgeleitet werden. Die Umschrift steht bewusst NICHT
@@ -174,7 +197,7 @@ export function buildArticleQuestion(entry: VocabEntry): DrillQuestion {
   return {
     id: `article:${entry.id}`,
     drill: 'article',
-    direction: 'th_to_de',
+    direction: toHub(entry),
     vocabId: entry.id,
     visible: `___ ${word}`,
     // Das thailändische Wort als Kontext: die lernende Person spricht Thai,
@@ -257,7 +280,7 @@ export function buildVerbFormQuestion(
   return {
     id: `verbForms:${entry.id}`,
     drill: 'verbForms',
-    direction: 'th_to_de',
+    direction: toHub(entry),
     vocabId: entry.id,
     visible: entry.german.split(',')[0].trim(),
     visibleHint: `${entry.term} · ${entry.romanization}`,
@@ -266,6 +289,148 @@ export function buildVerbFormQuestion(
     correctIndex: options.findIndex((option) => option.label === correct),
     solution: correct,
     explanation: parts.join(' · '),
+  };
+}
+
+/* ---------- Betonung herleiten (de_to_es) ---------- */
+
+/**
+ * Nur **mehrsilbige** Woerter — aus demselben Grund, aus dem die Ton-Uebung
+ * nur einsilbige nimmt: Bei einem einsilbigen Wort hat die Frage nur eine
+ * moegliche Antwort, und wer sie richtig beantwortet, hat nichts gezeigt.
+ *
+ * Und nur Woerter, deren Herleitung mit der abgelegten Betonung
+ * uebereinstimmt. Diese zweite Bedingung ist wie in Phase 13 die wichtigere:
+ * Waeren beide je verschieden, zeigte die Uebung eine Begruendung, die der
+ * als richtig markierten Antwort widerspricht. Ein Test faehrt den ganzen
+ * spanischen Grundstock durch und belegt, dass es diesen Fall nicht gibt.
+ */
+export function canBuildStressQuestion(entry: VocabEntry): boolean {
+  if (entry.language !== 'es') return false;
+  if (entry.syllables.length < 2) return false;
+  const analysis = analyzeStress(entry.term);
+  if (!analysis.ok) return false;
+  if (analysis.syllables.length !== entry.syllables.length) return false;
+  return analysis.stressedIndex === entry.syllables.findIndex((syllable) => syllable.stressed);
+}
+
+export function buildStressQuestion(entry: VocabEntry): DrillQuestion {
+  const analysis = analyzeStress(entry.term);
+  if (!analysis.ok) throw new Error(`"${entry.id}" (${entry.term}): ${analysis.reason}`);
+  const abgelegt = entry.syllables.findIndex((syllable) => syllable.stressed);
+  if (analysis.stressedIndex !== abgelegt) {
+    throw new Error(
+      `"${entry.id}" (${entry.term}): Herleitung ergibt Silbe ${analysis.stressedIndex + 1}, ` +
+        `abgelegt ist ${abgelegt + 1}. Solange das nicht geklaert ist, wird daraus keine Aufgabe.`
+    );
+  }
+
+  // Die Antworten sind die Silben DIESES Wortes - keine ausgedachte Auswahl.
+  // Ihre Zahl haengt damit am Wort, anders als bei den fuenf Toenen, die ein
+  // festes Inventar sind.
+  const options: DrillOption[] = analysis.syllables.map((syllable, index) => ({
+    label: syllable,
+    hint: `${index + 1}. Silbe`,
+  }));
+
+  const regel = {
+    acute: 'Der geschriebene Akut steht auf der betonten Silbe.',
+    monosyllable: 'Einsilbig - es gibt nur eine Silbe.',
+    penultimate: 'Endet auf Vokal, n oder s: vorletzte Silbe.',
+    final: 'Endet auf einen anderen Konsonanten: letzte Silbe.',
+  }[analysis.rule];
+
+  return {
+    id: `stressRule:${entry.id}`,
+    drill: 'stressRule',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    // Die Schreibung IST die Aufgabe: Genau aus ihr soll die Betonung folgen.
+    // Die Silbentrennung steht bewusst nicht dabei - sie waere der halbe Weg.
+    visible: entry.term,
+    visibleHint: entry.german,
+    speak: null,
+    options,
+    correctIndex: analysis.stressedIndex,
+    solution: `${analysis.syllables.join('-')} - ${entry.german}`,
+    explanation: regel,
+    derivation: analysis.steps,
+    uncertain: analysis.uncertain,
+  };
+}
+
+/* ---------- Gleiche Schreibung, anderer Laut (de_to_en) ---------- */
+
+/**
+ * Nur Woerter, die zu einer Gruppe mit mindestens zwei Lesarten gehoeren.
+ *
+ * Ohne Gegenstueck gaebe es nichts zu vergleichen, und die Frage haette genau
+ * eine moegliche Antwort. Der ganze Punkt der Uebung ist, dass dasselbe
+ * Schriftstueck im Grundstock nachweislich verschieden klingt (AE-44).
+ */
+export function canBuildSpellingQuestion(
+  entry: VocabEntry,
+  groups: GraphemeGroup[] = graphemeGroups()
+): boolean {
+  if (entry.language !== 'en') return false;
+  const group = groupFor(entry, groups);
+  return Boolean(group && entry.englishSpelling && group.sounds.length >= 2);
+}
+
+export function buildSpellingQuestion(
+  entry: VocabEntry,
+  groups: GraphemeGroup[] = graphemeGroups()
+): DrillQuestion {
+  const spelling = entry.englishSpelling;
+  const group = groupFor(entry, groups);
+  if (!spelling || !group) {
+    throw new Error(`"${entry.id}" gehoert zu keiner Schriftstueck-Gruppe - keine Aufgabe.`);
+  }
+
+  // Die falschen Antworten sind ECHTE Lesarten desselben Schriftstuecks aus
+  // demselben Grundstock. Ein ausgedachter Laut waere hier besonders
+  // schaedlich: Die Uebung behauptet ja gerade, dass all diese Lesarten
+  // wirklich vorkommen.
+  const options: DrillOption[] = group.sounds.map((sound) => ({
+    label: sound,
+    // Als Beispiel NIE das gefragte Wort selbst - das waere die Antwort.
+    // Bleibt keines uebrig, steht der Laut ohne Beispiel da.
+    hint: group.members.find(
+      (member) => member.sound === sound && member.entry.id !== entry.id
+    )?.entry.term,
+  }));
+
+  // Nur was wirklich anders klingt. Ein Wort mit demselben Laut unter
+  // "anders gesprochen" waere schlicht falsch.
+  const andere = group.members
+    .filter((member) => member.entry.id !== entry.id && member.sound !== spelling.sound)
+    .map((member) => `${member.entry.term} ${member.sound}`)
+    .join(' · ');
+
+  const gleiche = group.members
+    .filter((member) => member.entry.id !== entry.id && member.sound === spelling.sound)
+    .map((member) => member.entry.term)
+    .join(', ');
+
+  return {
+    id: `spelling:${entry.id}`,
+    drill: 'spelling',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    visible: entry.term,
+    visibleHint: `„${spelling.grapheme}" — ${entry.german}`,
+    // Kein Vorsprechen: Das Wort zu hoeren WAERE die Antwort. Die Aufloesung
+    // spricht es danach aus.
+    speak: null,
+    options,
+    correctIndex: group.sounds.indexOf(spelling.sound),
+    solution: `${entry.term} ${entry.ipa ?? ''} - ${entry.german}`.trim(),
+    explanation: [
+      andere ? `Dasselbe „${spelling.grapheme}", anders gesprochen: ${andere}.` : null,
+      gleiche ? `Gleich klingt es in: ${gleiche}.` : null,
+    ]
+      .filter(Boolean)
+      .join(' ') || `„${spelling.grapheme}" klingt hier ${spelling.sound}.`,
   };
 }
 

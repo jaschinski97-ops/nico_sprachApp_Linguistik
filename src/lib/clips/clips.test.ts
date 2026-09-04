@@ -1,4 +1,7 @@
-import { VOCABULARY } from '@/data/vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
 
 import {
   playPronunciation,
@@ -150,9 +153,9 @@ describe('Clip-IDs', () => {
     const ids = new Set<string>();
     for (const entry of VOCABULARY) {
       ids.add(clipIdFor('th', entry.term));
-      ids.add(clipIdFor('th', entry.exampleTerm));
+      ids.add(clipIdFor('th', entry.exampleTerm!));
     }
-    const unique = new Set(VOCABULARY.flatMap((e) => [normalizeClipText(e.term), normalizeClipText(e.exampleTerm)]));
+    const unique = new Set(VOCABULARY.flatMap((e) => [normalizeClipText(e.term), normalizeClipText(e.exampleTerm!)]));
     expect(ids.size).toBe(unique.size);
   });
 });

@@ -1,3 +1,5 @@
+import { SpeechLanguage } from '../audio';
+
 /**
  * Gemeinsamer Vertrag der KI-Anbieter (Phase 10).
  *
@@ -211,7 +213,12 @@ export type AudioFormat = 'wav' | 'mp3';
 
 export type AudioRequest = {
   text: string;
-  language: 'th' | 'de';
+  /**
+   * Seit Phase 16 alle vier Sprachen. Die Anbieter werten die Angabe derzeit
+   * nicht aus - die Stimme steht in den Einstellungen -, sie wandert aber
+   * durch bis in die Clip-ID und muss dort stimmen.
+   */
+  language: SpeechLanguage;
 };
 
 export type AudioResponse = {

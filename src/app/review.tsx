@@ -14,6 +14,8 @@ import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
 import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
+import { languageOf } from '@/lib/languages/registry';
+import { directionsFor, isLanguageCode, languageOfDirection } from '@/lib/languages/types';
 import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
 import { rateCard } from '@/lib/repository';
 import {
@@ -29,13 +31,26 @@ const RATINGS: Rating[] = [1, 2, 3, 4];
 /** Karteikarten oder eine der richtungseigenen Übungen. */
 type Mode = 'cards' | DrillId | 'speaking' | 'writing';
 
+/**
+ * Ist das eine Richtung, die es wirklich gibt?
+ *
+ * SEIT PHASE 16 AUS DEM SPRACHMODELL STATT ALS ZWEI LITERALE. Vorher stand
+ * hier `value === 'de_to_th' || value === 'th_to_de'`; ein Aufruf mit
+ * `?direction=de_to_es` waere still auf die Richtungsauswahl zurueckgefallen.
+ */
 function isDirection(value: unknown): value is Direction {
-  return value === 'de_to_th' || value === 'th_to_de';
+  if (typeof value !== 'string') return false;
+  const teile = value.split('_to_');
+  if (teile.length !== 2) return false;
+  const [von, nach] = teile;
+  return (von === 'de' && isLanguageCode(nach)) || (nach === 'de' && isLanguageCode(von));
 }
 
 function parseMode(value: unknown, direction: Direction): Mode {
   const drills: string[] = drillsForDirection(direction);
   if (direction === 'de_to_th' && value === 'speaking') return 'speaking';
+  // Die Sprechuebung misst Tonhoehenkonturen und gibt es deshalb bisher nur
+  // fuer Thai (AE-48) - fuer die anderen Paare faellt sie hier weg.
   // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
   // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
   if (value === 'writing') return 'writing';
@@ -86,7 +101,11 @@ export default function ReviewScreen() {
   // `waehlen=1` setzt der Wechsel-Knopf: die Auswahl muss auch dann erreichbar
   // bleiben, wenn eine Standard-Richtung hinterlegt ist - sonst waere der
   // Standard eine Einbahnstrasse.
-  const direction = params.waehlen === '1' ? null : (explicit ?? profile.defaultDirection);
+  const gemerkt =
+    profile.defaultDirection && languageOfDirection(profile.defaultDirection) === profile.language
+      ? profile.defaultDirection
+      : null;
+  const direction = params.waehlen === '1' ? null : (explicit ?? gemerkt);
 
   if (!direction) {
     return (
@@ -136,12 +155,15 @@ export default function ReviewScreen() {
       ) : (
         <DrillRunner
           drill={mode}
+          language={languageOfDirection(direction)}
           key={`${direction}:${mode}`}
           onExit={() => router.setParams({ direction, mode: undefined })}
         />
       )}
 
-      <ToneLegend compact />
+      {/* Die Tonlegende gehoert zum Thai-Merkmal. Bei Spanisch oder Englisch
+          waere sie eine Behauptung ueber eine Sprache, die keine Toene hat. */}
+      {languageOfDirection(direction) === 'th' ? <ToneLegend compact /> : null}
     </ScreenScaffold>
   );
 }
@@ -158,8 +180,10 @@ function DirectionPicker({
   onPick: (direction: Direction) => void;
 }) {
   return (
-    <ScreenScaffold title="Lernen" subtitle="Welche Richtung möchtest du üben?">
-      {DIRECTIONS.map((direction) => (
+    <ScreenScaffold
+      title="Lernen"
+      subtitle={`${languageOf(profile.language).label} — welche Richtung möchtest du üben?`}>
+      {directionsFor(profile.language).map((direction) => (
         <Pressable
           key={direction}
           onPress={() => onPick(direction)}
@@ -180,7 +204,7 @@ function DirectionPicker({
           </ThemedView>
         </Pressable>
       ))}
-      <ToneLegend />
+      {profile.language === 'th' ? <ToneLegend /> : null}
     </ScreenScaffold>
   );
 }

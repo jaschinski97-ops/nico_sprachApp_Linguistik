@@ -1,5 +1,5 @@
 import { Direction } from '../fsrs/types';
-import { DIRECTIONS } from '../review-session';
+import { directionsFor, LanguageCode } from '../languages/types';
 
 import { Level, LEVELS, situationId, SituationSpec, TopicId, TOPICS } from './types';
 
@@ -12,7 +12,23 @@ import { Level, LEVELS, situationId, SituationSpec, TopicId, TOPICS } from './ty
  * IDs schon im Speicher liegen, und nur der Rest angefragt.
  */
 
+/**
+ * Sprachen, fuer die es einen geprueften Aufgabentext gibt.
+ *
+ * PHASE 16, PFLICHT 4 - EHRLICH STATT STILL: Der Plan ist sprachparametrisiert,
+ * der **Aufgabentext an die KI** ist es nicht. Er verlangt ausdruecklich
+ * Paiboon-Umschrift und den konsequenten Gebrauch der thailaendischen
+ * Hoeflichkeitspartikel ครับ/ค่ะ (siehe `generator.ts`). Fuer Spanisch oder
+ * Englisch braucht es einen eigenen Text mit eigener Recherche - welche
+ * Anredeformen dort verbindlich sind, ist eine Frage wie die in Phase 7 und
+ * keine Uebersetzungsaufgabe. Bis dahin lehnt der Plan andere Sprachen ab,
+ * statt thailaendische Vorgaben unter spanischer Flagge zu erzeugen.
+ */
+export const SITUATION_LANGUAGES: readonly LanguageCode[] = ['th'];
+
 export type PlanOptions = {
+  /** Fuer welche Sprache geplant wird. Ohne Angabe Thai. */
+  language?: LanguageCode;
   topics?: readonly TopicId[];
   levels?: readonly Level[];
   directions?: readonly Direction[];
@@ -30,9 +46,16 @@ export const TEST_RUN: PlanOptions = { variantsPerCombo: 1 };
 export const FULL_RUN: PlanOptions = { variantsPerCombo: 32 };
 
 export function planSituations(options: PlanOptions = {}): SituationSpec[] {
+  const language = options.language ?? 'th';
+  if (!SITUATION_LANGUAGES.includes(language)) {
+    throw new Error(
+      `Fuer "${language}" gibt es noch keinen geprueften Aufgabentext fuer ` +
+        'Sprachsituationen (siehe SITUATION_LANGUAGES).'
+    );
+  }
   const topics = options.topics ?? TOPICS.map((t) => t.id);
   const levels = options.levels ?? LEVELS;
-  const directions = options.directions ?? DIRECTIONS;
+  const directions = options.directions ?? directionsFor(language);
   const variants = Math.max(1, options.variantsPerCombo ?? 1);
 
   const specs: SituationSpec[] = [];

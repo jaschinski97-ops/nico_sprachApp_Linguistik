@@ -1,5 +1,8 @@
 import { isMultiSyllable, syllablesOf, uniformTone } from './vocab-helpers';
-import { findVocab, VOCABULARY, VocabEntry } from './vocabulary';
+// PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
+// zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
+// ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
+import { findVocab, VOCABULARY_TH as VOCABULARY, VocabEntry } from './vocabulary';
 
 function entry(id: string): VocabEntry {
   const found = findVocab(id);
