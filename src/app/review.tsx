@@ -322,13 +322,21 @@ function ModeBar({
   const toneColor = useToneColor();
 
   return (
-    <View style={styles.modeGroups}>
-      {groupsForDirection(direction).map((group) => (
-        <View key={group.label} style={styles.modeGroup}>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.groupLabel}>
-            {group.label}
-          </ThemedText>
-          <View style={styles.modeBar}>
+    <View style={styles.modeBar}>
+      {groupsForDirection(direction).map((group) => {
+        // Eine Gruppe, die genauso heisst wie ihre einzige Uebung, braucht
+        // keine Beschriftung - „Sprechen Sprechen" waere doppelt.
+        const caption =
+          group.modes.length === 1 && modeLabel(group.modes[0]) === group.label
+            ? null
+            : group.label;
+        return (
+          <View key={group.label} style={styles.modeGroup}>
+            {caption ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {caption}
+              </ThemedText>
+            ) : null}
             {group.modes.map((candidate) => {
               const label = modeLabel(candidate);
               const selected = candidate === mode;
@@ -349,8 +357,8 @@ function ModeBar({
               );
             })}
           </View>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
@@ -515,14 +523,19 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     gap: Spacing.one,
   },
-  modeGroups: {
-    gap: Spacing.two,
-  },
+  /**
+   * Die Fertigkeit steht VOR ihren Knoepfen, nicht darueber.
+   *
+   * Zuerst lag die Beschriftung ueber jeder Gruppe; damit stand jeder Knopf in
+   * einer eigenen Zeile und die Leiste war fuenf Zeilen hoch. Jetzt laeuft
+   * alles in EINER umbrechenden Reihe wie vor Phase 18 - die Fertigkeit ist
+   * nur der kleine Text davor. Die Gruppe selbst bricht nicht um, damit eine
+   * Beschriftung nie allein am Zeilenende steht.
+   */
   modeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: Spacing.one,
-  },
-  groupLabel: {
-    marginLeft: Spacing.one,
   },
   modeBar: {
     flexDirection: 'row',
