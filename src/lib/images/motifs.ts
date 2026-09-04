@@ -60,6 +60,14 @@ export const IMAGE_MOTIFS: Record<string, string> = {
  * der Begriff kulturell gefärbt ist, hier eine eigene Fassung.
  */
 const MOTIF_OVERRIDES: Record<string, string> = {
+  // Drei englische Woerter haben kein Gegenstueck im Thai-Grundstock und
+  // deshalb auch keinen gemeinsamen Begriff, ueber den sie an ein Motiv
+  // kaemen (AE-46). Ohne diese drei Zeilen bekaemen sie stillschweigend kein
+  // Bild - und das faellt niemandem auf, weil ein fehlendes Bild kein Fehler
+  // ist. Gefunden beim Nachzaehlen: 28 konkrete Eintraege, 25 mit Motiv.
+  en_bread: 'a loaf of bread cut open on a wooden board',
+  en_blood: 'a single red drop on a white surface',
+  en_door: 'a closed wooden door with a handle',
   es_tienda: 'a small neighbourhood shop with a shop window',
   en_shop: 'a small neighbourhood shop with a shop window',
   es_dinero: 'euro banknotes and coins lying on a table',

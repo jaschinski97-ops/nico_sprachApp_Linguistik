@@ -160,12 +160,10 @@ export function directionLabel(direction: Direction): string {
     : `${language.label} → Deutsch`;
 }
 
-export function directionPrompt(direction: Direction): string {
-  const language = languageOf(languageOfDirection(direction));
-  // Kein zusammengebautes Adjektiv: aus „Thai" wuerde sonst „thaies".
-  return direction.startsWith(`${HUB_LANGUAGE}_to_`)
-    ? `Deutsch lesen, das Wort auf ${language.label} abrufen`
-    : `${language.label} lesen, deutsche Bedeutung abrufen`;
-}
+// `directionPrompt` gab es bis Phase 18: ein Satz wie „Deutsch lesen, das Wort
+// auf Thai abrufen". Er stand auf jeder Richtungskarte und sagte nichts, was
+// die Beschriftung „Deutsch → Thai" nicht schon sagt. An seine Stelle ist im
+// Lernen-Reiter die Liste der Fertigkeiten getreten - die Angabe, nach der man
+// wirklich auswaehlt.
 
 export { directionsFor, languageOfDirection };

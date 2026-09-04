@@ -7,12 +7,7 @@ import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
 import { LanguageCode } from '@/lib/languages/types';
-import {
-  directionLabel,
-  directionPrompt,
-  DirectionSummary,
-  summarizeAllDirections,
-} from '@/lib/review-session';
+import { directionLabel, DirectionSummary, summarizeAllDirections } from '@/lib/review-session';
 
 /**
  * Fällige Karten je Lernrichtung — bewusst getrennt, nicht als eine Zahl.
@@ -81,9 +76,6 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
               <ThemedView type="backgroundElement" style={styles.card}>
                 <ThemedText type="smallBold">
                   {directionLabel(summary.direction)}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {directionPrompt(summary.direction)}
                 </ThemedText>
 
                 <View style={styles.numbers}>

@@ -10,6 +10,7 @@ import { useToneColor } from '@/hooks/use-theme';
 import { isLanguageAvailable, playPronunciation } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
+import { languageOf } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
 import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
@@ -61,21 +62,22 @@ export function DrillRunner({
     };
   }, [drill, language, round]);
 
-  // Nur die Ton-Uebung braucht eine Stimme. Gewarnt wird ausschliesslich bei
-  // einem eindeutigen "nein" - siehe isLanguageAvailable.
+  // Jede HOERuebung braucht eine Stimme - seit Phase 18 sind das drei statt
+  // einer. Gewarnt wird ausschliesslich bei einem eindeutigen "nein"; siehe
+  // isLanguageAvailable.
   useEffect(() => {
     let cancelled = false;
-    if (drill !== 'tone') {
+    if (meta.skill !== 'hoeren') {
       setVoiceMissing(false);
       return;
     }
-    isLanguageAvailable('th').then((available) => {
+    isLanguageAvailable(language).then((available) => {
       if (!cancelled) setVoiceMissing(available === false);
     });
     return () => {
       cancelled = true;
     };
-  }, [drill]);
+  }, [meta.skill, language]);
 
   const question = session?.questions[index] ?? null;
 
@@ -171,7 +173,11 @@ export function DrillRunner({
         <ThemedText type="smallBold">{meta.prompt}</ThemedText>
 
         {question.speak ? (
-          <PlayBlock question={question} voiceMissing={voiceMissing} />
+          <PlayBlock
+            question={question}
+            voiceMissing={voiceMissing}
+            languageLabel={languageOf(language).label}
+          />
         ) : null}
 
         {question.visible ? (
@@ -269,9 +275,12 @@ export function DrillRunner({
 function PlayBlock({
   question,
   voiceMissing,
+  languageLabel,
 }: {
   question: DrillQuestion;
   voiceMissing: boolean;
+  /** „Thai", „Spanisch", „Englisch" — für die Meldung, wenn die Stimme fehlt. */
+  languageLabel: string;
 }) {
   const speak = question.speak!;
   const spokenFor = useRef<string | null>(null);
@@ -301,8 +310,9 @@ function PlayBlock({
       </Pressable>
       {voiceMissing ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-          Auf diesem Gerät ist keine Thai-Stimme installiert — die Übung bleibt
-          dann stumm. Das ist eine Systemeinstellung, kein Fehler der App.
+          Auf diesem Gerät ist keine {languageLabel}-Stimme installiert — die
+          Übung bleibt dann stumm. Das ist eine Systemeinstellung, kein Fehler
+          der App. Erzeugte Hörclips (Einstellungen) laufen davon unabhängig.
         </ThemedText>
       ) : null}
     </View>

@@ -1,44 +1,67 @@
 import { Direction } from './fsrs/types';
 import { defaultLanguage, hasContent } from './languages/registry';
-import { isLanguageCode, LanguageCode } from './languages/types';
+import { isLanguageCode, LanguageCode, languageOfDirection } from './languages/types';
 import { readMeta, writeMeta } from './repository';
 import { DataStore } from './storage';
 
 /**
- * Lernprofil — bislang nur die Standard-Lernrichtung.
+ * Lernprofil: welche Sprache gelernt wird — und wo man zuletzt stand.
  *
- * WARUM ES DAS GIBT (AE-17): Die App bedient zwei verschiedene Zielgruppen.
- * Für die meisten Menschen ist die Lernrichtung eine Eigenschaft der Person
- * und keine Entscheidung je Sitzung: wer Thai lernt, lernt beim nächsten Mal
- * wieder Thai. Die Richtung jedes Mal neu zu wählen ist Reibung mit
- * vorhersehbarer Antwort.
+ * WAS SICH GEGENÜBER AE-17 GEÄNDERT HAT. Bis hierher gab es eine
+ * **Standard-Lernrichtung**: eine ausdrücklich gesetzte Vorgabe, mit der der
+ * Lernen-Reiter startet, dazu „Immer fragen" als dritte Möglichkeit. Der
+ * Gedanke dahinter war richtig — die Richtung jedes Mal neu zu wählen ist
+ * Reibung mit vorhersehbarer Antwort — die Umsetzung aber umständlich: Man
+ * musste einen Standard **setzen**, um ihn zu haben, und ihn in den
+ * Einstellungen wieder aufheben.
  *
- * WARUM AUSDRÜCKLICH UND NICHT AUTOMATISCH: Bidirektionalität ist ein
- * Kernversprechen (AE-11) — dieselbe Person kann beide Richtungen lernen, und
- * ein Gerät kann geteilt werden. Die zuletzt gewählte Richtung still als
- * Standard festzuschreiben, würde die App nach einem einzigen Tippen auf eine
- * Richtung festlegen, ohne dass jemand das gewollt hätte. Deshalb wird der
- * Standard nur gesetzt, wenn er ausdrücklich gesetzt wird, er ist überall
- * sichtbar, wo er wirkt, und lässt sich an derselben Stelle wieder aufheben.
+ * An seine Stelle tritt das **Weitermachen**: Der Lernen-Reiter merkt sich,
+ * welche Richtung und welche Übung zuletzt offen waren, und öffnet sie beim
+ * nächsten Mal wieder. Niemand muss dafür etwas einstellen, und es gibt
+ * nichts, was man versehentlich festschreibt.
  *
- * Abgelegt in der Sammlung `meta`, die seit Phase 1 genau dafür vorgesehen
- * ist („Einstellungen, Lernprofil, Zähler") und bisher ungenutzt war.
+ * DIE SORGE AUS AE-17 BLEIBT BEANTWORTET: Ein Standard darf keine
+ * Einbahnstraße werden. Deshalb setzt jede Sprachwahl auf der Übersicht den
+ * gemerkten Stand **zurück** — auch wenn dieselbe Sprache noch einmal gewählt
+ * wird. Das ist die Geste „von vorn anfangen", und sie ist genau dort, wo man
+ * sie sucht. Zusätzlich bleiben Sprache und Richtung im Lernen-Bereich selbst
+ * jederzeit wechselbar.
+ *
+ * Abgelegt in der Sammlung `meta`, die seit Phase 1 dafür vorgesehen ist.
  */
 
 const PROFILE_KEY = 'profile';
 
-export type LearnerProfile = {
-  /** `null` heißt: bei jeder Sitzung fragen. */
-  defaultDirection: Direction | null;
-  /**
-   * Welche Sprache gerade gelernt wird (Phase 15). Steuert den Lernen-Bereich.
-   * Ein unbekannter oder inhaltsloser Wert ergibt die Standardsprache statt
-   * einer leeren App - dieselbe Nachsicht wie bei der Richtung (AE-17).
-   */
-  language: LanguageCode;
+/** Wo der Lernen-Reiter zuletzt stand. */
+export type ReviewSpot = {
+  direction: Direction;
+  /** Karteikarten oder eine Übung — als Zeichenkette, damit `lib` die Screens nicht kennt. */
+  mode: string;
 };
 
-const EMPTY_PROFILE: LearnerProfile = { defaultDirection: null, language: defaultLanguage() };
+export type LearnerProfile = {
+  /**
+   * Welche Sprache gerade gelernt wird (Phase 15). Steuert alle Bereiche.
+   * Ein unbekannter oder inhaltsloser Wert ergibt die Standardsprache statt
+   * einer leeren App.
+   */
+  language: LanguageCode;
+  /**
+   * Richtung und Übung, die im Lernen-Reiter zuletzt offen waren, oder `null`.
+   * Gehört immer zur aktuellen Sprache — ein Stand aus einer anderen wird beim
+   * Lesen verworfen, sonst zeigte der Reiter nach einem Sprachwechsel eine
+   * Richtung, die es dort gar nicht gibt.
+   */
+  review: ReviewSpot | null;
+  /** Welche Richtung im Gespräch-Reiter zuletzt offen war, oder `null`. */
+  conversation: Direction | null;
+};
+
+const EMPTY_PROFILE: LearnerProfile = {
+  language: defaultLanguage(),
+  review: null,
+  conversation: null,
+};
 
 /**
  * Ist das eine Richtung, die es wirklich gibt?
@@ -55,48 +78,66 @@ function isDirection(value: unknown): value is Direction {
   return (von === 'de' && isLanguageCode(nach)) || (nach === 'de' && isLanguageCode(von));
 }
 
+function readSpot(value: unknown, language: LanguageCode): ReviewSpot | null {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as { direction?: unknown; mode?: unknown };
+  if (!isDirection(raw.direction) || languageOfDirection(raw.direction) !== language) return null;
+  return { direction: raw.direction, mode: typeof raw.mode === 'string' ? raw.mode : 'cards' };
+}
+
 export async function loadProfile(store?: DataStore): Promise<LearnerProfile> {
-  const stored = await readMeta<Partial<LearnerProfile>>(PROFILE_KEY, {}, store);
+  const stored = await readMeta<Record<string, unknown>>(PROFILE_KEY, {}, store);
   // Bewusst nachsichtig gelesen: ein Profil aus einer aelteren Version darf
-  // die App nicht in die Richtungsauswahl sperren oder gar abstuerzen lassen.
+  // die App nicht in die Auswahl sperren oder gar abstuerzen lassen. Ein
+  // Profil aus der Zeit vor dieser Aenderung traegt `defaultDirection`; das
+  // Feld wird schlicht ignoriert, und der Reiter startet mit der Auswahl.
   const language =
     isLanguageCode(stored?.language) && hasContent(stored.language)
       ? stored.language
       : defaultLanguage();
+  const conversation = isDirection(stored?.conversation) ? stored.conversation : null;
   return {
-    defaultDirection: isDirection(stored?.defaultDirection) ? stored.defaultDirection : null,
     language,
+    review: readSpot(stored?.review, language),
+    conversation:
+      conversation && languageOfDirection(conversation) === language ? conversation : null,
   };
 }
 
-export async function setDefaultDirection(
-  direction: Direction | null,
-  store?: DataStore
-): Promise<LearnerProfile> {
-  const current = await loadProfile(store);
-  const profile: LearnerProfile = { ...current, defaultDirection: direction };
+async function write(profile: LearnerProfile, store?: DataStore): Promise<LearnerProfile> {
   await writeMeta(PROFILE_KEY, profile, store);
   return profile;
 }
 
+/** Merkt sich, wo der Lernen-Reiter steht. `null` vergisst den Stand. */
+export async function setReviewSpot(
+  spot: ReviewSpot | null,
+  store?: DataStore
+): Promise<LearnerProfile> {
+  const current = await loadProfile(store);
+  return write({ ...current, review: spot }, store);
+}
+
+/** Merkt sich die Richtung des Gespräch-Reiters. */
+export async function setConversationDirection(
+  direction: Direction | null,
+  store?: DataStore
+): Promise<LearnerProfile> {
+  const current = await loadProfile(store);
+  return write({ ...current, conversation: direction }, store);
+}
+
 /**
- * Sprache wechseln.
+ * Sprache wechseln — und dabei bewusst von vorn anfangen.
  *
- * Die Standard-Lernrichtung wird dabei zurueckgesetzt: Sie gehoerte zur alten
- * Sprache, und ein gespeichertes `de_to_th` waere nach einem Wechsel auf
- * Spanisch schlicht falsch.
+ * Der gemerkte Stand gehört zur alten Sprache und fällt weg. Das gilt
+ * **auch**, wenn dieselbe Sprache noch einmal gewählt wird: Auf der Übersicht
+ * ist das die Geste „neu anfangen", und wer sie macht, will die Auswahl sehen
+ * und nicht dort landen, wo er gestern aufgehört hat.
  */
 export async function setLanguage(
   language: LanguageCode,
   store?: DataStore
 ): Promise<LearnerProfile> {
-  const current = await loadProfile(store);
-  if (current.language === language) return current;
-  const profile: LearnerProfile = { defaultDirection: null, language };
-  await writeMeta(PROFILE_KEY, profile, store);
-  return profile;
-}
-
-export async function clearDefaultDirection(store?: DataStore): Promise<LearnerProfile> {
-  return setDefaultDirection(null, store);
+  return write({ language, review: null, conversation: null }, store);
 }

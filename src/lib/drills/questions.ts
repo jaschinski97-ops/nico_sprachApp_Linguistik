@@ -4,6 +4,8 @@ import { VocabEntry } from '@/data/vocab-types';
 import { Direction } from '../fsrs/types';
 import { HUB_LANGUAGE } from '../languages/types';
 import { analyzeSyllable } from '../reading/syllable';
+import { ACUTE_TO_PLAIN } from '@/data/spanish-stress';
+
 import { GraphemeGroup, graphemeGroups, groupFor } from '../spelling/graphemes';
 import { analyzeStress } from '../stress/syllables';
 
@@ -431,6 +433,121 @@ export function buildSpellingQuestion(
     ]
       .filter(Boolean)
       .join(' ') || `„${spelling.grapheme}" klingt hier ${spelling.sound}.`,
+  };
+}
+
+/* ---------- Betonung hoeren (de_to_es) ---------- */
+
+/**
+ * Die Silbe ohne ihr Akzentzeichen.
+ *
+ * DER GANZE PUNKT DER UEBUNG haengt an dieser Zeile. Stuenden die Silben mit
+ * Akut da, waere „mé·di·co" die Antwort zum Ablesen und niemand muesste
+ * hinhoeren. Ohne Zeichen — „me · di · co" — sieht man, WELCHE Silben es gibt,
+ * und muss hoeren, welche davon getragen wird.
+ */
+export function withoutAccent(syllable: string): string {
+  return [...syllable].map((letter) => ACUTE_TO_PLAIN[letter] ?? letter).join('');
+}
+
+/**
+ * Nur mehrsilbige Woerter mit abgelegter Betonung.
+ *
+ * Dieselbe Schranke wie bei „Betonung herleiten": Bei einem einsilbigen Wort
+ * gaebe es nur eine moegliche Antwort.
+ */
+export function canBuildStressHearQuestion(entry: VocabEntry): boolean {
+  if (entry.language !== 'es') return false;
+  if (entry.syllables.length < 2) return false;
+  return entry.syllables.some((syllable) => syllable.stressed);
+}
+
+export function buildStressHearQuestion(entry: VocabEntry): DrillQuestion {
+  const stressed = entry.syllables.findIndex((syllable) => syllable.stressed);
+  if (stressed < 0) {
+    throw new Error(`"${entry.id}" hat keine abgelegte Betonung - keine Hoeraufgabe.`);
+  }
+
+  const options: DrillOption[] = entry.syllables.map((syllable, index) => ({
+    label: withoutAccent(syllable.roman),
+    hint: `${index + 1}. Silbe`,
+  }));
+
+  const geschrieben = entry.syllables.some((syllable) => syllable.roman !== withoutAccent(syllable.roman));
+
+  return {
+    id: `stressHear:${entry.id}`,
+    drill: 'stressHear',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    // Das Wort selbst bleibt unsichtbar: Die Schreibung traegt den Akut, und
+    // die deutsche Bedeutung erlaubte es, die Antwort aus dem Gedaechtnis
+    // abzurufen statt sie zu hoeren. Dieselbe Ueberlegung wie bei der
+    // Thai-Ton-Uebung aus Phase 6.
+    visible: null,
+    visibleHint: null,
+    speak: { text: entry.term, language: 'es' },
+    options,
+    correctIndex: stressed,
+    solution: `${entry.term} · ${entry.romanization} — ${entry.german}`,
+    explanation: geschrieben
+      ? 'Die Betonung steht hier auch geschrieben da: Der Akut sitzt auf der betonten Silbe.'
+      : 'Ohne Akzentzeichen — die Betonung folgt der Grundregel aus „Betonung herleiten".',
+  };
+}
+
+/* ---------- Wort hoeren (de_to_en) ---------- */
+
+/**
+ * Die Umkehrung der Vergleichsuebung: nicht sehen und den Laut waehlen,
+ * sondern hoeren und die Schreibung waehlen.
+ *
+ * Das ist die ehrliche Hoeruebung fuer Englisch. Eine Aussprache HERZULEITEN
+ * geht dort nicht (AE-44) - sie zu ERKENNEN sehr wohl, und genau daran
+ * scheitert man im Alltag: though, through, thought und enough sehen fast
+ * gleich aus und klingen voellig verschieden.
+ */
+export function canBuildSoundSpellingQuestion(
+  entry: VocabEntry,
+  groups: GraphemeGroup[] = graphemeGroups()
+): boolean {
+  if (entry.language !== 'en') return false;
+  const group = groupFor(entry, groups);
+  return Boolean(group && group.members.length >= 3);
+}
+
+export function buildSoundSpellingQuestion(
+  entry: VocabEntry,
+  groups: GraphemeGroup[] = graphemeGroups()
+): DrillQuestion {
+  const group = groupFor(entry, groups);
+  if (!group) {
+    throw new Error(`"${entry.id}" gehoert zu keiner Schriftstueck-Gruppe - keine Hoeraufgabe.`);
+  }
+
+  // Die Ablenker sind die anderen Woerter derselben Gruppe - echte Woerter des
+  // Grundstocks mit derselben Buchstabenfolge. Erfunden ist daran nichts, und
+  // sie sind genau die Verwechslung, um die es geht.
+  const options: DrillOption[] = group.members.map((member) => ({
+    label: member.entry.term,
+    hint: member.sound,
+  }));
+
+  return {
+    id: `soundSpelling:${entry.id}`,
+    drill: 'soundSpelling',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    visible: null,
+    visibleHint: null,
+    speak: { text: entry.term, language: 'en' },
+    options,
+    correctIndex: group.members.findIndex((member) => member.entry.id === entry.id),
+    solution: `${entry.term} ${entry.ipa ?? ''} — ${entry.german}`.trim(),
+    explanation:
+      `Alle diese Woerter tragen „${group.grapheme}" und klingen verschieden: ` +
+      group.members.map((member) => `${member.entry.term} ${member.sound}`).join(' · ') +
+      '.',
   };
 }
 

@@ -1776,6 +1776,106 @@ hat niemand gemessen. Die Übung bleibt deshalb auf Thai beschränkt, statt eine
 Bewertung zu liefern, deren Grundlage ungeprüft ist. Das ist der Befund, nicht
 ein Versäumnis — er gehört vor einen Umbau, nicht danach.
 
+### AE-49 — Weitermachen statt Standard setzen
+
+**Entscheidung:** Der Lernen-Reiter merkt sich, welche Richtung und welche
+Übung zuletzt offen waren, und öffnet sie beim nächsten Mal wieder. Der
+Gespräch-Reiter merkt sich seine Richtung. Zurückgesetzt wird beides **nur**
+durch eine Sprachwahl auf der Übersicht — auch dann, wenn dieselbe Sprache
+noch einmal gewählt wird. Die **Standard-Lernrichtung** aus AE-17 samt „Immer
+fragen" und dem Knopf „☆ Als Standard merken" entfällt.
+
+**Begründung.** Der Gedanke von AE-17 war richtig: Die Richtung jedes Mal neu
+zu wählen ist Reibung mit vorhersehbarer Antwort. Die Umsetzung war es nicht.
+Man musste einen Standard **setzen**, um ihn zu haben, ihn in den Einstellungen
+wieder aufheben, und er kannte nur die Richtung — nicht die Übung, in der man
+tatsächlich steckte. Ein Lesezeichen leistet dasselbe, ohne dass jemand etwas
+einstellt, und es leistet mehr, weil es auch die Übung trägt.
+
+**Die Sorge aus AE-17 bleibt beantwortet:** Ein Standard darf keine
+Einbahnstraße werden. Deshalb ist die Sprachwahl auf der Übersicht ausdrücklich
+die Geste „von vorn anfangen" — sie setzt zurück, und zwar sichtbar dort, wo
+man sie sucht. Zusätzlich bleiben Sprache und Richtung im Lernen-Bereich selbst
+jederzeit wechselbar.
+
+**Der gemerkte Stand gehört zur Sprache.** `loadProfile` verwirft einen Stand,
+dessen Richtung zu einer anderen Sprache gehört. Ohne das zeigte der Reiter
+nach einem Wechsel eine Richtung, die es dort gar nicht gibt.
+
+**Gemerkt wird beim Ankommen, nicht beim Knopfdruck.** Man kommt auf drei Wegen
+in den Lernbereich: über die Übungsleiste, über eine Richtungskarte auf der
+Übersicht und über eine Adresse mit `?direction=`. Am Knopf zu merken erwischte
+nur den ersten — im Web-Build fiel genau das auf. Es hängt jetzt an einem
+Effekt auf dem, was wirklich offen ist.
+
+**Folge für die Einstellungen:** Die Karte „Lernprofil" ist ersatzlos
+entfallen. Ohne Standard-Lernrichtung gab es dort nichts mehr einzustellen; die
+Sprache wechselt man auf der Übersicht und in drei der Reiter.
+
+### AE-50 — Die Stimmlage ist belegt, wo sie belegbar ist — und sonst nicht
+
+**Entscheidung:** Bei Gemini gibt es zwei Knöpfe „Weiblich" / „Männlich", die
+eine namentlich belegte Stimme setzen. Bei ChatGPT gibt es sie **nicht**, und
+an ihrer Stelle steht, warum.
+
+**Der Weg dorthin.** Gewünscht war eine Auswahl nach Geschlecht. Die
+Gemini-Unterlagen, aus denen die Stimmnamen stammen, nennen zu jeder Stimme
+einen Stilbegriff („Firm", „Upbeat", „Informative") und **kein Geschlecht**.
+Bei OpenAI steht dazu ebenfalls nichts — dort gibt es nur eine Liste von
+dreizehn Namen. Damit war der Wunsch aus den naheliegenden Quellen nicht zu
+erfüllen, und eine Zuordnung nach dem Klang des Namens („Kore klingt
+weiblich") wäre genau die Art Behauptung, die dieses Projekt sonst vermeidet.
+
+**Google veröffentlicht es an anderer Stelle.** Die Seite „Chirp 3: HD voices"
+der Cloud-Text-to-Speech-Unterlagen führt **dieselben dreißig Namen** in einer
+Tabelle mit den Spalten „Name" und „Gender". Beide Listen wurden am 2026-09-04
+abgerufen und Name für Name abgeglichen; sie stimmen vollständig überein. Damit
+ist die Angabe für Gemini belegt.
+
+**Für OpenAI bleibt sie unbelegt, und dann steht dort keine.** Die Oberfläche
+sagt das ausdrücklich, statt die Knöpfe grau zu zeigen oder still wegzulassen —
+ein Nutzer, der sie bei einem Anbieter sieht und beim anderen nicht, hat
+Anspruch auf den Grund.
+
+**Vorgabe je Lage:** Kore („Firm") und Charon („Informative"). Bewusst nicht
+die erste der Liste: Für Vokabeln und Beispielsätze trägt eine ruhige, deutlich
+sprechende Stimme besser als „Excitable". Wer eine andere will, trägt den Namen
+ins Feld darunter ein; die Beschreibung darunter nennt dann Geschlecht und
+Stilbegriff der eingetragenen Stimme — oder meldet, dass der Anbieter diesen
+Namen nicht führt.
+
+**Was damit NICHT belegt ist:** wie die Stimmen klingen. Ohne gültigen
+Schlüssel (B-6) wurde kein einziger Clip erzeugt. Belegt ist die Angabe des
+Anbieters, nicht das Hörergebnis.
+
+### AE-51 — Jede Sprache hat eine Hör- und eine Leseübung ihres Merkmals
+
+**Entscheidung:** Zu jedem Sprachmerkmal gehören zwei Übungen — eine, die es
+aus der Schrift erschließt, und eine, die es hörbar macht. Neu dazugekommen
+sind „Betonung hören" (Spanisch) und „Wort hören" (Englisch).
+
+**Begründung — eine Lücke, keine Entscheidung.** Nach Phase 16 hatte nur Thai
+beides. Spanisch und Englisch bekamen je eine Leseübung ihres Merkmals, aber
+nichts fürs Ohr, und das war kein Befund, sondern schlicht nicht gebaut:
+Betonung ist hörbar, und englische Wörter mit gleicher Schreibung
+auseinanderzuhalten ist genau die Übung, an der man im Alltag scheitert.
+
+**Die entscheidende Zeile der spanischen Hörübung** ist `withoutAccent`: Die
+Silben stehen **ohne Akzentzeichen** in der Auswahl. Stünde „mé" dort, wäre die
+Antwort abzulesen statt zu hören, und die Übung prüfte nichts. So sieht man,
+welche Silben es gibt, und muss hören, welche getragen wird.
+
+**Die englische Hörübung ist die Umkehrung der Vergleichsübung** aus AE-47:
+nicht sehen und den Laut wählen, sondern hören und die Schreibung wählen. Die
+Ablenker sind die anderen Wörter derselben Schriftstück-Gruppe — echte Wörter
+des Grundstocks, keine erfundenen. Dass eine Aussprache sich nicht **herleiten**
+lässt (AE-44), heißt nicht, dass man sie nicht **erkennen** kann.
+
+**Die Übungen stehen jetzt nach Fertigkeit gruppiert:** Wortschatz, Hören,
+Lesen, Sprechen, Schreiben, Deutsche Grammatik — in fester Reihenfolge über
+alle Sprachen. Eine flache Reihe sagte nicht, dass das verschiedene Dinge sind,
+und nach einem Sprachwechsel hätte „Hören" an einer anderen Stelle gestanden.
+
 ---
 
 ## Protokoll
@@ -3847,12 +3947,174 @@ gefunden hat — sie lief nur breit.
   Freischaltung von Läufen (AE-48), also außerhalb dieser Phase.
 - Die Prüfungsseite filtert nicht nach Sprache; die Module gelten für jedes
   „X → Deutsch", nur der Screen weiß es noch nicht. Eigene Phase (siehe TODO).
+
+---
+
+### 2026-09-04 — Phase 18: Fertigkeiten, Merkfunktion und Stimmen
+
+**Vorbedingung: die offenen Blocker**
+
+Repo-Zustand geprüft (sauber auf `main` bei `3e94da8`, 689 Tests in 30 Suites
+grün). **B-2**, **B-4**, **B-5** und **B-6** bleiben offen; keine Antwort. Für
+diese Phase teilweise relevant — siehe „Was ungeprüft bleibt".
+
+**Die Gegenprüfung, um die ausdrücklich gebeten wurde**
+
+Frage war, ob die Übungslisten der Sprachen dem entsprechen, was die Recherche
+ergeben hat. Antwort: **Sie entsprachen ihr — aber sie waren unvollständig.**
+
+| Sprache | Merkmal laut Quelle (AE-44) | Leseübung | Hörübung |
+| --- | --- | --- | --- |
+| Thai | Ton aus der Schrift ableitbar | „Ton herleiten" ✓ | „Töne hören" ✓ |
+| Spanisch | Betonung „unequivocally" ableitbar | „Betonung herleiten" ✓ | **fehlte** |
+| Englisch | Aussprache „unpredictable" | Vergleich statt Herleitung ✓ | **fehlte** |
+
+Die Zuordnung Herleitung/Vergleich war also richtig. Was fehlte, war das Ohr:
+Nur Thai hatte eine Hörübung. Betonung ist hörbar, und englische Wörter mit
+gleicher Schreibung auseinanderzuhalten ist genau das, woran man im Alltag
+scheitert — beides war eine Lücke, keine Entscheidung.
+
+**Zwei neue Hörübungen**
+
+- **„Betonung hören" (Spanisch).** Wort anhören, betonte Silbe wählen. Der
+  ganze Punkt hängt an einer Zeile: Die Silben stehen **ohne Akzentzeichen**
+  in der Auswahl („me · di · co"). Mit Akut wäre die Antwort abzulesen statt zu
+  hören.
+- **„Wort hören" (Englisch).** Die Umkehrung der Vergleichsübung: nicht sehen
+  und den Laut wählen, sondern hören und die Schreibung wählen — /ðəʊ/ unter
+  though, through, thought, enough. Die Ablenker sind echte Wörter des
+  Grundstocks mit derselben Buchstabenfolge; erfunden ist nichts.
+
+Damit hat **jede** Zielsprache eine Hör- und eine Leseübung ihres Merkmals; ein
+Test hält das fest.
+
+**Die Übungen stehen nach Fertigkeit gruppiert**
+
+Vorher war es eine flache Reihe, und die sagte nicht, dass „Töne hören", „Ton
+herleiten", „Artikel" und „Schreiben" vier verschiedene Dinge sind. Jetzt:
+Wortschatz · Hören · Lesen · Sprechen · Schreiben · Deutsche Grammatik — feste
+Reihenfolge über alle Sprachen, damit „Hören" nach einem Sprachwechsel nicht
+woanders steht. Die Richtungsauswahl zeigt dieselbe Gliederung statt des
+generischen Satzes.
+
+**Der generische Satz ist weg**
+
+„Deutsch lesen, das Wort auf Thai abrufen" stand auf jeder Richtungskarte — im
+Lernen-Reiter **und** auf der Übersicht — und sagte nichts, was „Deutsch → Thai"
+nicht schon sagt. `directionPrompt` ist damit ersatzlos entfallen; dass die
+Funktion samt Test verschwindet statt ungenutzt liegenzubleiben, ist Absicht.
+
+**Je Sprache ihre eigene Merkhilfe**
+
+Bis hierher gab es nur die Tonfarben, und die gehören zu Thai. Neu:
+
+- **Spanisch** — die Betonungsregel als Silbenmuster: eine Punktreihe, in der
+  die betonte Silbe größer und farbig ist, daneben ein Beispielwort aus dem
+  Grundstock. Drei Zeilen: Vokal/n/s → vorletzte, anderer Konsonant → letzte,
+  Akut → genau dort.
+- **Englisch** — die Schriftstück-Gruppen mit ihren Lesarten: ⟨ough⟩, ⟨ea⟩,
+  ⟨oo⟩, ⟨o⟩, jeweils mit allen Wörtern und Lauten. Die Überschrift sagt
+  ausdrücklich, dass es hier **keine** Regel gibt; das ist der Befund aus
+  AE-44 und keine Entschuldigung.
+
+Keine der Darstellungen benutzt eine der fünf Tonfarben — die bedeuten Töne,
+und ein Ton ist keine Betonung. Nichts davon ist getippt: Die spanischen
+Beispiele werden aus dem Grundstock gesucht, die englischen Gruppen kommen aus
+`lib/spelling`.
+
+**Der Lernen-Reiter merkt sich, wo man war (AE-49)**
+
+An die Stelle der Standard-Lernrichtung tritt ein Lesezeichen: Richtung und
+Übung bleiben offen, bis auf der Übersicht eine Sprache gewählt wird — auch
+dieselbe. Das ist die Geste „von vorn anfangen", und sie ist dort, wo man sie
+sucht. Der Gespräch-Reiter merkt sich seine Richtung genauso; **Prüfung bleibt
+unverändert**.
+
+Beim Prüfen im Web-Build fiel auf, dass das Merken zunächst nur über die
+Übungsleiste griff. Man kommt aber auf drei Wegen hierher — Leiste,
+Richtungskarte auf der Übersicht, Adresse mit `?direction=`. Es hängt jetzt an
+einem Effekt auf dem, was wirklich offen ist, und trifft damit alle drei.
+
+**Damit fällt die Karte „Lernprofil" in den Einstellungen weg**
+
+Genau so vom Nutzer vermutet, und es stimmt: Ohne Standard-Lernrichtung gibt es
+dort nichts mehr einzustellen. Sprache wechselt man auf der Übersicht, im
+Lernen-, Gespräch- und Fortschritt-Reiter.
+
+**Bilder und Clips je Sprache**
+
+Die Planer waren seit Phase 16 sprachparametrisiert, die Einstellungen boten
+die Wahl nicht an (AE-48). Jetzt tun sie es — je eine Sprachzeile an der
+Bilder- und der Cliptkarte, und die Umfänge rechnen mit der gewählten Sprache.
+
+Beim Nachzählen fiel eine stille Lücke auf: **28 konkrete englische Einträge,
+aber nur 25 mit Motiv.** `bread`, `blood` und `door` haben kein Thai-Gegenstück
+und kamen deshalb nicht über den gemeinsamen Begriff (AE-46) an ein Motiv — sie
+hätten stillschweigend kein Bild bekommen, und ein fehlendes Bild ist kein
+Fehler, den man sieht. Drei Motive ergänzt, dazu ein Test, der für jede
+konkrete Vokabel ein Motiv verlangt.
+
+**Die Stimmenwahl — und warum sie anders aussieht als gewünscht (AE-50)**
+
+Gewünscht war „männlich oder weiblich". Die Gemini-Unterlagen, aus denen die
+Stimmnamen stammen, nennen zu jeder Stimme nur einen Stilbegriff („Firm",
+„Upbeat") und **kein Geschlecht**; bei OpenAI steht dazu ebenfalls nichts.
+
+Google veröffentlicht es aber an anderer Stelle: Die Cloud-Text-to-Speech-Seite
+zu „Chirp 3: HD voices" führt **dieselben dreißig Namen** in einer Tabelle mit
+den Spalten „Name" und „Gender". Beide Listen am 2026-09-04 abgerufen und Name
+für Name abgeglichen — sie stimmen vollständig überein. Damit ist die Angabe
+belegt und nicht aus dem Klang des Namens geschlossen.
+
+Ergebnis: Bei **Gemini** zwei Knöpfe „Weiblich" / „Männlich", die eine belegte
+Stimme setzen (Kore bzw. Charon — „Firm" und „Informative" passen zu Vokabeln
+besser als „Excitable"), darunter steht die gewählte Stimme mit Geschlecht und
+Stilbegriff. Bei **ChatGPT** gibt es die Knöpfe nicht, und dort steht, warum:
+Der Anbieter macht dazu keine Angabe, eine Auswahl wäre geraten.
+
+**Der Fortschritt zeigt Erarbeitetes statt Bestand**
+
+- „Fällige Karten je Richtung" ist ersatzlos raus — überall.
+- Die Kacheln „Jetzt fällig" und „Karten gesamt" sind durch **„Begonnen"** und
+  **„Gemeistert"** ersetzt. 168 Karten im Stapel sagen über den Fortschritt
+  nichts.
+- Der Zustandsbalken lässt „neu" weg. Er machte am Anfang 100 % aus, und ein
+  Balken, der zu hundert Prozent „noch nicht angefangen" anzeigt, ist keine
+  Fortschrittsanzeige. Wie viele Karten noch warten, steht darunter als Satz.
+
+**Verifiziert**
+
+- `npm test` → **712 Tests grün** in 31 Suites (vorher 689 in 30).
+- `npx tsc --noEmit` fehlerfrei.
+- **Web-Build:** beide neuen Hörübungen gespielt; Merkfunktion geprüft
+  (Richtung + Übung offen → Prüfung → zurück auf /review → wieder dort), und
+  die Rücksetzung geprüft (dieselbe Sprache auf der Übersicht → `review: null`,
+  Auswahl erscheint). Stimmwahl umgeschaltet: „Kore: weiblich · „Firm"" →
+  „Charon: männlich · „Informative"".
+- **375 px und breit:** kein horizontales Scrollen (`scrollWidth ===
+  innerWidth`), kein Bedienelement ohne Beschriftung, keines unter 24 Punkten.
+  In einem frischen Tab keine Konsolenfehler.
+- Nebenbefund aus dem Testbrowser: Dort ist **weder eine spanische noch eine
+  englische Stimme** installiert. Die Hörübungen melden das ehrlich — und das
+  ist genau das Argument für die erzeugten Clips.
+
+**Was ungeprüft bleibt**
+
+- Ob die erzeugten Bilder und Clips **auf iPhone und Android** laufen. Der
+  native Pfad (`expo-file-system`, `expo-audio`) ist typgeprüft und seit Phase
+  5/11 gebaut, aber nie auf einem Gerät gelaufen — das ist **B-2** und hängt an
+  einer Handlung des Nutzers. Im Web-Build läuft die Ablage über IndexedDB und
+  ist geprüft.
+- Ob die Stimmen tatsächlich so klingen, wie die Tabelle sie einordnet. Ohne
+  Schlüssel (**B-6**) wurde kein einziger Clip erzeugt. Belegt ist die
+  **Angabe des Anbieters**, nicht der Klang.
+- Sprechübung weiterhin nur Thai (AE-48, F0-Verfahren ungeprüft für Betonung).
 ---
 
 ## Konsolidierte Abnahme (Stand 2026-09-04)
 
-Jedes „Fertig, wenn“ aus Phase 0–17 gegen den **jetzigen** Repo-Zustand.
-**131 von 138 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
+Jedes „Fertig, wenn“ aus Phase 0–18 gegen den **jetzigen** Repo-Zustand.
+**138 von 145 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -3998,6 +4260,13 @@ Fassung abweichen.
 | 17 | Sprachwechsel jederzeit erreichbar | **erfüllt** | LanguageSwitch auf Lernen, Gespraech, Fortschritt, Einstellungen. Auf Gespraech Spanisch gewaehlt -> Profil language=es, danach zeigen Lernen und Fortschritt Spanisch, ohne Umweg ueber Uebersicht oder Einstellungen. |
 | 17 | 375 px und breit geprueft, Barrierefreiheitsniveau gehalten | **erfüllt** | Beide Breiten fuer alle Routen; ein Ueberlauf der Sprachkarten auf 375 px gefunden und behoben (flexBasis am falschen Element). Kein Element ohne Beschriftung, keines unter 24 Punkten, aria-checked an allen Umschaltern, scrollWidth == innerWidth. |
 | 17 | Bestehende Tests unveraendert gruen, tsc sauber | **erfüllt** | 689 Tests in 30 Suites vor und nach der Phase; keine Datei unter src/lib angefasst. npx tsc --noEmit fehlerfrei. |
+| 18 | Generischer Richtungstext entfernt, Uebungslisten gegen die Recherche geprueft | **erfüllt** | directionPrompt ersatzlos entfallen (Lernen UND Uebersicht), Funktion und Test mit. Gegenpruefung: Die Zuordnung Herleitung (th/es) gegen Vergleich (en) entsprach AE-44; unvollstaendig war sie beim Hoeren - nur Thai hatte eine Hoeruebung. Ein Test verlangt jetzt je Zielsprache eine Hoer- UND eine Leseuebung. |
+| 18 | Hoer- und Leseuebung je Sprache, nach Fertigkeit gruppiert | **erfüllt** | Neu "Betonung hoeren" (es) und "Wort hoeren" (en), beide im Web-Build gespielt. Leiste gruppiert nach Wortschatz/Hoeren/Lesen/Sprechen/Schreiben/Grammatik in fester Reihenfolge. 18 neue Tests (AE-51). |
+| 18 | Merkhilfe je Sprache, nicht nur Tonfarben | **erfüllt** | components/feature-legend.tsx: Betonungsregel als Silbenmuster (es) und Schriftstueck-Gruppen (en), beide aus dem Grundstock erzeugt statt getippt. Keine benutzt eine der fuenf Tonfarben. Im Web-Build fuer alle drei Sprachen angesehen. |
+| 18 | Lernen- und Gespraech-Reiter merken sich ihren Stand | **erfüllt** | AE-49. Im Web-Build: Richtung+Uebung offen, auf Pruefung gewechselt, zurueck auf /review ohne Parameter -> wieder dort. Dieselbe Sprache auf der Uebersicht gewaehlt -> review: null, Auswahl erscheint. Pruefung unveraendert. |
+| 18 | Bilder und Clips je Sprache erzeugbar, Stimmlage waehlbar | **erfüllt** | Sprachzeile an Bilder- und Clipkarte; Umfaenge rechnen mit der Sprache. Drei englische Motive ergaenzt (28 konkrete Eintraege, nur 25 hatten eines) samt Test. Stimmlage nur bei Gemini und belegt (AE-50), im Web-Build umgeschaltet: Kore weiblich -> Charon maennlich. NICHT geprueft: Klang der Stimmen (B-6) und der native Medienpfad auf iOS/Android (B-2). |
+| 18 | Fortschritt zeigt Erarbeitetes, Karte "Lernprofil" entfaellt | **erfüllt** | "Faellige Karten je Richtung" ersatzlos raus; Kacheln Begonnen/Gemeistert statt Bestand; Zustandsbalken ohne "neu", Restzahl als Satz. Lernprofil-Karte entfaellt als Folge von AE-49. |
+| 18 | Tests und tsc gruen, 375 px und breit geprueft | **erfüllt** | 712 Tests in 31 Suites gruen (vorher 689 in 30); npx tsc --noEmit fehlerfrei. Beide Breiten: kein horizontales Scrollen, kein Element ohne Beschriftung, keines unter 24 Punkten, in einem frischen Tab keine Konsolenfehler. |
 
 ## Skalierungsplan auf ~1000 Einträge
 
@@ -4067,6 +4336,18 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 18 (2026-09-04):** Jede Sprache hat jetzt Hören, Lesen und
+> Schreiben (Thai zusätzlich Sprechen), eine eigene Merkhilfe und eine
+> Merkfunktion, die den Lernen-Reiter dort wieder aufmacht, wo man war.
+> Bilder und Clips lassen sich je Sprache erzeugen. Was jetzt oben liegt,
+> braucht einen Schlüssel oder ein Gerät.
+
+0. **Clips erzeugen und am Gerät abspielen (B-6 + B-2 zusammen):** Erst
+   damit ist belegt, dass die Hörübungen ohne Systemstimme laufen. Im
+   Testbrowser ist **weder** eine spanische **noch** eine englische Stimme
+   installiert — genau der Fall, für den die Clips gedacht sind. Danach die
+   Tonmessung aus AE-31 mit echten Clips wiederholen.
 
 > **Neu aus Phase 17 (2026-09-04):** Die Oberfläche ist für Endnutzer
 > bereinigt — Sprachauswahl vorn, Sprachwechsel in jedem Bereich, kein

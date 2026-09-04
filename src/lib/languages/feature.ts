@@ -72,7 +72,7 @@ const SPANISH_RUNTIME: LanguageFeatureRuntime = {
     if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
     return [{ roman: entry.romanization || entry.term }];
   },
-  drills: ['stressRule'],
+  drills: ['stressHear', 'stressRule'],
 };
 
 /**
@@ -84,7 +84,7 @@ const SPANISH_RUNTIME: LanguageFeatureRuntime = {
  */
 const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
   annotate: (entry) => [{ roman: entry.ipa ?? entry.romanization ?? entry.term }],
-  drills: ['spelling'],
+  drills: ['soundSpelling', 'spelling'],
 };
 
 const RUNTIMES: Record<LanguageCode, LanguageFeatureRuntime> = {

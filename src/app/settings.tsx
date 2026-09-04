@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { DiagnosticsCard } from '@/components/diagnostics-card';
-import { Button, ChoiceRow, GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
-import { LanguageSwitch } from '@/components/language-switch';
+import { GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -24,10 +23,10 @@ import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store
 import { runImageBatch } from '@/lib/images/batch';
 import { createImageGenerationClient } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
-import { Direction } from '@/lib/fsrs/types';
-import { LanguageCode, directionsFor } from '@/lib/languages/types';
+import { vocabularyFor } from '@/data/vocabulary';
+import { LanguageCode } from '@/lib/languages/types';
 import { languageOf } from '@/lib/languages/registry';
-import { LearnerProfile, loadProfile, setDefaultDirection, setLanguage } from '@/lib/profile';
+import { loadProfile } from '@/lib/profile';
 import {
   defaultSettings,
   GeneratorChoice,
@@ -51,7 +50,6 @@ import {
   sumAudioClipBytes,
 } from '@/lib/repository';
 import { ProviderId } from '@/lib/providers/types';
-import { directionLabel } from '@/lib/review-session';
 
 /**
  * Alle drei Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`),
@@ -95,18 +93,21 @@ const EXAM_RUNS: RunOption[] = [
   },
 ];
 
-const IMAGE_RUNS: RunOption[] = [
-  {
-    id: 'test',
-    label: 'Probelauf',
-    hint: `${IMAGE_TEST_RUN} Bilder — kleiner Testlauf`,
-  },
-  {
-    id: 'full',
-    label: 'Alle konkreten Vokabeln',
-    hint: `${IMAGE_CANDIDATES} Bilder (Thai) — kostet echtes Geld und dauert`,
-  },
-];
+/**
+ * Der Bilderlauf haengt seit Phase 18 an der gewaehlten Sprache: Wie viele
+ * Bilder es werden, steht erst fest, wenn die Sprache feststeht.
+ */
+function imageRunOptions(language: LanguageCode): RunOption[] {
+  const alle = countImageCandidates(vocabularyFor(language));
+  return [
+    { id: 'test', label: 'Probelauf', hint: `${IMAGE_TEST_RUN} Bilder — kleiner Testlauf` },
+    {
+      id: 'full',
+      label: 'Alle konkreten Vokabeln',
+      hint: `${alle} Bilder (${languageOf(language).label}) — kostet echtes Geld und dauert`,
+    },
+  ];
+}
 
 /**
  * Die Umfänge des Clip-Laufs hängen vom Bestand ab (wie viele Situationen
@@ -116,13 +117,16 @@ const IMAGE_RUNS: RunOption[] = [
  */
 function clipRunOptions(
   storedSituations: ConversationSituation[],
-  provider: ProviderId
+  provider: ProviderId,
+  language: LanguageCode
 ): { options: RunOption[]; specsFor: (optionId: string) => AudioClipSpec[] } {
   const plans: Record<string, AudioClipSpec[]> = {
-    test: planClipTestRun(),
-    vocab: planClips({}),
+    test: planClipTestRun(vocabularyFor(language)),
+    vocab: planClips({ language }),
+    // Gespraechszuege gibt es bisher nur auf Thai (AE-48); sie haengen an den
+    // gespeicherten Situationen und nicht an dieser Wahl.
     turns: planClips({ includeWords: false, includeExamples: false, situations: storedSituations }),
-    all: planClips({ situations: storedSituations }),
+    all: planClips({ language, situations: storedSituations }),
   };
   const size = (specs: AudioClipSpec[]) => {
     const bytes = estimateClipBytes(specs, provider);
@@ -130,7 +134,11 @@ function clipRunOptions(
   };
   const options: RunOption[] = [
     { id: 'test', label: 'Probelauf', hint: `${plans.test.length} Clips — fünf Vokabeln samt Beispielsatz${size(plans.test)}` },
-    { id: 'vocab', label: 'Alle Vokabeln', hint: `${plans.vocab.length} Clips (Thai) — jedes Wort und jeder Beispielsatz${size(plans.vocab)}` },
+    {
+      id: 'vocab',
+      label: 'Alle Vokabeln',
+      hint: `${plans.vocab.length} Clips (${languageOf(language).label}) — jedes Wort und, wo es eines gibt, der Beispielsatz${size(plans.vocab)}`,
+    },
     {
       id: 'turns',
       label: 'Gesprächszüge',
@@ -152,8 +160,15 @@ export default function SettingsScreen() {
   const [images, setImages] = useState<number | null>(null);
   const [blobBackend, setBlobBackend] = useState<string | null>(null);
   const [exams, setExams] = useState<{ total: number; generated: number } | null>(null);
-  const [profile, setProfile] = useState<LearnerProfile | null>(null);
   const [generators, setGenerators] = useState<GeneratorSettings>(defaultSettings());
+  /**
+   * Fuer welche Sprache Bilder und Clips erzeugt werden.
+   *
+   * Voreingestellt ist die gerade gelernte Sprache — das ist fast immer die
+   * gemeinte. Sie steht getrennt vom Lernprofil, weil ein Generierungslauf
+   * eine einmalige Handlung ist und nicht bestimmen soll, was man lernt.
+   */
+  const [mediaLanguage, setMediaLanguage] = useState<LanguageCode>('th');
 
   const refreshSituations = useCallback(async () => {
     setSituations(await countSituations());
@@ -182,17 +197,9 @@ export default function SettingsScreen() {
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
     getImageBlobStore().then(() => setBlobBackend(getActiveBlobBackend()));
-    loadProfile().then(setProfile);
+    loadProfile().then((profile) => setMediaLanguage(profile.language));
     loadGeneratorSettings().then(setGenerators);
   }, [refreshSituations, refreshImages, refreshExams, refreshClips]);
-
-  const chooseDefaultDirection = useCallback(async (direction: Direction | null) => {
-    setProfile(await setDefaultDirection(direction));
-  }, []);
-
-  const chooseLanguage = useCallback(async (language: LanguageCode) => {
-    setProfile(await setLanguage(language));
-  }, []);
 
   /**
    * Ein Anbieterwechsel zieht den Modellnamen mit (siehe `setGeneratorProvider`),
@@ -227,8 +234,10 @@ export default function SettingsScreen() {
   );
 
   const startImages = useCallback(
-    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
-    const specs = planImages(optionId === 'full' ? {} : { limit: IMAGE_TEST_RUN });
+    async ({ optionId, language, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
+    const specs = planImages(
+      optionId === 'full' ? { language } : { language, limit: IMAGE_TEST_RUN }
+    );
     await runImageBatch({
       specs,
       client: createImageGenerationClient(provider, apiKey, model),
@@ -243,8 +252,8 @@ export default function SettingsScreen() {
   );
 
   const startClips = useCallback(
-    async ({ optionId, apiKey, provider, model, voice, onProgress, shouldCancel }: StartArgs) => {
-      const specs = clipRunOptions(storedSituations, provider).specsFor(optionId);
+    async ({ optionId, language, apiKey, provider, model, voice, onProgress, shouldCancel }: StartArgs) => {
+      const specs = clipRunOptions(storedSituations, provider, language).specsFor(optionId);
       await runClipBatch({
         specs,
         client: createClipGenerationClient(provider, apiKey, model, voice),
@@ -271,40 +280,7 @@ export default function SettingsScreen() {
   );
 
   return (
-    <ScreenScaffold title="Einstellungen" subtitle="Lernprofil, Inhalte erzeugen, API-Schlüssel">
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Lernprofil</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          Welche Sprache gelernt wird, und womit der Reiter „Lernen" startet.
-          „Immer fragen" zeigt jedes Mal die Richtungsauswahl — sinnvoll, wenn
-          zwei Menschen dasselbe Gerät benutzen oder wenn du beide Richtungen
-          lernst. Sprache und Richtung bleiben immer auch im Lernen-Bereich
-          selbst wechselbar.
-        </ThemedText>
-        <LanguageSwitch
-          selected={profile?.language ?? 'th'}
-          onSelect={chooseLanguage}
-          label="Sprache"
-        />
-        <ChoiceRow label={`Standard-Lernrichtung (${languageOf(profile?.language ?? 'th').label})`}>
-          <Button
-            label="Immer fragen"
-            onPress={() => chooseDefaultDirection(null)}
-            selected={profile !== null && profile.defaultDirection === null}
-            disabled={profile === null}
-          />
-          {directionsFor(profile?.language ?? 'th').map((direction) => (
-            <Button
-              key={direction}
-              label={directionLabel(direction)}
-              onPress={() => chooseDefaultDirection(direction)}
-              selected={profile?.defaultDirection === direction}
-              disabled={profile === null}
-            />
-          ))}
-        </ChoiceRow>
-      </ThemedView>
-
+    <ScreenScaffold title="Einstellungen" subtitle="Inhalte erzeugen, Stimmen, API-Schlüssel">
       <DiagnosticsCard />
 
       <GeneratorCard
@@ -324,12 +300,14 @@ export default function SettingsScreen() {
 
       <GeneratorCard
         heading="Generator: Bilder"
-        description="Ein Bild je konkreter Vokabel, einmalig erzeugt und lokal gespeichert — danach offline auf der Karteikarte. Abstrakte Wörter, Partikeln und Funktionswörter bekommen bewusst kein Bild: ein Bild zu „nicht“ wäre keine Merkhilfe."
+        description="Ein Bild je konkreter Vokabel, einmalig erzeugt und lokal gespeichert — danach offline auf der Karteikarte, ohne Netz und ohne Schlüssel. Abstrakte Wörter, Partikeln und Funktionswörter bekommen bewusst kein Bild: ein Bild zu „nicht“ wäre keine Merkhilfe."
         group="images"
         choice={generators.images}
         onChoiceChange={(change) => changeGenerator('images', change)}
-        statusLine={`Im Speicher: ${images === null ? '…' : `${images} von ${IMAGE_CANDIDATES} Bildern`} · Ablage ${blobBackend ?? '…'}`}
-        runOptions={IMAGE_RUNS}
+        language={mediaLanguage}
+        onLanguageChange={setMediaLanguage}
+        statusLine={`Im Speicher: ${images === null ? '…' : `${images} Bilder insgesamt`} · Ablage ${blobBackend ?? '…'}`}
+        runOptions={imageRunOptions(mediaLanguage)}
         onStart={startImages}
         onDelete={clearVocabImages}
         deleteLabel="Alle Bilder löschen"
@@ -354,12 +332,14 @@ export default function SettingsScreen() {
 
       <GeneratorCard
         heading="Generator: Hörclips"
-        description="Eine Aufnahme je Vokabel, Beispielsatz und Gesprächszug, einmalig erzeugt und lokal gespeichert — danach spielt „Anhören“ den Clip statt der Sprachausgabe des Geräts, auch wenn dort keine Thai-Stimme installiert ist. Es sind synthetische Stimmen, keine Muttersprachler-Aufnahmen; die App sagt das beim Abspielen dazu. Ob die Töne stimmen, ist gemessen (AE-31), nicht versprochen."
+        description="Eine Aufnahme je Vokabel, Beispielsatz und Gesprächszug, einmalig erzeugt und lokal gespeichert — danach spielt „Anhören“ den Clip statt der Sprachausgabe des Geräts, auch wenn dort gar keine Stimme dieser Sprache installiert ist. Genau darauf laufen auch die Hörübungen. Es sind synthetische Stimmen, keine Muttersprachler-Aufnahmen; die App sagt das beim Abspielen dazu. Ob die Töne stimmen, ist gemessen (AE-31), nicht versprochen."
+        language={mediaLanguage}
+        onLanguageChange={setMediaLanguage}
         group="audio"
         choice={generators.audio}
         onChoiceChange={(change) => changeGenerator('audio', change)}
         statusLine={`Im Speicher: ${clips === null ? '…' : `${clips.count} Clips, ${formatBytes(clips.bytes)}`} · Ablage ${clipBackend ?? '…'}`}
-        runOptions={clipRunOptions(storedSituations, generators.audio.provider).options}
+        runOptions={clipRunOptions(storedSituations, generators.audio.provider, mediaLanguage).options}
         onStart={startClips}
         onDelete={clearAudioClips}
         deleteLabel="Alle Clips löschen"

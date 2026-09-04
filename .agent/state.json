@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-04",
-  "currentPhase": 17,
-  "currentPhaseName": "Oberflaeche fuer Endnutzer (reine Darstellung)",
+  "currentPhase": 18,
+  "currentPhaseName": "Fertigkeiten, Merkfunktion und Stimmen",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -885,6 +885,48 @@
       "criterion": "Bestehende Tests unveraendert gruen, tsc sauber",
       "done": true,
       "verifiedHow": "689 Tests in 30 Suites vor und nach der Phase; keine Datei unter src/lib angefasst. npx tsc --noEmit fehlerfrei."
+    },
+    {
+      "phase": 18,
+      "criterion": "Generischer Richtungstext entfernt, Uebungslisten gegen die Recherche geprueft",
+      "done": true,
+      "verifiedHow": "directionPrompt ersatzlos entfallen (Lernen UND Uebersicht), Funktion und Test mit. Gegenpruefung: Die Zuordnung Herleitung (th/es) gegen Vergleich (en) entsprach AE-44; unvollstaendig war sie beim Hoeren - nur Thai hatte eine Hoeruebung. Ein Test verlangt jetzt je Zielsprache eine Hoer- UND eine Leseuebung."
+    },
+    {
+      "phase": 18,
+      "criterion": "Hoer- und Leseuebung je Sprache, nach Fertigkeit gruppiert",
+      "done": true,
+      "verifiedHow": "Neu \"Betonung hoeren\" (es) und \"Wort hoeren\" (en), beide im Web-Build gespielt. Leiste gruppiert nach Wortschatz/Hoeren/Lesen/Sprechen/Schreiben/Grammatik in fester Reihenfolge. 18 neue Tests (AE-51)."
+    },
+    {
+      "phase": 18,
+      "criterion": "Merkhilfe je Sprache, nicht nur Tonfarben",
+      "done": true,
+      "verifiedHow": "components/feature-legend.tsx: Betonungsregel als Silbenmuster (es) und Schriftstueck-Gruppen (en), beide aus dem Grundstock erzeugt statt getippt. Keine benutzt eine der fuenf Tonfarben. Im Web-Build fuer alle drei Sprachen angesehen."
+    },
+    {
+      "phase": 18,
+      "criterion": "Lernen- und Gespraech-Reiter merken sich ihren Stand",
+      "done": true,
+      "verifiedHow": "AE-49. Im Web-Build: Richtung+Uebung offen, auf Pruefung gewechselt, zurueck auf /review ohne Parameter -> wieder dort. Dieselbe Sprache auf der Uebersicht gewaehlt -> review: null, Auswahl erscheint. Pruefung unveraendert."
+    },
+    {
+      "phase": 18,
+      "criterion": "Bilder und Clips je Sprache erzeugbar, Stimmlage waehlbar",
+      "done": true,
+      "verifiedHow": "Sprachzeile an Bilder- und Clipkarte; Umfaenge rechnen mit der Sprache. Drei englische Motive ergaenzt (28 konkrete Eintraege, nur 25 hatten eines) samt Test. Stimmlage nur bei Gemini und belegt (AE-50), im Web-Build umgeschaltet: Kore weiblich -> Charon maennlich. NICHT geprueft: Klang der Stimmen (B-6) und der native Medienpfad auf iOS/Android (B-2)."
+    },
+    {
+      "phase": 18,
+      "criterion": "Fortschritt zeigt Erarbeitetes, Karte \"Lernprofil\" entfaellt",
+      "done": true,
+      "verifiedHow": "\"Faellige Karten je Richtung\" ersatzlos raus; Kacheln Begonnen/Gemeistert statt Bestand; Zustandsbalken ohne \"neu\", Restzahl als Satz. Lernprofil-Karte entfaellt als Folge von AE-49."
+    },
+    {
+      "phase": 18,
+      "criterion": "Tests und tsc gruen, 375 px und breit geprueft",
+      "done": true,
+      "verifiedHow": "712 Tests in 31 Suites gruen (vorher 689 in 30); npx tsc --noEmit fehlerfrei. Beide Breiten: kein horizontales Scrollen, kein Element ohne Beschriftung, keines unter 24 Punkten, in einem frischen Tab keine Konsolenfehler."
     }
   ],
   "architectureDecisions": [
@@ -1127,6 +1169,21 @@
       "id": "AE-48",
       "title": "Sprachparametrisiert heisst nicht sprachfaehig - was fehlt, steht dran",
       "rationale": "Pflicht 4 verlangte, die Generatoren aus Phase 4/5/11 nachzuziehen statt zu duplizieren. Getan: planImages, planClips und planSituations nehmen jetzt eine Sprache. ABER DIE PARAMETRISIERUNG MACHT NOCH KEINEN INHALT. Der Aufgabentext des Situationsgenerators verlangt ausdruecklich Paiboon-Umschrift und den konsequenten Gebrauch der thailaendischen Hoeflichkeitspartikel ครับ/ค่ะ; fuer Spanisch oder Englisch braucht es einen eigenen Text mit eigener Recherche (welche Anredeformen dort verbindlich sind, ist eine Frage wie die aus Phase 7). Deshalb LEHNT planSituations andere Sprachen ab, statt thailaendische Vorgaben unter spanischer Flagge zu erzeugen. Die Einstellungen schreiben \"(Thai)\" an die Laufumfaenge, weil eine Zahl ohne Sprache dort eine stille Falschaussage waere. Ebenso die Sprechuebung: Das F0-Verfahren aus Phase 12 misst Tonhoehenkonturen. Ob dasselbe Werkzeug spanische Betonung erkennen kann, ist eine offene Frage und keine Selbstverstaendlichkeit - Betonung ist im Spanischen ueber Dauer, Lautstaerke UND Tonhoehe realisiert, und welcher Anteil messbar durchschlaegt, ist nicht gemessen. Die Uebung bleibt deshalb auf Thai beschraenkt, statt eine Bewertung zu liefern, deren Grundlage niemand geprueft hat."
+    },
+    {
+      "id": "AE-49",
+      "title": "Weitermachen statt Standard setzen",
+      "rationale": "Der Lernen-Reiter merkt sich Richtung UND Uebung; der Gespraech-Reiter seine Richtung. Zurueckgesetzt wird beides nur durch eine Sprachwahl auf der Uebersicht - auch bei derselben Sprache, denn das ist die Geste \"von vorn anfangen\". Die Standard-Lernrichtung aus AE-17 samt \"Immer fragen\" und dem Knopf \"Als Standard merken\" entfaellt; damit faellt auch die Karte \"Lernprofil\" in den Einstellungen weg. Der Gedanke von AE-17 war richtig (die Richtung jedes Mal neu zu waehlen ist Reibung mit vorhersehbarer Antwort), die Umsetzung umstaendlich: Man musste einen Standard SETZEN, um ihn zu haben, und er kannte nur die Richtung, nicht die Uebung. Die Sorge aus AE-17 bleibt beantwortet - ein Standard darf keine Einbahnstrasse werden, und die Ruecksetzung steht sichtbar dort, wo man sie sucht. loadProfile verwirft einen Stand, dessen Richtung zu einer anderen Sprache gehoert. GEMERKT WIRD BEIM ANKOMMEN, nicht beim Knopfdruck: Man kommt ueber die Uebungsleiste, ueber eine Richtungskarte und ueber eine Adresse mit ?direction= - am Knopf erwischte es nur den ersten Weg, was im Web-Build auffiel."
+    },
+    {
+      "id": "AE-50",
+      "title": "Die Stimmlage ist belegt, wo sie belegbar ist - und sonst nicht",
+      "rationale": "Gewuenscht war eine Auswahl \"maennlich/weiblich\". Die Gemini-Unterlagen nennen zu jeder Stimme nur einen Stilbegriff und KEIN Geschlecht; OpenAI sagt dazu gar nichts. Eine Zuordnung nach dem Klang des Namens waere geraten. Google veroeffentlicht es aber an anderer Stelle: Die Cloud-TTS-Seite \"Chirp 3: HD voices\" fuehrt DIESELBEN dreissig Namen in einer Tabelle mit den Spalten Name und Gender. Beide Listen am 2026-09-04 abgerufen und Name fuer Name abgeglichen - sie stimmen vollstaendig ueberein. Ergebnis: bei Gemini zwei Knoepfe, die eine belegte Stimme setzen (Kore \"Firm\" / Charon \"Informative\" - ruhige Stimmen passen zu Vokabeln besser als \"Excitable\"); bei ChatGPT keine Knoepfe und stattdessen der Grund. Was damit NICHT belegt ist: wie die Stimmen klingen - ohne Schluessel (B-6) wurde kein Clip erzeugt."
+    },
+    {
+      "id": "AE-51",
+      "title": "Jede Sprache hat eine Hoer- und eine Leseuebung ihres Merkmals",
+      "rationale": "Nach Phase 16 hatte nur Thai beides; Spanisch und Englisch fehlte das Ohr. Das war keine Entscheidung, sondern eine Luecke: Betonung ist hoerbar, und englische Woerter mit gleicher Schreibung auseinanderzuhalten ist genau die Uebung, an der man im Alltag scheitert. Neu: \"Betonung hoeren\" (Spanisch) und \"Wort hoeren\" (Englisch). Die entscheidende Zeile der spanischen Uebung ist withoutAccent - die Silben stehen OHNE Akzentzeichen in der Auswahl, sonst waere die Antwort abzulesen statt zu hoeren. Die englische Uebung ist die Umkehrung von AE-47: nicht sehen und den Laut waehlen, sondern hoeren und die Schreibung waehlen; die Ablenker sind echte Woerter derselben Schriftstueck-Gruppe. Dass eine Aussprache sich nicht HERLEITEN laesst (AE-44), heisst nicht, dass man sie nicht ERKENNEN kann. Die Uebungen stehen jetzt nach Fertigkeit gruppiert, in fester Reihenfolge ueber alle Sprachen."
     }
   ],
   "openBlockers": [
@@ -1180,12 +1237,12 @@
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 17 abgeschlossen; Oberflaeche fuer Endnutzer bereinigt",
+    "name": "Phase 18 abgeschlossen; drei Sprachen mit je vier Fertigkeiten",
     "tasks": [
+      "B-6 + B-2 zusammen: Clips fuer eine Sprache erzeugen und auf dem Geraet abspielen. Erst dann ist belegt, dass die Hoeruebungen ohne Systemstimme laufen - im Testbrowser ist WEDER eine spanische NOCH eine englische Stimme installiert.",
       "Pruefungsmodule fuer Englisch und Spanisch (Cambridge/IELTS, DELE/Cervantes): eigene Recherche wie Phase 7, eigene Phase. Der Pruefungs-Screen filtert noch nicht nach Sprache.",
       "Sprachsituationen fuer Englisch und Spanisch: der Plan ist parametrisiert, der Aufgabentext an die KI ist es nicht (Paiboon, ครับ/ค่ะ). Braucht einen eigenen Text mit eigener Recherche zu Anredeformen (AE-48).",
       "Einstellungen: Sprachwahl fuer Bilder- und Cliplauf anbieten (Planer sind parametrisiert, AE-46/AE-48) - keine reine Darstellung mehr, deshalb nicht in Phase 17",
-      "Bilder und Hoerclips fuer die neuen Sprachen: Motive liegen ueber den gemeinsamen Begriff vor (AE-46), aber die Einstellungen bieten die Sprachwahl noch nicht an - dort steht derzeit ausdruecklich \"(Thai)\".",
       "Beispielsaetze fuer Englisch und Spanisch mit der Disziplin aus Phase 2. Bisher gibt es nur bei spanischen Substantiven die Wortgruppe aus Artikel und Wort.",
       "Offener Befund: Ob die F0-Messung aus Phase 12 spanische Betonung erkennen kann, ist NICHT geprueft (AE-48). Vor einem Umbau der Sprechuebung messen, nicht annehmen.",
       "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2)",
@@ -1245,6 +1302,7 @@
       "verbForms"
     ],
     "de_to_es": [
+      "stressHear",
       "stressRule"
     ],
     "es_to_de": [
@@ -1252,6 +1310,7 @@
       "verbForms"
     ],
     "de_to_en": [
+      "soundSpelling",
       "spelling"
     ],
     "en_to_de": [
@@ -1273,11 +1332,14 @@
         "en": 19
       },
       "stressRule": 65,
-      "spelling": 23
+      "spelling": 23,
+      "stressHear": 65,
+      "soundSpelling": 23
     },
     "direction": "Seit Phase 16 aus Uebung UND Sprache gerechnet (directionForDrill); DrillMeta traegt side und feature statt einer festen Richtung.",
     "fsrs": "Auswahluebungen weiterhin NICHT angebunden (AE-16); seit Phase 14 speist der Uebungstyp Schreiben FSRS ueber denselben Kartenschluessel (AE-40)",
-    "logging": "eigene Zaehler drills/drillsCorrect im Tagesprotokoll, getrennt von total"
+    "logging": "eigene Zaehler drills/drillsCorrect im Tagesprotokoll, getrennt von total",
+    "skills": "Jede Uebung traegt seit Phase 18 eine Fertigkeit (hoeren/lesen/grammatik); die Leiste im Lernen-Reiter gruppiert danach. Jede Zielsprache hat eine Hoer- UND eine Leseuebung ihres Merkmals (AE-51)."
   },
   "profile": {
     "defaultDirection": "nur ausdruecklich gesetzt; ohne Angabe fragt die App bei jeder Sitzung",
@@ -1534,10 +1596,18 @@
     "learnerLanguageHook": "hooks/use-learner-language.ts kapselt loadProfile/setLanguage - keine neue Logik",
     "removed": [
       "components/placeholder-card.tsx",
-      "components/vocab-summary.tsx"
+      "components/vocab-summary.tsx",
+      "Karte \"Lernprofil\" in den Einstellungen (AE-49)",
+      "directionPrompt - der generische Satz auf jeder Richtungskarte",
+      "Block \"Faellige Karten je Richtung\" im Fortschritt"
     ],
     "diagnostics": "Einstellungen -> Diagnose: Vokabeln je Sprache aus dem Speicher, Daten-/Bild-/Clipablage",
     "layoutFix": "language-picker: flexBasis vom inneren View auf das Pressable verschoben (in einer Spalte war es die Hoehe)",
-    "notYet": "Generatoren ohne Sprachwahl (AE-48); Pruefungs-Screen ohne Sprachfilter"
+    "notYet": "Generatoren ohne Sprachwahl (AE-48); Pruefungs-Screen ohne Sprachfilter",
+    "featureLegend": "components/feature-legend.tsx - je Sprache ihre Merkhilfe: Tonfarben (th), Betonungsregel als Silbenmuster (es), Schriftstueck-Gruppen (en). Keine benutzt eine der fuenf Tonfarben.",
+    "resume": "Lernen- und Gespraech-Reiter merken sich ihren Stand im Profil; zurueckgesetzt nur durch eine Sprachwahl auf der Uebersicht (AE-49). Pruefung unveraendert.",
+    "progress": "Zeigt Erarbeitetes statt Bestand: Kacheln Begonnen/Gemeistert, Zustandsbalken ohne \"neu\", Restzahl als Satz.",
+    "voices": "Geschlechtswahl nur bei Gemini, weil nur Google es dokumentiert - und zwar in den Cloud-TTS-Unterlagen zu denselben Stimmnamen (AE-50). Bei ChatGPT steht der Grund statt der Knoepfe.",
+    "mediaLanguage": "Bilder- und Cliplauf haben in den Einstellungen eine Sprachzeile (schliesst einen Teil von AE-48)."
   }
 }

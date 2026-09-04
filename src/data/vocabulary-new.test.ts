@@ -1,9 +1,12 @@
+import { planClips } from '@/lib/clips/plan';
 import { drillsForDirection } from '@/lib/drills/types';
+import { canHaveImage, planImages } from '@/lib/images/plan';
 import { LANGUAGE_CODES } from '@/lib/languages/types';
 
 import { PartOfSpeech } from './vocab-types';
 import {
   findVocab,
+  vocabularyFor,
   VOCABULARY,
   VOCABULARY_EN,
   VOCABULARY_ES,
@@ -228,5 +231,34 @@ describe('Thai bleibt unverändert (Regressionsnachweis)', () => {
     // Der Spiegel dazu: Ein spanischer Eintrag mit `tone: 'mid'` waere eine
     // Behauptung ueber eine Sprache ohne Toene.
     for (const entry of NEUE) expect(entry.tone).toBeUndefined();
+  });
+});
+
+describe('Bilder und Clips für die neuen Sprachen (Phase 18)', () => {
+  it('gibt jeder konkreten Vokabel ein Motiv — auch ohne gemeinsamen Begriff', () => {
+    // Ohne diesen Test faellt es nicht auf: Ein fehlendes Motiv heisst kein
+    // Bild, und kein Bild ist kein Fehler. Drei englische Woerter (bread,
+    // blood, door) haben kein Thai-Gegenstueck und brauchen ein eigenes.
+    for (const entry of NEUE) {
+      if (!entry.isConcrete) continue;
+      expect(canHaveImage(entry)).toBe(true);
+    }
+  });
+
+  it('plant für jede Sprache genau ihre eigenen Bilder', () => {
+    for (const language of LANGUAGE_CODES) {
+      const specs = planImages({ language });
+      expect(specs.length).toBeGreaterThan(0);
+      const ids = new Set(vocabularyFor(language).map((entry) => entry.id));
+      for (const spec of specs) expect(ids.has(spec.vocabId)).toBe(true);
+    }
+  });
+
+  it('plant für jede Sprache Hörclips in ihrer eigenen Sprache', () => {
+    for (const language of LANGUAGE_CODES) {
+      const specs = planClips({ language });
+      expect(specs.length).toBeGreaterThan(0);
+      for (const spec of specs) expect(spec.language).toBe(language);
+    }
   });
 });

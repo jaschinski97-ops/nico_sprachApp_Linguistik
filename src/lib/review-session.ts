@@ -2,7 +2,7 @@ import { VocabEntry } from '@/data/vocabulary';
 
 import { createCardState, dueCards, retrievability } from './fsrs/fsrs';
 import { Direction, FSRSCardState } from './fsrs/types';
-import { directionLabel, directionPrompt } from './languages/registry';
+import { directionLabel } from './languages/registry';
 import { directionsFor, LanguageCode, languageOfDirection } from './languages/types';
 import { loadCardStatesForDirection, loadVocabulary, seedVocabulary } from './repository';
 import { DataStore, getStore } from './storage';
@@ -25,7 +25,7 @@ import { DataStore, getStore } from './storage';
  */
 export const DIRECTIONS: Direction[] = directionsFor('th');
 
-export { directionLabel, directionPrompt, directionsFor };
+export { directionLabel, directionsFor };
 
 export type ReviewItem = {
   entry: VocabEntry;

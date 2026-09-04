@@ -8,13 +8,17 @@ import { DataStore, getStore } from './../storage';
 
 import {
   buildArticleQuestion,
+  buildSoundSpellingQuestion,
   buildSpellingQuestion,
+  buildStressHearQuestion,
   buildStressQuestion,
   buildToneQuestion,
   buildToneRuleQuestion,
   buildVerbFormQuestion,
   canBuildArticleQuestion,
+  canBuildSoundSpellingQuestion,
   canBuildSpellingQuestion,
+  canBuildStressHearQuestion,
   canBuildStressQuestion,
   canBuildToneQuestion,
   canBuildToneRuleQuestion,
@@ -84,6 +88,10 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildStressQuestion(entry);
     case 'spelling':
       return canBuildSpellingQuestion(entry);
+    case 'stressHear':
+      return canBuildStressHearQuestion(entry);
+    case 'soundSpelling':
+      return canBuildSoundSpellingQuestion(entry);
   }
 }
 
@@ -106,6 +114,10 @@ function buildQuestion(
       return buildStressQuestion(entry);
     case 'spelling':
       return buildSpellingQuestion(entry);
+    case 'stressHear':
+      return buildStressHearQuestion(entry);
+    case 'soundSpelling':
+      return buildSoundSpellingQuestion(entry);
   }
 }
 

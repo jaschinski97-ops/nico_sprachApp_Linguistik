@@ -4,7 +4,7 @@ import { DirectionDashboard } from '@/components/direction-dashboard';
 import { LanguagePicker } from '@/components/language-picker';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
-import { ToneLegend } from '@/components/tone-legend';
+import { FeatureLegend } from '@/components/feature-legend';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { featureIsImplemented } from '@/lib/languages/feature';
 import { languageOf } from '@/lib/languages/registry';
@@ -46,10 +46,11 @@ export default function DashboardScreen() {
       <ThemedText type="subtitle">{definition.label} lernen</ThemedText>
       <DirectionDashboard language={language} />
 
-      {/* Die Tonlegende gehoert zum Thai-Merkmal, nicht zur Art des Merkmals:
-          Seit Phase 16 ist auch die spanische Betonung „ableitbar und
-          gebaut", und dort waeren fuenf Tonfarben schlicht falsch. */}
-      {language === 'th' && featureIsImplemented(language) ? <ToneLegend /> : null}
+      {/* Seit Phase 18 hat jede Sprache ihre eigene Merkhilfe: Tonfarben bei
+          Thai, die Betonungsregel bei Spanisch, die Schriftstueck-Gruppen bei
+          Englisch. Vorher stand hier fuer zwei von drei Sprachen nichts - die
+          Bedingung war auf die Toene gemuenzt und schloss die anderen aus. */}
+      {featureIsImplemented(language) ? <FeatureLegend language={language} /> : null}
 
       <ThemedText type="small" themeColor="textSecondary">
         {definition.feature.description}

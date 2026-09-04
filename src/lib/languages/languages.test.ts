@@ -12,7 +12,6 @@ import { drillsForDirectionViaFeature, featureFor, featureRuntime } from './feat
 import {
   defaultLanguage,
   directionLabel,
-  directionPrompt,
   hasContent,
   LANGUAGES,
   LANGUAGE_ORDER,
@@ -73,7 +72,7 @@ describe('Deutsch als Drehscheibe (AE-42)', () => {
     expect(directionLabel('th_to_de')).toBe('Thai → Deutsch');
     expect(directionLabel('de_to_th')).toBe('Deutsch → Thai');
     expect(directionLabel('de_to_es')).toBe('Deutsch → Spanisch');
-    expect(directionPrompt('th_to_de')).toContain('Thai lesen');
+    expect(directionLabel('en_to_de')).toBe('Englisch → Deutsch');
   });
 });
 
@@ -156,12 +155,14 @@ describe('Das Merkmal als einhängbarer Baustein (Pflicht 3)', () => {
   });
 
   it('gibt jeder Sprache genau die Übungen ihres eigenen Merkmals', () => {
+    // Seit Phase 18 hat jede Sprache eine Hoer- UND eine Leseuebung ihres
+    // Merkmals - vorher fehlte den beiden neuen Sprachen das Hoeren.
     expect(featureRuntime('th').drills).toEqual(['tone', 'toneRule']);
-    expect(featureRuntime('es').drills).toEqual(['stressRule']);
-    expect(featureRuntime('en').drills).toEqual(['spelling']);
+    expect(featureRuntime('es').drills).toEqual(['stressHear', 'stressRule']);
+    expect(featureRuntime('en').drills).toEqual(['soundSpelling', 'spelling']);
     // Und keine Übung wandert in eine fremde Sprache.
-    expect(drillsForDirectionViaFeature('de_to_es')).toEqual(['stressRule']);
-    expect(drillsForDirectionViaFeature('de_to_en')).toEqual(['spelling']);
+    expect(drillsForDirectionViaFeature('de_to_es')).toEqual(['stressHear', 'stressRule']);
+    expect(drillsForDirectionViaFeature('de_to_en')).toEqual(['soundSpelling', 'spelling']);
     expect(drillsForDirectionViaFeature('de_to_th')).toEqual(['tone', 'toneRule']);
   });
 

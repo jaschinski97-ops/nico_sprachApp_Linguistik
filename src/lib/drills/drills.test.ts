@@ -6,7 +6,7 @@ import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { createCardState } from '../fsrs/fsrs';
 import { cardKey } from '../fsrs/types';
-import { loadProfile, setDefaultDirection } from '../profile';
+import { loadProfile, setConversationDirection, setLanguage, setReviewSpot } from '../profile';
 import { dayIsActive, dayKey, drillCount, loadReviewLog, recordDrill } from '../review-log';
 import { rateCard } from '../repository';
 import { DataStore, MemoryDataStore } from '../storage';
@@ -393,33 +393,64 @@ describe('Tagesprotokoll mit Uebungen', () => {
 });
 
 describe('Lernprofil', () => {
-  it('startet ohne Standard-Richtung, aber mit einer Sprache', async () => {
-    // Seit Phase 15 traegt das Profil zusaetzlich die gewaehlte Sprache
-    // (AE-42). Ohne Angabe ist es die erste mit Inhalten - eine App ohne
-    // Sprache waere kein sinnvoller Anfangszustand.
+  it('startet mit einer Sprache und ohne gemerkten Stand', async () => {
+    // Seit Phase 15 traegt das Profil die gewaehlte Sprache (AE-42); seit
+    // Phase 18 statt einer Standard-Richtung den Ort, an dem man zuletzt war.
     const store = await freshStore();
-    expect(await loadProfile(store)).toEqual({ defaultDirection: null, language: 'th' });
+    expect(await loadProfile(store)).toEqual({ language: 'th', review: null, conversation: null });
   });
 
-  it('merkt sich eine Richtung und gibt sie wieder heraus', async () => {
+  it('merkt sich Richtung und Uebung und gibt beides wieder heraus', async () => {
     const store = await freshStore();
-    await setDefaultDirection('de_to_th', store);
-    expect((await loadProfile(store)).defaultDirection).toBe('de_to_th');
+    await setReviewSpot({ direction: 'de_to_th', mode: 'toneRule' }, store);
+    expect((await loadProfile(store)).review).toEqual({
+      direction: 'de_to_th',
+      mode: 'toneRule',
+    });
   });
 
-  it('laesst den Standard wieder aufheben', async () => {
+  it('vergisst den Stand auf Wunsch wieder', async () => {
     const store = await freshStore();
-    await setDefaultDirection('th_to_de', store);
-    await setDefaultDirection(null, store);
-    expect((await loadProfile(store)).defaultDirection).toBeNull();
+    await setReviewSpot({ direction: 'th_to_de', mode: 'article' }, store);
+    await setReviewSpot(null, store);
+    expect((await loadProfile(store)).review).toBeNull();
+  });
+
+  it('faengt bei jeder Sprachwahl von vorn an - auch bei derselben Sprache', async () => {
+    // Das ist die Geste "neu anfangen" auf der Uebersicht. Wer sie macht, will
+    // die Auswahl sehen und nicht dort landen, wo er gestern aufgehoert hat.
+    const store = await freshStore();
+    await setReviewSpot({ direction: 'de_to_th', mode: 'tone' }, store);
+    await setConversationDirection('th_to_de', store);
+    const danach = await setLanguage('th', store);
+    expect(danach.review).toBeNull();
+    expect(danach.conversation).toBeNull();
+  });
+
+  it('verwirft einen Stand, der zu einer anderen Sprache gehoert', async () => {
+    // Sonst zeigte der Reiter nach einem Sprachwechsel eine Richtung, die es
+    // in der neuen Sprache gar nicht gibt.
+    const store = await freshStore();
+    await store.put('meta', 'profile', {
+      language: 'es',
+      review: { direction: 'de_to_th', mode: 'tone' },
+      conversation: 'th_to_de',
+    });
+    const profil = await loadProfile(store);
+    expect(profil.language).toBe('es');
+    expect(profil.review).toBeNull();
+    expect(profil.conversation).toBeNull();
   });
 
   it('ignoriert einen unsinnigen gespeicherten Wert', async () => {
     // Ein Profil aus einer aelteren Version darf die App nicht in die
-    // Richtungsauswahl sperren oder gar abstuerzen lassen.
+    // Auswahl sperren oder gar abstuerzen lassen. `defaultDirection` aus der
+    // Zeit vor Phase 18 wird schlicht nicht mehr gelesen.
     const store = await freshStore();
-    await store.put('meta', 'profile', { defaultDirection: 'quer' });
-    expect((await loadProfile(store)).defaultDirection).toBeNull();
+    await store.put('meta', 'profile', { defaultDirection: 'de_to_th', review: 'quer' });
+    const profil = await loadProfile(store);
+    expect(profil.review).toBeNull();
+    expect(profil.language).toBe('th');
   });
 });
 

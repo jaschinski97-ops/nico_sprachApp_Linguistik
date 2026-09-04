@@ -9,7 +9,6 @@ import { Spacing } from '@/constants/theme';
 import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
-import { directionLabel } from '@/lib/review-session';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { languageOf } from '@/lib/languages/registry';
 import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
@@ -79,24 +78,16 @@ export default function ProgressScreen() {
           value={String(stats.streak)}
           hint={stats.streak === 1 ? 'Tag' : 'Tage'}
         />
-        <Tile label="Jetzt fällig" value={String(stats.totalDue)} />
-        <Tile label="Karten gesamt" value={String(stats.totalCards)} />
+        {/* SEIT PHASE 18 KEIN BESTAND MEHR, sondern Erarbeitetes: „168 Karten
+            gesamt" ist die Groesse des Stapels und sagt ueber den Fortschritt
+            nichts. Begonnen heisst: mindestens einmal bewertet. */}
+        <Tile label="Begonnen" value={String(stats.totalCards - stats.cardStates.new)} />
+        <Tile label="Gemeistert" value={String(stats.cardStates.mastered)} />
       </View>
 
       <ReviewChart stats={stats} />
       <CardStates stats={stats} />
 
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Fällige Karten je Richtung</ThemedText>
-        {stats.perDirection.map((summary) => (
-          <View key={summary.direction} style={styles.row}>
-            <ThemedText type="small">{directionLabel(summary.direction)}</ThemedText>
-            <ThemedText type="smallBold">
-              {summary.due} von {summary.total}
-            </ThemedText>
-          </View>
-        ))}
-      </ThemedView>
     </ScreenScaffold>
   );
 }
@@ -199,45 +190,71 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   );
 }
 
+/**
+ * Wie das Erarbeitete verteilt ist.
+ *
+ * SEIT PHASE 18 OHNE DEN ZUSTAND „neu". Er machte am Anfang 100 % aus, und
+ * ein Balken, der zu hundert Prozent „noch nicht angefangen" anzeigt, ist
+ * keine Fortschrittsanzeige, sondern die Größe des Stapels. Wie viele Karten
+ * noch warten, steht darunter als Satz — als Auskunft, nicht als Balken.
+ */
 function CardStates({ stats }: { stats: LearningStats }) {
   const toneColor = useToneColor();
-  const total = Math.max(1, stats.totalCards);
+  const zustaende = CARD_STATE_ORDER.filter((state) => state !== 'new');
+  const begonnen = zustaende.reduce((sum, state) => sum + stats.cardStates[state], 0);
+  const offen = stats.cardStates.new;
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
       <ThemedText type="smallBold">Kartenzustände</ThemedText>
 
-      <View style={styles.stackedBar}>
-        {CARD_STATE_ORDER.map((state) => {
-          const count = stats.cardStates[state];
-          if (count === 0) return null;
-          return (
-            <View
-              key={state}
-              style={{
-                flexGrow: count,
-                flexBasis: 0,
-                backgroundColor: toneColor(STATE_TONES[state]),
-              }}
-            />
-          );
-        })}
-      </View>
-
-      <View style={styles.legend}>
-        {CARD_STATE_ORDER.map((state) => (
-          <View key={state} style={styles.legendItem}>
-            <View style={[styles.swatch, { backgroundColor: toneColor(STATE_TONES[state]) }]} />
-            <ThemedText type="small">{CARD_STATE_LABELS[state]}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {stats.cardStates[state]} ({Math.round((stats.cardStates[state] / total) * 100)} %)
-            </ThemedText>
+      {begonnen === 0 ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          Noch keine Karte bewertet. Sobald du die erste im Reiter „Lernen"
+          bewertest, steht hier, wie sie sich verteilen.
+        </ThemedText>
+      ) : (
+        <>
+          <View style={styles.stackedBar}>
+            {zustaende.map((state) => {
+              const count = stats.cardStates[state];
+              if (count === 0) return null;
+              return (
+                <View
+                  key={state}
+                  style={{
+                    flexGrow: count,
+                    flexBasis: 0,
+                    backgroundColor: toneColor(STATE_TONES[state]),
+                  }}
+                />
+              );
+            })}
           </View>
-        ))}
-      </View>
+
+          <View style={styles.legend}>
+            {zustaende.map((state) => (
+              <View key={state} style={styles.legendItem}>
+                <View style={[styles.swatch, { backgroundColor: toneColor(STATE_TONES[state]) }]} />
+                <ThemedText type="small">{CARD_STATE_LABELS[state]}</ThemedText>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {stats.cardStates[state]} ({Math.round((stats.cardStates[state] / begonnen) * 100)}{' '}
+                  %)
+                </ThemedText>
+              </View>
+            ))}
+          </View>
+
+          <ThemedText type="small" themeColor="textSecondary">
+            „Gemeistert" heißt: die berechnete Stabilität liegt über 21 Tagen.
+          </ThemedText>
+        </>
+      )}
 
       <ThemedText type="small" themeColor="textSecondary">
-        „Gemeistert" heißt: die berechnete Stabilität liegt über 21 Tagen.
+        {offen === 0
+          ? 'Alle Karten dieser Sprache sind begonnen.'
+          : `Noch nicht begonnen: ${offen} von ${stats.totalCards} Karten.`}
       </ThemedText>
     </ThemedView>
   );

@@ -9,24 +9,18 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { SpeakingRunner } from '@/components/speaking-runner';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { ToneLegend } from '@/components/tone-legend';
+import { FeatureLegend } from '@/components/feature-legend';
 import { WritingRunner } from '@/components/writing-runner';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
+import { DRILL_META, DrillId, drillsForDirection, SKILL_LABELS } from '@/lib/drills/types';
 import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
 import { languageOf } from '@/lib/languages/registry';
 import { directionsFor, isLanguageCode, languageOfDirection } from '@/lib/languages/types';
-import { LearnerProfile, loadProfile, setDefaultDirection, setLanguage } from '@/lib/profile';
+import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
 import { LanguageCode } from '@/lib/languages/types';
 import { rateCard } from '@/lib/repository';
-import {
-  buildReviewQueue,
-  directionLabel,
-  directionPrompt,
-  DIRECTIONS,
-  ReviewItem,
-} from '@/lib/review-session';
+import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
@@ -75,6 +69,37 @@ function modeLabel(mode: Mode): string {
   return DRILL_META[mode].label;
 }
 
+/**
+ * Die Übungen nach Fertigkeit gruppiert (Phase 18).
+ *
+ * VORHER WAR ES EINE FLACHE REIHE, und die sagte nicht, dass „Töne hören",
+ * „Ton herleiten", „Artikel" und „Schreiben" vier verschiedene Dinge üben.
+ * Gruppiert sieht man auf einen Blick, was eine Richtung abdeckt — Hören,
+ * Lesen, Sprechen, Schreiben, dazu Wortschatz und deutsche Grammatik.
+ *
+ * Die Reihenfolge ist fest und für alle Sprachen dieselbe: Wer von Thai auf
+ * Spanisch wechselt, sucht „Hören" nicht an einer neuen Stelle.
+ */
+type Group = { label: string; modes: Mode[] };
+
+function groupsForDirection(direction: Direction): Group[] {
+  const modes = modesForDirection(direction);
+  const drills = modes.filter((mode): mode is DrillId => mode in DRILL_META);
+  const bySkill = (skill: 'hoeren' | 'lesen' | 'grammatik') =>
+    drills.filter((drill) => DRILL_META[drill].skill === skill);
+
+  const groups: Group[] = [{ label: 'Wortschatz', modes: ['cards'] }];
+  const hoeren = bySkill('hoeren');
+  if (hoeren.length > 0) groups.push({ label: SKILL_LABELS.hoeren, modes: hoeren });
+  const lesen = bySkill('lesen');
+  if (lesen.length > 0) groups.push({ label: SKILL_LABELS.lesen, modes: lesen });
+  if (modes.includes('speaking')) groups.push({ label: 'Sprechen', modes: ['speaking'] });
+  if (modes.includes('writing')) groups.push({ label: 'Schreiben', modes: ['writing'] });
+  const grammatik = bySkill('grammatik');
+  if (grammatik.length > 0) groups.push({ label: SKILL_LABELS.grammatik, modes: grammatik });
+  return groups;
+}
+
 export default function ReviewScreen() {
   const params = useLocalSearchParams<{ direction?: string; mode?: string; waehlen?: string }>();
   const router = useRouter();
@@ -85,8 +110,15 @@ export default function ReviewScreen() {
     loadProfile().then(setProfile);
   }, []);
 
-  const remember = useCallback(async (direction: Direction | null) => {
-    setProfile(await setDefaultDirection(direction));
+  /**
+   * Jede Wahl im Lernen-Reiter wird gemerkt (Phase 18).
+   *
+   * Nicht als „Standard", den man setzt und wieder aufhebt, sondern als
+   * Lesezeichen: Beim nächsten Öffnen steht man wieder dort. Zurückgesetzt
+   * wird es nur durch eine Sprachwahl auf der Übersicht — die Geste „von vorn".
+   */
+  const remember = useCallback(async (direction: Direction | null, mode?: Mode) => {
+    setProfile(await setReviewSpot(direction ? { direction, mode: mode ?? 'cards' } : null));
   }, []);
 
   // Sprachwechsel mitten im Lernen-Bereich (Phase 17, Ziel 4). Die Richtung
@@ -96,6 +128,17 @@ export default function ReviewScreen() {
     async (language: LanguageCode) => {
       setProfile(await setLanguage(language));
       router.setParams({ direction: undefined, mode: undefined, waehlen: undefined });
+    },
+    [router]
+  );
+
+  const open = useCallback(
+    (direction: Direction, mode: Mode) => {
+      router.setParams({
+        direction,
+        mode: mode === 'cards' ? undefined : mode,
+        waehlen: undefined,
+      });
     },
     [router]
   );
@@ -112,13 +155,10 @@ export default function ReviewScreen() {
 
   const explicit = isDirection(params.direction) ? params.direction : null;
   // `waehlen=1` setzt der Wechsel-Knopf: die Auswahl muss auch dann erreichbar
-  // bleiben, wenn eine Standard-Richtung hinterlegt ist - sonst waere der
-  // Standard eine Einbahnstrasse.
-  const gemerkt =
-    profile.defaultDirection && languageOfDirection(profile.defaultDirection) === profile.language
-      ? profile.defaultDirection
-      : null;
-  const direction = params.waehlen === '1' ? null : (explicit ?? gemerkt);
+  // bleiben, wenn ein Stand gemerkt ist - sonst waere er eine Einbahnstrasse.
+  // `profile.review` traegt nur einen Stand der AKTUELLEN Sprache; darum
+  // kuemmert sich `loadProfile`.
+  const direction = params.waehlen === '1' ? null : (explicit ?? profile.review?.direction ?? null);
 
   if (!direction) {
     return (
@@ -130,28 +170,67 @@ export default function ReviewScreen() {
     );
   }
 
-  const mode = parseMode(params.mode, direction);
+  // Ohne `?mode=` in der Adresse gilt der gemerkte Stand - aber nur, wenn er
+  // zu DIESER Richtung gehoert.
+  const gemerkterModus =
+    profile.review && profile.review.direction === direction ? profile.review.mode : undefined;
+  const mode = parseMode(params.mode ?? gemerkterModus, direction);
+
+  return (
+    <ReviewBody
+      profile={profile}
+      direction={direction}
+      mode={mode}
+      onOpen={open}
+      onSwitch={() => {
+        remember(null);
+        router.setParams({ direction: undefined, mode: undefined, waehlen: '1' });
+      }}
+      onRemember={remember}
+      onExit={() => router.setParams({ direction, mode: undefined })}
+    />
+  );
+}
+
+/**
+ * Der eigentliche Lernbereich — als eigene Komponente, damit der gemerkte
+ * Stand in einem Effekt geschrieben werden kann.
+ *
+ * WARUM EIN EFFEKT UND NICHT DER KNOPFDRUCK: Man kommt auf drei Wegen hierher
+ * — über die Übungsleiste, über eine Richtungskarte auf der Übersicht und über
+ * eine Adresse mit `?direction=`. Am Knopf zu merken hätte nur den ersten Weg
+ * erwischt; im Web-Build fiel genau das auf. Der Effekt hängt an dem, was
+ * wirklich offen ist, und trifft damit alle drei.
+ */
+function ReviewBody({
+  profile,
+  direction,
+  mode,
+  onOpen,
+  onSwitch,
+  onRemember,
+  onExit,
+}: {
+  profile: LearnerProfile;
+  direction: Direction;
+  mode: Mode;
+  onOpen: (direction: Direction, mode: Mode) => void;
+  onSwitch: () => void;
+  onRemember: (direction: Direction | null, mode?: Mode) => void;
+  onExit: () => void;
+}) {
+  useEffect(() => {
+    onRemember(direction, mode);
+    // `onRemember` ist bewusst nicht in der Liste: Es schreibt das Profil und
+    // erzeugt dadurch eine neue Identitaet - mit ihm liefe der Effekt endlos.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direction, mode]);
 
   return (
     <ScreenScaffold title="Lernen" subtitle={directionLabel(direction)}>
-      <ModeBar
-        direction={direction}
-        mode={mode}
-        onPick={(picked) =>
-          router.setParams({
-            direction,
-            mode: picked === 'cards' ? undefined : picked,
-            waehlen: undefined,
-          })
-        }
-      />
+      <ModeBar direction={direction} mode={mode} onPick={(picked) => onOpen(direction, picked)} />
 
-      <DirectionBar
-        direction={direction}
-        profile={profile}
-        onSwitch={() => router.setParams({ direction: undefined, mode: undefined, waehlen: '1' })}
-        onRemember={remember}
-      />
+      <DirectionBar onSwitch={onSwitch} />
 
       {mode === 'cards' ? (
         <CardSession direction={direction} key={direction} />
@@ -159,25 +238,25 @@ export default function ReviewScreen() {
         <WritingRunner
           key={`${direction}:writing`}
           direction={direction}
-          onExit={() => router.setParams({ direction, mode: undefined })}
+          onExit={onExit}
         />
       ) : mode === 'speaking' ? (
         <SpeakingRunner
           key={`${direction}:speaking`}
-          onExit={() => router.setParams({ direction, mode: undefined })}
+          onExit={onExit}
         />
       ) : (
         <DrillRunner
           drill={mode}
           language={languageOfDirection(direction)}
           key={`${direction}:${mode}`}
-          onExit={() => router.setParams({ direction, mode: undefined })}
+          onExit={onExit}
         />
       )}
 
-      {/* Die Tonlegende gehoert zum Thai-Merkmal. Bei Spanisch oder Englisch
-          waere sie eine Behauptung ueber eine Sprache, die keine Toene hat. */}
-      {languageOfDirection(direction) === 'th' ? <ToneLegend compact /> : null}
+      {/* Je Sprache ihr eigenes Merkmal: Toene bei Thai, Betonungsregel bei
+          Spanisch, Schriftstueck-Gruppen bei Englisch (Phase 18). */}
+      <FeatureLegend language={languageOfDirection(direction)} compact />
     </ScreenScaffold>
   );
 }
@@ -207,21 +286,25 @@ function DirectionPicker({
           accessibilityRole="button"
           style={({ pressed }) => pressed && styles.pressed}>
           <ThemedView type="backgroundElement" style={styles.pickerCard}>
-            <ThemedText type="smallBold">
-              {directionLabel(direction)}
-              {profile.defaultDirection === direction ? ' · Standard' : ''}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {directionPrompt(direction)}
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              Karteikarten ·{' '}
-              {modesForDirection(direction).slice(1).map(modeLabel).join(' · ')}
-            </ThemedText>
+            <ThemedText type="smallBold">{directionLabel(direction)}</ThemedText>
+            {/* Statt eines generischen Satzes („Deutsch lesen, das Wort auf
+                Thai abrufen") steht hier, was diese Richtung an Fertigkeiten
+                anbietet - das ist die Angabe, nach der man auswaehlt. */}
+            {groupsForDirection(direction).map((group) => {
+              const modes = group.modes.map(modeLabel).join(' · ');
+              return (
+                <ThemedText key={group.label} type="small" themeColor="textSecondary">
+                  {/* „Sprechen: Sprechen" waere doppelt gemoppelt - bei einer
+                      Gruppe, die genauso heisst wie ihre einzige Uebung,
+                      steht nur der Name. */}
+                  {modes === group.label ? modes : `${group.label}: ${modes}`}
+                </ThemedText>
+              );
+            })}
           </ThemedView>
         </Pressable>
       ))}
-      {profile.language === 'th' ? <ToneLegend /> : null}
+      <FeatureLegend language={profile.language} />
     </ScreenScaffold>
   );
 }
@@ -236,55 +319,51 @@ function ModeBar({
   mode: Mode;
   onPick: (mode: Mode) => void;
 }) {
-  const modes = modesForDirection(direction);
   const toneColor = useToneColor();
 
   return (
-    <View style={styles.modeBar}>
-      {modes.map((candidate) => {
-        const label = modeLabel(candidate);
-        const selected = candidate === mode;
-        return (
-          <Pressable
-            key={candidate}
-            onPress={() => onPick(candidate)}
-            accessibilityRole="button"
-            accessibilityLabel={label}
-            accessibilityState={{ selected }}
-            style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedView
-              type={selected ? 'backgroundSelected' : 'backgroundElement'}
-              style={[styles.modeButton, selected && { borderColor: toneColor('mid') }]}>
-              <ThemedText type="small">{label}</ThemedText>
-            </ThemedView>
-          </Pressable>
-        );
-      })}
+    <View style={styles.modeGroups}>
+      {groupsForDirection(direction).map((group) => (
+        <View key={group.label} style={styles.modeGroup}>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.groupLabel}>
+            {group.label}
+          </ThemedText>
+          <View style={styles.modeBar}>
+            {group.modes.map((candidate) => {
+              const label = modeLabel(candidate);
+              const selected = candidate === mode;
+              return (
+                <Pressable
+                  key={candidate}
+                  onPress={() => onPick(candidate)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${group.label}: ${label}`}
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => pressed && styles.pressed}>
+                  <ThemedView
+                    type={selected ? 'backgroundSelected' : 'backgroundElement'}
+                    style={[styles.modeButton, selected && { borderColor: toneColor('mid') }]}>
+                    <ThemedText type="small">{label}</ThemedText>
+                  </ThemedView>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }
 
 /**
- * Richtung wechseln und den Standard setzen — an derselben Stelle.
+ * Zurück zur Sprach- und Richtungsauswahl.
  *
- * Der Standard wird nur gesetzt, wenn er ausdrücklich gesetzt wird, und er ist
- * dort sichtbar, wo er wirkt (AE-17). Eine still aus der letzten Wahl
- * abgeleitete Voreinstellung würde die App nach einem einzigen Tippen
- * festlegen, ohne dass jemand das gewollt hätte.
+ * SEIT PHASE 18 NUR NOCH EIN KNOPF. Daneben stand „☆ Als Standard merken" —
+ * das Gegenstück zur Standard-Lernrichtung aus AE-17. Seit der Reiter sich
+ * ohnehin merkt, wo man war, gibt es nichts mehr zu setzen; geblieben ist der
+ * Weg zurück, damit der gemerkte Stand keine Einbahnstraße wird.
  */
-function DirectionBar({
-  direction,
-  profile,
-  onSwitch,
-  onRemember,
-}: {
-  direction: Direction;
-  profile: LearnerProfile;
-  onSwitch: () => void;
-  onRemember: (direction: Direction | null) => void;
-}) {
-  const isDefault = profile.defaultDirection === direction;
-
+function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
   return (
     <View style={styles.directionBar}>
       <Pressable
@@ -293,21 +372,7 @@ function DirectionBar({
         accessibilityLabel="Sprache oder Lernrichtung wechseln"
         style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
         <ThemedText type="small" themeColor="textSecondary">
-          Sprache oder Richtung wechseln
-        </ThemedText>
-      </Pressable>
-      <Pressable
-        onPress={() => onRemember(isDefault ? null : direction)}
-        accessibilityRole="button"
-        accessibilityLabel={
-          isDefault
-            ? 'Diese Richtung nicht mehr als Standard verwenden'
-            : 'Diese Richtung als Standard merken'
-        }
-        accessibilityState={{ selected: isDefault }}
-        style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
-        <ThemedText type="small" themeColor="textSecondary">
-          {isDefault ? '★ Standard — aufheben' : '☆ Als Standard merken'}
+          ← Sprache oder Richtung wechseln
         </ThemedText>
       </Pressable>
     </View>
@@ -449,6 +514,15 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.one,
+  },
+  modeGroups: {
+    gap: Spacing.two,
+  },
+  modeGroup: {
+    gap: Spacing.one,
+  },
+  groupLabel: {
+    marginLeft: Spacing.one,
   },
   modeBar: {
     flexDirection: 'row',

@@ -23,6 +23,15 @@ import {
   providersForGroup,
 } from '@/lib/providers/settings';
 import { PROVIDER_INFO, ProviderId } from '@/lib/providers/types';
+import {
+  defaultVoiceForGender,
+  describeVoice,
+  documentsGender,
+  findVoice,
+  VOICE_SOURCES,
+} from '@/data/tts-voices';
+import { LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
+import { LanguageCode } from '@/lib/languages/types';
 
 /**
  * Eine Generator-Karte: Anbieterwahl, Modellfeld, Schlüsselfeld, Umfangwahl,
@@ -56,6 +65,8 @@ export type RunOption = {
 
 export type StartArgs = {
   optionId: string;
+  /** Für welche Sprache der Lauf gilt — nur bei Gruppen, die eine Wahl anbieten. */
+  language: LanguageCode;
   apiKey: string;
   provider: ProviderId;
   /** Freitext aus dem Modellfeld — ungeprüft, siehe Pflicht 5. */
@@ -67,6 +78,13 @@ export type StartArgs = {
 };
 
 type Props = {
+  /**
+   * Für welche Sprache erzeugt wird (Phase 18). Fehlt die Angabe, bietet die
+   * Karte keine Wahl an — so bei Prüfungsaufgaben (die prüfen Deutsch) und
+   * Sprachsituationen (deren Aufgabentext bisher nur Thai kennt, AE-48).
+   */
+  language?: LanguageCode;
+  onLanguageChange?: (language: LanguageCode) => void;
   heading: string;
   description: string;
   /** Welche Generator-Gruppe — bestimmt, welche Anbieter überhaupt taugen. */
@@ -88,6 +106,8 @@ type Props = {
 };
 
 export function GeneratorCard({
+  language,
+  onLanguageChange,
   heading,
   description,
   group,
@@ -159,6 +179,7 @@ export function GeneratorCard({
     try {
       await onStart({
         optionId: runOption,
+        language: language ?? 'th',
         apiKey,
         provider,
         // Leeres Feld heisst „nimm den Vorschlag" - kein Grund fuer eine
@@ -177,7 +198,7 @@ export function GeneratorCard({
       setRunning(false);
       await onFinished();
     }
-  }, [key, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
+  }, [key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
@@ -206,6 +227,28 @@ export function GeneratorCard({
       <ThemedText type="small" themeColor="textSecondary">
         {statusLine}
       </ThemedText>
+
+      {language && onLanguageChange ? (
+        <View style={styles.field}>
+          <ThemedText type="small">Sprache</ThemedText>
+          <ChoiceRow label={`Sprache für ${heading}`}>
+            {LANGUAGE_ORDER.map((code) => (
+              <Button
+                key={code}
+                label={languageOf(code).label}
+                onPress={() => onLanguageChange(code)}
+                selected={language === code}
+                disabled={running}
+              />
+            ))}
+          </ChoiceRow>
+          <ThemedText type="small" themeColor="textSecondary">
+            Erzeugt wird immer für genau eine Sprache. Was schon erzeugt wurde,
+            bleibt liegen — ein zweiter Lauf für eine andere Sprache nimmt
+            nichts weg.
+          </ThemedText>
+        </View>
+      ) : null}
 
       <View style={styles.field}>
         <ThemedText type="small">Anbieter</ThemedText>
@@ -263,6 +306,40 @@ export function GeneratorCard({
       {groupInfo.needs === 'audio' ? (
         <View style={styles.field}>
           <ThemedText type="small">Stimme</ThemedText>
+          {documentsGender(provider) ? (
+            <>
+              <ChoiceRow label={`Stimmlage für ${heading}`}>
+                {(['female', 'male'] as const).map((gender) => {
+                  const name = defaultVoiceForGender(provider, gender);
+                  const current = findVoice(provider, choice.voice ?? '');
+                  return (
+                    <Button
+                      key={gender}
+                      label={gender === 'female' ? 'Weiblich' : 'Männlich'}
+                      onPress={() => name && onChoiceChange({ voice: name })}
+                      selected={current?.gender === gender}
+                      disabled={running || !name}
+                    />
+                  );
+                })}
+              </ChoiceRow>
+              <ThemedText type="small" themeColor="textSecondary">
+                Google nennt das Geschlecht seiner Stimmen nicht auf der
+                Gemini-Seite, sondern in der Tabelle „Voice options" der
+                Cloud-Text-to-Speech-Unterlagen — dieselben dreißig Namen,
+                abgerufen am {VOICE_SOURCES.geminiGender.retrieved}. Die Knöpfe
+                setzen eine belegte Stimme dieser Lage; im Feld darunter geht
+                jede andere.
+              </ThemedText>
+            </>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              {providerInfo.vendor} macht zum Geschlecht seiner Stimmen keine
+              Angabe (abgerufen am {VOICE_SOURCES.openaiVoices.retrieved}).
+              Eine Auswahl „weiblich/männlich" wäre hier geraten, deshalb gibt
+              es nur die Namen.
+            </ThemedText>
+          )}
           <TextInput
             value={choice.voice ?? ''}
             onChangeText={(value) => onChoiceChange({ voice: value })}
@@ -275,8 +352,10 @@ export function GeneratorCard({
             style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
           />
           <ThemedText type="small" themeColor="textSecondary">
-            Name einer Stimme des Anbieters, ebenfalls ungeprüft. Leer lassen nimmt „
-            {providerInfo.voicePlaceholder}". Alle Stimmen sind synthetisch — welche die
+            {choice.voice
+              ? `${choice.voice}: ${describeVoice(provider, choice.voice)}. `
+              : `Leer lassen nimmt „${providerInfo.voicePlaceholder}". `}
+            Alle Stimmen sind synthetisch, keine Muttersprachler-Aufnahmen — welche die
             Thai-Töne trifft, ist gemessen (AE-31), nicht versprochen.
           </ThemedText>
         </View>

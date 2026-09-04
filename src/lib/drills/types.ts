@@ -36,6 +36,10 @@ export const DRILLS = [
   'stressRule',
   /** Phase 16: das englische Merkmal - gleiche Schreibung, andere Aussprache. */
   'spelling',
+  /** Phase 18: Betonung HOEREN - das Gegenstueck zu 'tone' fuer Spanisch. */
+  'stressHear',
+  /** Phase 18: Wort hoeren und die richtige Schreibung waehlen (Englisch). */
+  'soundSpelling',
 ] as const;
 export type DrillId = (typeof DRILLS)[number];
 
@@ -53,6 +57,15 @@ export type DrillMeta = {
    *   `toTarget` — „Deutsch → X": die Merkmalsübungen der Zielsprache.
    */
   side: 'toHub' | 'toTarget';
+  /**
+   * Welche Fertigkeit geübt wird.
+   *
+   * SEIT PHASE 18, WEIL DIE LEISTE SONST EINE FLACHE LISTE WÄRE: „Töne hören",
+   * „Ton herleiten", „Artikel" und „Schreiben" nebeneinander sagen nicht, dass
+   * das vier verschiedene Fertigkeiten sind. Gruppiert man sie, sieht man auf
+   * einen Blick, was eine Sprache abdeckt — und was ihr fehlt.
+   */
+  skill: 'hoeren' | 'lesen' | 'grammatik';
   /**
    * Zu welchem Sprachmerkmal die Übung gehört, oder `null` für die deutschen
    * Module, die zu jedem Paar gehören.
@@ -77,6 +90,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     id: 'tone',
     side: 'toTarget',
     feature: 'th',
+    skill: 'hoeren',
     label: 'Töne hören',
     description:
       'Wort anhören und den Ton bestimmen. Nur einsilbige Wörter — bei mehrsilbigen hat jede Silbe ihren eigenen Ton.',
@@ -86,6 +100,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     id: 'toneRule',
     side: 'toTarget',
     feature: 'th',
+    skill: 'lesen',
     label: 'Ton herleiten',
     description:
       'Den Ton aus der Schrift ableiten statt ihn auswendig zu lernen: Konsonantenklasse, Vokallänge, Schlusslaut und Tonzeichen ergeben ihn. Nur einsilbige Wörter.',
@@ -95,6 +110,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     id: 'article',
     side: 'toHub',
     feature: null,
+    skill: 'grammatik',
     label: 'Artikel',
     description:
       'Das richtige Genus zum Substantiv. Im Deutschen ist es nicht ableitbar, sondern gehört zum Wort dazu.',
@@ -104,6 +120,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     id: 'verbForms',
     side: 'toHub',
     feature: null,
+    skill: 'grammatik',
     label: 'Stammformen',
     description:
       'Das Perfekt mit dem richtigen Hilfsverb. „haben" gegen „sein" ist eine eigene Fehlerquelle.',
@@ -113,6 +130,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     id: 'stressRule',
     side: 'toTarget',
     feature: 'es',
+    skill: 'lesen',
     label: 'Betonung herleiten',
     description:
       'Welche Silbe betont wird, steht in der Schreibung: Wortende und Akut entscheiden. ' +
@@ -123,12 +141,42 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     id: 'spelling',
     side: 'toTarget',
     feature: 'en',
+    skill: 'lesen',
     label: 'Gleiche Schreibung, anderer Laut',
     description:
       'Im Englischen lässt sich die Aussprache nicht aus der Schreibung ableiten — „ough" ' +
       'allein hat mehrere Lesarten. Geübt wird deshalb der Vergleich, nicht die Herleitung.',
     prompt: 'Wie klingt dieses Schriftstück hier?',
   },
+  stressHear: {
+    id: 'stressHear',
+    side: 'toTarget',
+    feature: 'es',
+    skill: 'hoeren',
+    label: 'Betonung hören',
+    description:
+      'Wort anhören und die betonte Silbe bestimmen. Die Silben stehen ohne Akzentzeichen da — ' +
+      'sonst wäre die Antwort abzulesen statt zu hören.',
+    prompt: 'Welche Silbe hörst du betont?',
+  },
+  soundSpelling: {
+    id: 'soundSpelling',
+    side: 'toTarget',
+    feature: 'en',
+    skill: 'hoeren',
+    label: 'Wort hören',
+    description:
+      'Wort anhören und aus Wörtern mit demselben Schriftstück das richtige heraushören — ' +
+      'though, through, thought und enough klingen verschieden, obwohl sie gleich aussehen.',
+    prompt: 'Welches Wort hörst du?',
+  },
+};
+
+/** Die vier Fertigkeiten, in der Reihenfolge, in der sie angezeigt werden. */
+export const SKILL_LABELS: Record<DrillMeta['skill'], string> = {
+  hoeren: 'Hören',
+  lesen: 'Lesen',
+  grammatik: 'Deutsche Grammatik',
 };
 
 /**

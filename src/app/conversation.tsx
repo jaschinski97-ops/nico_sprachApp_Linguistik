@@ -12,6 +12,7 @@ import { ConversationSituation, TOPIC_LABELS } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
 import { loadSituations } from '@/lib/repository';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
+import { setConversationDirection } from '@/lib/profile';
 import { languageOf } from '@/lib/languages/registry';
 import { directionsFor } from '@/lib/languages/types';
 import { directionLabel } from '@/lib/review-session';
@@ -20,10 +21,15 @@ export default function ConversationScreen() {
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
   // Die Richtung haengt an der Sprache (Phase 17): gewaehlt wird eine der
   // zwei Richtungen der gerade gelernten Sprache, sonst die erste davon.
-  const { language, chooseLanguage } = useLearnerLanguage();
+  const { language, profile, chooseLanguage } = useLearnerLanguage();
   const [chosen, setChosen] = useState<Direction | null>(null);
   const directions = directionsFor(language);
-  const direction = chosen && directions.includes(chosen) ? chosen : directions[0];
+  // Wie im Lernen-Reiter (Phase 18): Die zuletzt geoeffnete Richtung bleibt
+  // offen, bis auf der Uebersicht eine Sprache gewaehlt wird. `profile`
+  // liefert nur einen Stand der aktuellen Sprache.
+  const gemerkt = profile?.conversation ?? null;
+  const aktuell = chosen ?? gemerkt;
+  const direction = aktuell && directions.includes(aktuell) ? aktuell : directions[0];
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -90,7 +96,10 @@ export default function ConversationScreen() {
         {directions.map((d) => (
           <Pressable
             key={d}
-            onPress={() => setChosen(d)}
+            onPress={() => {
+              setChosen(d);
+              setConversationDirection(d);
+            }}
             accessibilityRole="button"
             accessibilityState={{ selected: direction === d }}
             style={({ pressed }) => pressed && styles.pressed}>
