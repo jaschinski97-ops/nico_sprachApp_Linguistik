@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -10,11 +11,19 @@ import { PlaybackKind, playPronunciation } from '@/lib/audio';
 import { ConversationSituation, TOPIC_LABELS } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
 import { loadSituations } from '@/lib/repository';
-import { directionLabel, DIRECTIONS } from '@/lib/review-session';
+import { useLearnerLanguage } from '@/hooks/use-learner-language';
+import { languageOf } from '@/lib/languages/registry';
+import { directionsFor } from '@/lib/languages/types';
+import { directionLabel } from '@/lib/review-session';
 
 export default function ConversationScreen() {
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
-  const [direction, setDirection] = useState<Direction>('de_to_th');
+  // Die Richtung haengt an der Sprache (Phase 17): gewaehlt wird eine der
+  // zwei Richtungen der gerade gelernten Sprache, sonst die erste davon.
+  const { language, chooseLanguage } = useLearnerLanguage();
+  const [chosen, setChosen] = useState<Direction | null>(null);
+  const directions = directionsFor(language);
+  const direction = chosen && directions.includes(chosen) ? chosen : directions[0];
   const [openId, setOpenId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,16 +51,31 @@ export default function ConversationScreen() {
     );
   }
 
-  if (situations.length === 0) {
+  const mine = situations.filter((s) => directions.includes(s.direction));
+
+  if (mine.length === 0) {
     return (
-      <ScreenScaffold title="Gespräch" subtitle="Vorproduzierte Sprachsituationen">
+      <ScreenScaffold
+        title="Gespräch"
+        subtitle={`Vorproduzierte Sprachsituationen · ${languageOf(language).label}`}>
+        <LanguageSwitch selected={language} onSelect={chooseLanguage} />
         <ThemedView type="backgroundElement" style={styles.card}>
-          <ThemedText type="smallBold">Noch keine Situationen erzeugt</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Dialoge werden einmalig unter „Einstellungen" erzeugt — dafür wird
-            ein eigener API-Schlüssel gebraucht. Danach sind sie dauerhaft
-            gespeichert und funktionieren ohne Internet und ohne Schlüssel.
+          <ThemedText type="smallBold">
+            Noch keine Situationen für {languageOf(language).label}
           </ThemedText>
+          {language === 'th' ? (
+            <ThemedText type="small" themeColor="textSecondary">
+              Dialoge werden einmalig unter „Einstellungen" erzeugt — dafür wird
+              ein eigener API-Schlüssel gebraucht. Danach sind sie dauerhaft
+              gespeichert und funktionieren ohne Internet und ohne Schlüssel.
+            </ThemedText>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              Der Generator für Sprachsituationen kennt bisher nur Thai — ein
+              eigener, geprüfter Aufgabentext für {languageOf(language).label}{' '}
+              steht noch aus. Karteikarten und Übungen gibt es unter „Lernen".
+            </ThemedText>
+          )}
         </ThemedView>
       </ScreenScaffold>
     );
@@ -60,12 +84,13 @@ export default function ConversationScreen() {
   return (
     <ScreenScaffold
       title="Gespräch"
-      subtitle={`${situations.length} Situationen — offline nutzbar`}>
+      subtitle={`${mine.length} Situationen — offline nutzbar`}>
+      <LanguageSwitch selected={language} onSelect={chooseLanguage} />
       <View style={styles.row}>
-        {DIRECTIONS.map((d) => (
+        {directions.map((d) => (
           <Pressable
             key={d}
-            onPress={() => setDirection(d)}
+            onPress={() => setChosen(d)}
             accessibilityRole="button"
             accessibilityState={{ selected: direction === d }}
             style={({ pressed }) => pressed && styles.pressed}>

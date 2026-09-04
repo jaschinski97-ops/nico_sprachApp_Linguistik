@@ -3747,12 +3747,112 @@ Englisch vorfinden. Die Vorgabe steht jetzt ausdrücklich da.
 - Ob die F0-Messung spanische Betonung erkennt — **nicht geprüft**, siehe AE-48.
 - `ConversationTurn.thai` bleibt, was es ist: ein Inhaltstyp des Thai-Paars.
 
+
+---
+
+### 2026-09-04 — Phase 17: Oberfläche für Endnutzer (reine Darstellung)
+
+**Vorbedingung: die offenen Blocker**
+
+`PROGRESS.md` und `.agent/state.json` gelesen, Repo-Zustand geprüft (sauber auf
+`main` bei `c71731b`, 689 Tests in 30 Suites grün, `npx tsc --noEmit`
+fehlerfrei). Nach **B-2**, **B-4**, **B-5** und **B-6** erneut gefragt; keine
+Antwort bis zum Ende der Sitzung, **alle vier bleiben offen**. Für diese Phase
+ohne Einfluss.
+
+**Abgrenzung — und der Beleg dafür**
+
+Keine Logik, kein Datenmodell, keine Übung, kein Generator. Der Nachweis ist
+die Testzahl: **689 vorher, 689 nachher, keine Datei unter `src/lib`
+angefasst.** Alles, was sich geändert hat, liegt unter `src/app`,
+`src/components` und `src/hooks`.
+
+**Zuerst: der Ist-Zustand, durchgeklickt**
+
+Alle fünf Bereiche im Web-Build angesehen, bevor etwas geändert wurde. Das
+Vorhaben stammte aus einem älteren Bildschirmfoto, und ein Teil war seit
+Phase 15/16 erledigt:
+
+| Bereich | Schon erledigt | Noch offen |
+| --- | --- | --- |
+| Übersicht | Sprachauswahl steht vorn (Phase 15); Tonlegende nur bei Thai (Phase 16) | Statistikkarte „Vokabel-Grundstock · Phase 2" mit Wortartenzählung; Untertitel nannte das Sprachpaar |
+| Lernen | Richtungsauswahl aus dem Sprachmodell (Phase 16) | kein Sprachwechsel |
+| Gespräch | — | Richtungen fest auf Thai verdrahtet; kein Sprachwechsel; Leertext ohne Sprache |
+| Prüfung | — | Text „richtet sich an Thai-Muttersprachler" |
+| Fortschritt | Zahlen je Sprache (Phase 16) | Platzhalterkarte „Prüfungsmodul · Phase 7"; kein Sprachwechsel |
+| Einstellungen | Ablage-Backend steht hier, also am richtigen Ort | Standard-Lernrichtung nur für Thai wählbar; keine Sprachwahl |
+| Kopfzeile | „Lernbegleiter" statt eines Sprachpaars (Phase 16) | — |
+
+**Gemacht**
+
+- `components/language-switch.tsx` — der kompakte Umschalter, eine Zeile aus
+  Auswahlknöpfen. Steht auf **Lernen**, **Gespräch**, **Fortschritt** und in
+  den **Einstellungen** (Ziel 4). Nur Sprachen mit Inhalt; die leeren stehen
+  auf der Übersicht ehrlich als leer.
+- `hooks/use-learner-language.ts` — kapselt `loadProfile`/`setLanguage`,
+  damit nicht fünf Screens dieselben Zeilen wiederholen. Was ein Wechsel mit
+  der Standard-Lernrichtung macht, entscheidet weiterhin `lib/profile`.
+- **Übersicht:** Untertitel „Welche Sprache lernst du heute?", darunter
+  „{Sprache} lernen" mit den zwei Richtungskarten. Statistikkarte entfernt.
+- **Lernen:** Umschalter in der Richtungsauswahl; ein Wechsel setzt die
+  gewählte Richtung zurück, weil sie zur alten Sprache gehörte. Der Link in
+  der Sitzung heißt jetzt „Sprache oder Richtung wechseln".
+- **Gespräch:** Richtungen aus `directionsFor(sprache)`; Leertext sagt für
+  Englisch und Spanisch ehrlich, dass der Generator bisher nur Thai kennt.
+- **Fortschritt:** Platzhalterkarte entfernt, Umschalter oben, Untertitel
+  mit Sprache.
+- **Einstellungen:** Karte „Lernprofil" mit Sprache und Standard-Lernrichtung
+  **der gewählten Sprache**; neue Karte **„Diagnose"** — Vokabeln je Sprache
+  aus dem Speicher gegen die ausgelieferte Zahl, plus Daten-, Bild- und
+  Clipablage. Das ist die alte Startseiten-Statistik am richtigen Ort.
+- **Prüfung:** Text nennt jetzt alle, die Deutsch lernen.
+- Gelöscht: `placeholder-card.tsx`, `vocab-summary.tsx` — beides
+  Entwicklergerüst aus Phase 0 und 2 ohne verbleibenden Aufrufer.
+
+**Ein Layoutfehler, den erst 375 px gezeigt haben (Ziel 5)**
+
+Die Sprachkarten der Übersicht liefen auf 375 px über den rechten Rand und
+waren über 200 Punkte hoch. Ursache: `flexBasis: 220` saß am **inneren** View,
+dessen Elternelement — das Pressable — eine Spalte ist. In einer Spalte meint
+`flexBasis` die **Höhe**. Auf einem breiten Fenster fiel das nicht auf, weil
+der Inhalt ohnehin hineinpasste. Die Flex-Maße hängen jetzt am Pressable
+selbst, die Karte ist 311 Punkte breit und 122 hoch, `scrollWidth` gleich
+`innerWidth`. Ein Fehler aus Phase 15, den die damalige Prüfung nicht
+gefunden hat — sie lief nur breit.
+
+**Verifiziert**
+
+- `npm test` → **689 Tests grün**, 30 Suites — identisch zu vorher.
+- `npx tsc --noEmit` fehlerfrei.
+- **Web-Build, breit:** alle sechs Routen; Übersicht ohne Statistikkarte,
+  Fortschritt ohne Platzhalter, Einstellungen mit Lernprofil und Diagnose.
+- **Sprachwechsel durchgespielt:** Auf „Gespräch" Spanisch gewählt → Profil
+  im Speicher `language: es`, Leertext für Spanisch; danach zeigen **Lernen**
+  („Spanisch — welche Richtung", Karteikarten · Betonung herleiten ·
+  Schreiben) und **Fortschritt** („Lernverlauf · Spanisch", 79 von 79 je
+  Richtung) dieselbe Sprache, ohne dass die Übersicht besucht wurde. Ein
+  synthetisches `element.click()` löste den Wechsel **nicht** aus, eine
+  Zeiger-Ereignisfolge (pointerdown/up, click) schon — React Native Web hört
+  auf den Responder, nicht auf `click` allein. Kein Fehler der App, aber gut
+  zu wissen für die nächste Prüfung.
+- **375 px:** Übersicht, Lernen, Einstellungen, Prüfung und eine
+  Betonungsübung — kein horizontales Scrollen, kein Bedienelement ohne
+  Beschriftung, keines unter 24 Punkten, alle Umschalter mit `aria-checked`.
+- In einem frischen Tab keine Konsolenfehler. Testzustand danach geleert.
+
+**Bewusst nicht gemacht**
+
+- Die Generatoren in den Einstellungen bieten die Sprachwahl weiterhin nicht
+  an und tragen „(Thai)" — das wäre keine Darstellung mehr, sondern die
+  Freischaltung von Läufen (AE-48), also außerhalb dieser Phase.
+- Die Prüfungsseite filtert nicht nach Sprache; die Module gelten für jedes
+  „X → Deutsch", nur der Screen weiß es noch nicht. Eigene Phase (siehe TODO).
 ---
 
 ## Konsolidierte Abnahme (Stand 2026-09-04)
 
-Jedes „Fertig, wenn“ aus Phase 0–16 gegen den **jetzigen** Repo-Zustand.
-**125 von 132 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
+Jedes „Fertig, wenn“ aus Phase 0–17 gegen den **jetzigen** Repo-Zustand.
+**131 von 138 erfüllt; 7 offen, und alle 7 hängen an einer Handlung des
 Nutzers** — an einem gültigen API-Schlüssel (B-4, B-6), einem Expo-Konto (B-5)
 oder einem Gerät (B-2). Diese Tabelle ist **aus `.agent/state.json` erzeugt**,
 nicht abgetippt; sie kann deshalb nicht still von der maschinenlesbaren
@@ -3892,6 +3992,12 @@ Fassung abweichen.
 | 16 | Bestehende Uebungstypen greifen fuer die neuen Paare | **erfüllt** | Karteikarten, Artikel, Stammformen und freies Schreiben laufen fuer beide neuen Paare; im Web-Build angeklickt. DrillMeta traegt side statt einer festen Richtung, ensureCardStates filtert nach der Sprache der Richtung, und ein Test belegt, dass eine spanische Artikelsitzung keine Thai-Vokabel enthaelt. Die Schreibuebung schuetzt im Spanischen den Akut wie im Thai das Tonzeichen und bietet eine Akzentpalette. |
 | 16 | Thai<->Deutsch nachweislich unveraendert funktionsfaehig (Regressionstest) | **erfüllt** | Die Tests aus Phase 0-15 zeigen ueber eine umbenannte Importzeile jetzt auf VOCABULARY_TH; unterhalb dieser Zeile wurde in keiner Datei eine Zusicherung geaendert. Dazu ein eigener Block: 84 Eintraege mit Ton und Beispielsatz, สวัสดี weiter tief-tief-mittel, kein Thai-Eintrag traegt ein Feld einer anderen Sprache und kein neuer Eintrag einen Ton. Im Web-Build zeigt die Uebersicht nach dem Zuruecksetzen wieder 84 faellige Karten je Richtung. |
 | 16 | Tests und tsc gruen, PROGRESS ergaenzt, TODO aktualisiert, Commit | **erfüllt** | 689 Tests in 30 Suites gruen (vorher 606 in 25); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler. |
+| 17 | Uebersicht fuehrt mit Sprachauswahl, Auswahl steuert den Lernen-Bereich | **erfüllt** | Uebersicht: Sprachauswahl zuerst, darunter "{Sprache} lernen" mit den zwei Richtungskarten, die in /review mit dieser Sprache fuehren. Im Web-Build breit und bei 375 px durchgespielt. |
+| 17 | Kein Entwicklergeruest mehr in der Endnutzer-Oberflaeche | **erfüllt** | Statistikkarte "Vokabel-Grundstock / Phase 2" und Platzhalter "Pruefungsmodul / Phase 7" entfernt, beide Komponenten geloescht. Ablage-Backends und Grundstockzahlen stehen jetzt in Einstellungen -> Diagnose. grep nach "Phase [0-9]" in app/ und components/ trifft nur noch Kommentare. |
+| 17 | Sprachfremde Elemente erscheinen nicht mehr | **erfüllt** | Tonlegende nur bei Thai (Uebersicht und Lernen, seit Phase 16 bereits so); Gespraech und Einstellungen leiten ihre Richtungen aus der Sprache ab statt aus der Thai-Konstante; Pruefungstext nennt keine Thai-Muttersprachler mehr; Kopfzeile "Lernbegleiter" (Phase 16). |
+| 17 | Sprachwechsel jederzeit erreichbar | **erfüllt** | LanguageSwitch auf Lernen, Gespraech, Fortschritt, Einstellungen. Auf Gespraech Spanisch gewaehlt -> Profil language=es, danach zeigen Lernen und Fortschritt Spanisch, ohne Umweg ueber Uebersicht oder Einstellungen. |
+| 17 | 375 px und breit geprueft, Barrierefreiheitsniveau gehalten | **erfüllt** | Beide Breiten fuer alle Routen; ein Ueberlauf der Sprachkarten auf 375 px gefunden und behoben (flexBasis am falschen Element). Kein Element ohne Beschriftung, keines unter 24 Punkten, aria-checked an allen Umschaltern, scrollWidth == innerWidth. |
+| 17 | Bestehende Tests unveraendert gruen, tsc sauber | **erfüllt** | 689 Tests in 30 Suites vor und nach der Phase; keine Datei unter src/lib angefasst. npx tsc --noEmit fehlerfrei. |
 
 ## Skalierungsplan auf ~1000 Einträge
 
@@ -3961,6 +4067,16 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 ---
 
 ## TODO — priorisiert
+
+> **Neu aus Phase 17 (2026-09-04):** Die Oberfläche ist für Endnutzer
+> bereinigt — Sprachauswahl vorn, Sprachwechsel in jedem Bereich, kein
+> Entwicklergerüst mehr. Was die Einstellungen an Generatoren noch nicht
+> je Sprache anbieten, ist keine Darstellungsfrage und steht unten.
+
+0. **Generatoren je Sprache in den Einstellungen:** Bilder- und Cliplauf sind
+   sprachparametrisiert (AE-46), die Oberfläche bietet die Wahl aber nicht an
+   und schreibt „(Thai)". Beim Anbieten mitdenken, dass Motive über den
+   gemeinsamen Begriff kommen und Sprachsituationen weiter abgelehnt werden.
 
 > **Neu aus Phase 16 (2026-09-04):** Alle drei Sprachpaare sind nutzbar, alle
 > drei Merkmale gebaut. Was jetzt oben liegt, braucht entweder eine eigene

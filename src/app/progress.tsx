@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { PlaceholderCard } from '@/components/placeholder-card';
+import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -10,8 +10,8 @@ import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { directionLabel } from '@/lib/review-session';
-import { LanguageCode } from '@/lib/languages/types';
-import { loadProfile } from '@/lib/profile';
+import { useLearnerLanguage } from '@/hooks/use-learner-language';
+import { languageOf } from '@/lib/languages/registry';
 import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
 /**
@@ -29,11 +29,7 @@ export default function ProgressScreen() {
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const [language, setLanguage] = useState<LanguageCode>('th');
-
-  useEffect(() => {
-    loadProfile().then((profile) => setLanguage(profile.language));
-  }, []);
+  const { language, chooseLanguage } = useLearnerLanguage();
 
   useEffect(() => {
     let cancelled = false;
@@ -72,7 +68,9 @@ export default function ProgressScreen() {
   }
 
   return (
-    <ScreenScaffold title="Fortschritt" subtitle="Lernverlauf und Prüfungsvorbereitung">
+    <ScreenScaffold title="Fortschritt" subtitle={`Lernverlauf · ${languageOf(language).label}`}>
+      <LanguageSwitch selected={language} onSelect={chooseLanguage} />
+
       <View style={styles.grid}>
         <Tile label="Heute wiederholt" value={String(stats.reviewsToday)} />
         <Tile label="Heute geübt" value={String(stats.drillsToday)} hint="Aufgaben" />
@@ -99,12 +97,6 @@ export default function ProgressScreen() {
           </View>
         ))}
       </ThemedView>
-
-      <PlaceholderCard
-        phase="Phase 7"
-        heading="Prüfungsmodul"
-        body="Übungen nach der tatsächlichen Modulstruktur des Goethe-Instituts — Struktur wird erst aus den Originalseiten erhoben, nicht geraten."
-      />
     </ScreenScaffold>
   );
 }

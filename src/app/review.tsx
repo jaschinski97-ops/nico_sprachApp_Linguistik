@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { DrillRunner } from '@/components/drill-runner';
 import { Flashcard } from '@/components/flashcard';
+import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { SpeakingRunner } from '@/components/speaking-runner';
 import { ThemedText } from '@/components/themed-text';
@@ -16,7 +17,8 @@ import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
 import { languageOf } from '@/lib/languages/registry';
 import { directionsFor, isLanguageCode, languageOfDirection } from '@/lib/languages/types';
-import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
+import { LearnerProfile, loadProfile, setDefaultDirection, setLanguage } from '@/lib/profile';
+import { LanguageCode } from '@/lib/languages/types';
 import { rateCard } from '@/lib/repository';
 import {
   buildReviewQueue,
@@ -87,6 +89,17 @@ export default function ReviewScreen() {
     setProfile(await setDefaultDirection(direction));
   }, []);
 
+  // Sprachwechsel mitten im Lernen-Bereich (Phase 17, Ziel 4). Die Richtung
+  // gehoerte zur alten Sprache und faellt weg; die Auswahl zeigt dann die
+  // zwei Richtungen der neuen.
+  const chooseLanguage = useCallback(
+    async (language: LanguageCode) => {
+      setProfile(await setLanguage(language));
+      router.setParams({ direction: undefined, mode: undefined, waehlen: undefined });
+    },
+    [router]
+  );
+
   if (!profile) {
     return (
       <ScreenScaffold title="Lernen" subtitle="Lernrichtung">
@@ -112,6 +125,7 @@ export default function ReviewScreen() {
       <DirectionPicker
         profile={profile}
         onPick={(picked) => router.setParams({ direction: picked, waehlen: undefined })}
+        onLanguage={chooseLanguage}
       />
     );
   }
@@ -175,14 +189,17 @@ export default function ReviewScreen() {
 function DirectionPicker({
   profile,
   onPick,
+  onLanguage,
 }: {
   profile: LearnerProfile;
   onPick: (direction: Direction) => void;
+  onLanguage: (language: LanguageCode) => void;
 }) {
   return (
     <ScreenScaffold
       title="Lernen"
       subtitle={`${languageOf(profile.language).label} — welche Richtung möchtest du üben?`}>
+      <LanguageSwitch selected={profile.language} onSelect={onLanguage} />
       {directionsFor(profile.language).map((direction) => (
         <Pressable
           key={direction}
@@ -273,10 +290,10 @@ function DirectionBar({
       <Pressable
         onPress={onSwitch}
         accessibilityRole="button"
-        accessibilityLabel="Lernrichtung wechseln"
+        accessibilityLabel="Sprache oder Lernrichtung wechseln"
         style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
         <ThemedText type="small" themeColor="textSecondary">
-          Richtung wechseln
+          Sprache oder Richtung wechseln
         </ThemedText>
       </Pressable>
       <Pressable

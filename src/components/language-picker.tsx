@@ -58,7 +58,11 @@ export function LanguagePicker({
               }
               aria-checked={active}
               accessibilityState={{ disabled: !usable }}
-              style={({ pressed }) => [pressed && usable && styles.pressed]}>
+              // Die Flex-Masse haengen am Pressable, nicht am inneren View:
+              // Das Pressable ist eine Spalte, und dort haette `flexBasis: 220`
+              // die HOEHE gemeint - genau so lief die Karte auf 375 px ueber
+              // den Rand und wurde 220 Punkte hoch (Befund Phase 17).
+              style={({ pressed }) => [styles.cell, pressed && usable && styles.pressed]}>
               <ThemedView
                 type={active ? 'backgroundSelected' : 'background'}
                 style={[
@@ -114,14 +118,18 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
+  cell: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 220,
+    minWidth: 0,
+  },
   option: {
     borderRadius: Spacing.two,
     padding: Spacing.three,
     gap: Spacing.one,
-    minWidth: 220,
     minHeight: 44,
-    flexGrow: 1,
-    flexBasis: 220,
+    width: '100%',
   },
   plain: {
     borderWidth: 1,

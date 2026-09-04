@@ -2,8 +2,8 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-04",
-  "currentPhase": 16,
-  "currentPhaseName": "Inhalte fuer Englisch und Spanisch",
+  "currentPhase": 17,
+  "currentPhaseName": "Oberflaeche fuer Endnutzer (reine Darstellung)",
   "currentPhaseStatus": "done",
   "stack": {
     "framework": "expo",
@@ -849,6 +849,42 @@
       "criterion": "Tests und tsc gruen, PROGRESS ergaenzt, TODO aktualisiert, Commit",
       "done": true,
       "verifiedHow": "689 Tests in 30 Suites gruen (vorher 606 in 25); npx tsc --noEmit fehlerfrei. Barrierefreiheit gehalten: kein Bedienelement ohne Beschriftung, alle Auswahlknoepfe mit aria-checked, in einem frischen Tab keine Konsolenfehler."
+    },
+    {
+      "phase": 17,
+      "criterion": "Uebersicht fuehrt mit Sprachauswahl, Auswahl steuert den Lernen-Bereich",
+      "done": true,
+      "verifiedHow": "Uebersicht: Sprachauswahl zuerst, darunter \"{Sprache} lernen\" mit den zwei Richtungskarten, die in /review mit dieser Sprache fuehren. Im Web-Build breit und bei 375 px durchgespielt."
+    },
+    {
+      "phase": 17,
+      "criterion": "Kein Entwicklergeruest mehr in der Endnutzer-Oberflaeche",
+      "done": true,
+      "verifiedHow": "Statistikkarte \"Vokabel-Grundstock / Phase 2\" und Platzhalter \"Pruefungsmodul / Phase 7\" entfernt, beide Komponenten geloescht. Ablage-Backends und Grundstockzahlen stehen jetzt in Einstellungen -> Diagnose. grep nach \"Phase [0-9]\" in app/ und components/ trifft nur noch Kommentare."
+    },
+    {
+      "phase": 17,
+      "criterion": "Sprachfremde Elemente erscheinen nicht mehr",
+      "done": true,
+      "verifiedHow": "Tonlegende nur bei Thai (Uebersicht und Lernen, seit Phase 16 bereits so); Gespraech und Einstellungen leiten ihre Richtungen aus der Sprache ab statt aus der Thai-Konstante; Pruefungstext nennt keine Thai-Muttersprachler mehr; Kopfzeile \"Lernbegleiter\" (Phase 16)."
+    },
+    {
+      "phase": 17,
+      "criterion": "Sprachwechsel jederzeit erreichbar",
+      "done": true,
+      "verifiedHow": "LanguageSwitch auf Lernen, Gespraech, Fortschritt, Einstellungen. Auf Gespraech Spanisch gewaehlt -> Profil language=es, danach zeigen Lernen und Fortschritt Spanisch, ohne Umweg ueber Uebersicht oder Einstellungen."
+    },
+    {
+      "phase": 17,
+      "criterion": "375 px und breit geprueft, Barrierefreiheitsniveau gehalten",
+      "done": true,
+      "verifiedHow": "Beide Breiten fuer alle Routen; ein Ueberlauf der Sprachkarten auf 375 px gefunden und behoben (flexBasis am falschen Element). Kein Element ohne Beschriftung, keines unter 24 Punkten, aria-checked an allen Umschaltern, scrollWidth == innerWidth."
+    },
+    {
+      "phase": 17,
+      "criterion": "Bestehende Tests unveraendert gruen, tsc sauber",
+      "done": true,
+      "verifiedHow": "689 Tests in 30 Suites vor und nach der Phase; keine Datei unter src/lib angefasst. npx tsc --noEmit fehlerfrei."
     }
   ],
   "architectureDecisions": [
@@ -1144,10 +1180,11 @@
   ],
   "nextUp": {
     "phase": null,
-    "name": "Phase 16 abgeschlossen; drei Sprachpaare nutzbar, drei Merkmale gebaut",
+    "name": "Phase 17 abgeschlossen; Oberflaeche fuer Endnutzer bereinigt",
     "tasks": [
       "Pruefungsmodule fuer Englisch und Spanisch (Cambridge/IELTS, DELE/Cervantes): eigene Recherche wie Phase 7, eigene Phase. Der Pruefungs-Screen filtert noch nicht nach Sprache.",
       "Sprachsituationen fuer Englisch und Spanisch: der Plan ist parametrisiert, der Aufgabentext an die KI ist es nicht (Paiboon, ครับ/ค่ะ). Braucht einen eigenen Text mit eigener Recherche zu Anredeformen (AE-48).",
+      "Einstellungen: Sprachwahl fuer Bilder- und Cliplauf anbieten (Planer sind parametrisiert, AE-46/AE-48) - keine reine Darstellung mehr, deshalb nicht in Phase 17",
       "Bilder und Hoerclips fuer die neuen Sprachen: Motive liegen ueber den gemeinsamen Begriff vor (AE-46), aber die Einstellungen bieten die Sprachwahl noch nicht an - dort steht derzeit ausdruecklich \"(Thai)\".",
       "Beispielsaetze fuer Englisch und Spanisch mit der Disziplin aus Phase 2. Bisher gibt es nur bei spanischen Substantiven die Wortgruppe aus Artikel und Wort.",
       "Offener Befund: Ob die F0-Messung aus Phase 12 spanische Betonung erkennen kann, ist NICHT geprueft (AE-48). Vor einem Umbau der Sprechuebung messen, nicht annehmen.",
@@ -1491,5 +1528,16 @@
     "migration": "lib/storage/migration.ts - Vokabeln neu einspielen, Kartenzustaende unberuehrt (AE-43)",
     "languageFilter": "ensureCardStates filtert seit Phase 16 nach der Sprache der Richtung. Ohne diese Zeile bekaeme eine Thai-Sitzung Karten fuer spanische Vokabeln.",
     "notGeneralizedYet": "ConversationTurn.thai und der Aufgabentext des Situationsgenerators (Paiboon, ครับ/ค่ะ) - der Plan ist sprachparametrisiert, der Prompt nicht (AE-48). Pruefungs-Screen-Filter. Sprechuebung nur Thai (F0-Konturen)."
+  },
+  "ui": {
+    "languageSwitch": "components/language-switch.tsx auf Lernen, Gespraech, Fortschritt, Einstellungen; grosse Auswahl auf der Uebersicht",
+    "learnerLanguageHook": "hooks/use-learner-language.ts kapselt loadProfile/setLanguage - keine neue Logik",
+    "removed": [
+      "components/placeholder-card.tsx",
+      "components/vocab-summary.tsx"
+    ],
+    "diagnostics": "Einstellungen -> Diagnose: Vokabeln je Sprache aus dem Speicher, Daten-/Bild-/Clipablage",
+    "layoutFix": "language-picker: flexBasis vom inneren View auf das Pressable verschoben (in einer Spalte war es die Hoehe)",
+    "notYet": "Generatoren ohne Sprachwahl (AE-48); Pruefungs-Screen ohne Sprachfilter"
   }
 }

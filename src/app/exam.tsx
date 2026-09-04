@@ -190,9 +190,9 @@ export default function ExamScreen() {
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           Das Goethe-Institut zertifiziert Deutsch. Dieses Modul richtet sich
-          deshalb an Thai-Muttersprachler, die Deutsch lernen. Für die
-          Gegenrichtung ist hier bewusst nichts hinterlegt — der Grund steht im
-          Projektprotokoll (AE-19).
+          deshalb an alle, die Deutsch lernen — gleich, ob ihre Sprache Thai,
+          Englisch oder Spanisch ist. Für die Gegenrichtung ist hier bewusst
+          nichts hinterlegt — der Grund steht im Projektprotokoll (AE-19).
         </ThemedText>
       </ThemedView>
     </ScreenScaffold>

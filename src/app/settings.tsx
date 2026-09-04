@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { DiagnosticsCard } from '@/components/diagnostics-card';
 import { Button, ChoiceRow, GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
+import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -23,7 +25,9 @@ import { runImageBatch } from '@/lib/images/batch';
 import { createImageGenerationClient } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
 import { Direction } from '@/lib/fsrs/types';
-import { LearnerProfile, loadProfile, setDefaultDirection } from '@/lib/profile';
+import { LanguageCode, directionsFor } from '@/lib/languages/types';
+import { languageOf } from '@/lib/languages/registry';
+import { LearnerProfile, loadProfile, setDefaultDirection, setLanguage } from '@/lib/profile';
 import {
   defaultSettings,
   GeneratorChoice,
@@ -47,7 +51,7 @@ import {
   sumAudioClipBytes,
 } from '@/lib/repository';
 import { ProviderId } from '@/lib/providers/types';
-import { directionLabel, DIRECTIONS } from '@/lib/review-session';
+import { directionLabel } from '@/lib/review-session';
 
 /**
  * Alle drei Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`),
@@ -186,6 +190,10 @@ export default function SettingsScreen() {
     setProfile(await setDefaultDirection(direction));
   }, []);
 
+  const chooseLanguage = useCallback(async (language: LanguageCode) => {
+    setProfile(await setLanguage(language));
+  }, []);
+
   /**
    * Ein Anbieterwechsel zieht den Modellnamen mit (siehe `setGeneratorProvider`),
    * eine Modelleingabe nicht — sonst würde jeder Tastendruck den Anbieter
@@ -265,21 +273,27 @@ export default function SettingsScreen() {
   return (
     <ScreenScaffold title="Einstellungen" subtitle="Lernprofil, Inhalte erzeugen, API-Schlüssel">
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Standard-Lernrichtung</ThemedText>
+        <ThemedText type="smallBold">Lernprofil</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Womit der Reiter „Lernen" startet. „Immer fragen" zeigt jedes Mal die
-          Auswahl — sinnvoll, wenn zwei Menschen dasselbe Gerät benutzen oder
-          wenn du beide Richtungen lernst. Die jeweils andere Richtung bleibt
-          immer über „Richtung wechseln" erreichbar.
+          Welche Sprache gelernt wird, und womit der Reiter „Lernen" startet.
+          „Immer fragen" zeigt jedes Mal die Richtungsauswahl — sinnvoll, wenn
+          zwei Menschen dasselbe Gerät benutzen oder wenn du beide Richtungen
+          lernst. Sprache und Richtung bleiben immer auch im Lernen-Bereich
+          selbst wechselbar.
         </ThemedText>
-        <ChoiceRow label="Standard-Lernrichtung">
+        <LanguageSwitch
+          selected={profile?.language ?? 'th'}
+          onSelect={chooseLanguage}
+          label="Sprache"
+        />
+        <ChoiceRow label={`Standard-Lernrichtung (${languageOf(profile?.language ?? 'th').label})`}>
           <Button
             label="Immer fragen"
             onPress={() => chooseDefaultDirection(null)}
             selected={profile !== null && profile.defaultDirection === null}
             disabled={profile === null}
           />
-          {DIRECTIONS.map((direction) => (
+          {directionsFor(profile?.language ?? 'th').map((direction) => (
             <Button
               key={direction}
               label={directionLabel(direction)}
@@ -290,6 +304,8 @@ export default function SettingsScreen() {
           ))}
         </ChoiceRow>
       </ThemedView>
+
+      <DiagnosticsCard />
 
       <GeneratorCard
         heading="Generator: Sprachsituationen"
