@@ -1,31 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { ContentReview } from './content-review';
-import { syncRejections } from './content-client';
+import { View } from 'react-native';
+import { ContentReport } from './content-report';
+import { estimateRunCost } from './run-cost';
+import { exportDrafts, studioRequest } from './content-client';
 import { planDeliveryAudio } from '@/lib/content/audio-plan';
 import { loadExamModules } from '@/lib/repository';
 import type { ExamModule } from '@/lib/exam/types';
 
 import { DiagnosticsCard } from '@/components/diagnostics-card';
 import { GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
-import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { runClipBatch } from '@/lib/clips/batch';
+import { runClipBatch, missingClipSpecs } from '@/lib/clips/batch';
 import { getActiveAudioBlobBackend, getAudioBlobStore } from '@/lib/clips/blob-store';
 import { createClipGenerationClient } from '@/lib/clips/generator';
 import { estimateClipBytes, formatBytes, planClips, planClipTestRun } from '@/lib/clips/plan';
 import { AudioClipSpec } from '@/lib/clips/types';
-import { runGenerationBatch } from '@/lib/conversation/batch';
+import { runGenerationBatch, missingSpecs } from '@/lib/conversation/batch';
 import { ConversationSituation } from '@/lib/conversation/types';
 import { createGenerationClient } from '@/lib/conversation/generator';
 import { FULL_RUN, planSituations } from '@/lib/conversation/plan';
-import { runExamBatch } from '@/lib/exam/batch';
+import { runExamBatch, missingExamSpecs } from '@/lib/exam/batch';
 import { createExamGenerationClient } from '@/lib/exam/generator';
 import { EXAM_FULL_RUN, EXAM_TEST_RUN, planExamModules } from '@/lib/exam/plan';
 import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store';
-import { runImageBatch } from '@/lib/images/batch';
+import { runImageBatch, missingImageSpecs } from '@/lib/images/batch';
 import { createImageGenerationClient } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
 import { vocabularyFor } from '@/data/vocabulary';
@@ -83,7 +82,6 @@ const SITUATION_RUNS: RunOption[] = [
 // (Pflicht 4), aber diese Seite bietet die Wahl noch nicht an - und eine Zahl
 // ohne Sprache waere hier eine stille Falschaussage. Was fehlt, steht in
 // PROGRESS.md unter Phase 16.
-const IMAGE_CANDIDATES = countImageCandidates();
 
 const EXAM_RUNS: RunOption[] = [
   {
@@ -161,6 +159,8 @@ function clipRunOptions(
 }
 
 export default function SettingsScreen() {
+  const [reportRevision, setReportRevision] = useState(0);
+  const [exportMessage, setExportMessage] = useState('');
   const [situations, setSituations] = useState<number | null>(null);
   const [storedSituations, setStoredSituations] = useState<ConversationSituation[]>([]);
   const [clips, setClips] = useState<{ count: number; bytes: number } | null>(null);
@@ -228,9 +228,10 @@ export default function SettingsScreen() {
   );
 
   const startSituations = useCallback(
-    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
-    await syncRejections();
+    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel, confirmRun }: StartArgs) => {
+    await studioRequest('/state');
     const specs = planSituations(optionId === 'full' ? FULL_RUN : { variantsPerCombo: 1 });
+    if (!await confirmRun(estimateRunCost('situations', provider, model, (await missingSpecs(specs)).map(() => ({}))))) return;
     await runGenerationBatch({
       specs,
       client: createGenerationClient(provider, apiKey, model),
@@ -240,16 +241,19 @@ export default function SettingsScreen() {
       // unnötig ins Rate-Limit rennt.
       delayMs: 400,
     });
+    await exportDrafts(setExportMessage);
+    setReportRevision(value => value + 1);
   },
     []
   );
 
   const startImages = useCallback(
-    async ({ optionId, language, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
-    await syncRejections();
+    async ({ optionId, language, apiKey, provider, model, onProgress, shouldCancel, confirmRun }: StartArgs) => {
+    await studioRequest('/state');
     const specs = planImages(
       optionId === 'full' ? { language } : { language, limit: IMAGE_TEST_RUN }
     );
+    if (!await confirmRun(estimateRunCost('images', provider, model, (await missingImageSpecs(specs)).map(() => ({}))))) return;
     await runImageBatch({
       specs,
       client: createImageGenerationClient(provider, apiKey, model),
@@ -259,14 +263,17 @@ export default function SettingsScreen() {
       // entsprechend größer sein.
       delayMs: 800,
     });
+    await exportDrafts(setExportMessage);
+    setReportRevision(value => value + 1);
   },
     []
   );
 
   const startClips = useCallback(
-    async ({ optionId, language, apiKey, provider, model, voice, onProgress, shouldCancel }: StartArgs) => {
-      await syncRejections();
+    async ({ optionId, language, apiKey, provider, model, voice, onProgress, shouldCancel, confirmRun }: StartArgs) => {
+      await studioRequest('/state');
       const specs = clipRunOptions(await loadSituations(), provider, language, await loadExamModules()).specsFor(optionId);
+      if (!await confirmRun(estimateRunCost('audio', provider, model, await missingClipSpecs(specs)))) return;
       await runClipBatch({
         specs,
         client: createClipGenerationClient(provider, apiKey, model, voice),
@@ -274,14 +281,17 @@ export default function SettingsScreen() {
         shouldCancel,
         delayMs: 600,
       });
+      await exportDrafts(setExportMessage);
+      setReportRevision(value => value + 1);
     },
     [storedSituations]
   );
 
   const startExams = useCallback(
-    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel }: StartArgs) => {
-      await syncRejections();
+    async ({ optionId, apiKey, provider, model, onProgress, shouldCancel, confirmRun }: StartArgs) => {
+      await studioRequest('/state');
       const specs = planExamModules(optionId === 'full' ? EXAM_FULL_RUN : EXAM_TEST_RUN);
+      if (!await confirmRun(estimateRunCost('exam', provider, model, (await missingExamSpecs(specs)).map(() => ({}))))) return;
       await runExamBatch({
         specs,
         client: createExamGenerationClient(provider, apiKey, model),
@@ -289,13 +299,16 @@ export default function SettingsScreen() {
         shouldCancel,
         delayMs: 400,
       });
+      await exportDrafts(setExportMessage);
+      setReportRevision(value => value + 1);
     },
     []
   );
 
   return (
     <View style={{ gap: Spacing.three }}>
-      <ContentReview />
+      <ContentReport revision={reportRevision} />
+      <ThemedText accessibilityLiveRegion="polite" type="small">{exportMessage}</ThemedText>
       <DiagnosticsCard />
 
       <GeneratorCard
@@ -383,16 +396,3 @@ export default function SettingsScreen() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.three,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-});

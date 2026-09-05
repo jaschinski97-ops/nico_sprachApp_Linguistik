@@ -41,12 +41,12 @@ function verifyContentAssets(root, exported) {
     }
   }
   return { verifiedAt: new Date().toISOString(),
-    scope: 'Actual checked-in human-approved media, byte-identical in iOS/Android Expo asset manifests and the Web export. Hermes exports are not signed AAB/IPA files or physical device playback.',
+    scope: 'Actual checked-in automatically checked media, byte-identical in iOS/Android Expo asset manifests and the Web export. Hermes exports are not signed AAB/IPA files or physical device playback.',
     media: media.length, rows };
 }
 
 if (require.main === module) {
-  const root = path.resolve(__dirname, '..');
+  const root = path.resolve(__dirname, '../..');
   const report = verifyContentAssets(root, path.resolve(process.argv[2] ?? 'build-verification/production'));
   fs.writeFileSync(path.join(root, 'content/asset-bundling-verification.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ media: report.media, byteComparisons: report.rows.length, platforms: ['ios', 'android', 'web'], allIdentical: true }, null, 2));

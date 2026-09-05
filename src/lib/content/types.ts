@@ -10,13 +10,12 @@ export type ContentDocuments = {
   audio: AudioClip;
   exam: ExamModule;
 };
-export type ContentReview = {
-  status: 'approved' | 'rejected';
-  reviewer: string;
-  reviewedAt: string;
-  reason: string;
-  /** Binds the human decision to metadata AND the final compressed bytes. */
-  digest: string;
+export type ContentCheck = {
+  status: 'passed' | 'failed' | 'unchecked';
+  label: 'automatisch geprüft' | 'ungeprüft' | 'aussortiert';
+  checkedAt: string;
+  scope: 'schema-integrity-decode';
+  tone?: import('./tone-gate').ToneCheck;
 };
 export type ContentEntry<K extends ContentKind = ContentKind> = {
   kind: K;
@@ -26,6 +25,6 @@ export type ContentEntry<K extends ContentKind = ContentKind> = {
   asset?: string;
   sourceBytes?: number;
   byteSize?: number;
-  review?: ContentReview;
+  check?: ContentCheck;
 };
-export type ContentCatalog = { version: 1; entries: ContentEntry[] };
+export type ContentCatalog = { version: 2; entries: ContentEntry[] };

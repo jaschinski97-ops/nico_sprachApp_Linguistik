@@ -58,6 +58,9 @@ export async function resolveClipUri(
   const id = clipIdFor(request.language, request.text);
   const bundled = await bundledAssetUri('audio', id);
   if (bundled) return bundled;
+  // Learning screens must not bypass the delivery gate through old drafts.
+  // Explicit stores are retained only as the dependency seam for isolated tests.
+  if (request.language === 'th' && !store) return null;
   if (!__DEV__ || (!store && !isContentDeveloper())) return null;
   const blobKey = (await clipIndex(store)).get(id);
   if (!blobKey) return null;

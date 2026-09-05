@@ -1,7 +1,6 @@
 import { BatchProgress, missingFrom, runBatch } from '../generation/batch';
 import { BatchTask } from '../generation/types';
 import { DataStore, getStore } from '../storage';
-import { isContentRejected } from '../content/rejections';
 
 import { getImageBlobStore } from './blob-store';
 import { ImageGenerationClient } from './generator';
@@ -42,7 +41,6 @@ export type ImageRunOptions = {
 function imageExists(db: DataStore, blobs: ImageBlobStore) {
   return {
     async exists(spec: ImageSpec) {
-      if (await isContentRejected('images', spec.id, db)) return true;
       const doc = await db.get<VocabImage>('images', spec.id);
       if (!doc) return false;
       return blobs.has(doc.blobKey);

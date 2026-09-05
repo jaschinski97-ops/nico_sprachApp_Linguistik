@@ -2,9 +2,9 @@
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
   "lastUpdated": "2026-09-05",
-  "currentPhase": 19,
-  "currentPhaseName": "Inhalte werden mitgeliefert, nicht vom Nutzer erzeugt",
-  "currentPhaseStatus": "test_content_accepted_full_rollout_deferred_by_user",
+  "currentPhase": 20,
+  "currentPhaseName": "Automatisches Tontor und Strukturpflege; Satzuebungen als TODO",
+  "currentPhaseStatus": "blocks_a_b_complete_block_c_deferred_as_authorized",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -932,51 +932,92 @@
       "phase": 19,
       "criterion": "Generatorlauf auf localhost:8081 erzeugt echten Bestand, der menschlich geprueft ins Repo uebernommen wird",
       "done": true,
-      "verifiedHow": "Echter localhost:8081-Probelauf mit 5 Bildern und 10 Clips. Nutzer bestaetigt im Chat am 05.09.2026 die eigene Pruefung aller 15 Inhalte; Freigabe pro unveraendertem Hash protokolliert und per bestehender Pipeline ins Repo uebernommen. Der Gesamtbestand bleibt gesondert offen."
+      "verifiedHow": "Echter localhost:8081-Probelauf mit 5 Bildern und 10 Clips. Nutzer bestaetigt im Chat am 05.09.2026 die eigene Pruefung aller 15 Inhalte; Freigabe pro unveraendertem Hash protokolliert und per bestehender Pipeline ins Repo uebernommen. Der Gesamtbestand bleibt gesondert offen.",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "Exportpfad fuer Situationen, Bilder, Clips und Aufgaben mit Einzelpruefung und dauerhafter Ablehnung implementiert",
       "done": true,
-      "verifiedHow": "Lokaler Server, SHA-256-Pruefung, MP3 vor Hoerpruefung, einzeln pruefbare Inhalte. Sieben Pipeline-Tests plus Batch-Tests gegen alle vier Anbieterwege; echter Export von 5 Bildern und 10 Clips erfolgreich."
+      "verifiedHow": "Lokaler Server, SHA-256-Pruefung, MP3 vor Hoerpruefung, einzeln pruefbare Inhalte. Sieben Pipeline-Tests plus Batch-Tests gegen alle vier Anbieterwege; echter Export von 5 Bildern und 10 Clips erfolgreich.",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "Gebundene Assets werden durch den bestehenden Resolver bevorzugt",
       "done": true,
-      "verifiedHow": "Alle 15 echten freigegebenen Medien bytegenau in Web-, Android- und iOS-Exporten (45 Vergleiche). Zusaetzlicher Produktionstest mit echtem Katalog: Netz, Laufzeitablage und Systemstimme nicht verfuegbar, alle ausgelieferten Medien aufloesbar."
+      "verifiedHow": "Alle 15 echten freigegebenen Medien bytegenau in Web-, Android- und iOS-Exporten (45 Vergleiche). Zusaetzlicher Produktionstest mit echtem Katalog: Netz, Laufzeitablage und Systemstimme nicht verfuegbar, alle ausgelieferten Medien aufloesbar.",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "Produktionspfad rendert kein Schluesselfeld und enthaelt keinen Generatorcode",
       "done": true,
-      "verifiedHow": "Render-Test mit __DEV__ false; Import des Studios wuerde werfen; 0 TextInput/Generatorprogress. Web-/iOS-/Android-Modulgraphen ohne Generator-/Key-/Providerclients und Browser-Produktionsansicht geprueft."
+      "verifiedHow": "Render-Test mit __DEV__ false; Import des Studios wuerde werfen; 0 TextInput/Generatorprogress. Web-/iOS-/Android-Modulgraphen ohne Generator-/Key-/Providerclients und Browser-Produktionsansicht geprueft.",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "Audiokompression gewaehlt und reale Referenzdateien gemessen, Store-Grenzen offiziell geprueft",
       "done": true,
-      "verifiedHow": "MP3 64 kbit/s mono 24 kHz. Zehn echte Gemini-Clips: 632120 Byte WAV -> 112194 Byte MP3 (-82.25%); alle dekodiert. Zusaetzlich SAPI-Referenz. Google 500 MB Basismodul komprimiert, Apple 4 GB iOS unkomprimiert, abgerufen 05.09.2026. Vollmenge weiter offen."
+      "verifiedHow": "MP3 64 kbit/s mono 24 kHz. Zehn echte Gemini-Clips: 632120 Byte WAV -> 112194 Byte MP3 (-82.25%); alle dekodiert. Zusaetzlich SAPI-Referenz. Google 500 MB Basismodul komprimiert, Apple 4 GB iOS unkomprimiert, abgerufen 05.09.2026. Vollmenge weiter offen.",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "Reale komprimierte Vollmenge gemessen und fuer die Auslieferung bestaetigt",
       "done": false,
       "verifiedHow": "Kein echter Gemini-Vollbestand vorhanden; ~700 MB aus Phase 11 war eine Hochrechnung. Export misst jede Datei; 150-MiB-Budget stoppt ohne Teiluebernahme.",
-      "blocker": "B-19"
+      "blocker": "B-19",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "App ohne Schluessel und Netz vollstaendig mit freigegebenem Inhalt",
       "done": false,
       "verifiedHow": "15 Medien ausgeliefert; content:check meldet 452 fehlende Clips ohne Dialoge, 73 Bilder, 512 Thai-Situationen, keine EN/ES-Gespraeche (AE-48). Vollstaendige EAS-Auslieferung bleibt gesperrt.",
-      "blocker": "B-19; AE-48; B-2; B-5"
+      "blocker": "B-19; AE-48; B-2; B-5",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
     },
     {
       "phase": 19,
       "criterion": "Tests und npx tsc --noEmit gruen; Protokoll und TODO aktualisiert",
       "done": true,
-      "verifiedHow": "724 Tests in 36 Suites und TypeScript gruen. Speicher-Unit-Tests vom wechselnden Inhaltskatalog isoliert; delivered.test.ts prueft den echten Katalog. Drei Produktionsbundles und alle 45 Medienkopien geprueft. 7 bestehende Node-Pipeline-Tests unveraendert."
+      "verifiedHow": "724 Tests in 36 Suites und TypeScript gruen. Speicher-Unit-Tests vom wechselnden Inhaltskatalog isoliert; delivered.test.ts prueft den echten Katalog. Drei Produktionsbundles und alle 45 Medienkopien geprueft. 7 bestehende Node-Pipeline-Tests unveraendert.",
+      "historical": true,
+      "currentStatusNote": "Historischer Phase-19-Nachweis. Ablauf und Lieferbestand durch Phase 20 / AE-58 bis AE-60 ersetzt."
+    },
+    {
+      "phase": 20,
+      "criterion": "F0-Korrektur und automatisches Thai-Tontor",
+      "done": true,
+      "verifiedHow": "Echtes komprimiertes ค่ะ: vorher unmessbar, jetzt -5.10367 st. Zehn neu erzeugte AE-31-Microsoft-Vergleichsclips mit exakt identischen Vorher/Nachher-Messwerten; Originaldateien fehlten. Alle zehn Gemini-Clips gemessen. Neun nicht pruefbare Thai-Clips ausgeschlossen."
+    },
+    {
+      "phase": 20,
+      "criterion": "Eine Kostenbestaetigung, anschliessend automatische Pruefung und Uebernahme",
+      "done": true,
+      "verifiedHow": "GeneratorCard-Test: kein Provider vor Bestaetigung, mehrere Aufrufe danach, Abbruch ohne weitere Aufrufe. Browser zeigt 452 Aufrufe / 0.557 USD geschaetzt, abgebrochen. Keine manuelle Inhaltsfreigabe, kein neuer bezahlter Vollmengenlauf."
+    },
+    {
+      "phase": 20,
+      "criterion": "Block B rein strukturell, Entferntes belegt",
+      "done": true,
+      "verifiedHow": "AST-Importgraph vor/nach B: 194/191 Dateien, 769/763 Kanten; Expo-Plugins, npm-Skripte und Lockfile beruecksichtigt. 728 Jest-Tests und 8 Node-Tests vor/nach B gruen; fuer B keine Assertions geaendert. Acht statische HTML-Seiten identisch."
+    },
+    {
+      "phase": 20,
+      "criterion": "Shadowing, Zeitfenster, Satz-Hoerverstehen, Planung und Satzbildungsbefund",
+      "done": false,
+      "deferredByUserScope": true,
+      "verifiedHow": "Erlaubter sauberer Stopp nach Block B. Vollstaendiger Block-C-Auftrag in PROGRESS.md / nextUp. 84 Beispielsatze laut Datenkopf NICHT einzeln als Satz quellengeprueft."
     }
   ],
   "architectureDecisions": [
@@ -1264,6 +1305,21 @@
       "id": "AE-57",
       "title": "Echte Gemini-Probelaufe und komprimierte Enddateien sind gemessen, Freigabe bleibt menschlich",
       "rationale": "Nutzer bestimmt gemini-3.1-flash-image und gemini-3.1-flash-tts-preview. 5/5 Bilder und 10/10 Clips im bestehenden localhost:8081-Generator ohne Fehler erzeugt und exportiert. generateContent funktioniert ohne API-Umbau. 632120 Byte WAV -> 112194 Byte MP3 (-82.25%); 5 JPEGs zusammen 1910911 Byte. Alle Dateien SHA-256- und dekodiergeprueft. Kein Hochrechnen als Vollmengenmessung, keine automatische Freigabe oder Uebernahme. Schluessel nur in Browser-Sitzung."
+    },
+    {
+      "id": "AE-58",
+      "title": "Schwache Periodizitaet nur als begrenzter Fallback",
+      "rationale": "r >= 0.6 bleibt der sichere Start. Nur ohne vier zusammenhaengende sichere Frames werden Nachbarn ab r >= 0.18 mit hoechstens 2 st pro Schritt fortgesetzt. Keine Luecken, keine isoliert schwachen Starts. Eine breitere Fortsetzung veraenderte Niwat-Konturen und wurde verworfen. Gemeinsamer Kern fuer App und HTML-Messwerkzeug. Kleine Kalibrierstichprobe, kein allgemeiner Qualitaetsnachweis."
+    },
+    {
+      "id": "AE-59",
+      "title": "Maschineller Inhaltscheck ersetzt menschliche Einzelfreigabe",
+      "rationale": "Catalog v2: check statt review, keine Sperrliste. Hash/Bytes/Schema/Asset-Verweise/Decode bleiben. Jeder Thai-Clip wird gemessen; nur exakt verifizierte einsilbige fallende/steigende Ziele koennen positiv passieren. Register ohne Sprecherreferenz und Mehrsilber ohne Zeitsegmentierung bleiben ungeprueft. Fehler/ungeprueft -> kein Lieferclip, System-TTS. Eine Anzahl-/Kostenbestaetigung vor Provideraufrufen; danach automatischer Export und Uebernahme. Nico-Eintraege waren bewusste Nutzertests, kein Vorfall."
+    },
+    {
+      "id": "AE-60",
+      "title": "Content-Werkzeuge zusammengelegt; Block C sauber vertagt",
+      "rationale": "Neun Pipeline-Skripte und Fixtures unter scripts/content, keine Aenderung der Lernlogik in Block B. Ungenutztes expo-device nach Import-/Plugin-/Lockfile-Pruefung entfernt; peer/transitiv benoetigte Pakete behalten. Alte Scaffold- und Einmalmessskripte entfernt, tone-contour.html bleibt. User erlaubt Stopp nach B; Satzuebungen und Recherche bleiben explizite TODOs."
     }
   ],
   "openBlockers": [
@@ -1316,22 +1372,27 @@
     },
     {
       "id": "B-19",
-      "title": "Vollauslieferung vom Nutzer vorerst zurueckgestellt",
+      "title": "Vollbestand noch nicht erzeugt; automatische Pruefung ersetzt Einzelabnahme",
       "affectsPhases": [
         19
       ],
-      "needsUser": true,
-      "note": "Die ersten 5 Gemini-Bilder und 10 Clips wurden vom Nutzer im Chat nach eigener Pruefung freigegeben und ins Repo uebernommen. Alle 15 Medien sind in allen drei Plattformexporten bytegleich. Fuer den Gesamtbestand fehlen weitere Inhalte samt eigener Freigabe; 452 Wort-/Pruefungsclips, 73 Bilder und 512 Thai-Situationen offen. Keine Freigabe fuer zukuenftige ungepruefte Inhalte abgeleitet. AE-48 und B-5/B-2 bleiben offen. ENTSCHEIDUNG 05.09.2026: Automatische Freigabepruefung lehnte den grossen kostenpflichtigen Audiolauf mangels ausdruecklicher Umfangsbestaetigung ab. Der Nutzer hat danach weitere Generierung bis insgesamt 462 Clips/78 Bilder ausdruecklich abgelehnt und moechte vorerst bei den 15 geprueften Testinhalten bleiben. Bereits zusaetzlich gestarteter Bildlauf angehalten: 6 neue ungepruefte Entwuerfe nur in Browserablage. Grosser Audiolauf nicht gestartet. Keine weiteren bezahlten Laeufe ohne neue Nutzeranweisung.",
-      "steps": "Bei den 15 geprueften, uebernommenen Medien bleiben. Erst nach neuer ausdruecklicher Nutzeranweisung weitere bezahlte Laeufe starten. Vollstaendige Phase-19-Abnahme bleibt offen."
+      "needsUser": false,
+      "note": "Aktueller Auftrag ersetzt den frueheren Stop beim Testbestand durch einen Vollmengen-Workflow mit einer Kostenbestaetigung je Lauf. Umbau A/B abgeschlossen; 5 Bilder und 1 Thai-Clip passieren, 9 Thai-Clips ungeprueft ausgeschlossen. 461 Clips, 73 Bilder, 512 Thai-Situationen sowie AE-48 fehlen. Kein bezahlter Vollmengenlauf im Umbau gestartet. Physische Geraete-/Endgroessenpruefung B-2/B-5 bleibt offen.",
+      "steps": "Bei einem gewuenschten Generierungslauf Anzahl und Kosten einmal bestaetigen; automatisch gepruefte Inhalte werden direkt uebernommen. Fuer Thai-Mehrsilber/Register fehlen noch verifizierte Segmentierung/Kalibrierung, daher keine garantierte Vollabdeckung durch mehr Generierung."
     }
   ],
   "nextUp": {
-    "phase": 19,
-    "name": "Geprueften Testbestand beibehalten; Vollauslieferung vorerst zurueckgestellt",
+    "phase": 21,
+    "name": "Block C: Satzproduktion und Hoerverstehen, Recherche und Datenpruefung zuerst",
     "tasks": [
-      "Nutzerentscheidung beachten: keine weiteren bezahlten Inhaltslaeufe. 15 freigegebene Medien bleiben im Repo; 6 weitere Bildentwuerfe nur lokal, nicht zur Auslieferung freigegeben. Vollbestand erst nach neuer Anweisung fortsetzen.",
-      "Vollstaendigen Audioexport messen; kein Hochrechnen der Referenzmessung als Ist-Wert. Bei Budgetueberschreitung Umfang explizit entscheiden.",
-      "content:check gruen bekommen: fehlende Medien und Situationen ergaenzen; AE-48 fuer EN/ES-Gespraeche separat sprachlich klaeren.",
+      "Block C: Declarative-Procedural-Modell, Nation 1989 / 4-3-2, Shadowing-Uebersicht ueber 44 Studien und TBLT-Planungszeit (behauptete g=0.98 gegen 0.28) primaer nachrecherchieren; Behauptungen nicht ungeprueft uebernehmen, Abrufdatum und Quellen belegen.",
+      "Block C: 84 Thai-Beispielsaetze als ganze Saetze pruefen. Datenkopf belegt nur verifizierte Einzelwoerter, keine einzeln verifizierten Saetze; keine falsche Quellenfreigabe vererben.",
+      "Block C: Satzclip-Shadowing, lokale Aufnahme und begrenzte Rueckmeldung auf Phase 12/AE-58 aufbauen. Kein Netz/Upload, keine Aussprache-Gesamtnote oder unbelegtes FSRS-Scoring (AE-32/AE-35).",
+      "Block C: Sinkende Zeitfenster als ausdrueckliche Anpassung von 4/3/2 bauen. Wechselndes Gegenueber fehlt; nicht abgedeckten Teil des belegten Effekts erklaeren. Verpflichtende, nicht abschaltbare Vorbereitungsphase vor der Produktion.",
+      "Block C: Satz hoeren und Bedeutung pruefen spielbar machen, erst auf verifiziertem Satzbestand und mit ehrlich behandelter Clip-/System-TTS-Abdeckung.",
+      "Block C: Satzbildung aus vorhandenem Wortschatz systematisch auf Luecken untersuchen, insbesondere Thai-Klassifikatoren und korrekte Wortstellung. Neue Sprachdaten nur mit Quellendisziplin aus Phase 2. Keine unpruefte Uebernahme der Mango-Beispielformulierung.",
+      "Block C: Im UI Grenze benennen, dass kein unvorhersehbares Gegenueber vorhanden ist. Erst feature-komplett und automatisiert geprueft um manuelle Tests bitten.",
+      "Vollbestand nur nach einer Kostenbestaetigung je konkretem Lauf erzeugen, tatsaechliche Endgroesse messen; content:check und AE-48 bleiben Release-Gates.",
       "B-2/B-5: echte Android-/iOS-Installation offline inklusive Kaltstart/Cachebereinigung; Store-Endgroessen am echten Build messen.",
       "B-6 + B-2 zusammen: Clips fuer eine Sprache erzeugen und auf dem Geraet abspielen. Erst dann ist belegt, dass die Hoeruebungen ohne Systemstimme laufen - im Testbrowser ist WEDER eine spanische NOCH eine englische Stimme installiert.",
       "Pruefungsmodule fuer Englisch und Spanisch (Cambridge/IELTS, DELE/Cervantes): eigene Recherche wie Phase 7, eigene Phase. Der Pruefungs-Screen filtert noch nicht nach Sprache.",
@@ -1339,7 +1400,6 @@
       "Beispielsaetze fuer Englisch und Spanisch mit der Disziplin aus Phase 2. Bisher gibt es nur bei spanischen Substantiven die Wortgruppe aus Artikel und Wort.",
       "Offener Befund: Ob die F0-Messung aus Phase 12 spanische Betonung erkennen kann, ist NICHT geprueft (AE-48). Vor einem Umbau der Sprechuebung messen, nicht annehmen.",
       "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2)",
-      "B-6: Probelauf Hoerclips mit gueltigem Gemini-Schluessel - danach die zehn Clips in scripts/tone-contour.html ziehen und die Toene messen (AE-31)",
       "B-5: EAS-Konto, dann Android-APK bauen (schliesst B-2 fuer Android mit)",
       "B-4: Bilder-Probelauf mit gueltigem Stability-Schluessel",
       "B-2: nativ zusaetzlich pruefen, ob ChatGPT ohne CORS funktioniert (AE-27), und physisches PCM der Sprechuebung pruefen (AE-34)",
@@ -1710,8 +1770,6 @@
     "catalog": "src/content/catalog.json",
     "assets": "assets/content/",
     "staticReferences": "src/content/assets.ts",
-    "reviews": "per item, named human, timestamp, SHA-256 of final media and metadata",
-    "rejections": "content/rejections.json; permanent per-kind/per-ID; checked before provider request",
     "production": "__DEV__ conditional require removed from all three production module graphs; studio outside Expo Router; no key field or generator control",
     "audio": {
       "format": "MP3",
@@ -1720,9 +1778,7 @@
       "channels": 1,
       "sampleRate": 24000,
       "measuredSample": {
-        "source": "5 German Windows SAPI/Hedda sentences, NOT Gemini or human-approved learning content",
-        "sourceBytes": 1414190,
-        "compressedBytes": 239265
+        "source": "Historical SAPI measurement retained in git history / AE-52; superseded by current real Gemini measurements."
       },
       "fullCorpusMeasured": false,
       "measuredGeminiTest": {
@@ -1736,6 +1792,15 @@
         "durationMs": 13160,
         "reductionPercent": 82.25,
         "fullCorpus": false
+      },
+      "calibration": {
+        "report": "content/tone-calibration.json",
+        "geminiClips": 10,
+        "microsoftReproductions": 10,
+        "originalMicrosoftFilesAvailable": false,
+        "reproducedAt": "2026-09-05",
+        "manifest": "scripts/content/fixtures/tones/index.json",
+        "allMicrosoftMeasurementsUnchanged": true
       }
     },
     "contentBudgetBytes": 157286400,
@@ -1743,47 +1808,40 @@
     "storeLimitsChecked": "2026-09-05",
     "googlePlayBaseCompressedMB": 500,
     "appleIOSUncompressedGB": 4,
-    "approvedGeneratedEntries": 15,
     "currentMissing": {
-      "audioBeforeDialogues": 452,
+      "audioBeforeDialogues": 461,
       "images": 73,
       "thaiSituations": 512,
       "enEsConversations": true
     },
     "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
-    "nativeEvidence": "15 echte menschlich freigegebene Medien in Web-/iOS-/Android-Exporten bytegleich (45 Vergleiche), Hermes-Exports erstellt; kein signiertes AAB/IPA oder physisches Playback.",
+    "nativeEvidence": "6 aktuelle Medien in Web-/iOS-/Android-Exporten bytegleich (18 Vergleiche); kein signiertes AAB/IPA oder physisches Playback.",
     "tests": {
-      "jest": 724,
-      "suites": 36,
-      "nodePipeline": 7,
-      "typeScript": "pass"
+      "jest": 728,
+      "suites": 39,
+      "nodePipeline": 8,
+      "typeScript": "pass",
+      "staticPagesUnchangedAcrossBlockB": 8
     },
     "complete": false,
     "blocker": "B-19 plus existing B-2/B-5 and AE-48",
-    "pendingReview": {
-      "images": 0,
-      "audio": 0,
-      "situations": 0,
-      "exam": 0,
-      "location": ".content-studio/",
-      "approved": 15
+    "catalogVersion": 2,
+    "automaticChecks": {
+      "report": "content/automatic-checks.json",
+      "passed": 6,
+      "failed": 0,
+      "unchecked": 9,
+      "toneGate": "f0-hysteresis-1",
+      "releasePolicy": "Thai requires passed tone check; failed/unchecked excluded; System-TTS fallback also in developer learning screens",
+      "limits": "Pitch only. No consonant/vowel-length/aspiration quality claim. Register needs speaker reference; multi-syllable needs verified timed segmentation; System-TTS itself unchecked."
     },
-    "humanApproval": {
-      "date": "2026-09-05",
-      "reviewer": "Projektinhaber (Chat-Freigabe)",
-      "scope": "15 Testmedien aus content/gemini-probelauf-2026-09-05.json",
-      "source": "hab alles geprüft und ich fande es sehr gut.",
-      "publishedEntries": 15,
-      "budgetBytes": 2038225
-    },
+    "costConfirmation": "One count/cost confirmation before provider calls. Known exact Gemini models have dated tariff assumptions; unknown models require a user estimate. No per-item review.",
     "rolloutDecision": {
       "date": "2026-09-05",
-      "decision": "Nein, vorerst bei den geprüften Testinhalten bleiben",
-      "shippedScope": "5 freigegebene Bilder und 10 freigegebene Clips",
-      "furtherPaidGenerationAuthorized": false,
-      "additionalUnreviewedLocalImages": 6,
-      "additionalImagesLocation": "Browser-Laufzeitablage, nicht exportiert und nicht ausgeliefert",
-      "audioFullRunStarted": false
+      "decision": "Automatischer Vollmengen-Workflow mit einer Kostenbestaetigung ersetzt Einzelpruefung. Sauberer Stopp nach A/B erlaubt, C TODO.",
+      "paidFullRunStartedDuringRefactor": false,
+      "additionalLocalImages": 6,
+      "additionalImagesLocation": "Browser; werden bei einem kuenftigen Lauf automatisch mitgeprueft."
     }
   }
 }

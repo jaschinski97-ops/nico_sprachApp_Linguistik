@@ -1,7 +1,6 @@
 import { BatchProgress, missingFrom, runBatch } from '../generation/batch';
 import { BatchTask } from '../generation/types';
 import { DataStore, getStore } from '../storage';
-import { isContentRejected } from '../content/rejections';
 
 import { ExamGenerationClient } from './generator';
 import { ExamSpec } from './plan';
@@ -28,7 +27,6 @@ export type ExamRunOptions = {
 function examExists(db: DataStore) {
   return {
     async exists(spec: ExamSpec) {
-      if (await isContentRejected('exam', spec.id, db)) return true;
       return (await db.get<ExamModule>('exam', spec.id)) !== null;
     },
   };

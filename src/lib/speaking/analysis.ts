@@ -1,11 +1,14 @@
 /**
  * Lokale F0-Konturmessung fuer die Sprechuebung.
  *
- * Die Rechenschritte sind eine direkte TypeScript-Uebertragung aus
- * `scripts/tone-contour.html` (Phase 11, AE-31): 40-ms-Fenster, 10-ms-Schritt,
+ * Urspruenglich aus dem Messwerkzeug (Phase 11, AE-31) uebertragen;
+ * `scripts/tone-contour.html` verwendet jetzt diesen gemeinsamen Kern.
+ * 40-ms-Fenster, 10-ms-Schritt,
  * normierte Autokorrelation von 70 bis 400 Hz, Energie- und
  * Korrelationsschwelle, Medianfilter (3), laengste stimmhafte Strecke,
  * einmalige grobe Oktavkorrektur und 8 % Beschnitt an beiden Raendern.
+ * Ohne sichere Vier-Fenster-Strecke erlaubt AE-58 eine eng begrenzte
+ * Fortsetzung schwacher Periodizitaet; vorhandene sichere Strecken bleiben.
  *
  * Dieses Modul kennt weder Aufnahme-APIs noch TTS oder Netzwerkzugriffe. Es
  * bekommt ausschliesslich Mono-PCM und liefert Messwerte zurueck.
@@ -18,6 +21,9 @@ export const F0_HOP_SECONDS = 0.01;
 export const F0_MIN_HZ = 70;
 export const F0_MAX_HZ = 400;
 export const F0_MIN_CORRELATION = 0.6;
+/** Weak frames may CONTINUE a confidently voiced track, never seed one. */
+export const F0_CONTINUATION_CORRELATION = 0.18;
+export const F0_MAX_STEP_SEMITONES = 2;
 export const F0_MIN_RELATIVE_RMS = 0.08;
 export const OCTAVE_RATIO = 1.8;
 export const CONTOUR_EDGE_TRIM = 0.08;
@@ -39,6 +45,8 @@ export type F0Frame = {
   rms: number;
   /** Grundfrequenz in Hz; 0 bedeutet: in diesem Fenster nicht stimmhaft. */
   f0: number;
+  /** Best normalized correlation, retained even when the frame is rejected. */
+  correlation?: number;
 };
 
 export type SixPointContour = [number, number, number, number, number, number];
@@ -142,7 +150,7 @@ export function downsampleForF0(
  * Kopie der urspruenglichen F0-Werte, damit ein ersetzter Nachbar nicht die
  * naechste Ersetzung beeinflusst.
  */
-export function autocorrF0(samples: ArrayLike<number>, sampleRate: number): F0Frame[] {
+export function autocorrF0(samples: ArrayLike<number>, sampleRate: number, recoverWeakVoicing = true): F0Frame[] {
   if (!Number.isFinite(sampleRate) || sampleRate <= 0) {
     throw new RangeError('sampleRate muss eine positive Zahl sein.');
   }
@@ -164,6 +172,7 @@ export function autocorrF0(samples: ArrayLike<number>, sampleRate: number): F0Fr
     frames.push({ t: start / sampleRate, start, rms, f0: 0 });
   }
 
+  const candidates = new Map<F0Frame, number>();
   for (const frame of frames) {
     if (frame.rms < F0_MIN_RELATIVE_RMS * maxRms) continue;
 
@@ -186,7 +195,30 @@ export function autocorrF0(samples: ArrayLike<number>, sampleRate: number): F0Fr
         bestLag = lag;
       }
     }
+    frame.correlation = best;
+    if (best >= F0_CONTINUATION_CORRELATION) candidates.set(frame, sampleRate / bestLag);
     if (best >= F0_MIN_CORRELATION) frame.f0 = sampleRate / bestLag;
+  }
+
+  // Short dead syllables can lose periodicity while their F0 falls smoothly.
+  // Hysteresis preserves that continuation without accepting a whole low-r
+  // noise track. No gaps, octave jumps, or isolated weak runs are bridged.
+  // A valid strict run wins. Extending every run polluted Niwat's otherwise
+  // measurable contours in the AE-31 reproduction; recovery is a fallback
+  // only for recordings that would otherwise have no four-frame run at all.
+  if (recoverWeakVoicing && !longestRun(frames)) {
+    for (const direction of [1, -1]) {
+      for (let i = direction === 1 ? 1 : frames.length - 2;
+        i >= 0 && i < frames.length; i += direction) {
+        const frame = frames[i];
+        const previous = frames[i - direction];
+        const candidate = candidates.get(frame);
+        if (!frame.f0 && previous?.f0 && candidate &&
+          Math.abs(semitones(candidate, previous.f0)) <= F0_MAX_STEP_SEMITONES) {
+          frame.f0 = candidate;
+        }
+      }
+    }
   }
 
   const originalF0 = frames.map((frame) => frame.f0);
@@ -348,10 +380,11 @@ export function matchesToneShape(tone: Tone, summary: ToneContourSummary): boole
 export function analyzeToneContour(
   samples: ArrayLike<number>,
   sampleRate: number,
-  referenceHz?: number
+  referenceHz?: number,
+  recoverWeakVoicing = true
 ): ToneContourMeasurement {
   const prepared = downsampleForF0(samples, sampleRate);
-  const frames = autocorrF0(prepared.samples, prepared.sampleRate);
+  const frames = autocorrF0(prepared.samples, prepared.sampleRate, recoverWeakVoicing);
   const voicedMs = frames.filter((frame) => frame.f0 > 0).length * 10;
   const run = longestRun(frames);
 

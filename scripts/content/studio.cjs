@@ -1,7 +1,7 @@
 const http = require('node:http');
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const { ContentPipeline } = require('./content-pipeline.cjs');
+const { ContentPipeline } = require('./pipeline.cjs');
 const ORIGIN = 'http://localhost:8081';
 function createStudio(root) {
   const pipeline = new ContentPipeline(root);
@@ -31,7 +31,7 @@ function createStudio(root) {
         res.writeHead(200, { 'Content-Type': name.endsWith('.mp3') ? 'audio/mpeg' : 'image/' + name.split('.').pop(), 'Content-Length': bytes.length });
         res.end(bytes); return;
       }
-      if (req.method !== 'POST' || !['/stage','/review','/publish'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
+      if (req.method !== 'POST' || !['/stage','/publish'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
       if (req.headers.origin !== ORIGIN || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
       let size = 0; const parts = [];
       for await (const chunk of req) {
@@ -40,7 +40,7 @@ function createStudio(root) {
         parts.push(chunk);
       }
       const data = JSON.parse(Buffer.concat(parts).toString('utf8'));
-      const action = () => req.url === '/stage' ? pipeline.stage(data) : req.url === '/review' ? pipeline.review(data) : pipeline.publish();
+      const action = () => req.url === '/stage' ? pipeline.stage(data) : pipeline.publish();
       const operation = queue.then(action);
       queue = operation.catch(() => {});
       json(200, await operation);
@@ -48,7 +48,7 @@ function createStudio(root) {
   });
 }
 if (require.main === module) {
-  createStudio(path.resolve(__dirname, '..')).listen(8082, '127.0.0.1', () => {
+  createStudio(path.resolve(__dirname, '../..')).listen(8082, '127.0.0.1', () => {
     console.log('Inhaltsstudio bereit. App: http://localhost:8081/settings · nur Loopback, keine API-Schlüssel im Export.');
   });
 }

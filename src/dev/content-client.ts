@@ -2,13 +2,13 @@ import { getStore } from '@/lib/storage';
 import { getAudioBlobStore } from '@/lib/clips/blob-store';
 import { getImageBlobStore } from '@/lib/images/blob-store';
 import { isContentDeveloper } from '@/lib/content/developer';
-import type { ContentCatalog, ContentKind } from '@/lib/content/types';
+import type { ContentCatalog, ContentEntry } from '@/lib/content/types';
 
 export const STUDIO_URL = 'http://127.0.0.1:8082';
 export type StudioState = {
   stage: ContentCatalog;
   shipped: ContentCatalog;
-  rejected: { entries: { kind: ContentKind; id: string }[] };
+  report: { limitations?: string; entries: (ContentEntry['check'] & { kind: string; id: string; text?: string })[] };
 };
 export async function studioRequest<T>(path: string, data?: unknown): Promise<T> {
   if (!isContentDeveloper()) throw new Error('Inhaltsstudio nur lokal im Entwicklerbetrieb.');
@@ -22,20 +22,12 @@ export async function studioRequest<T>(path: string, data?: unknown): Promise<T>
   if (!response.ok) throw new Error(result.error ?? 'Inhaltsexport fehlgeschlagen.');
   return result as T;
 }
-export async function syncRejections(): Promise<StudioState> {
-  const state = await studioRequest<StudioState>('/state');
-  const db = await getStore();
-  for (const item of state.rejected.entries) await db.put('meta', `content-rejected:${item.kind}:${item.id}`, true);
-  return state;
-}
-
 /** One item at a time; never collect the complete PCM corpus in memory/JSON. */
 export async function exportDrafts(onProgress: (message: string) => void): Promise<void> {
-  const state = await syncRejections();
-  const denied = new Set(state.rejected.entries.map((entry) => `${entry.kind}:${entry.id}`));
+  await studioRequest<StudioState>('/state');
   const db = await getStore();
   let exported = 0;
-  let skipped = 0;
+
   const failures: string[] = [];
   for (const kind of ['situations', 'exam', 'images', 'audio'] as const) {
     const docs = await db.getAll<unknown>(kind);
@@ -48,8 +40,7 @@ export async function exportDrafts(onProgress: (message: string) => void): Promi
         }
         id = document.id;
         if (kind === 'exam' && 'source' in document && document.source === 'builtin') continue;
-        if (denied.has(`${kind}:${id}`)) { skipped++; continue; }
-        onProgress(`${exported} exportiert · ${skipped} gesperrt · ${kind}: ${id}`);
+        onProgress(`${exported} exportiert · Prüfung läuft · ${kind}: ${id}`);
         let base64: string | undefined;
         if (kind === 'audio' || kind === 'images') {
           const blobs = kind === 'audio' ? await getAudioBlobStore() : await getImageBlobStore();
@@ -63,5 +54,7 @@ export async function exportDrafts(onProgress: (message: string) => void): Promi
       } catch (error) { failures.push(`${kind}:${id}: ${error instanceof Error ? error.message : String(error)}`); }
     }
   }
-  onProgress(`${exported} exportiert · ${skipped} gesperrt · ${failures.length} Fehler` + (failures.length ? `\n${failures.join('\n')}` : ''));
+  await studioRequest('/publish', {});
+  onProgress(`${exported} exportiert · Prüfbericht aktualisiert · ${failures.length} Exportfehler` + (failures.length ? `\n${failures.join('\n')}` : ''));
+  if (failures.length) throw new Error(failures.join('\n'));
 }

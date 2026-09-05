@@ -57,12 +57,6 @@ export type LearnerProfile = {
   conversation: Direction | null;
 };
 
-const EMPTY_PROFILE: LearnerProfile = {
-  language: defaultLanguage(),
-  review: null,
-  conversation: null,
-};
-
 /**
  * Ist das eine Richtung, die es wirklich gibt?
  *

@@ -27,9 +27,9 @@
 <div id="order"></div>
 <h2>Wie gemessen wird</h2>
 <ul>
-  <li>Dekodierung über Web Audio (<code>decodeAudioData</code>), Mono, Originalabtastrate.</li>
+  <li>Dekodierung über Web Audio (<code>decodeAudioData</code>), Mono, lokale Vorverarbeitung auf höchstens 8 kHz wie in der App.</li>
   <li>F0 je 40-ms-Fenster (Schritt 10 ms) über <em>normierte Autokorrelation</em>, Suchbereich 70–400 Hz;
-      stimmhaft, wenn Korrelation ≥ 0,6 und Energie ≥ 8 % des Maximums. Medianfilter (3) gegen Ausreißer.</li>
+      Sicherer Start bei Korrelation ≥ 0,6 und Energie ≥ 8 % des Maximums. Nur wenn keine sichere Strecke von vier Fenstern existiert: Fortsetzung ab r ≥ 0,18 ohne Lücke und mit höchstens 2 Halbtönen Sprung je 10 ms. Medianfilter (3) gegen Ausreißer.</li>
   <li><strong>Oktavkorrektur:</strong> Werte über dem 1,8-fachen bzw. unter dem 1/1,8-fachen des Median der
       Strecke werden halbiert bzw. verdoppelt — die typische Autokorrelationsfalle am Silbenanfang.</li>
   <li>Bewertet wird die längste zusammenhängende stimmhafte Strecke, <strong>ohne die ersten und letzten 8 %</strong>
@@ -46,93 +46,17 @@
 <ul>
   <li>Autokorrelation kann bei Rauschen, Nasalen und sehr kurzen Silben irren; die Oktavkorrektur fängt nur den groben Fall.</li>
   <li>Formzuordnung und Ordnungsprüfung sind Heuristiken. „passt" heißt: die Kontur widerspricht dem Ton nicht.</li>
-  <li>Vokallänge, Stimmqualität, Silbenendrand und die Wahrnehmung durch Muttersprachler werden nicht bewertet.</li>
+  <li>Konsonanten, Vokallänge, Aspiration, Stimmqualität und Wahrnehmung durch Muttersprachler werden nicht bewertet. Filter gegen grobe Fehler, kein Qualitätsnachweis.</li>
+  <li>Mehrsilbige Wörter und Sätze: Die längste Strecke ist keine Silbensegmentierung (AE-7/AE-8). Ohne verifizierte zeitliche Silbengrenzen ungeprüft.</li>
+  <li>Die gemeinsame Stimmenreferenz dieses Messwerkzeugs ist explorativ. Das Auslieferungstor verwendet keinen unkalibrierten TTS-Median zum Bestehen von Registertönen.</li>
 </ul>
+<script src="tone-analysis.js"></script>
 <script>
 const TONE_LABEL = { mid: 'mittel', low: 'tief', falling: 'fallend', high: 'hoch', rising: 'steigend' };
 
-function autocorrF0(samples, sr) {
-  const win = Math.round(0.040 * sr), hop = Math.round(0.010 * sr);
-  const minLag = Math.floor(sr / 400), maxLag = Math.ceil(sr / 70);
-  const frames = [];
-  let maxRms = 0;
-  for (let start = 0; start + win + maxLag <= samples.length; start += hop) {
-    let e = 0;
-    for (let i = 0; i < win; i++) e += samples[start + i] * samples[start + i];
-    const rms = Math.sqrt(e / win);
-    maxRms = Math.max(maxRms, rms);
-    frames.push({ t: start / sr, start, rms });
-  }
-  for (const f of frames) {
-    f.f0 = 0;
-    if (f.rms < 0.08 * maxRms) continue;
-    let best = 0, bestLag = 0;
-    for (let lag = minLag; lag <= maxLag; lag++) {
-      let num = 0, d1 = 0, d2 = 0;
-      for (let i = 0; i < win; i++) {
-        const a = samples[f.start + i], b = samples[f.start + i + lag];
-        num += a * b; d1 += a * a; d2 += b * b;
-      }
-      const r = num / (Math.sqrt(d1 * d2) || 1);
-      if (r > best) { best = r; bestLag = lag; }
-    }
-    if (best >= 0.6) f.f0 = sr / bestLag;
-  }
-  const f0s = frames.map((f) => f.f0);
-  for (let i = 1; i < frames.length - 1; i++) {
-    const trio = [f0s[i - 1], f0s[i], f0s[i + 1]].filter((v) => v > 0).sort((a, b) => a - b);
-    if (trio.length === 3) frames[i].f0 = trio[1];
-  }
-  return frames;
-}
-
-function longestRun(frames) {
-  let runs = [], cur = [];
-  for (const f of frames) { if (f.f0 > 0) cur.push(f); else { if (cur.length) runs.push(cur); cur = []; } }
-  if (cur.length) runs.push(cur);
-  runs.sort((a, b) => b.length - a.length);
-  return runs[0] && runs[0].length >= 4 ? runs[0] : null;
-}
-
-function octaveCorrect(run) {
-  const sorted = run.map((f) => f.f0).sort((a, b) => a - b);
-  const med = sorted[Math.floor(sorted.length / 2)];
-  return run.map((f) => {
-    let f0 = f.f0;
-    if (f0 > med * 1.8) f0 /= 2;
-    else if (f0 < med / 1.8) f0 *= 2;
-    return { ...f, f0 };
-  });
-}
-
-function trimEdges(run, fraction) {
-  const cut = Math.floor(run.length * fraction);
-  return run.length - 2 * cut >= 4 ? run.slice(cut, run.length - cut) : run;
-}
-
-const st = (hz, ref) => 12 * Math.log2(hz / ref);
-
-function summarize(span, ref) {
-  const n = span.length;
-  const at = (p) => st(span[Math.min(n - 1, Math.round(p * (n - 1)))].f0, ref);
-  const pts = [0, 0.2, 0.4, 0.6, 0.8, 1].map(at);
-  const all = span.map((f) => st(f.f0, ref));
-  const mean = all.reduce((a, b) => a + b, 0) / n;
-  return { pts, start: pts[0], end: pts[5], min: Math.min(...all), max: Math.max(...all), mean,
-           slope: pts[5] - pts[0], durMs: Math.round((span[n - 1].t - span[0].t) * 1000) };
-}
-
-/** Passt die Kontur zum erwarteten Ton? Heuristik, bewusst grob. */
-function matches(tone, s) {
-  switch (tone) {
-    case 'mid':     return Math.abs(s.slope) < 3 && Math.abs(s.mean) < 2.5;
-    case 'low':     return s.mean < -0.5 && s.slope < 1.5;
-    case 'falling': return s.slope < -3 && s.max > s.end + 3;
-    case 'high':    return s.end > 0 && s.end >= s.start - 1;
-    case 'rising':  return s.end - s.min > 3 && s.end > s.start - 0.5;
-  }
-  return false;
-}
+const { autocorrF0, longestRun, octaveCorrect, trimEdges,
+  semitones: st, summarizeContour: summarize, matchesTone: matches,
+  downsampleForF0 } = globalThis.ToneAnalysis;
 
 /** Ordnungsprüfung ohne Schwellen: gilt die erwartete Rangfolge innerhalb einer Stimme? */
 function orderChecks(byTone) {
@@ -176,7 +100,8 @@ async function analyze(items) {
     status.textContent = `analysiere ${it.file} …`;
     try {
       const { samples, sr, seconds } = await decode(it.buffer);
-      const frames = autocorrF0(samples, sr);
+      const prepared = downsampleForF0(samples, sr);
+      const frames = autocorrF0(prepared.samples, prepared.sampleRate);
       const voicedMs = frames.filter((f) => f.f0 > 0).length * 10;
       const run = longestRun(frames);
       const span = run ? trimEdges(octaveCorrect(run), 0.08) : null;

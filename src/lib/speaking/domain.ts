@@ -17,6 +17,7 @@ export const SPEAKING_LIMITATIONS = [
   'Bewertet wird nur die Tonhöhenkontur.',
   'Konsonanten, Vokallänge und Aspiration werden nicht geprüft.',
   'Die lokale F0-Messung ist eine Heuristik und kann besonders bei Rauschen, Nasalen und sehr kurzen Silben irren.',
+  'Nur wenn keine ausreichend lange sichere Tonspur gefunden wird, werden schwach korrelierte Fenster als sprungfreie Fortsetzung berücksichtigt; das verhindert nicht alle Messfehler.',
   'Die einmalige 1,8-fache Oktavkorrektur fängt nur grobe Einzelsprünge; mehrere oder überwiegende Oktavfehler können bestehen bleiben.',
   'Ohne eine persönliche Referenz aus mehreren Aufnahmen wird nur die Konturform verglichen; die absolute Lage von mittel, tief und hoch ist dann nicht kalibriert.',
 ] as const;

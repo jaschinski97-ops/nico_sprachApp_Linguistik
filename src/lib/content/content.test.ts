@@ -13,7 +13,7 @@ import { planDeliveryAudio } from './audio-plan';
 import { BUILTIN_EXAM_MODULES } from '../../data/exam-modules';
 import { VOCABULARY } from '../../data/vocabulary';
 
-test('rejections skip all four provider clients, even with empty draft and blob stores', async () => {
+test('obsolete rejection markers cannot suppress any of the four provider clients', async () => {
   const db = new MemoryDataStore();
   await db.init();
   const situation = planSituations({ variantsPerCombo: 1 })[0];
@@ -30,8 +30,8 @@ test('rejections skip all four provider clients, even with empty draft and blob 
     await runExamBatch({ specs: [exam], client: { generate }, store: db }),
     await runClipBatch({ specs: [audio], client: { generate }, store: db, blobStore: new MemoryBlobStore(AUDIO_BLOB_CONFIG) }),
   ];
-  for (const outcome of outcomes) expect(outcome).toMatchObject({ skipped: 1, ok: 0, failed: 0 });
-  expect(generate).not.toHaveBeenCalled();
+  for (const outcome of outcomes) expect(outcome).toMatchObject({ skipped: 0, ok: 0, failed: 1 });
+  expect(generate).toHaveBeenCalledTimes(4);
 });
 
 test('delivery audio covers every card, example, built-in hearing text and spoken model answer', () => {

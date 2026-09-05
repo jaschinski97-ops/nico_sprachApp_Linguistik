@@ -1,40 +1,46 @@
 const fs = require('node:fs');
 const path = require('node:path');
-const { digestOf, assertDocument, BUDGET, keyOf } = require('./content-pipeline.cjs');
-const domain = require('./content-domain.cjs');
+const { digestOf, assertDocument, BUDGET, keyOf } = require('./pipeline.cjs');
+const domain = require('./domain.cjs');
 const { planDeliveryAudio } = domain.load('src/lib/content/audio-plan');
 const { BUILTIN_EXAM_MODULES } = domain.load('src/data/exam-modules');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { planSituations, FULL_RUN } = domain.load('src/lib/conversation/plan');
+const { checkThaiTone } = domain.load('src/lib/content/tone-gate');
+const { decodeAudio, decodeImage } = require('./media.cjs');
+const { createHash } = require('node:crypto');
 
 function checkContent(root, { integrityOnly = false } = {}) {
   const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/content/catalog.json'), 'utf8'));
-  const ledger = JSON.parse(fs.readFileSync(path.join(root, 'content/rejections.json'), 'utf8'));
   const errors = [];
   const seen = new Set();
   const assetMap = fs.readFileSync(path.join(root, 'src/content/assets.ts'), 'utf8');
   let audioSourceBytes = 0;
   let audioCompressedBytes = 0;
   let contentBytes = 0;
-  if (catalog.version !== 1 || !Array.isArray(catalog.entries)) throw Error('Unbekannte Katalogversion.');
+  if (catalog.version !== 2 || !Array.isArray(catalog.entries)) throw Error('Unbekannte Katalogversion.');
   for (const entry of catalog.entries) {
     try {
       assertDocument(entry.kind, entry.document);
       if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
       seen.add(keyOf(entry));
-      if (ledger.entries.some((item) => keyOf(item) === keyOf(entry))) throw Error('Verworfener Inhalt im Katalog.');
-      if (entry.review?.status !== 'approved' || !entry.review.reviewer?.trim() || !entry.review.reviewedAt || entry.review.digest !== entry.digest) throw Error('Menschliche Freigabe fehlt.');
+      if (entry.review || entry.check?.status !== 'passed' || entry.check.label !== 'automatisch geprüft' || !entry.check.checkedAt) throw Error('Automatische Prüfung fehlt.');
       const media = entry.kind === 'audio' || entry.kind === 'images';
       if (media && !entry.asset) throw Error('Mediendatei fehlt.');
       if (entry.asset && !/^[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(entry.asset)) throw Error('Unsicherer Assetpfad.');
       if (entry.asset && !assetMap.includes(`${JSON.stringify(entry.asset)}: require('../../assets/content/${entry.asset}')`)) throw Error('Statischer Expo-Asset-Verweis fehlt.');
       const bytes = entry.asset ? fs.readFileSync(path.join(root, 'assets/content', entry.asset)) : Buffer.alloc(0);
-      if (digestOf(entry.kind, entry.document, bytes) !== entry.digest) throw Error('Datei oder Metadaten nach Freigabe geändert.');
+      if (digestOf(entry.kind, entry.document, bytes) !== entry.digest) throw Error('Datei oder Metadaten geändert.');
+      if (media && createHash('sha256').update(bytes).digest('hex') + '.' + entry.document.format !== entry.asset) throw Error('Asset-Hash stimmt nicht.');
       if (media && (bytes.length !== entry.byteSize || bytes.length !== entry.document.byteSize)) throw Error('Falsche Größenangabe.');
       if (entry.kind === 'audio') {
         if (entry.document.format !== 'mp3' || !entry.asset.endsWith('.mp3')) throw Error('Unkomprimiertes Audio.');
         audioSourceBytes += entry.sourceBytes;
         audioCompressedBytes += bytes.length;
+        const tone = checkThaiTone(entry.document, decodeAudio(path.join(root, 'assets/content', entry.asset)), 24000);
+        if (entry.check.tone?.status !== tone.status || ['failed', 'unchecked'].includes(tone.status)) throw Error('Thai-Tontor nicht bestanden: ' + tone.reason);
+      } else if (entry.kind === 'images') {
+        decodeImage(path.join(root, 'assets/content', entry.asset));
       }
       contentBytes += bytes.length + Buffer.byteLength(JSON.stringify(entry));
     } catch (error) { errors.push(`${entry.kind}:${entry.id}: ${error.message}`); }
@@ -48,7 +54,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
   const missingSituations = planSituations(FULL_RUN).filter((spec) => !seen.has(`situations:${spec.id}`));
   if (!integrityOnly) {
     if (missingAudio.length) errors.push(`${missingAudio.length}/${neededAudio.length} benötigte Hörclips fehlen (auch Deutsch und Prüfungen). System-TTS ist kein garantierter Offline-Ersatz.`);
-    if (missingImages.length) errors.push(`${missingImages.length} konkrete Vokabeln ohne freigegebenes Bild.`);
+    if (missingImages.length) errors.push(`${missingImages.length} konkrete Vokabeln ohne automatisch geprüftes Bild.`);
     if (missingSituations.length) errors.push(`${missingSituations.length} Situationen des vollständigen Thai-Plans fehlen. Keine Teilmenge als Vollmenge ausgeben.`);
     // The existing EN/ES situation prompt is intentionally Thai-only (AE-48).
     // Keep this visible as a completeness blocker instead of silently treating
@@ -61,7 +67,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
     audioSourceBytes, audioCompressedBytes, missing: { audio: missingAudio.map((spec) => spec.id), images: missingImages.map((entry) => entry.id), situations: missingSituations.map((spec) => spec.id) }, errors };
 }
 if (require.main === module) {
-  const result = checkContent(path.resolve(__dirname, '..'), { integrityOnly: process.argv.includes('--integrity-only') });
+  const result = checkContent(path.resolve(__dirname, '../..'), { integrityOnly: process.argv.includes('--integrity-only') });
   console.log(JSON.stringify({ ...result, missing: Object.fromEntries(Object.entries(result.missing).map(([kind, ids]) => [kind, ids.length])) }, null, 2));
   process.exitCode = result.errors.length ? 1 : 0;
 }

@@ -32,6 +32,7 @@ import {
 } from '@/data/tts-voices';
 import { LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
+import type { RunEstimate } from '@/dev/run-cost';
 
 /**
  * Eine Generator-Karte: Anbieterwahl, Modellfeld, Schlüsselfeld, Umfangwahl,
@@ -75,6 +76,7 @@ export type StartArgs = {
   voice: string;
   onProgress: (progress: BatchProgress) => void;
   shouldCancel: () => boolean;
+  confirmRun: (estimate: RunEstimate) => Promise<boolean>;
 };
 
 type Props = {
@@ -134,6 +136,18 @@ export function GeneratorCard({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const cancelRef = useRef(false);
+  const startingRef = useRef(false);
+  const confirmation = useRef<((accepted: boolean) => void) | null>(null);
+  const [estimate, setEstimate] = useState<RunEstimate | null>(null);
+  const [customCost, setCustomCost] = useState('');
+
+  useEffect(() => () => { cancelRef.current = true; confirmation.current?.(false); }, []);
+  function answerEstimate(accepted: boolean) {
+    const resolve = confirmation.current;
+    confirmation.current = null;
+    setEstimate(null);
+    resolve?.(accepted);
+  }
 
   const groupInfo = GENERATOR_GROUP_INFO[group];
   const provider = choice.provider;
@@ -166,10 +180,13 @@ export function GeneratorCard({
   }, [provider]);
 
   const start = useCallback(async () => {
+    if (startingRef.current) return;
+    startingRef.current = true;
     setNotice(null);
     const apiKey = key.trim() || (await loadApiKey(provider));
     if (!apiKey) {
       setNotice('Erst einen API-Schlüssel eintragen.');
+      startingRef.current = false;
       return;
     }
 
@@ -191,17 +208,24 @@ export function GeneratorCard({
             : '',
         onProgress: setProgress,
         shouldCancel: () => cancelRef.current,
+        confirmRun: (next) => new Promise<boolean>((resolve) => {
+          setCustomCost(''); setEstimate(next); confirmation.current = resolve;
+        }),
       });
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
       setRunning(false);
+      startingRef.current = false;
       await onFinished();
     }
   }, [key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
+    confirmation.current?.(false);
+    confirmation.current = null;
+    setEstimate(null);
   }, []);
 
   const remove = useCallback(async () => {
@@ -416,6 +440,15 @@ export function GeneratorCard({
           <Button label="Start" onPress={start} />
         )}
       </View>
+
+      {estimate ? <View style={styles.field}>
+        <ThemedText type="smallBold">{estimate.count} Anbieteraufrufe · {provider} · {choice.model}</ThemedText>
+        <ThemedText type="small">{estimate.basis}</ThemedText>
+        {estimate.usd === null ? <TextInput accessibilityLabel="Geschätzte Gesamtkosten in USD" value={customCost} onChangeText={setCustomCost} keyboardType="decimal-pad" placeholder="Gesamtschätzung USD" /> :
+          <ThemedText type="smallBold">Geschätzte Kosten: {estimate.usd.toFixed(3)} USD</ThemedText>}
+        <Button label="Kosten bestätigen und Lauf starten" disabled={estimate.usd === null && (!customCost.trim() || !Number.isFinite(Number(customCost.replace(',', '.'))) || Number(customCost.replace(',', '.')) <= 0)} onPress={() => answerEstimate(true)} />
+        <Button label="Abbrechen" onPress={() => answerEstimate(false)} />
+      </View> : null}
 
       {progress ? <ProgressPanel progress={progress} /> : null}
 

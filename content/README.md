@@ -1,160 +1,118 @@
-# Inhalte mit der App ausliefern
+# Automatisch geprüfte Inhalte ausliefern
 
-Die Generatoren sind Entwicklerwerkzeuge. Sie erscheinen ausschließlich im
-Web-Entwicklungsbuild auf `http://localhost:8081/settings`. Release-Bundles
-enthalten weder diese Oberfläche noch die Anbieter- und Schlüsselmodule.
+Die Generatoren laufen im Web-Entwicklungsbuild auf `http://localhost:8081/settings`.
+Release-Bundles enthalten weder Studio noch Anbieterclients oder Schlüsselfelder.
 
-## Lokaler Ablauf
+## Ein Lauf
 
-1. `npm ci` ausführen. `ffmpeg-static` ist nur eine Entwicklungsabhängigkeit;
-   der Encoder wird weder in die App noch ins Repo kopiert.
-2. In einem Terminal `npm run content:studio` starten, in einem zweiten
-   `npx expo start --web --localhost --port 8081`.
-3. In den lokalen Einstellungen den benötigten Anbieterschlüssel für diese
-   Sitzung eintragen und zunächst den **Probelauf** starten. Schlüssel gehören
-   weder in Dateien noch in `EXPO_PUBLIC_*`. Nach einem Reload erneut eingeben.
-4. **Laufzeitdaten exportieren und Audio komprimieren** übernimmt Dokumente aus
-   dem bestehenden Speicher und Mediendaten aus IndexedDB einzeln nach
-   `.content-studio/`. Dieser Ordner ist ignoriert. Kein Sammel-JSON mit dem
-   gesamten PCM-Bestand entsteht. Fehler werden mit ID aufgelistet.
-5. Den eigenen Prüfernamen eintragen. Jede Situation und Prüfungsaufgabe
-   vollständig lesen, jedes Bild ansehen, jeden **bereits komprimierten** Clip
-   bis zum Ende anhören. Metadaten, Prompt/Modell, Transkript, Original- und
-   MP3-Größe stehen beim Inhalt. **Einzeln** freigeben oder mit Grund ablehnen.
-   Es gibt keine Sammelfreigabe. Die prüfende Person verantwortet sprachliche
-   Richtigkeit, Tonverläufe, Bildpassung und Hörqualität; ein technischer Test
-   ist keine menschliche Prüfung.
-6. **Freigegebenes ins Repo übernehmen** schreibt die unveränderlichen Medien
-   nach `assets/content/`, den geprüften Katalog nach `src/content/catalog.json`
-   und statische `require`-Verweise nach `src/content/assets.ts`. Die Ist-Größen
-   stehen danach in `content/size-report.json`. Ungeprüfte und abgelehnte
-   Einträge werden mit Anzahl ausgewiesen, nicht stillschweigend ausgeliefert.
-7. Für die vollständige Vertonung im Cliplauf bewusst **Auslieferung: alle
-   Sprachen und Deutsch** wählen. Dieser Plan ergänzt den bisherigen Plan um
-   deutsche Kartenwörter, Hörtexte der Prüfungen und gesprochene Musterantworten.
-   Er verwendet den aktuellen Dialog- und Aufgabenbestand. Anschließend die
-   neuen Clips wieder exportieren, anhören und einzeln prüfen.
-8. `npm run content:check`, `npm test -- --runInBand`,
-   `npm run test:content-pipeline` und `npx tsc --noEmit` ausführen.
-   Katalog, Asset-Verweise, Medien, Größenbericht und Ablehnungsliste gemeinsam
-   committen. Neue Inhalte kommen über neue App-Binaries.
+1. `npm ci`, dann `npm run content:studio` und in einem zweiten Terminal
+   `npx expo start --web --localhost --port 8081` starten.
+2. Anbieter, Modell, Sprache und Umfang wählen, Sitzungsschlüssel eintragen und
+   **Start** drücken. Schlüssel bleiben im Browser-Arbeitsspeicher; keine Keys
+   in Dateien, Logs oder `EXPO_PUBLIC_*` schreiben.
+3. Vor dem ersten Anbieteraufruf erscheinen die noch fehlende Anzahl und die
+   Kostenschätzung. **Kosten bestätigen und Lauf starten** bestätigt einmal
+   den ganzen Lauf. Für unbekannte Modelltarife ist eine eigene Gesamtschätzung
+   erforderlich. Bekannte Gemini-Tarife und Dauer-/Tokenannahmen stehen dabei;
+   die Schätzung ist keine Kostenobergrenze.
+4. Danach folgen Generierung, Einzelexport, MP3-Kompression, automatische
+   Prüfung und Katalogübernahme ohne weitere Freigabe. Fehler werden gesammelt;
+   der lesbare Prüfbericht unterscheidet übernommen, aussortiert und ungeprüft.
+   Bestehende lokale Entwürfe werden ebenfalls geprüft. Abbrechen stoppt weitere
+   Generierungsaufrufe; bereits erzeugte Inhalte durchlaufen die Prüfungen.
 
-## Ablehnung und Änderungen
+Es gibt keinen Prüfernamen, keine Hörpflicht, keine Freigabetaste und keine
+dauerhafte Sperrliste mehr. Die drei alten Einträge mit „nico“ und leerem Grund
+waren bewusste Nutzertests. AE-59 ersetzt das Verfahren aus Phase 19.
 
-`content/rejections.json` enthält dauerhafte Sperren je Inhaltsart und stabiler
-ID. Vor jedem Generatorstart wird die Repo-Liste mit der lokalen Metadatenablage
-abgeglichen. Die vier bestehenden Batch-Läufer überspringen diese IDs **vor**
-jedem Anbieteraufruf. Das Löschen von Entwürfen oder Browserdaten hebt eine
-Ablehnung nicht auf. Ein bereits übernommener Inhalt wird bei Ablehnung aus
-dem nächsten Katalog entfernt; alte installierte App-Versionen ändern sich
-erst mit einem Update.
+## Was geprüft wird
 
-Eine abgelehnte ID wird nicht automatisch durch einen neuen Versuch ersetzt.
-Eine spätere redaktionelle Neubewertung braucht eine bewusste Änderung der
-versionierten Sperre samt Begründung und erneute Inhaltsprüfung. Der Generator
-selbst bietet kein Zurücksetzen der Sperre an.
+Schema, IDs, SHA-256 von Metadaten und Dateien, Bytezahlen, Asset-Verweise und
+Dekodierbarkeit bleiben technische Prüfungen. SHA-256 schützt Integrität und
+bindet keine menschliche Freigabe. Audio wird vor der Tonmessung mit FFmpeg nach
+MP3, 64 kbit/s, mono, 24 kHz konvertiert und wieder dekodiert.
 
-Freigaben binden SHA-256 von Metadaten und endgültigen Mediendaten. Ändert sich
-ein Entwurf, ist eine neue Prüfung erforderlich. Vor der Übernahme wird der
-gesamte freigegebene Bestand nochmals auf Schema, Hash und Bytes geprüft.
-Lernkarten, FSRS-Zustände, Profil und Tagesprotokoll werden nie exportiert.
+Jeder Thai-Clip erhält eine F0-Messung aus demselben Kern wie die lokale
+Sprechübung. Ein positiver Tonbefund braucht einen exakt passenden,
+quellengeprüften einsilbigen Vokabeleintrag samt `syllables[0].tone`.
+Fallend/steigend sind relativ prüfbar. Mittel/tief/hoch bleiben ohne kalibrierte
+Sprecherreferenz ungeprüft; ein deutlicher Fall beim hohen Sollton kann bereits
+als Widerspruch aussortiert werden. Mehrsilbige Wörter und Sätze bleiben ohne
+verifizierte zeitliche Silbengrenzen ungeprüft (AE-7/AE-8).
 
-## Bündelung und Offline-Prüfung
+**Filter gegen grobe Tonhöhenfehler, kein Qualitätsnachweis:** Konsonanten,
+Vokallänge und Aspiration werden nicht geprüft. Für Bilder/Text bedeutet
+„automatisch geprüft“ ausschließlich Schema/Integrität/Dekodierbarkeit, keine
+sprachliche oder inhaltliche Qualitätsprüfung. Ungeprüfte oder durchgefallene
+Thai-Clips gelangen nicht in den Lieferkatalog; dort verwendet die App
+System-TTS. Auch lokale Thai-Entwürfe umgehen dieses Tor nicht. System-TTS ist
+selbst ungeprüft und keine garantierte Offline-Stimme.
 
-Der bestehende Aussprache-Resolver bleibt erhalten: gebündelter Clip zuerst,
-lokaler Entwurf ausschließlich im Entwicklerbetrieb, danach System-TTS.
-Produktion liest Situationen, Bilder, Clips und zusätzliche Prüfungsaufgaben
-aus dem freigegebenen Katalog. Alte lokale Entwürfe können sie nicht verdrängen.
-Das Vokabular und die acht vorhandenen Prüfungsaufgaben bleiben erhalten.
+Beim Abspielen bleibt **„KI-Stimme, keine Muttersprachler-Aufnahme“** sichtbar.
+Mikrofonanalyse bleibt lokal; FSRS, Lernfortschritt und Vokabel-IDs bleiben
+unverändert. Das Studio exportiert keine Lernerdaten.
 
-Statische `require`-Verweise werden von Metro in die nativen App-Ressourcen
-übernommen; `expo-asset` löst sie dort lokal auf. Es gibt keinen Inhaltsserver
-für Endnutzer. Ein Web-Export benötigt weiterhin einen lokalen/statischen
-Webserver und ist keine neu hinzugefügte Offline-PWA.
+## Berichte und reproduzierbare Prüfungen
 
-`npm run content:integrity` prüft Schema, menschliche Freigabe, Hash, Bytes und
-statische Asset-Verweise. `npm run content:check` verlangt darüber hinaus den
-vollständigen bekannten Bestand. Der EAS-Hook sperrt Preview-/Release-Builds
-bei fehlender Vollständigkeit; Entwicklungsbuilds bleiben möglich. Ein direkter
-`expo export` ist nur eine technische Bundle-Prüfung und keine Freigabe zur
-Auslieferung. System-TTS zählt wegen möglicherweise fehlender Stimmen nicht
-als garantierte Offline-Abdeckung.
-
-Produktionsnachweis:
+- `automatic-checks.json`: Status, Grund, verifiziertes Tonziel, Konturwerte und
+  vollständige F0-Spuren des letzten übernommenen/ausgeschlossenen Bestands.
+- `tone-calibration.json`: zehn Gemini-Clips vorher/nachher und zehn Microsoft-
+  Vergleichsclips. Die Originaldateien aus AE-31 waren nicht mehr vorhanden.
+  `scripts/content/fixtures/tones/index.json` dokumentiert ausdrücklich neue
+  Reproduktionen derselben fünf Wörter mit Premwadee und Niwat vom 05.09.2026,
+  einschließlich Dateihashes. Kein Vergleich mit den ursprünglichen Bytes.
+- `size-report.json`: aktuelle echte Liefergröße, kein hochgerechneter Vollbestand.
+- `structure-audit.json` und `structure-render-comparison.json`: Importgraph,
+  Abhängigkeitsprüfung und acht identische statisch gerenderte Seiten vor/nach B.
+- `production-verification.json` und `asset-bundling-verification.json`:
+  Generatorausschluss und bytegleiche gebündelte Medien für alle drei Plattformen.
 
 ```sh
+npm test -- --runInBand
+npm run test:content-pipeline
+npx tsc --noEmit
+npm run content:integrity
+npm run content:tone-tool
+npm run content:measure-tones
+npm run audit:structure
 npx expo export --platform all --source-maps --output-dir build-verification/production
 npm run verify:production
-node scripts/verify-content-assets.cjs
+node scripts/content/verify-assets.cjs
 ```
 
-Das Prüfskript kontrolliert alle drei Modulgraphen sowie JS/HTML auf
-Generator-/Schlüsselfeld- und Anbietercode. Der Jest-Test rendert zusätzlich
-den Produktionspfad mit `__DEV__ = false`.
+`scripts/tone-contour.html` bleibt als Messwerkzeug erhalten. Sein generiertes
+`tone-analysis.js` stammt aus `src/lib/speaking/analysis.ts`; nach Änderungen
+`node scripts/build-tone-tool.cjs` ausführen, der Check verhindert Abweichungen.
+Die aktuelle Korrektur ergänzt nur dann schwach periodische Nachbarfenster
+(r ≥ 0,18, maximal 2 Halbtöne je Schritt), wenn r ≥ 0,6 keine vier zusammenhängenden
+Fenster findet. Sie beginnt nie an einem schwachen Fenster und überbrückt keine
+Lücken. Vorhandene sichere Verläufe werden nicht verlängert (AE-58).
 
-## Audiomessung und Größenbudget
+## Lieferstand und offene Abnahme
 
-MP3, `libmp3lame`, 64 kbit/s, Mono, 24 kHz. Kompression findet auf dem
-Entwicklungsrechner statt, vor der Hörprüfung. Roh-WAV bleibt außerhalb des
-Repos. Fünf lokale SAPI-Sprachclips mit Microsoft Hedda Desktop wurden real
-komprimiert: **1.414.190 → 239.265 Byte**, **83,08 % weniger**. Einzeldateien und
-Prüfsummen: [compression-measurement.json](compression-measurement.json).
-Dies ist ein deutsches Referenzsample, **kein Gemini-Gesamtbestand und kein
-Thai-Qualitätsnachweis**. Die ca. 700 MB aus Phase 11 waren eine Hochrechnung.
+Am 05.09.2026: **5 Bilder und 1 Thai-Clip** automatisch übernommen, **9 Thai-Clips
+ungeprüft ausgeschlossen**. ค่ะ ist jetzt messbar (−5,10 Halbtöne; vorher keine
+ausreichende Strecke). Alle zehn Microsoft-Reproduktionen behalten exakt ihre
+bisherigen Messergebnisse. Die zehn ursprünglichen Gemini-Mediendateien bleiben
+als Messbeleg erhalten; ausschließlich statisch referenzierte Dateien werden
+gebündelt. `gemini-probelauf-2026-09-05.json` ist historische Herkunftsevidenz.
 
-Reproduzierbar unter Windows:
+`content:integrity` ist grün. `content:check` verlangt zusätzlich Vollständigkeit
+und bleibt absichtlich rot: 461 Clips bereits ohne Dialoge, 73 Bilder und 512
+Thai-Situationen fehlen, außerdem der Sprachvertrag für EN/ES-Gespräche (AE-48).
+Der EAS-Hook sperrt unvollständige Preview-/Release-Builds. Ein technischer
+Expo-Export ist keine vollständige Release-Abnahme.
 
-```powershell
-powershell -NoProfile -File scripts/measure-sapi.ps1
-node scripts/measure-audio.cjs .content-studio/measurement-source .content-studio/measurement-mp3 "Lokale SAPI-Referenz, kein Gemini-Lauf"
-```
+Das Inhaltsbudget beträgt 150 MiB einschließlich Metadaten. Überschreitung
+stoppt die gesamte Übernahme; keine stille Kürzung. Vollmenge, signierte
+AAB-/IPA-Endgrößen und echtes Offline-Playback auf Geräten bleiben offen
+(B-19/B-2/B-5). Ein neuer kostenpflichtiger Vollmengenlauf wurde bei diesem
+Umbau nicht gestartet. Block C ist mit allen Anforderungen in PROGRESS.md als
+TODO festgehalten; insbesondere sind die 84 Beispielsätze laut Datenkopf
+**nicht als ganze Sätze einzeln quellengeprüft**.
 
-`measure-audio.cjs` akzeptiert auch einen Ordner echter generierter WAV/MP3-Dateien.
-Die tatsächliche Messung des kompletten Entwicklerlaufs steht noch aus.
-
-Am **05.09.2026** offiziell geprüft: [Google Play](https://support.google.com/googleplay/android-developer/answer/9859372?hl=en)
-nennt **500 MB** komprimierten Download pro Basismodul, **4 GB** insgesamt für
-Module plus Install-time-Asset-Packs. Über 200 MB erscheint ein Mobilfunkhinweis;
-200 MB ist hier nicht mehr die harte Basismodulgrenze.
-[Apple](https://developer.apple.com/help/app-store-connect/reference/app-uploads/maximum-build-file-sizes/)
-nennt **4 GB unkomprimierte iOS-App**, daneben 500 MB für die Summe der
-`__TEXT`-Sektionen des ausführbaren Codes, nicht für Medien.
-
-Lokales Inhaltsbudget: **150 MiB einschließlich Katalogmetadaten**, damit Platz
-für Framework, Code und sonstige Assets bleibt. Das ist ein Projektbudget,
-keine behauptete Store-Grenze. Überschreitung stoppt die gesamte Übernahme;
-es gibt keine automatische Teilmenge. Der volle reale Bestand muss gemessen
-werden. Falls er nicht passt, sind Umfang oder ein späteres Nachladeverfahren
-gesondert zu entscheiden. Native AAB-/IPA-Endgrößen bleiben B-5.
-
-## Aktueller Abnahmestand
-
-Die technische Pipeline, Tests, Produktionsausschluss und Asset-Exporte sind
-geprüft. Seit dem 05.09.2026 sind **5 echte Gemini-Bilder und 10 echte Gemini-Clips**
-nach menschlicher Prüfung und ausdrücklicher Chat-Freigabe ins Repo übernommen.
-Beide Probeläufe liefen ohne Fehler. Die Clips
-wurden von **632.120 Byte WAV auf 112.194 Byte MP3** komprimiert (-82,25 %).
-Alle 15 Dateien wurden technisch dekodiert und bytegenau in den drei
-Plattformexporten nachgewiesen. Einzelmessungen: `gemini-probelauf-2026-09-05.json`
-(historischer Stand vor Freigabe), Freigaben im Katalog, aktuelle Größen in
-`size-report.json`. Neue Inhalte benötigen eine eigene Prüfung.
-Es fehlen bereits ohne Dialog-Clips **452 Clips**, **73 Bilder**, **512
-Thai-Situationen** sowie Gespräche für Englisch/Spanisch (AE-48). Letztere
-brauchen weiterhin einen eigenen Sprachvertrag; Phase 19 erfindet ihn nicht.
-Der Vollständigkeitscheck schlägt deshalb absichtlich fehl. Phase 19 und die
-Offline-Vollständigkeit sind noch **nicht abgenommen**.
-
-Der Nutzer möchte seit dem 05.09.2026 ausdrücklich **vorerst bei den 15
-geprüften Testinhalten bleiben**. Keine weiteren bezahlten Generatorläufe ohne
-neue Anweisung. Sechs beim angehaltenen Zusatzlauf entstandene Bildentwürfe
-liegen nur im Browser und sind nicht zur Auslieferung freigegeben.
-
-Technische Testfreigaben und Platzhalter liegen ausschließlich unter dem
-ignorierten `build-verification/`; sie sind kein ausgeliefertes Lernmaterial.
-
-Quellen zur Umsetzung: [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/),
-[Asset API 57](https://docs.expo.dev/versions/v57.0.0/sdk/asset/),
-[lokale Asset-Bündelung](https://docs.expo.dev/develop/user-interface/assets/),
-[Entfernung von Entwicklungscode](https://docs.expo.dev/guides/tree-shaking/),
+Umsetzungsquellen: [Expo SDK 57](https://docs.expo.dev/versions/v57.0.0/),
 [Audio API 57](https://docs.expo.dev/versions/v57.0.0/sdk/audio/),
-[FFmpeg MP3-Encoder](https://ffmpeg.org/ffmpeg-codecs.html#libmp3lame-1).
+[Asset API 57](https://docs.expo.dev/versions/v57.0.0/sdk/asset/),
+[Gemini-Preise](https://ai.google.dev/gemini-api/docs/pricing)
+(Tarife am 05.09.2026 abgerufen).

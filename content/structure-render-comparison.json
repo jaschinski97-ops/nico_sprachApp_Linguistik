@@ -1,0 +1,53 @@
+{
+  "scope": "Static rendered HTML, script and link assets removed; not an interactive device check",
+  "pages": [
+    {
+      "page": "+not-found.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "2b9a73c6e527b6cead1beeab662285533196d9e6ac9d571b0d6307832dc64fa8",
+      "afterHash": "2b9a73c6e527b6cead1beeab662285533196d9e6ac9d571b0d6307832dc64fa8"
+    },
+    {
+      "page": "conversation.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "f6f74a8607e3c3c2648c9297f9e113319721e661b2b46fefb87371b5055d64ab",
+      "afterHash": "f6f74a8607e3c3c2648c9297f9e113319721e661b2b46fefb87371b5055d64ab"
+    },
+    {
+      "page": "exam.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "ae7a671b2ae81ffbe65ff2f4cea10a9e2f0226eb017c42135b6adff5e39f55a7",
+      "afterHash": "ae7a671b2ae81ffbe65ff2f4cea10a9e2f0226eb017c42135b6adff5e39f55a7"
+    },
+    {
+      "page": "index.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "ca277cdf778bcbfcc38057d83c6d36abefce6885d7f35271e6a08612b52dd17d",
+      "afterHash": "ca277cdf778bcbfcc38057d83c6d36abefce6885d7f35271e6a08612b52dd17d"
+    },
+    {
+      "page": "progress.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "5f1008db3e45026bbe773e803a8790d039757d138b3b2638670600feac99bcfa",
+      "afterHash": "5f1008db3e45026bbe773e803a8790d039757d138b3b2638670600feac99bcfa"
+    },
+    {
+      "page": "review.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "b2eb5049346e273e20d2708372e6c469d834cb28f8d660c2ef08c9baae55547d",
+      "afterHash": "b2eb5049346e273e20d2708372e6c469d834cb28f8d660c2ef08c9baae55547d"
+    },
+    {
+      "page": "settings.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "0c19fc56f93e9f91468e9df52b15875a29169a6d4d9aa861943a24b02a44b388",
+      "afterHash": "0c19fc56f93e9f91468e9df52b15875a29169a6d4d9aa861943a24b02a44b388"
+    },
+    {
+      "page": "_sitemap.html",
+      "identicalRenderedHtml": true,
+      "beforeHash": "2b9a73c6e527b6cead1beeab662285533196d9e6ac9d571b0d6307832dc64fa8",
+      "afterHash": "2b9a73c6e527b6cead1beeab662285533196d9e6ac9d571b0d6307832dc64fa8"
+    }
+  ]
+}

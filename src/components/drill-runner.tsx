@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
@@ -10,7 +10,6 @@ import { useToneColor } from '@/hooks/use-theme';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciation } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
-import { languageOf } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
 import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
@@ -176,7 +175,6 @@ export function DrillRunner({
           <PlayBlock
             question={question}
             voiceMissing={voiceMissing}
-            languageLabel={languageOf(language).label}
           />
         ) : null}
 
@@ -275,12 +273,9 @@ export function DrillRunner({
 function PlayBlock({
   question,
   voiceMissing,
-  languageLabel,
 }: {
   question: DrillQuestion;
   voiceMissing: boolean;
-  /** „Thai", „Spanisch", „Englisch" — für die Meldung, wenn die Stimme fehlt. */
-  languageLabel: string;
 }) {
   const speak = question.speak!;
   const [hasClip, setHasClip] = useState(false);

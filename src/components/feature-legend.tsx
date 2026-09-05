@@ -76,7 +76,6 @@ const STRESS_ROWS: { rule: StressRow['rule']; label: string; detail: string }[] 
 ];
 
 function StressLegend({ compact }: { compact: boolean }) {
-  const toneColor = useToneColor();
 
   // Beispiele aus dem Grundstock statt aus dem Kopf: das erste mehrsilbige
   // Wort, auf das die jeweilige Regel greift.

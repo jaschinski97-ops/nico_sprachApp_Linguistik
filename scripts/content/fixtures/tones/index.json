@@ -1,0 +1,112 @@
+[
+  {
+    "file": "edge_Premwadee_maa_mid.mp3",
+    "word": "มา",
+    "engine": "microsoft-edge",
+    "voice": "Premwadee",
+    "tone": "mid",
+    "sha256": "4d1c7a14e2c046db15c4a3de26e2f0c9c298998eb31fdf65bd45a4c7608d0855",
+    "byteSize": 9504,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Premwadee_maa_high.mp3",
+    "word": "ม้า",
+    "engine": "microsoft-edge",
+    "voice": "Premwadee",
+    "tone": "high",
+    "sha256": "a9a7e937466115bd0004fe87519efa6849dc36eb5e8809508a461bbfb8c9fc4c",
+    "byteSize": 9504,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Premwadee_maa_rising.mp3",
+    "word": "หมา",
+    "engine": "microsoft-edge",
+    "voice": "Premwadee",
+    "tone": "rising",
+    "sha256": "b4e12541ccd6d5430ec1a54f9db224fb21ec8149bd1878487f53f0b874ef75f3",
+    "byteSize": 9504,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Premwadee_mai_falling.mp3",
+    "word": "ไม่",
+    "engine": "microsoft-edge",
+    "voice": "Premwadee",
+    "tone": "falling",
+    "sha256": "52389dbb203b77ebd7ca24a0333b6766d7d4eca0b2a9e994b6bfd36b1f5c2a03",
+    "byteSize": 9792,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Premwadee_mai_low.mp3",
+    "word": "ใหม่",
+    "engine": "microsoft-edge",
+    "voice": "Premwadee",
+    "tone": "low",
+    "sha256": "dfcc4846dde8a7d979b8dd9df4aa97f37b179c5237f08b0f31aa3bb6d11b793e",
+    "byteSize": 9504,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Niwat_maa_mid.mp3",
+    "word": "มา",
+    "engine": "microsoft-edge",
+    "voice": "Niwat",
+    "tone": "mid",
+    "sha256": "e1736577d513002a528b80036c57ea521724049171043f08623ec287f8f2fad5",
+    "byteSize": 8496,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Niwat_maa_high.mp3",
+    "word": "ม้า",
+    "engine": "microsoft-edge",
+    "voice": "Niwat",
+    "tone": "high",
+    "sha256": "8a4e86e4e6ff0fde057d37a3777b59090b9242da201f5c96ac55b814915e1dde",
+    "byteSize": 8352,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Niwat_maa_rising.mp3",
+    "word": "หมา",
+    "engine": "microsoft-edge",
+    "voice": "Niwat",
+    "tone": "rising",
+    "sha256": "58c4090080acc0dcb8fd6538264e9ab6dc71030f531b4049fe22e231940711e4",
+    "byteSize": 8496,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Niwat_mai_falling.mp3",
+    "word": "ไม่",
+    "engine": "microsoft-edge",
+    "voice": "Niwat",
+    "tone": "falling",
+    "sha256": "d09b48eb7c295bab636f397375313107f417a973148751d683d3be5d0f9bfcbb",
+    "byteSize": 8352,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  },
+  {
+    "file": "edge_Niwat_mai_low.mp3",
+    "word": "ใหม่",
+    "engine": "microsoft-edge",
+    "voice": "Niwat",
+    "tone": "low",
+    "sha256": "14edc0f328c3f135ba388a16a3efec035877a19c9aed1495e769bf920a179dc2",
+    "byteSize": 7632,
+    "generatedAt": "2026-09-05",
+    "provenance": "New reproduction of AE-31 words/voices; original temporary files are missing. edge-tts 7.2.8; default rate/pitch/volume. Technical regression fixture, never app content."
+  }
+]

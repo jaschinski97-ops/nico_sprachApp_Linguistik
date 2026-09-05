@@ -7,19 +7,19 @@ import { installClipLookup } from '../clips/lookup';
 
 jest.mock('../../content/catalog.json', () => {
   const { clipIdFor } = require('../clips/types');
-  return { version: 1, entries: [
-    { kind: 'situations', id: 'approved', digest: 'good', document: { id: 'approved', title: 'Bundled' }, review: { status: 'approved', digest: 'good' } },
+  return { version: 2, entries: [
+    { kind: 'situations', id: 'approved', digest: 'good', document: { id: 'approved', title: 'Bundled' }, check: { status: 'passed' } },
     { kind: 'situations', id: 'pending', digest: 'pending', document: { id: 'pending' } },
-    { kind: 'situations', id: 'rejected', digest: 'bad', document: { id: 'rejected' }, review: { status: 'rejected', digest: 'bad' } },
-    { kind: 'situations', id: 'altered', digest: 'new', document: { id: 'altered' }, review: { status: 'approved', digest: 'old' } },
-    { kind: 'audio', id: clipIdFor('en', 'hello'), digest: 'audio', document: { id: clipIdFor('en', 'hello') }, asset: 'test.mp3', review: { status: 'approved', digest: 'audio' } },
-    { kind: 'images', id: 'house', digest: 'image', document: { id: 'house' }, asset: 'test.png', review: { status: 'approved', digest: 'image' } },
+    { kind: 'situations', id: 'rejected', digest: 'bad', document: { id: 'rejected' }, check: { status: 'failed' } },
+    { kind: 'situations', id: 'altered', digest: 'new', document: { id: 'altered' }, check: { status: 'unchecked' } },
+    { kind: 'audio', id: clipIdFor('en', 'hello'), digest: 'audio', document: { id: clipIdFor('en', 'hello') }, asset: 'test.mp3', check: { status: 'passed' } },
+    { kind: 'images', id: 'house', digest: 'image', document: { id: 'house' }, asset: 'test.png', check: { status: 'passed' } },
   ] };
 });
 jest.mock('../../content/assets', () => ({ CONTENT_ASSETS: { 'test.mp3': 1, 'test.png': 2 } }));
 jest.mock('expo-asset', () => ({ Asset: { fromModule: jest.fn((id: number) => ({ downloadAsync: async () => ({ localUri: `file:///embedded/${id}`, uri: 'https://must-not-use.invalid' }) })) } }));
 
-test('only reviewed current documents load and the bundle wins over stale drafts', () => {
+test('only automatically checked documents load and the bundle wins over stale drafts', () => {
   expect(bundledDocuments('situations').map((doc) => doc.id)).toEqual(['approved']);
   expect(preferBundled('situations', [{ id: 'approved', title: 'Stale' } as never])[0].title).toBe('Bundled');
 });

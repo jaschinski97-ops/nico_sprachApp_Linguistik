@@ -4944,3 +4944,169 @@ Es bleibt damit beim freigegebenen und gebündelten Bestand aus **15 Medien**.
 Weitere Generierung benötigt eine neue ausdrückliche Nutzeranweisung; die
 sechs zusätzlichen Entwürfe sind nicht freigegeben und werden nicht ausgeliefert.
 Die vollständige Phase 19 ist zurückgestellt, nicht als erledigt markiert.
+
+## Phase 20 — Automatisches Tontor und Strukturpflege (05.09.2026)
+
+**Aktueller Auftrag ersetzt den bisherigen Freigabeablauf.** Die drei
+„nico“-Freigaben mit leerer Begründung waren bewusste Nutzertests, kein Vorfall.
+Block A und B sind umgesetzt; vom ausdrücklich erlaubten Stopp nach B wird
+Gebrauch gemacht. Block C bleibt unten vollständig als TODO erhalten.
+Historische Phase-19-Einträge beschreiben den damaligen Zustand, nicht den
+aktuellen Liefervertrag. Die versionierten Expo-57-Unterlagen wurden vor den
+Codeänderungen gelesen.
+
+### AE-58 — F0-Fortsetzung nur ohne bereits messbare sichere Strecke
+
+`r >= 0,6` bleibt der sichere Start. Falls damit keine vier zusammenhängenden
+Fenster gefunden werden, dürfen unmittelbar benachbarte Fenster mit
+`r >= 0,18` und maximal zwei Halbtönen Abstand je 10-ms-Schritt die Strecke
+fortsetzen. Keine Lückenüberbrückung, kein isolierter schwacher Start und kein
+Oktavsprung. Energiegrenze, Medianfilter, Randbeschnitt und Messbereich bleiben.
+Der erste, breitere Versuch verlängerte auch bestehende sichere Strecken und
+veränderte Niwat-Konturen; die Gegenprobe führte deshalb zur engen
+Fallback-Bedingung. Vorhandene sichere Strecken bleiben unverändert.
+
+Echter komprimierter Gemini-Clip **ค่ะ**: vorher `unmeasurable`, 50 ms stimmhafte
+Fenster; jetzt `measured`, 150 ms stimmhafte Fenster, 110 ms ausgewerteter
+Konturabschnitt, **−5,10367 Halbtöne**. Dauerwerte bezeichnen verschiedene
+Messgrößen, nicht die ganze Audiodatei. Der verifizierte Sollton ist fallend.
+Alle zehn Gemini-Probeclips wurden mit demselben Kern erneut gemessen.
+
+**Microsoft-Gegenprobe mit klarer Herkunftsgrenze:** Die temporären
+Originaldateien aus AE-31 waren nicht mehr vorhanden. Der damalige Lauf wurde
+für มา / ม้า / หมา / ไม่ / ใหม่ mit `th-TH-PremwadeeNeural` und
+`th-TH-NiwatNeural` am 05.09.2026 über edge-tts 7.2.8 neu reproduziert.
+Dies sind neue Dateien, kein behaupteter Bytevergleich mit AE-31-Originalen.
+Manifest mit Hashes, Datum und Parametern unter
+`scripts/content/fixtures/tones/index.json`. **10/10 Vorher-/Nachher-Messungen
+sind exakt gleich** (Status, stimmhafte Dauer und sämtliche Summary-Werte).
+Die vier fallenden/steigenden Prüfungen passieren; sechs Registerfälle bleiben
+ungeprüft. Das ist eine kleine technische Regressionsstichprobe, keine
+allgemeine Validierung der TTS-Stimmen oder des Erkennungsverfahrens.
+
+Messwerte und Spuren: `content/tone-calibration.json`;
+`npm run content:measure-tones` reproduziert sie aus den vorhandenen Dateien.
+`scripts/tone-contour.html` bleibt erhalten und lädt den generierten gemeinsamen
+App-Kern `scripts/tone-analysis.js`. `content:tone-tool` prüft dessen Gleichstand.
+
+### AE-59 — Automatische Prüfung ersetzt die Einzelabnahme vollständig
+
+Katalog Version 2 hat `check` statt `review`: Status, Zeitpunkt, Prüfumfang,
+Grund und gegebenenfalls Tonmessung. Keine Person, keine Freigabe-Schaltfläche,
+kein Durchhören, keine Sammelfreigabe, keine dauerhafte Sperrliste. Hashes von
+Metadaten und endgültigen Dateien bleiben Integritätsnachweise; ihre Bindung
+an eine menschliche Entscheidung entfällt. Erneute Generierung wird nicht durch
+frühere Ablehnungs-IDs gesperrt.
+
+Nach einmaliger Kostenbestätigung läuft der Batch einschließlich Export,
+MP3-Kompression, Dekodierung, Tonprüfung und Katalogübernahme automatisch.
+Anzahl zählt noch fehlende Anbieteraufrufe. Für exakt bekannte Gemini-Modelle
+werden datierte Tarife mit geschätzter Text-/Audiomenge angezeigt; unbekannte
+Modelle benötigen eine eigene Gesamtschätzung. Keine Kostenobergrenze behauptet.
+[Offizielle Gemini-Preise](https://ai.google.dev/gemini-api/docs/pricing),
+abgerufen 05.09.2026: Gemini 3.1 Flash TTS Preview 1 USD/Mio. Eingabetokens und
+20 USD/Mio. Audiotokens (25 Tokens/s); Bildmodell 0,50 USD/Mio. Eingabetokens,
+3 USD/Mio. Text-/Thinking-Ausgabetokens, 60 USD/Mio. Bildtokens (1K: 1.120 Tokens).
+Annahmen und tatsächliche Ist-Bytes werden getrennt ausgewiesen.
+
+Automatisierter UI-Test: **kein Anbieteraufruf vor Bestätigung**, mehrere
+Aufrufe mit einer Bestätigung, Abbruch ohne neue Aufrufe. Zusätzlich im realen
+localhost-Web-Build Kostenvorschau mit einer Dummy-Eingabe geöffnet: 452 fehlende
+Aufrufe, 0,557 USD geschätzt, Annahmen sichtbar. Abgebrochen und Dummy entfernt;
+kein kostenpflichtiger Vollmengenlauf gestartet. Der read-only Prüfbericht zeigt
+Status, Gründe und Konturwerte korrekt. Keine manuellen Inhaltsfreigaben mehr.
+
+Jeder Thai-Clip erhält F0-Messwerte; positiver Tonbefund erfordert exakt passende
+ID/Text sowie quellengeprüftes einsilbiges `syllables[0].tone`. Nur relative
+fallende/steigende Formen können positiv geprüft werden. Mittel/tief/hoch
+brauchen für eine positive Registerprüfung eine Sprecherreferenz; Mehrsilber
+und Sätze brauchen verifizierte zeitliche Segmentierung (AE-7/AE-8). Ohne das
+steht **ungeprüft**, nicht automatisch bestanden. Ein deutlicher Fall beim
+hohen Sollton kann bereits einen Widerspruch belegen.
+
+**Grenzen im Bericht und UI:** Tonhöhe allein, keine Prüfung von Konsonanten,
+Vokallänge oder Aspiration, kein Aussprache-Qualitätsnachweis. Bilder und Texte
+erhalten ausschließlich technische Schema-/Integritätsprüfungen. Die Anzeige
+„KI-Stimme, keine Muttersprachler-Aufnahme“ bleibt. Mikrofonanalyse bleibt lokal;
+kein Upload, kein neues FSRS-Scoring. System-TTS selbst ist ungeprüft.
+
+Aktueller Bestand: **5 Bilder + 1 Thai-Clip übernommen; 9 Thai-Clips ungeprüft
+ausgeschlossen; 0 als Tonwiderspruch aussortiert.** Nicht prüfbar ist nicht
+gleich falsch. Die App fällt an diesen Stellen auf System-TTS zurück, auch
+alte lokale Thai-Entwürfe können das Tor nicht umgehen. Ursprüngliche Gemini-
+Dateien bleiben als referenzierte Messevidenz, aber nur sechs Katalogassets
+werden statisch gebündelt. `content/automatic-checks.json` enthält alle Spuren.
+Liefergröße einschließlich Eintragsmetadaten: **1.924.501 Byte**.
+
+### AE-60 — Block B: Struktur vor/nach, ohne Änderung der Lernlogik
+
+Beleg vor dem Entfernen: AST-Import-/Export-/require-/dynamic-import-Graph,
+einschließlich nativer/Web-Varianten; npm-Skript- und Expo-Plugin-Einstiegspunkte
+separat geprüft. Ergebnis vor B: **194 Quelldateien / 769 Kanten**; danach
+**191 / 763**. Wiederholbares Werkzeug `npm run audit:structure`, aktueller
+vollständiger Graph in `content/structure-audit.json`. Der Graph allein
+entscheidet keine Löschung; CLI-Einstiegspunkte und transitive Abhängigkeiten
+wurden zusätzlich geprüft.
+
+| Vorher | Nachher / belegte Änderung |
+| --- | --- |
+| Neun Content-Skripte verteilt direkt unter `scripts/` | `scripts/content/{domain,pipeline,pipeline.test,studio,check,eas-gate,verify-assets,verify-production,measure-tones}.cjs`; Imports, Repo-Wurzeln und npm-Befehle angepasst; Fixtures daneben |
+| Eigenständiger F0-Code im HTML-Werkzeug | Bereits in A durch gemeinsamen generierten Kern ersetzt; HTML bleibt |
+| `expo-device` direkte Abhängigkeit | Kein Source-Import, kein Plugin, `npm explain` nur Root, kein transitiver Bedarf; Paket plus verwaistes Unterpaket aus Lockfile entfernt |
+| `expo-font`, `expo-glass-effect`, `@expo/ui` ohne App-Imports | Behalten: Bedarf über Expo/Router/Peers im Lockfile nachgewiesen |
+| `reset-project.js` | Alter Scaffold-Reset mit einzigem Einstieg npm-Abkürzung; beide entfernt, keine App-Verwendung |
+| `prepare-content-fixture.cjs` | Isolierte Einmalfixture für ersetzten manuellen Review-Vertrag; keine Imports oder npm-/Build-Nutzung |
+| `measure-audio.cjs`, `measure-sapi.ps1`, `compression-measurement.json` | Einmalige SAPI-Kompressionsprobe aus Phase 19; kein App-/Build-Verbraucher. Echte Gemini-Messung und reproduzierbare aktuelle Tonprüfung vorhanden; alte Evidenz bleibt in Git/AE-52 |
+| `EMPTY_PROFILE`, ungenutzte Props/Imports/Styles | TypeScript-Referenzprüfung: unbenutzt; aus Profil, DrillRunner, ReviewBody, StressLegend und Studio entfernt |
+| Review-Oberfläche und Sperrlistenmodule | Wegen der ausdrücklich verlangten Verhaltensänderung in **A** entfernt; keine angeblich rein strukturelle Löschung |
+
+Für A wurden Tests des alten Freigabevertrags angepasst und Ton-/Kostenfälle
+ergänzt. **Für B keine Testassertion verändert**; bei verschobenen Node-Tests
+nur Pfade korrigiert. Vor und nach B **728 Jest-Tests / 39 Suites plus 8
+Node-Pipeline-Tests grün**. Acht statisch gerenderte Seiten nach Entfernen von
+Script-/Stylesheet-Dateiverweisen exakt gleich; Hashes in
+`content/structure-render-comparison.json`. Dies belegt statisches Markup,
+keine vollständige interaktive Geräteprüfung.
+
+### Abschlussprüfung A/B und weiterhin offene Auslieferung
+
+`npx tsc --noEmit`, 728 Jest-Tests, acht Node-Pipeline-Tests,
+`content:integrity`, gemeinsamer Tonkern und alle drei Expo-Exporte grün.
+Pipeline-Tests dekodieren echte MP3/PNG-Dateien, erkennen Beschädigungen und
+Metadatenmanipulation, prüfen Budget-Abbruch ohne Teilübernahme, fehlende
+Tonprüfbarkeit, Regenerierung ohne Sperrliste und den entfernten Review-Endpunkt.
+
+Produktionsgraphen: kein Generator-/Schlüssel-/Anbietercode. Sechs aktuelle
+Medien in Web, Android und iOS **18-mal bytegleich** nachgewiesen. Signiertes
+AAB/IPA, physisches Mikrofon und Offline-Geräte-Playback bleiben B-2/B-5.
+`content:check` bleibt wegen **461 fehlender Clips, 73 Bilder, 512 Thai-
+Situationen und AE-48** absichtlich rot; diese Lücke wird nicht durch eine
+behauptete Vollabnahme oder durch mehr ungeprüfte Generierung verdeckt.
+
+### TODO Block C — explizit nicht umgesetzt
+
+- [ ] Declarative-Procedural-Modell; Nation 1989 und 4/3/2; Shadowing-Übersicht
+  über 44 Studien; behauptete TBLT-Planungszeit-Effekte g = 0,98 gegenüber 0,28
+  anhand von Primärquellen nachrecherchieren, mit Abrufdatum belegen. Zahlen und
+  Wirkungen aus dem Chat sind bislang keine verifizierten Ergebnisse.
+- [ ] **Datenbefund zuerst klären:** Laut Kopf von `src/data/vocabulary.ts`
+  stammen die Wörter der 84 Thai-Beispielsätze aus verifiziertem Bestand,
+  die Sätze als Ganzes wurden ausdrücklich **nicht einzeln quellengeprüft**.
+  Für neue Satzübungen Satzbau/Bedeutung/Transkription nach Phase-2-Disziplin
+  absichern; `sourceVerified` des Wortes darf keine Satzfreigabe vortäuschen.
+- [ ] Satz-Shadowing: Satzclip, Mitsprechen, lokale Aufnahme und begrenzte
+  Rückmeldung auf Phase 12 und AE-58 aufbauen. Kein Netz/Upload, keine
+  Aussprache-Gesamtnote (AE-32/AE-35), keine unbelegte automatische Bewertung.
+- [ ] Sinkende Zeitfenster als **Anpassung** der 4/3/2-Technik spielbar machen.
+  Die App hat kein wechselndes Gegenüber; erklären, welcher Anteil eines
+  belegten Effekts deshalb nicht abgedeckt ist.
+- [ ] Verpflichtende, nicht abschaltbare Vorbereitung vor jeder Produktion.
+- [ ] Satz hören und Bedeutung prüfen spielbar machen, auf tatsächlich
+  verifizierter Satzbasis und mit ehrlicher Audioabdeckung.
+- [ ] Systematische Satzbildungslücken des vorhandenen Wortschatzes prüfen,
+  insbesondere Thai-Klassifikatoren und ihre Wortstellung. Auch die
+  Mango-Formulierung im Auftrag erst linguistisch verifizieren. Neue Daten
+  nur mit Quellen; Befund dokumentieren.
+- [ ] Im UI sagen, dass die App kein unvorhersehbares Gegenüber liefert.
+  Gesamten Block erst feature-komplett und automatisch geprüft zum manuellen
+  Test geben. Bis dahin keine spielbaren Satzübungen behaupten.

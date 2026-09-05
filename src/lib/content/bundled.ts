@@ -4,8 +4,9 @@ import catalog from '../../content/catalog.json';
 import { CONTENT_ASSETS } from '../../content/assets';
 import type { ContentCatalog, ContentDocuments, ContentKind } from './types';
 
-const entries = (catalog as ContentCatalog).entries.filter(
-  (entry) => entry.review?.status === 'approved' && entry.review.digest === entry.digest
+const entries = (catalog as unknown as ContentCatalog).entries.filter(
+  (entry) => entry.check?.status === 'passed' &&
+    (entry.kind !== 'audio' || (entry.document as import('../clips/types').AudioClip).language !== 'th' || entry.check.tone?.status === 'passed')
 );
 
 export function bundledDocuments<K extends ContentKind>(kind: K): ContentDocuments[K][] {

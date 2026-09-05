@@ -178,7 +178,6 @@ export default function ReviewScreen() {
 
   return (
     <ReviewBody
-      profile={profile}
       direction={direction}
       mode={mode}
       onOpen={open}
@@ -203,7 +202,6 @@ export default function ReviewScreen() {
  * wirklich offen ist, und trifft damit alle drei.
  */
 function ReviewBody({
-  profile,
   direction,
   mode,
   onOpen,
@@ -211,7 +209,6 @@ function ReviewBody({
   onRemember,
   onExit,
 }: {
-  profile: LearnerProfile;
   direction: Direction;
   mode: Mode;
   onOpen: (direction: Direction, mode: Mode) => void;

@@ -32,8 +32,8 @@ test('every shipped media entry resolves in production with no network, draft st
     expect(await loadAudioClips()).toEqual(audio.map(entry => entry.document));
     expect(await loadVocabImages()).toEqual(images.map(entry => entry.document));
     for (const entry of [...audio, ...images]) {
-      expect(entry.review?.status).toBe('approved');
-      expect(entry.review?.digest).toBe(entry.digest);
+      expect(entry.check?.status).toBe('passed');
+      expect(entry.check?.label).toBe('automatisch geprüft');
       expect(CONTENT_ASSETS[entry.asset!]).toBeDefined();
       if (entry.kind === 'audio') {
         const clip = entry.document as { text: string; language: 'th' | 'de' | 'en' | 'es' };
