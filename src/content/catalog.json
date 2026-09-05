@@ -1,4 +1,440 @@
 {
   "version": 1,
-  "entries": []
+  "entries": [
+    {
+      "kind": "audio",
+      "id": "th-108bad8b3abd9bde",
+      "document": {
+        "id": "th-108bad8b3abd9bde",
+        "language": "th",
+        "text": "ครับ",
+        "kind": "vocab",
+        "sourceId": "khrap",
+        "format": "mp3",
+        "byteSize": 8109,
+        "durationMs": 920,
+        "blobKey": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602476000,
+        "synthetic": true
+      },
+      "digest": "bcb9716c410068a4f1e67261f0b264af756ea482e3c681554d08fc5e7303fb12",
+      "asset": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a.mp3",
+      "byteSize": 8109,
+      "sourceBytes": 44204,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "bcb9716c410068a4f1e67261f0b264af756ea482e3c681554d08fc5e7303fb12",
+        "reviewedAt": "2026-09-05T10:13:43.065Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-1f1216e2aa97ebdb",
+      "document": {
+        "id": "th-1f1216e2aa97ebdb",
+        "language": "th",
+        "text": "สวัสดี",
+        "kind": "vocab",
+        "sourceId": "sawatdii",
+        "format": "mp3",
+        "byteSize": 12525,
+        "durationMs": 1480,
+        "blobKey": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602468767,
+        "synthetic": true
+      },
+      "digest": "7d12d4d90030222781f40debcf545893e68bc00dfbee32b1c74aa13980af5b1e",
+      "asset": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482.mp3",
+      "byteSize": 12525,
+      "sourceBytes": 71084,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "7d12d4d90030222781f40debcf545893e68bc00dfbee32b1c74aa13980af5b1e",
+        "reviewedAt": "2026-09-05T10:13:43.059Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-25dac11d091a88b6",
+      "document": {
+        "id": "th-25dac11d091a88b6",
+        "language": "th",
+        "text": "ขอบคุณ มาก ครับ",
+        "kind": "example",
+        "sourceId": "khoopkhun",
+        "format": "mp3",
+        "byteSize": 14829,
+        "durationMs": 1760,
+        "blobKey": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602482510,
+        "synthetic": true
+      },
+      "digest": "f9cb23f08e4add38a0d8b3db8702cb3a8dce35f9e32a6c5450c69a2d3f8eee15",
+      "asset": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b.mp3",
+      "byteSize": 14829,
+      "sourceBytes": 84524,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "f9cb23f08e4add38a0d8b3db8702cb3a8dce35f9e32a6c5450c69a2d3f8eee15",
+        "reviewedAt": "2026-09-05T10:13:43.071Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-26991523deb03340",
+      "document": {
+        "id": "th-26991523deb03340",
+        "language": "th",
+        "text": "ค่ะ",
+        "kind": "vocab",
+        "sourceId": "kha",
+        "format": "mp3",
+        "byteSize": 8301,
+        "durationMs": 960,
+        "blobKey": "16440f54287a4d83aa57d3a98bcefcf9b8512489e88b49c76ad6397e3c94cd89.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602478053,
+        "synthetic": true
+      },
+      "digest": "49051f919360470c89bd32f4121efddfac033a43b5b1b5217b0e4aa1e401c287",
+      "asset": "16440f54287a4d83aa57d3a98bcefcf9b8512489e88b49c76ad6397e3c94cd89.mp3",
+      "byteSize": 8301,
+      "sourceBytes": 46124,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "49051f919360470c89bd32f4121efddfac033a43b5b1b5217b0e4aa1e401c287",
+        "reviewedAt": "2026-09-05T10:13:43.067Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-8ae0473a01b209b5",
+      "document": {
+        "id": "th-8ae0473a01b209b5",
+        "language": "th",
+        "text": "ใช่ ครับ",
+        "kind": "example",
+        "sourceId": "khrap",
+        "format": "mp3",
+        "byteSize": 10605,
+        "durationMs": 1240,
+        "blobKey": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602487697,
+        "synthetic": true
+      },
+      "digest": "47a883a6cc44d1a15b5767e008cdaa2eb8592508c4d74a0ff3139d3ccf968774",
+      "asset": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c.mp3",
+      "byteSize": 10605,
+      "sourceBytes": 59564,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "47a883a6cc44d1a15b5767e008cdaa2eb8592508c4d74a0ff3139d3ccf968774",
+        "reviewedAt": "2026-09-05T10:13:43.074Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-90b05d949e9676a9",
+      "document": {
+        "id": "th-90b05d949e9676a9",
+        "language": "th",
+        "text": "ใช่ ค่ะ",
+        "kind": "example",
+        "sourceId": "kha",
+        "format": "mp3",
+        "byteSize": 9645,
+        "durationMs": 1120,
+        "blobKey": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602489833,
+        "synthetic": true
+      },
+      "digest": "bfb9022cc03193218b95e77e32c0399178abf8b19aa629e004c4205ec0ae62c6",
+      "asset": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9.mp3",
+      "byteSize": 9645,
+      "sourceBytes": 53804,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "bfb9022cc03193218b95e77e32c0399178abf8b19aa629e004c4205ec0ae62c6",
+        "reviewedAt": "2026-09-05T10:13:43.076Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-93d9acf63a83c20d",
+      "document": {
+        "id": "th-93d9acf63a83c20d",
+        "language": "th",
+        "text": "ขอโทษ",
+        "kind": "vocab",
+        "sourceId": "khoothoot",
+        "format": "mp3",
+        "byteSize": 11949,
+        "durationMs": 1400,
+        "blobKey": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602473567,
+        "synthetic": true
+      },
+      "digest": "29c687060d392ee97826078880ca3258d1c18ee84776fb42e03163818b4a41a2",
+      "asset": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0.mp3",
+      "byteSize": 11949,
+      "sourceBytes": 67244,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "29c687060d392ee97826078880ca3258d1c18ee84776fb42e03163818b4a41a2",
+        "reviewedAt": "2026-09-05T10:13:43.063Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-df514ca440e75c41",
+      "document": {
+        "id": "th-df514ca440e75c41",
+        "language": "th",
+        "text": "สวัสดี ครับ",
+        "kind": "example",
+        "sourceId": "sawatdii",
+        "format": "mp3",
+        "byteSize": 12525,
+        "durationMs": 1480,
+        "blobKey": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602480321,
+        "synthetic": true
+      },
+      "digest": "2a6a8115d89b01961c35af9053086f8e898907f981c623893ca2ac36d82fb81a",
+      "asset": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa.mp3",
+      "byteSize": 12525,
+      "sourceBytes": 71084,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "2a6a8115d89b01961c35af9053086f8e898907f981c623893ca2ac36d82fb81a",
+        "reviewedAt": "2026-09-05T10:13:43.069Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-e295ddc04bde88c3",
+      "document": {
+        "id": "th-e295ddc04bde88c3",
+        "language": "th",
+        "text": "ขอโทษ ครับ",
+        "kind": "example",
+        "sourceId": "khoothoot",
+        "format": "mp3",
+        "byteSize": 12141,
+        "durationMs": 1440,
+        "blobKey": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602485062,
+        "synthetic": true
+      },
+      "digest": "74bd3b274b4257d4eab02c8ba19f8b5a7c6d0c2f7486ca595c1dc1065cfd3076",
+      "asset": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71.mp3",
+      "byteSize": 12141,
+      "sourceBytes": 69164,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "74bd3b274b4257d4eab02c8ba19f8b5a7c6d0c2f7486ca595c1dc1065cfd3076",
+        "reviewedAt": "2026-09-05T10:13:43.073Z"
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-fb4c648b72f80cee",
+      "document": {
+        "id": "th-fb4c648b72f80cee",
+        "language": "th",
+        "text": "ขอบคุณ",
+        "kind": "vocab",
+        "sourceId": "khoopkhun",
+        "format": "mp3",
+        "byteSize": 11565,
+        "durationMs": 1360,
+        "blobKey": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602471135,
+        "synthetic": true
+      },
+      "digest": "b96405c7d89353b4096b014b07d319b48f9b84032e28be695962b1f3897e498a",
+      "asset": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4.mp3",
+      "byteSize": 11565,
+      "sourceBytes": 65324,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "b96405c7d89353b4096b014b07d319b48f9b84032e28be695962b1f3897e498a",
+        "reviewedAt": "2026-09-05T10:13:43.061Z"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "aahaan",
+      "document": {
+        "id": "aahaan",
+        "vocabId": "aahaan",
+        "format": "jpeg",
+        "byteSize": 571131,
+        "blobKey": "85ba2b1021e9cb203213fc3da50a0b78363c2cd6d84cd2cdaeca1f16a85f4059.jpeg",
+        "prompt": "a plate of simple Thai food, rice with vegetables. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788602470252
+      },
+      "digest": "41287a30cfdd25e318b775fea8efe0416e339a5c8834c8cdb89d65302a857602",
+      "asset": "85ba2b1021e9cb203213fc3da50a0b78363c2cd6d84cd2cdaeca1f16a85f4059.jpeg",
+      "byteSize": 571131,
+      "sourceBytes": 571131,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "41287a30cfdd25e318b775fea8efe0416e339a5c8834c8cdb89d65302a857602",
+        "reviewedAt": "2026-09-05T10:13:43.054Z"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "baan",
+      "document": {
+        "id": "baan",
+        "vocabId": "baan",
+        "format": "jpeg",
+        "byteSize": 282727,
+        "blobKey": "f4f5cf6bd8e8984c9619ea8a6b9e470c060025f6fd6bd78750abea409bb6870b.jpeg",
+        "prompt": "a small simple house with a roof and a door. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788602480289
+      },
+      "digest": "80353fc83707b5498ff87afe6d7c1b959007d3ecb41aa97d52c0b92c1e6253bd",
+      "asset": "f4f5cf6bd8e8984c9619ea8a6b9e470c060025f6fd6bd78750abea409bb6870b.jpeg",
+      "byteSize": 282727,
+      "sourceBytes": 282727,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "80353fc83707b5498ff87afe6d7c1b959007d3ecb41aa97d52c0b92c1e6253bd",
+        "reviewedAt": "2026-09-05T10:13:43.056Z"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "khaao",
+      "document": {
+        "id": "khaao",
+        "vocabId": "khaao",
+        "format": "jpeg",
+        "byteSize": 388006,
+        "blobKey": "cfb3a40dff9dc0bfd5774679d067905f88e1415f7674437ef4b53011a0f1e4f2.jpeg",
+        "prompt": "a bowl of steamed white rice. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788602459501
+      },
+      "digest": "e9e21240ffddd6e6b23e368a753191b7999ac568550a5637b3a051000155a7ef",
+      "asset": "cfb3a40dff9dc0bfd5774679d067905f88e1415f7674437ef4b53011a0f1e4f2.jpeg",
+      "byteSize": 388006,
+      "sourceBytes": 388006,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "e9e21240ffddd6e6b23e368a753191b7999ac568550a5637b3a051000155a7ef",
+        "reviewedAt": "2026-09-05T10:13:43.052Z"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "nam",
+      "document": {
+        "id": "nam",
+        "vocabId": "nam",
+        "format": "jpeg",
+        "byteSize": 331927,
+        "blobKey": "222ba33a4c46b70c1f02db0bd683fd1e52352cdda281ccf50373a320ca68ecc0.jpeg",
+        "prompt": "a single clear glass of drinking water on a plain surface. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788602449455
+      },
+      "digest": "bbf7103dc238b173a4dbb5a0bb5df022f47c8efccc283b6939bb3287b770f315",
+      "asset": "222ba33a4c46b70c1f02db0bd683fd1e52352cdda281ccf50373a320ca68ecc0.jpeg",
+      "byteSize": 331927,
+      "sourceBytes": 331927,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "bbf7103dc238b173a4dbb5a0bb5df022f47c8efccc283b6939bb3287b770f315",
+        "reviewedAt": "2026-09-05T10:13:43.049Z"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "rot",
+      "document": {
+        "id": "rot",
+        "vocabId": "rot",
+        "format": "jpeg",
+        "byteSize": 337120,
+        "blobKey": "928b5b30fef90bee02f0e7c466dabd8d1e6031c03bc6a159e7f5070bd55ea4b7.jpeg",
+        "prompt": "a single small car seen from the side. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788602489306
+      },
+      "digest": "be1864ea0b49a577ba04c71c9c44939a8a53ade6cb5509ee1de7344bd99b39d4",
+      "asset": "928b5b30fef90bee02f0e7c466dabd8d1e6031c03bc6a159e7f5070bd55ea4b7.jpeg",
+      "byteSize": 337120,
+      "sourceBytes": 337120,
+      "review": {
+        "status": "approved",
+        "reviewer": "Projektinhaber (Chat-Freigabe)",
+        "reason": "Am 05.09.2026 im Chat nach eigener Pruefung aller 15 Testinhalte bestaetigt: \"hab alles geprüft und ich fande es sehr gut.\" Bezug: content/gemini-probelauf-2026-09-05.json.",
+        "digest": "be1864ea0b49a577ba04c71c9c44939a8a53ade6cb5509ee1de7344bd99b39d4",
+        "reviewedAt": "2026-09-05T10:13:43.057Z"
+      }
+    }
+  ]
 }

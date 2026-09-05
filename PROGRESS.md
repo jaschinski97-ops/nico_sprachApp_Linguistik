@@ -4455,18 +4455,17 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 > TODO-Einträge darunter sind historisch; Generatoren gehören jetzt nur in
 > den Entwicklerbetrieb auf localhost:8081.
 
-- [ ] **B-19: Menschliche Einzelprüfung und restlicher Bestand.** Mit dem vom
-  Nutzer bereitgestellten Zugang sind jetzt 5 echte Gemini-Bilder und 10 Clips
-  erfolgreich erzeugt und exportiert. Alle 15 stehen auf localhost:8081/settings
-  zur Einzelprüfung bereit. Freigeben/ablehnen und nur Freigegebenes übernehmen;
-  restlichen Inhaltsbestand anschließend vervollständigen. Keine Platzhalter ausliefern.
+- [ ] **B-19: Restlichen Bestand erzeugen, prüfen und übernehmen.** Die ersten
+  5 echten Gemini-Bilder und 10 Clips sind vom Nutzer nach eigener Prüfung im
+  Chat freigegeben und ins Repo übernommen. Weitere Inhalte brauchen jeweils
+  ihre eigene Prüfung. Keine Freigabe für zukünftige Inhalte daraus ableiten.
 - [ ] **Vollständigen Audiobestand tatsächlich messen.** Referenzmessung vorhanden
   (SAPI: 1.414.190 → 239.265 Byte; echter Gemini-Probelauf: 632.120 → 112.194 Byte);
   der Gemini-Gesamtbestand fehlt. Bei Überschreitung
   des 150-MiB-Inhaltsbudgets Umfang ausdrücklich entscheiden, nicht automatisch
   kürzen. AAB-/IPA-Endgröße separat messen (B-5).
-- [ ] **`npm run content:check` grün bekommen.** Derzeit fehlen 462 Clips bereits
-  ohne Dialoge, 78 Bilder und 512 Thai-Situationen. Zusätzlich AE-48: geprüfte
+- [ ] **`npm run content:check` grün bekommen.** Derzeit fehlen 452 Clips bereits
+  ohne Dialoge, 73 Bilder und 512 Thai-Situationen. Zusätzlich AE-48: geprüfte
   Gesprächsinhalte/-verträge für Englisch und Spanisch. System-TTS ersetzt keine
   fehlende Offline-Datei. EAS-Preview/Produktion bleiben bis dahin gesperrt.
 - [ ] **B-2/B-5:** echte Android-/iOS-Installation offline, Kaltstart und nach
@@ -4898,3 +4897,31 @@ B-6 ist für die tatsächliche Gemini-Bild-/Audioantwort teilweise geklärt;
 Gemini-Text, ChatGPT und sprachliche Tongenauigkeit bleiben offen. B-19 betrifft
 jetzt die Einzelprüfung, Übernahme, restlichen Inhalte und Vollmengenmessung.
 Der Probelauf belegt keine reale Gesamtgröße und schließt Phase 19 nicht ab.
+
+### Menschliche Freigabe und erste echte Übernahme (05.09.2026)
+
+Der Nutzer hat im Chat bestätigt: „hab alles geprüft und ich fande es sehr gut.“
+Diese Freigabe gilt den bereits vorgelegten 15 Testmedien. Vor Übernahme wurden
+ihre IDs und unveränderten Mediendateien mit dem Messbericht abgeglichen; die
+bestehende Pipeline protokolliert die menschliche Chat-Freigabe pro Eintrag und
+Hash. Eine erneute Eingabe derselben Entscheidung in 15 UI-Felder war dafür
+nicht erforderlich. Keine Freigabe für neue, noch ungeprüfte Inhalte.
+
+**Im Repo übernommen:** 5 JPEGs und 10 MP3s in `assets/content/`, Katalog und
+statische Expo-Verweise in `src/content/`, Ist-Größen in `content/size-report.json`.
+Zusammen **2.038.225 Byte inklusive Katalogeinträgen**. Sämtliche 15 Medien sind
+in Web, Android und iOS exportiert und **45-mal bytegenau** mit den Originalen
+verglichen (`node scripts/verify-content-assets.cjs`). Die native Prüfung
+umfasst Hermes-/Asset-Exporte, weiterhin kein signiertes AAB/IPA oder Gerät.
+
+Der nun gefüllte Katalog machte zwölf bisher vom leeren Lieferbestand abhängige
+Speichertests sichtbar. Die Unit-Tests verwenden jetzt einen explizit leeren
+Katalog; der neue `delivered.test.ts` nimmt den echten Lieferkatalog und prüft
+alle Medien im Produktionspfad bei nicht verfügbarem Netz, Laufzeitspeicher
+und Systemstimme. **724 App-Tests in 36 Suites und TypeScript grün**. Alle drei
+Produktionsgraphen bleiben ohne Generator-/Schlüsselcode. Die Berichte unter
+`content/` wurden aktualisiert.
+
+Phase 19 bleibt für den Gesamtbestand offen: **452 Clips bereits ohne Dialoge,
+73 Bilder und 512 Thai-Situationen fehlen**, dazu AE-48. Der erste geprüfte
+Bestand ist übernommen; er wird nicht als vollständige Auslieferung ausgegeben.

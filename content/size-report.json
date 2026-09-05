@@ -1,0 +1,61 @@
+{
+  "measuredAt": "2026-09-05T10:23:55.977Z",
+  "encoder": "libmp3lame, 64 kbit/s, mono, 24000 Hz",
+  "entries": 15,
+  "pending": 0,
+  "rejected": 0,
+  "contentBudgetBytes": 157286400,
+  "budgetBytes": 2038225,
+  "audio": [
+    {
+      "id": "th-108bad8b3abd9bde",
+      "sourceBytes": 44204,
+      "compressedBytes": 8109
+    },
+    {
+      "id": "th-1f1216e2aa97ebdb",
+      "sourceBytes": 71084,
+      "compressedBytes": 12525
+    },
+    {
+      "id": "th-25dac11d091a88b6",
+      "sourceBytes": 84524,
+      "compressedBytes": 14829
+    },
+    {
+      "id": "th-26991523deb03340",
+      "sourceBytes": 46124,
+      "compressedBytes": 8301
+    },
+    {
+      "id": "th-8ae0473a01b209b5",
+      "sourceBytes": 59564,
+      "compressedBytes": 10605
+    },
+    {
+      "id": "th-90b05d949e9676a9",
+      "sourceBytes": 53804,
+      "compressedBytes": 9645
+    },
+    {
+      "id": "th-93d9acf63a83c20d",
+      "sourceBytes": 67244,
+      "compressedBytes": 11949
+    },
+    {
+      "id": "th-df514ca440e75c41",
+      "sourceBytes": 71084,
+      "compressedBytes": 12525
+    },
+    {
+      "id": "th-e295ddc04bde88c3",
+      "sourceBytes": 69164,
+      "compressedBytes": 12141
+    },
+    {
+      "id": "th-fb4c648b72f80cee",
+      "sourceBytes": 65324,
+      "compressedBytes": 11565
+    }
+  ]
+}

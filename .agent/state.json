@@ -931,9 +931,8 @@
     {
       "phase": 19,
       "criterion": "Generatorlauf auf localhost:8081 erzeugt echten Bestand, der menschlich geprueft ins Repo uebernommen wird",
-      "done": false,
-      "verifiedHow": "05.09.2026 echter Web-Probelauf: Gemini 3.1 Flash Image 5/5 Bilder, Gemini 3.1 Flash TTS Preview 10/10 Clips, keine Fehler. Alle 15 nach .content-studio exportiert/komprimiert, noch keine menschliche Freigabe oder Repo-Uebernahme.",
-      "blocker": "B-19"
+      "done": true,
+      "verifiedHow": "Echter localhost:8081-Probelauf mit 5 Bildern und 10 Clips. Nutzer bestaetigt im Chat am 05.09.2026 die eigene Pruefung aller 15 Inhalte; Freigabe pro unveraendertem Hash protokolliert und per bestehender Pipeline ins Repo uebernommen. Der Gesamtbestand bleibt gesondert offen."
     },
     {
       "phase": 19,
@@ -945,7 +944,7 @@
       "phase": 19,
       "criterion": "Gebundene Assets werden durch den bestehenden Resolver bevorzugt",
       "done": true,
-      "verifiedHow": "Offline-Resolver-Jest-Test; isolierte echte MP3-/PNG-Dateien bytegenau in iOS-/Android-Assetexporten. Produktionsdaten ignorieren ungepruefte alte Entwuerfe."
+      "verifiedHow": "Alle 15 echten freigegebenen Medien bytegenau in Web-, Android- und iOS-Exporten (45 Vergleiche). Zusaetzlicher Produktionstest mit echtem Katalog: Netz, Laufzeitablage und Systemstimme nicht verfuegbar, alle ausgelieferten Medien aufloesbar."
     },
     {
       "phase": 19,
@@ -970,14 +969,14 @@
       "phase": 19,
       "criterion": "App ohne Schluessel und Netz vollstaendig mit freigegebenem Inhalt",
       "done": false,
-      "verifiedHow": "content:check meldet 462 fehlende Clips ohne Dialoge, 78 Bilder, 512 Thai-Situationen, keine EN/ES-Gespraeche (AE-48). EAS-Auslieferung deshalb gesperrt.",
+      "verifiedHow": "15 Medien ausgeliefert; content:check meldet 452 fehlende Clips ohne Dialoge, 73 Bilder, 512 Thai-Situationen, keine EN/ES-Gespraeche (AE-48). Vollstaendige EAS-Auslieferung bleibt gesperrt.",
       "blocker": "B-19; AE-48; B-2; B-5"
     },
     {
       "phase": 19,
       "criterion": "Tests und npx tsc --noEmit gruen; Protokoll und TODO aktualisiert",
       "done": true,
-      "verifiedHow": "723 Tests in 35 Suites, 7 Node-Pipeline-Tests mit echtem Encoder, TypeScript und content:integrity gruen; drei Produktionsbundles erstellt/geprueft. Wiederexport repariert fehlende/defekte Staging-Medien; ungueltige Altmetadaten stoppen keine anderen Exporte."
+      "verifiedHow": "724 Tests in 36 Suites und TypeScript gruen. Speicher-Unit-Tests vom wechselnden Inhaltskatalog isoliert; delivered.test.ts prueft den echten Katalog. Drei Produktionsbundles und alle 45 Medienkopien geprueft. 7 bestehende Node-Pipeline-Tests unveraendert."
     }
   ],
   "architectureDecisions": [
@@ -1317,20 +1316,20 @@
     },
     {
       "id": "B-19",
-      "title": "Menschliche Inhaltsfreigabe, restlicher Bestand und reale Vollmengenmessung fehlen",
+      "title": "Restlicher Inhaltsbestand, dessen Einzelpruefung und reale Vollmengenmessung fehlen",
       "affectsPhases": [
         19
       ],
       "needsUser": true,
-      "note": "Anbieterzugang vom Nutzer fuer lokale Tests bereitgestellt. Echte Gemini-Probelaufe erfolgreich: 5 Bilder und 10 Clips, alle 15 in .content-studio zur Einzelpruefung. Keine menschliche Freigabe; Repo-Katalog weiter leer. Zugang nur Browser-Sitzung, nicht im Repo. EN/ES-Sprachvertrag bleibt AE-48, native Builds/Geraet B-5/B-2.",
-      "steps": "localhost:8081/settings: eigenen Pruefernamen eintragen, 15 Testmedien einzeln ansehen/anhoeren, freigeben oder ablehnen. Freigegebenes ins Repo uebernehmen; restlichen Bestand erzeugen/pruefen und Gesamtgroesse messen. content:check muss vor Auslieferung gruen sein."
+      "note": "Die ersten 5 Gemini-Bilder und 10 Clips wurden vom Nutzer im Chat nach eigener Pruefung freigegeben und ins Repo uebernommen. Alle 15 Medien sind in allen drei Plattformexporten bytegleich. Fuer den Gesamtbestand fehlen weitere Inhalte samt eigener Freigabe; 452 Wort-/Pruefungsclips, 73 Bilder und 512 Thai-Situationen offen. Keine Freigabe fuer zukuenftige ungepruefte Inhalte abgeleitet. AE-48 und B-5/B-2 bleiben offen.",
+      "steps": "Restlichen Bestand erzeugen, exportieren/komprimieren und menschlich einzeln pruefen. Erst Freigegebenes uebernehmen; reale Vollmenge und native Endgroessen messen, content:check gruen bekommen."
     }
   ],
   "nextUp": {
     "phase": 19,
     "name": "Echte Inhalte bereitstellen und abnehmen; Phase 19 noch nicht abgeschlossen",
     "tasks": [
-      "B-19: 15 echte Gemini-Testmedien sind in der lokalen Pruefliste bereit. Menschlich einzeln pruefen, freigeben/ablehnen und erst Freigegebenes uebernehmen; restlichen Bestand danach vervollstaendigen.",
+      "B-19: Der erste freigegebene Bestand (5 Bilder, 10 Clips) ist uebernommen. Restliche Inhalte erzeugen und einzeln pruefen; die Chat-Freigabe galt genau den 15 bereits geprueften Testmedien.",
       "Vollstaendigen Audioexport messen; kein Hochrechnen der Referenzmessung als Ist-Wert. Bei Budgetueberschreitung Umfang explizit entscheiden.",
       "content:check gruen bekommen: fehlende Medien und Situationen ergaenzen; AE-48 fuer EN/ES-Gespraeche separat sprachlich klaeren.",
       "B-2/B-5: echte Android-/iOS-Installation offline inklusive Kaltstart/Cachebereinigung; Store-Endgroessen am echten Build messen.",
@@ -1744,33 +1743,38 @@
     "storeLimitsChecked": "2026-09-05",
     "googlePlayBaseCompressedMB": 500,
     "appleIOSUncompressedGB": 4,
-    "approvedGeneratedEntries": 0,
+    "approvedGeneratedEntries": 15,
     "currentMissing": {
-      "audioBeforeDialogues": 462,
-      "images": 78,
+      "audioBeforeDialogues": 452,
+      "images": 73,
       "thaiSituations": 512,
       "enEsConversations": true
     },
     "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
-    "nativeEvidence": "Hermes and asset exports, isolated MP3/PNG bytes identical for iOS/Android; not a signed AAB/IPA or physical playback",
+    "nativeEvidence": "15 echte menschlich freigegebene Medien in Web-/iOS-/Android-Exporten bytegleich (45 Vergleiche), Hermes-Exports erstellt; kein signiertes AAB/IPA oder physisches Playback.",
     "tests": {
-      "jest": 723,
-      "suites": 35,
+      "jest": 724,
+      "suites": 36,
       "nodePipeline": 7,
       "typeScript": "pass"
     },
     "complete": false,
     "blocker": "B-19 plus existing B-2/B-5 and AE-48",
     "pendingReview": {
-      "images": 5,
-      "audio": 10,
+      "images": 0,
+      "audio": 0,
       "situations": 0,
       "exam": 0,
       "location": ".content-studio/",
-      "imageModel": "gemini-3.1-flash-image",
-      "imageBytes": 1910911,
-      "imageDimensions": "1024x1024 JPEG",
-      "approved": 0
+      "approved": 15
+    },
+    "humanApproval": {
+      "date": "2026-09-05",
+      "reviewer": "Projektinhaber (Chat-Freigabe)",
+      "scope": "15 Testmedien aus content/gemini-probelauf-2026-09-05.json",
+      "source": "hab alles geprüft und ich fande es sehr gut.",
+      "publishedEntries": 15,
+      "budgetBytes": 2038225
     }
   }
 }
