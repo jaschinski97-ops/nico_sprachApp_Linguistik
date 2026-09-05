@@ -4455,13 +4455,14 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 > TODO-Einträge darunter sind historisch; Generatoren gehören jetzt nur in
 > den Entwicklerbetrieb auf localhost:8081.
 
-- [ ] **B-19: Echter Entwicklerlauf und menschliche Einzelprüfung.** Anbieterzugang
-  bzw. bereits geprüfte Inhalte wurden zu Beginn dieser Phase angefragt; noch
-  keine Antwort. Lokal `npm run content:studio` plus Expo-Web auf Port 8081
-  starten, Inhalte erzeugen, exportieren/komprimieren, einzeln ansehen/anhören,
-  freigeben oder ablehnen und ins Repo übernehmen. Keine Testdaten ausliefern.
+- [ ] **B-19: Menschliche Einzelprüfung und restlicher Bestand.** Mit dem vom
+  Nutzer bereitgestellten Zugang sind jetzt 5 echte Gemini-Bilder und 10 Clips
+  erfolgreich erzeugt und exportiert. Alle 15 stehen auf localhost:8081/settings
+  zur Einzelprüfung bereit. Freigeben/ablehnen und nur Freigegebenes übernehmen;
+  restlichen Inhaltsbestand anschließend vervollständigen. Keine Platzhalter ausliefern.
 - [ ] **Vollständigen Audiobestand tatsächlich messen.** Referenzmessung vorhanden
-  (1.414.190 → 239.265 Byte); echter Gemini-Gesamtbestand fehlt. Bei Überschreitung
+  (SAPI: 1.414.190 → 239.265 Byte; echter Gemini-Probelauf: 632.120 → 112.194 Byte);
+  der Gemini-Gesamtbestand fehlt. Bei Überschreitung
   des 150-MiB-Inhaltsbudgets Umfang ausdrücklich entscheiden, nicht automatisch
   kürzen. AAB-/IPA-Endgröße separat messen (B-5).
 - [ ] **`npm run content:check` grün bekommen.** Derzeit fehlen 462 Clips bereits
@@ -4859,3 +4860,41 @@ Prüflisteneintrag. Nullwerte, falsche Datentypen oder fehlende Medien in alten
 Laufzeitdaten werden jetzt einzeln als Fehler gemeldet; gültige spätere
 Einträge werden weiter exportiert. Beide Wiederanlauffälle sind automatisiert
 geprüft, Audio erneut mit echtem FFmpeg. B-19 bleibt unverändert offen.
+
+### AE-57 — Echter Gemini-Probelauf und gemessene komprimierte Enddateien
+
+Am 05.09.2026 hat der Nutzer einen Anbieterzugang für lokale Tests bereitgestellt
+und die Modelle `gemini-3.1-flash-image` sowie
+`gemini-3.1-flash-tts-preview` festgelegt. Der Zugang wurde ausschließlich im
+Sitzungsspeicher des Browsers übernommen, nicht in Dateien oder Berichte.
+Aktuelle [Bild-Dokumentation](https://ai.google.dev/gemini-api/docs/image-generation)
+und [TTS-Dokumentation](https://ai.google.dev/gemini-api/docs/speech-generation)
+vorher gelesen. Beide Modelle funktionieren im bestehenden `generateContent`-Pfad;
+eine API-Umstellung war für diesen Lauf nicht erforderlich.
+
+**Tatsächlicher Lauf auf localhost:8081:** 5/5 Bilder und 10/10 Thai-Hörclips,
+jeweils 0 Fehler und 0 übersprungen. Anschließend alle 15 Inhalte über die
+Entwickleroberfläche exportiert, Audio mit dem festgelegten MP3-Encoder komprimiert.
+
+| Messung | Tatsächlicher Wert |
+| --- | ---: |
+| 5 Bilder, JPEG, jeweils 1024 × 1024 | 1.910.911 Byte |
+| 10 Clips, ursprüngliches PCM ohne WAV-Header | 631.680 Byte |
+| 10 Clips, WAV einschließlich Header | 632.120 Byte |
+| Dieselben 10 Clips, MP3 64 kbit/s, mono, 24 kHz | 112.194 Byte |
+| Einsparung gegenüber WAV | 82,25 % |
+| Ursprüngliche Audiodauer zusammen | 13,16 Sekunden |
+
+Alle 15 Enddateien wurden anhand ihrer Hashes und Bytezahlen geprüft und mit
+FFmpeg vollständig dekodiert. Die fünf Bilder zeigen Wasser, Reis, Essen, Haus
+und Auto; eine technische/visuelle Vorprüfung ersetzt die menschliche Freigabe
+nicht. Bericht mit Einzeldateien und SHA-256:
+`content/gemini-probelauf-2026-09-05.json`.
+
+**Abnahmestand:** Die 15 echten Medien liegen ungeprüft unter `.content-studio/`
+und sind im Inhaltsstudio einzeln sichtbar/anhörbar. Kein Eintrag wurde als
+menschlich freigegeben markiert oder in den Auslieferungskatalog übernommen.
+B-6 ist für die tatsächliche Gemini-Bild-/Audioantwort teilweise geklärt;
+Gemini-Text, ChatGPT und sprachliche Tongenauigkeit bleiben offen. B-19 betrifft
+jetzt die Einzelprüfung, Übernahme, restlichen Inhalte und Vollmengenmessung.
+Der Probelauf belegt keine reale Gesamtgröße und schließt Phase 19 nicht ab.

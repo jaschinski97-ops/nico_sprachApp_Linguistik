@@ -130,6 +130,11 @@ gesondert zu entscheiden. Native AAB-/IPA-Endgrößen bleiben B-5.
 
 Die technische Pipeline, Tests, Produktionsausschluss und Asset-Exporte sind
 geprüft. Es gibt weiterhin **0 menschlich freigegebene generierte Inhalte**.
+Seit dem 05.09.2026 stehen **5 echte Gemini-Bilder und 10 echte Gemini-Clips**
+in der lokalen Prüfliste bereit. Beide Probeläufe liefen ohne Fehler. Die Clips
+wurden von **632.120 Byte WAV auf 112.194 Byte MP3** komprimiert (-82,25 %).
+Alle 15 Dateien wurden technisch dekodiert; die menschliche Einzelprüfung und
+Übernahme stehen aus. Einzelmessungen: `gemini-probelauf-2026-09-05.json`.
 Es fehlen bereits ohne Dialog-Clips **462 Clips**, **78 Bilder**, **512
 Thai-Situationen** sowie Gespräche für Englisch/Spanisch (AE-48). Letztere
 brauchen weiterhin einen eigenen Sprachvertrag; Phase 19 erfindet ihn nicht.

@@ -932,14 +932,14 @@
       "phase": 19,
       "criterion": "Generatorlauf auf localhost:8081 erzeugt echten Bestand, der menschlich geprueft ins Repo uebernommen wird",
       "done": false,
-      "verifiedHow": "UI und leerer echter Export im Browser geprueft. Noch kein Anbieterzugang oder gepruefter Bestand bereitgestellt; keine menschlichen Freigaben.",
+      "verifiedHow": "05.09.2026 echter Web-Probelauf: Gemini 3.1 Flash Image 5/5 Bilder, Gemini 3.1 Flash TTS Preview 10/10 Clips, keine Fehler. Alle 15 nach .content-studio exportiert/komprimiert, noch keine menschliche Freigabe oder Repo-Uebernahme.",
       "blocker": "B-19"
     },
     {
       "phase": 19,
       "criterion": "Exportpfad fuer Situationen, Bilder, Clips und Aufgaben mit Einzelpruefung und dauerhafter Ablehnung implementiert",
       "done": true,
-      "verifiedHow": "Lokaler Server, SHA-256-Pruefung, MP3 vor Hoerpruefung, einzeln pruefbare Inhalte. Sechs Pipeline-Tests plus Batch-Tests gegen alle vier Anbieterwege."
+      "verifiedHow": "Lokaler Server, SHA-256-Pruefung, MP3 vor Hoerpruefung, einzeln pruefbare Inhalte. Sieben Pipeline-Tests plus Batch-Tests gegen alle vier Anbieterwege; echter Export von 5 Bildern und 10 Clips erfolgreich."
     },
     {
       "phase": 19,
@@ -957,7 +957,7 @@
       "phase": 19,
       "criterion": "Audiokompression gewaehlt und reale Referenzdateien gemessen, Store-Grenzen offiziell geprueft",
       "done": true,
-      "verifiedHow": "MP3 64 kbit/s mono 24 kHz. Fuenf lokale SAPI-Sprachsamples: 1414190 -> 239265 Byte. Google 500 MB Basismodul komprimiert, Apple 4 GB iOS unkomprimiert, abgerufen 05.09.2026."
+      "verifiedHow": "MP3 64 kbit/s mono 24 kHz. Zehn echte Gemini-Clips: 632120 Byte WAV -> 112194 Byte MP3 (-82.25%); alle dekodiert. Zusaetzlich SAPI-Referenz. Google 500 MB Basismodul komprimiert, Apple 4 GB iOS unkomprimiert, abgerufen 05.09.2026. Vollmenge weiter offen."
     },
     {
       "phase": 19,
@@ -1260,6 +1260,11 @@
       "id": "AE-56",
       "title": "Offline-Vollstaendigkeit ist ein Auslieferungstor",
       "rationale": "Auslieferungsplan deckt alle Zielwoerter, Beispiele, deutsche Kartenwoerter und Pruefungstexte ab. en/es Clip-Validator korrigiert. Fehlende Inhalte lassen content:check und EAS Preview/Produktion scheitern; System-TTS ist keine garantierte Offline-Datei."
+    },
+    {
+      "id": "AE-57",
+      "title": "Echte Gemini-Probelaufe und komprimierte Enddateien sind gemessen, Freigabe bleibt menschlich",
+      "rationale": "Nutzer bestimmt gemini-3.1-flash-image und gemini-3.1-flash-tts-preview. 5/5 Bilder und 10/10 Clips im bestehenden localhost:8081-Generator ohne Fehler erzeugt und exportiert. generateContent funktioniert ohne API-Umbau. 632120 Byte WAV -> 112194 Byte MP3 (-82.25%); 5 JPEGs zusammen 1910911 Byte. Alle Dateien SHA-256- und dekodiergeprueft. Kein Hochrechnen als Vollmengenmessung, keine automatische Freigabe oder Uebernahme. Schluessel nur in Browser-Sitzung."
     }
   ],
   "openBlockers": [
@@ -1301,31 +1306,31 @@
     },
     {
       "id": "B-6",
-      "title": "Antwortform von ChatGPT und Gemini ist ohne gueltigen Schluessel nicht belegbar",
+      "title": "Anbieterantworten teilweise belegt; ChatGPT, Gemini-Text und sprachliche Audiopruefung offen",
       "affectsPhases": [
         10,
         11
       ],
       "needsUser": true,
-      "note": "Beide Anbieter pruefen den Schluessel VOR der Anfrageform: OpenAI beantwortet auch einen voellig leeren Koerper mit invalid_api_key, Google jede Anfrage mit 'API key not valid' - sogar ein erfundenes Modell und ein GET auf die Modellliste. Anders als bei Stability (AE-13, Pflichtfelder und Enums vor der Authentifizierung) liess sich deshalb weder Anfrage- noch Antwortform festklopfen. Vorsorge im Code: die Parser nennen im Fehlerfall die tatsaechlich gelieferten Feldnamen. Fremde Schluessel gebe ich nicht ein - dieselbe Linie wie bei B-4. Bei ChatGPT kommt hinzu, dass ein Versuch im Browser berechnet werden koennte, ohne dass die Antwort ankommt (AE-27). SEIT PHASE 11: Betrifft auch die Sprachausgabe - ohne Schluessel kein Audio, also keine Messung der Thai-Toene von Gemini und ChatGPT (AE-31) und keine Bestaetigung der Antwortform (inlineData audio/L16). Das Messwerkzeug scripts/tone-contour.html wartet auf echte Clips.",
+      "note": "Beide Anbieter pruefen den Schluessel VOR der Anfrageform: OpenAI beantwortet auch einen voellig leeren Koerper mit invalid_api_key, Google jede Anfrage mit 'API key not valid' - sogar ein erfundenes Modell und ein GET auf die Modellliste. Anders als bei Stability (AE-13, Pflichtfelder und Enums vor der Authentifizierung) liess sich deshalb weder Anfrage- noch Antwortform festklopfen. Vorsorge im Code: die Parser nennen im Fehlerfall die tatsaechlich gelieferten Feldnamen. Fremde Schluessel gebe ich nicht ein - dieselbe Linie wie bei B-4. Bei ChatGPT kommt hinzu, dass ein Versuch im Browser berechnet werden koennte, ohne dass die Antwort ankommt (AE-27). SEIT PHASE 11: Betrifft auch die Sprachausgabe - ohne Schluessel kein Audio, also keine Messung der Thai-Toene von Gemini und ChatGPT (AE-31) und keine Bestaetigung der Antwortform (inlineData audio/L16). Das Messwerkzeug scripts/tone-contour.html wartet auf echte Clips. NACHTRAG 05.09.2026 (AE-57): Mit autorisiertem Nutzerzugang liefern gemini-3.1-flash-image 5 JPEGs und gemini-3.1-flash-tts-preview 10 echte Clips erfolgreich ueber generateContent im lokalen Web-Build. Parser, Blob-Ablage und Export fuer diese Gemini-Wege jetzt real belegt. Tongenauigkeit, Gemini-Text und ChatGPT bleiben offen.",
       "steps": "Einstellungen -> Gruppe waehlen -> Anbieter Gemini -> gueltigen Google-Schluessel eintragen -> Probelauf -> Start. Erwartung: Situationen bzw. Aufgaben werden erzeugt. Bei Fehlschlaegen nennt die Meldung die gelieferten Feldnamen; anzupassen sind dann parseGeminiText / parseGeminiImage in src/lib/providers/."
     },
     {
       "id": "B-19",
-      "title": "Echter Entwicklerlauf, menschliche Inhaltsfreigabe und reale Vollmengenmessung fehlen",
+      "title": "Menschliche Inhaltsfreigabe, restlicher Bestand und reale Vollmengenmessung fehlen",
       "affectsPhases": [
         19
       ],
       "needsUser": true,
-      "note": "Zu Beginn nach lokalem Anbieterzugang oder bereits geprueften Inhalten gefragt. Keine Antwort in dieser Sitzung. Browserbestand und Repo-Katalog sind leer. Technische Pipeline ist getestet; keine menschliche Pruefung fingiert. EN/ES-Sprachvertrag bleibt AE-48, signierte native Builds/Geraet bleiben B-5/B-2.",
-      "steps": "content/README.md: npm run content:studio, Expo Web localhost:8081, Zugang lokal eintragen, erzeugen, exportieren/komprimieren, einzeln pruefen, uebernehmen; content:check muss vor Auslieferung gruen sein."
+      "note": "Anbieterzugang vom Nutzer fuer lokale Tests bereitgestellt. Echte Gemini-Probelaufe erfolgreich: 5 Bilder und 10 Clips, alle 15 in .content-studio zur Einzelpruefung. Keine menschliche Freigabe; Repo-Katalog weiter leer. Zugang nur Browser-Sitzung, nicht im Repo. EN/ES-Sprachvertrag bleibt AE-48, native Builds/Geraet B-5/B-2.",
+      "steps": "localhost:8081/settings: eigenen Pruefernamen eintragen, 15 Testmedien einzeln ansehen/anhoeren, freigeben oder ablehnen. Freigegebenes ins Repo uebernehmen; restlichen Bestand erzeugen/pruefen und Gesamtgroesse messen. content:check muss vor Auslieferung gruen sein."
     }
   ],
   "nextUp": {
     "phase": 19,
     "name": "Echte Inhalte bereitstellen und abnehmen; Phase 19 noch nicht abgeschlossen",
     "tasks": [
-      "B-19: Lokalen Anbieterzugang oder geprueften Bestand bereitstellen; echter Lauf und menschliche Einzelpruefung in content/README.md.",
+      "B-19: 15 echte Gemini-Testmedien sind in der lokalen Pruefliste bereit. Menschlich einzeln pruefen, freigeben/ablehnen und erst Freigegebenes uebernehmen; restlichen Bestand danach vervollstaendigen.",
       "Vollstaendigen Audioexport messen; kein Hochrechnen der Referenzmessung als Ist-Wert. Bei Budgetueberschreitung Umfang explizit entscheiden.",
       "content:check gruen bekommen: fehlende Medien und Situationen ergaenzen; AE-48 fuer EN/ES-Gespraeche separat sprachlich klaeren.",
       "B-2/B-5: echte Android-/iOS-Installation offline inklusive Kaltstart/Cachebereinigung; Store-Endgroessen am echten Build messen.",
@@ -1720,7 +1725,19 @@
         "sourceBytes": 1414190,
         "compressedBytes": 239265
       },
-      "fullCorpusMeasured": false
+      "fullCorpusMeasured": false,
+      "measuredGeminiTest": {
+        "report": "content/gemini-probelauf-2026-09-05.json",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "clips": 10,
+        "sourceWavBytes": 632120,
+        "sourcePcmBytes": 631680,
+        "compressedBytes": 112194,
+        "durationMs": 13160,
+        "reductionPercent": 82.25,
+        "fullCorpus": false
+      }
     },
     "contentBudgetBytes": 157286400,
     "onBudgetOverflow": "abort whole publication; no silent subset",
@@ -1743,6 +1760,17 @@
       "typeScript": "pass"
     },
     "complete": false,
-    "blocker": "B-19 plus existing B-2/B-5 and AE-48"
+    "blocker": "B-19 plus existing B-2/B-5 and AE-48",
+    "pendingReview": {
+      "images": 5,
+      "audio": 10,
+      "situations": 0,
+      "exam": 0,
+      "location": ".content-studio/",
+      "imageModel": "gemini-3.1-flash-image",
+      "imageBytes": 1910911,
+      "imageDimensions": "1024x1024 JPEG",
+      "approved": 0
+    }
   }
 }
