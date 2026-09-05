@@ -1,0 +1,21 @@
+{
+  "verifiedAt": "2026-09-05T09:05:03.390Z",
+  "checked": [
+    {
+      "platform": "android",
+      "modules": 1835,
+      "generatorModules": 0
+    },
+    {
+      "platform": "ios",
+      "modules": 1754,
+      "generatorModules": 0
+    },
+    {
+      "platform": "web",
+      "modules": 1294,
+      "generatorModules": 0
+    }
+  ],
+  "productionSettingsInputs": 0
+}

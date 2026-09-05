@@ -2,6 +2,7 @@ import { BatchProgress, missingFrom, runBatch } from '../generation/batch';
 import { BatchTask } from '../generation/types';
 import { base64ByteLength } from '../images/types';
 import { DataStore, getStore } from '../storage';
+import { isContentRejected } from '../content/rejections';
 
 import { getAudioBlobStore } from './blob-store';
 import { ClipGenerationClient } from './generator';
@@ -30,6 +31,7 @@ export type ClipRunOptions = {
 function clipExists(db: DataStore, blobs: AudioBlobStore) {
   return {
     async exists(spec: AudioClipSpec) {
+      if (await isContentRejected('audio', spec.id, db)) return true;
       const doc = await db.get<AudioClip>('audio', spec.id);
       if (!doc) return false;
       return blobs.has(doc.blobKey);

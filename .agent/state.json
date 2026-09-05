@@ -1,10 +1,10 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-09-04",
-  "currentPhase": 18,
-  "currentPhaseName": "Fertigkeiten, Merkfunktion und Stimmen",
-  "currentPhaseStatus": "done",
+  "lastUpdated": "2026-09-05",
+  "currentPhase": 19,
+  "currentPhaseName": "Inhalte werden mitgeliefert, nicht vom Nutzer erzeugt",
+  "currentPhaseStatus": "implementation_complete_acceptance_open",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -927,6 +927,57 @@
       "criterion": "Tests und tsc gruen, 375 px und breit geprueft",
       "done": true,
       "verifiedHow": "712 Tests in 31 Suites gruen (vorher 689 in 30); npx tsc --noEmit fehlerfrei. Beide Breiten: kein horizontales Scrollen, kein Element ohne Beschriftung, keines unter 24 Punkten, in einem frischen Tab keine Konsolenfehler."
+    },
+    {
+      "phase": 19,
+      "criterion": "Generatorlauf auf localhost:8081 erzeugt echten Bestand, der menschlich geprueft ins Repo uebernommen wird",
+      "done": false,
+      "verifiedHow": "UI und leerer echter Export im Browser geprueft. Noch kein Anbieterzugang oder gepruefter Bestand bereitgestellt; keine menschlichen Freigaben.",
+      "blocker": "B-19"
+    },
+    {
+      "phase": 19,
+      "criterion": "Exportpfad fuer Situationen, Bilder, Clips und Aufgaben mit Einzelpruefung und dauerhafter Ablehnung implementiert",
+      "done": true,
+      "verifiedHow": "Lokaler Server, SHA-256-Pruefung, MP3 vor Hoerpruefung, einzeln pruefbare Inhalte. Sechs Pipeline-Tests plus Batch-Tests gegen alle vier Anbieterwege."
+    },
+    {
+      "phase": 19,
+      "criterion": "Gebundene Assets werden durch den bestehenden Resolver bevorzugt",
+      "done": true,
+      "verifiedHow": "Offline-Resolver-Jest-Test; isolierte echte MP3-/PNG-Dateien bytegenau in iOS-/Android-Assetexporten. Produktionsdaten ignorieren ungepruefte alte Entwuerfe."
+    },
+    {
+      "phase": 19,
+      "criterion": "Produktionspfad rendert kein Schluesselfeld und enthaelt keinen Generatorcode",
+      "done": true,
+      "verifiedHow": "Render-Test mit __DEV__ false; Import des Studios wuerde werfen; 0 TextInput/Generatorprogress. Web-/iOS-/Android-Modulgraphen ohne Generator-/Key-/Providerclients und Browser-Produktionsansicht geprueft."
+    },
+    {
+      "phase": 19,
+      "criterion": "Audiokompression gewaehlt und reale Referenzdateien gemessen, Store-Grenzen offiziell geprueft",
+      "done": true,
+      "verifiedHow": "MP3 64 kbit/s mono 24 kHz. Fuenf lokale SAPI-Sprachsamples: 1414190 -> 239265 Byte. Google 500 MB Basismodul komprimiert, Apple 4 GB iOS unkomprimiert, abgerufen 05.09.2026."
+    },
+    {
+      "phase": 19,
+      "criterion": "Reale komprimierte Vollmenge gemessen und fuer die Auslieferung bestaetigt",
+      "done": false,
+      "verifiedHow": "Kein echter Gemini-Vollbestand vorhanden; ~700 MB aus Phase 11 war eine Hochrechnung. Export misst jede Datei; 150-MiB-Budget stoppt ohne Teiluebernahme.",
+      "blocker": "B-19"
+    },
+    {
+      "phase": 19,
+      "criterion": "App ohne Schluessel und Netz vollstaendig mit freigegebenem Inhalt",
+      "done": false,
+      "verifiedHow": "content:check meldet 462 fehlende Clips ohne Dialoge, 78 Bilder, 512 Thai-Situationen, keine EN/ES-Gespraeche (AE-48). EAS-Auslieferung deshalb gesperrt.",
+      "blocker": "B-19; AE-48; B-2; B-5"
+    },
+    {
+      "phase": 19,
+      "criterion": "Tests und npx tsc --noEmit gruen; Protokoll und TODO aktualisiert",
+      "done": true,
+      "verifiedHow": "722 Tests in 34 Suites, 6 Node-Pipeline-Tests mit echtem Encoder, TypeScript und content:integrity gruen; drei Produktionsbundles erstellt/geprueft."
     }
   ],
   "architectureDecisions": [
@@ -1184,6 +1235,31 @@
       "id": "AE-51",
       "title": "Jede Sprache hat eine Hoer- und eine Leseuebung ihres Merkmals",
       "rationale": "Nach Phase 16 hatte nur Thai beides; Spanisch und Englisch fehlte das Ohr. Das war keine Entscheidung, sondern eine Luecke: Betonung ist hoerbar, und englische Woerter mit gleicher Schreibung auseinanderzuhalten ist genau die Uebung, an der man im Alltag scheitert. Neu: \"Betonung hoeren\" (Spanisch) und \"Wort hoeren\" (Englisch). Die entscheidende Zeile der spanischen Uebung ist withoutAccent - die Silben stehen OHNE Akzentzeichen in der Auswahl, sonst waere die Antwort abzulesen statt zu hoeren. Die englische Uebung ist die Umkehrung von AE-47: nicht sehen und den Laut waehlen, sondern hoeren und die Schreibung waehlen; die Ablenker sind echte Woerter derselben Schriftstueck-Gruppe. Dass eine Aussprache sich nicht HERLEITEN laesst (AE-44), heisst nicht, dass man sie nicht ERKENNEN kann. Die Uebungen stehen jetzt nach Fertigkeit gruppiert, in fester Reihenfolge ueber alle Sprachen."
+    },
+    {
+      "id": "AE-52",
+      "title": "MP3 vor der menschlichen Pruefung, reale Bytezahlen und aktuelle Store-Grenzen",
+      "rationale": "Lokaler FFmpeg/libmp3lame 64 kbit/s mono 24 kHz. 1414190 -> 239265 Byte am SAPI-Referenzsample, kein Gemini-Vollbestand. Play 500 MB Basismodul komprimiert, iOS 4 GB unkomprimiert. 150 MiB Projektbudget stoppt vollstaendig, keine automatische Kuerzung."
+    },
+    {
+      "id": "AE-53",
+      "title": "Versionierter Katalog und statische Expo-Assets im bestehenden Resolver",
+      "rationale": "Einzelexport aus Laufzeitablage zum lokalen Loopback-Studio. Freigaben schreiben SHA-Dateien plus Katalog und statische require-Verweise. Metro buendelt nativ; ungepruefte Runtime-Entwuerfe bleiben in Produktion unberuecksichtigt. FSRS und IDs bleiben erhalten."
+    },
+    {
+      "id": "AE-54",
+      "title": "Generatorcode aus dem Produktionsgraph entfernt",
+      "rationale": "Bedingtes require innerhalb __DEV__, zusaetzlich Web localhost:8081; Entwicklerdateien ausserhalb Expo Router. Kein URL-/Profil-/Env-Schalter kann Release aktivieren. Render-Test und alle drei exportierten Modulgraphen belegen Ausschluss."
+    },
+    {
+      "id": "AE-55",
+      "title": "Menschen pruefen pro Inhalt, Ablehnungen ueberleben weitere Laeufe",
+      "rationale": "Finale komprimierte Dateien einzeln pruefen. Freigabe mit Name/Zeitpunkt/Hash; Aenderung braucht erneute Pruefung. Repo-Sperrliste je Art und ID wird vor Providerzugriff abgeglichen. Keine Sammelfreigabe und keine als Menschen ausgegebenen Testfreigaben."
+    },
+    {
+      "id": "AE-56",
+      "title": "Offline-Vollstaendigkeit ist ein Auslieferungstor",
+      "rationale": "Auslieferungsplan deckt alle Zielwoerter, Beispiele, deutsche Kartenwoerter und Pruefungstexte ab. en/es Clip-Validator korrigiert. Fehlende Inhalte lassen content:check und EAS Preview/Produktion scheitern; System-TTS ist keine garantierte Offline-Datei."
     }
   ],
   "openBlockers": [
@@ -1233,16 +1309,29 @@
       "needsUser": true,
       "note": "Beide Anbieter pruefen den Schluessel VOR der Anfrageform: OpenAI beantwortet auch einen voellig leeren Koerper mit invalid_api_key, Google jede Anfrage mit 'API key not valid' - sogar ein erfundenes Modell und ein GET auf die Modellliste. Anders als bei Stability (AE-13, Pflichtfelder und Enums vor der Authentifizierung) liess sich deshalb weder Anfrage- noch Antwortform festklopfen. Vorsorge im Code: die Parser nennen im Fehlerfall die tatsaechlich gelieferten Feldnamen. Fremde Schluessel gebe ich nicht ein - dieselbe Linie wie bei B-4. Bei ChatGPT kommt hinzu, dass ein Versuch im Browser berechnet werden koennte, ohne dass die Antwort ankommt (AE-27). SEIT PHASE 11: Betrifft auch die Sprachausgabe - ohne Schluessel kein Audio, also keine Messung der Thai-Toene von Gemini und ChatGPT (AE-31) und keine Bestaetigung der Antwortform (inlineData audio/L16). Das Messwerkzeug scripts/tone-contour.html wartet auf echte Clips.",
       "steps": "Einstellungen -> Gruppe waehlen -> Anbieter Gemini -> gueltigen Google-Schluessel eintragen -> Probelauf -> Start. Erwartung: Situationen bzw. Aufgaben werden erzeugt. Bei Fehlschlaegen nennt die Meldung die gelieferten Feldnamen; anzupassen sind dann parseGeminiText / parseGeminiImage in src/lib/providers/."
+    },
+    {
+      "id": "B-19",
+      "title": "Echter Entwicklerlauf, menschliche Inhaltsfreigabe und reale Vollmengenmessung fehlen",
+      "affectsPhases": [
+        19
+      ],
+      "needsUser": true,
+      "note": "Zu Beginn nach lokalem Anbieterzugang oder bereits geprueften Inhalten gefragt. Keine Antwort in dieser Sitzung. Browserbestand und Repo-Katalog sind leer. Technische Pipeline ist getestet; keine menschliche Pruefung fingiert. EN/ES-Sprachvertrag bleibt AE-48, signierte native Builds/Geraet bleiben B-5/B-2.",
+      "steps": "content/README.md: npm run content:studio, Expo Web localhost:8081, Zugang lokal eintragen, erzeugen, exportieren/komprimieren, einzeln pruefen, uebernehmen; content:check muss vor Auslieferung gruen sein."
     }
   ],
   "nextUp": {
-    "phase": null,
-    "name": "Phase 18 abgeschlossen; drei Sprachen mit je vier Fertigkeiten",
+    "phase": 19,
+    "name": "Echte Inhalte bereitstellen und abnehmen; Phase 19 noch nicht abgeschlossen",
     "tasks": [
+      "B-19: Lokalen Anbieterzugang oder geprueften Bestand bereitstellen; echter Lauf und menschliche Einzelpruefung in content/README.md.",
+      "Vollstaendigen Audioexport messen; kein Hochrechnen der Referenzmessung als Ist-Wert. Bei Budgetueberschreitung Umfang explizit entscheiden.",
+      "content:check gruen bekommen: fehlende Medien und Situationen ergaenzen; AE-48 fuer EN/ES-Gespraeche separat sprachlich klaeren.",
+      "B-2/B-5: echte Android-/iOS-Installation offline inklusive Kaltstart/Cachebereinigung; Store-Endgroessen am echten Build messen.",
       "B-6 + B-2 zusammen: Clips fuer eine Sprache erzeugen und auf dem Geraet abspielen. Erst dann ist belegt, dass die Hoeruebungen ohne Systemstimme laufen - im Testbrowser ist WEDER eine spanische NOCH eine englische Stimme installiert.",
       "Pruefungsmodule fuer Englisch und Spanisch (Cambridge/IELTS, DELE/Cervantes): eigene Recherche wie Phase 7, eigene Phase. Der Pruefungs-Screen filtert noch nicht nach Sprache.",
       "Sprachsituationen fuer Englisch und Spanisch: der Plan ist parametrisiert, der Aufgabentext an die KI ist es nicht (Paiboon, ครับ/ค่ะ). Braucht einen eigenen Text mit eigener Recherche zu Anredeformen (AE-48).",
-      "Einstellungen: Sprachwahl fuer Bilder- und Cliplauf anbieten (Planer sind parametrisiert, AE-46/AE-48) - keine reine Darstellung mehr, deshalb nicht in Phase 17",
       "Beispielsaetze fuer Englisch und Spanisch mit der Disziplin aus Phase 2. Bisher gibt es nur bei spanischen Substantiven die Wortgruppe aus Artikel und Wort.",
       "Offener Befund: Ob die F0-Messung aus Phase 12 spanische Betonung erkennen kann, ist NICHT geprueft (AE-48). Vor einem Umbau der Sprechuebung messen, nicht annehmen.",
       "Phase 12: Sprechen in Chrome/Edge mit echtem Mikrofon pruefen; danach auf Android/iOS ueber Expo Go oder Preview-APK (B-2)",
@@ -1601,13 +1690,59 @@
       "directionPrompt - der generische Satz auf jeder Richtungskarte",
       "Block \"Faellige Karten je Richtung\" im Fortschritt"
     ],
-    "diagnostics": "Einstellungen -> Diagnose: Vokabeln je Sprache aus dem Speicher, Daten-/Bild-/Clipablage",
+    "diagnostics": "Nur im Entwicklerbetrieb localhost:8081, zusammen mit dem Inhaltsstudio",
     "layoutFix": "language-picker: flexBasis vom inneren View auf das Pressable verschoben (in einer Spalte war es die Hoehe)",
     "notYet": "Generatoren ohne Sprachwahl (AE-48); Pruefungs-Screen ohne Sprachfilter",
     "featureLegend": "components/feature-legend.tsx - je Sprache ihre Merkhilfe: Tonfarben (th), Betonungsregel als Silbenmuster (es), Schriftstueck-Gruppen (en). Keine benutzt eine der fuenf Tonfarben.",
     "resume": "Lernen- und Gespraech-Reiter merken sich ihren Stand im Profil; zurueckgesetzt nur durch eine Sprachwahl auf der Uebersicht (AE-49). Pruefung unveraendert.",
     "progress": "Zeigt Erarbeitetes statt Bestand: Kacheln Begonnen/Gemeistert, Zustandsbalken ohne \"neu\", Restzahl als Satz.",
     "voices": "Geschlechtswahl nur bei Gemini, weil nur Google es dokumentiert - und zwar in den Cloud-TTS-Unterlagen zu denselben Stimmnamen (AE-50). Bei ChatGPT steht der Grund statt der Knoepfe.",
-    "mediaLanguage": "Bilder- und Cliplauf haben in den Einstellungen eine Sprachzeile (schliesst einen Teil von AE-48)."
+    "mediaLanguage": "Bilder- und Cliplauf haben in den Einstellungen eine Sprachzeile (schliesst einen Teil von AE-48).",
+    "generatorVisibility": "Entwickler-Web localhost:8081; produktiv kein Generator-/Schluesselfeld"
+  },
+  "contentDelivery": {
+    "developerOrigin": "http://localhost:8081",
+    "localStudio": "127.0.0.1:8082",
+    "catalog": "src/content/catalog.json",
+    "assets": "assets/content/",
+    "staticReferences": "src/content/assets.ts",
+    "reviews": "per item, named human, timestamp, SHA-256 of final media and metadata",
+    "rejections": "content/rejections.json; permanent per-kind/per-ID; checked before provider request",
+    "production": "__DEV__ conditional require removed from all three production module graphs; studio outside Expo Router; no key field or generator control",
+    "audio": {
+      "format": "MP3",
+      "encoder": "libmp3lame",
+      "bitrate": 64000,
+      "channels": 1,
+      "sampleRate": 24000,
+      "measuredSample": {
+        "source": "5 German Windows SAPI/Hedda sentences, NOT Gemini or human-approved learning content",
+        "sourceBytes": 1414190,
+        "compressedBytes": 239265
+      },
+      "fullCorpusMeasured": false
+    },
+    "contentBudgetBytes": 157286400,
+    "onBudgetOverflow": "abort whole publication; no silent subset",
+    "storeLimitsChecked": "2026-09-05",
+    "googlePlayBaseCompressedMB": 500,
+    "appleIOSUncompressedGB": 4,
+    "approvedGeneratedEntries": 0,
+    "currentMissing": {
+      "audioBeforeDialogues": 462,
+      "images": 78,
+      "thaiSituations": 512,
+      "enEsConversations": true
+    },
+    "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
+    "nativeEvidence": "Hermes and asset exports, isolated MP3/PNG bytes identical for iOS/Android; not a signed AAB/IPA or physical playback",
+    "tests": {
+      "jest": 722,
+      "suites": 34,
+      "nodePipeline": 6,
+      "typeScript": "pass"
+    },
+    "complete": false,
+    "blocker": "B-19 plus existing B-2/B-5 and AE-48"
   }
 }

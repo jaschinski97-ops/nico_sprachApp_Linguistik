@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-09-05T09:05:03.778Z",
+  "integrityOnly": false,
+  "entries": 0,
+  "contentBytes": 0,
+  "audioSourceBytes": 0,
+  "audioCompressedBytes": 0,
+  "missing": {
+    "audio": 462,
+    "images": 78,
+    "situations": 512
+  },
+  "errors": [
+    "462/462 benötigte Hörclips fehlen (auch Deutsch und Prüfungen). System-TTS ist kein garantierter Offline-Ersatz.",
+    "78 konkrete Vokabeln ohne freigegebenes Bild.",
+    "512 Situationen des vollständigen Thai-Plans fehlen. Keine Teilmenge als Vollmenge ausgeben.",
+    "Gespräche für en fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich).",
+    "Gespräche für es fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich)."
+  ]
+}

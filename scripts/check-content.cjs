@@ -1,0 +1,68 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const { digestOf, assertDocument, BUDGET, keyOf } = require('./content-pipeline.cjs');
+const domain = require('./content-domain.cjs');
+const { planDeliveryAudio } = domain.load('src/lib/content/audio-plan');
+const { BUILTIN_EXAM_MODULES } = domain.load('src/data/exam-modules');
+const { VOCABULARY } = domain.load('src/data/vocabulary');
+const { planSituations, FULL_RUN } = domain.load('src/lib/conversation/plan');
+
+function checkContent(root, { integrityOnly = false } = {}) {
+  const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/content/catalog.json'), 'utf8'));
+  const ledger = JSON.parse(fs.readFileSync(path.join(root, 'content/rejections.json'), 'utf8'));
+  const errors = [];
+  const seen = new Set();
+  const assetMap = fs.readFileSync(path.join(root, 'src/content/assets.ts'), 'utf8');
+  let audioSourceBytes = 0;
+  let audioCompressedBytes = 0;
+  let contentBytes = 0;
+  if (catalog.version !== 1 || !Array.isArray(catalog.entries)) throw Error('Unbekannte Katalogversion.');
+  for (const entry of catalog.entries) {
+    try {
+      assertDocument(entry.kind, entry.document);
+      if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
+      seen.add(keyOf(entry));
+      if (ledger.entries.some((item) => keyOf(item) === keyOf(entry))) throw Error('Verworfener Inhalt im Katalog.');
+      if (entry.review?.status !== 'approved' || !entry.review.reviewer?.trim() || !entry.review.reviewedAt || entry.review.digest !== entry.digest) throw Error('Menschliche Freigabe fehlt.');
+      const media = entry.kind === 'audio' || entry.kind === 'images';
+      if (media && !entry.asset) throw Error('Mediendatei fehlt.');
+      if (entry.asset && !/^[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(entry.asset)) throw Error('Unsicherer Assetpfad.');
+      if (entry.asset && !assetMap.includes(`${JSON.stringify(entry.asset)}: require('../../assets/content/${entry.asset}')`)) throw Error('Statischer Expo-Asset-Verweis fehlt.');
+      const bytes = entry.asset ? fs.readFileSync(path.join(root, 'assets/content', entry.asset)) : Buffer.alloc(0);
+      if (digestOf(entry.kind, entry.document, bytes) !== entry.digest) throw Error('Datei oder Metadaten nach Freigabe geändert.');
+      if (media && (bytes.length !== entry.byteSize || bytes.length !== entry.document.byteSize)) throw Error('Falsche Größenangabe.');
+      if (entry.kind === 'audio') {
+        if (entry.document.format !== 'mp3' || !entry.asset.endsWith('.mp3')) throw Error('Unkomprimiertes Audio.');
+        audioSourceBytes += entry.sourceBytes;
+        audioCompressedBytes += bytes.length;
+      }
+      contentBytes += bytes.length + Buffer.byteLength(JSON.stringify(entry));
+    } catch (error) { errors.push(`${entry.kind}:${entry.id}: ${error.message}`); }
+  }
+  if (contentBytes > BUDGET) errors.push('Inhaltsbudget von 150 MiB überschritten. Keine automatische Kürzung zulässig.');
+  const situations = catalog.entries.filter((entry) => entry.kind === 'situations').map((entry) => entry.document);
+  const exams = [...BUILTIN_EXAM_MODULES, ...catalog.entries.filter((entry) => entry.kind === 'exam').map((entry) => entry.document)];
+  const neededAudio = planDeliveryAudio(situations, exams);
+  const missingAudio = neededAudio.filter((spec) => !seen.has(`audio:${spec.id}`));
+  const missingImages = VOCABULARY.filter((entry) => entry.isConcrete && !seen.has(`images:${entry.id}`));
+  const missingSituations = planSituations(FULL_RUN).filter((spec) => !seen.has(`situations:${spec.id}`));
+  if (!integrityOnly) {
+    if (missingAudio.length) errors.push(`${missingAudio.length}/${neededAudio.length} benötigte Hörclips fehlen (auch Deutsch und Prüfungen). System-TTS ist kein garantierter Offline-Ersatz.`);
+    if (missingImages.length) errors.push(`${missingImages.length} konkrete Vokabeln ohne freigegebenes Bild.`);
+    if (missingSituations.length) errors.push(`${missingSituations.length} Situationen des vollständigen Thai-Plans fehlen. Keine Teilmenge als Vollmenge ausgeben.`);
+    // The existing EN/ES situation prompt is intentionally Thai-only (AE-48).
+    // Keep this visible as a completeness blocker instead of silently treating
+    // an empty conversation tab as an offline-complete product.
+    for (const language of ['en', 'es']) {
+      if (!situations.some((situation) => situation.direction === `de_to_${language}`)) errors.push(`Gespräche für ${language} fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich).`);
+    }
+  }
+  return { checkedAt: new Date().toISOString(), integrityOnly, entries: catalog.entries.length, contentBytes,
+    audioSourceBytes, audioCompressedBytes, missing: { audio: missingAudio.map((spec) => spec.id), images: missingImages.map((entry) => entry.id), situations: missingSituations.map((spec) => spec.id) }, errors };
+}
+if (require.main === module) {
+  const result = checkContent(path.resolve(__dirname, '..'), { integrityOnly: process.argv.includes('--integrity-only') });
+  console.log(JSON.stringify({ ...result, missing: Object.fromEntries(Object.entries(result.missing).map(([kind, ids]) => [kind, ids.length])) }, null, 2));
+  process.exitCode = result.errors.length ? 1 : 0;
+}
+module.exports = { checkContent };

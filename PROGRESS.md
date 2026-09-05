@@ -4450,6 +4450,29 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 
 ## TODO — priorisiert
 
+> **Aktueller Vorrang: Phase 19 (05.09.2026), technische Umsetzung fertig,
+> Inhaltsabnahme offen.** Der Ablauf steht in `content/README.md`. Die älteren
+> TODO-Einträge darunter sind historisch; Generatoren gehören jetzt nur in
+> den Entwicklerbetrieb auf localhost:8081.
+
+- [ ] **B-19: Echter Entwicklerlauf und menschliche Einzelprüfung.** Anbieterzugang
+  bzw. bereits geprüfte Inhalte wurden zu Beginn dieser Phase angefragt; noch
+  keine Antwort. Lokal `npm run content:studio` plus Expo-Web auf Port 8081
+  starten, Inhalte erzeugen, exportieren/komprimieren, einzeln ansehen/anhören,
+  freigeben oder ablehnen und ins Repo übernehmen. Keine Testdaten ausliefern.
+- [ ] **Vollständigen Audiobestand tatsächlich messen.** Referenzmessung vorhanden
+  (1.414.190 → 239.265 Byte); echter Gemini-Gesamtbestand fehlt. Bei Überschreitung
+  des 150-MiB-Inhaltsbudgets Umfang ausdrücklich entscheiden, nicht automatisch
+  kürzen. AAB-/IPA-Endgröße separat messen (B-5).
+- [ ] **`npm run content:check` grün bekommen.** Derzeit fehlen 462 Clips bereits
+  ohne Dialoge, 78 Bilder und 512 Thai-Situationen. Zusätzlich AE-48: geprüfte
+  Gesprächsinhalte/-verträge für Englisch und Spanisch. System-TTS ersetzt keine
+  fehlende Offline-Datei. EAS-Preview/Produktion bleiben bis dahin gesperrt.
+- [ ] **B-2/B-5:** echte Android-/iOS-Installation offline, Kaltstart und nach
+  Cache-Bereinigung testen. Hermes-/Asset-Exporte sind kein signiertes AAB/IPA.
+- [x] Phase-19-Entwicklerexport, Einzelprüfung, dauerhafte Sperren, MP3-Kompression,
+  gebündelter Resolver und Produktionsausschluss implementiert und automatisiert geprüft.
+
 > **Neu aus Phase 18 (2026-09-04):** Jede Sprache hat jetzt Hören, Lesen und
 > Schreiben (Thai zusätzlich Sprechen), eine eigene Merkhilfe und eine
 > Merkfunktion, die den Lernen-Reiter dort wieder aufmacht, wo man war.
@@ -4660,3 +4683,166 @@ Stability-Wachstum bzw. -Einbruch je nach Bewertung.
 Die Default-Gewichte sind eine **Näherung** an veröffentlichte FSRS-Werte,
 keine zertifizierte Kopie — dieser Hinweis gehört auch als Kommentar in den
 Code.
+
+---
+
+## 2026-09-05 — Phase 19: Entwicklerproduktion, geprüfte Repo-Inhalte
+
+**Stand: technische Umsetzung abgeschlossen und geprüft; Inhaltsabnahme offen.**
+Vor Beginn `.agent/state.json`, Protokoll/AE/TODO und Git geprüft. Ausgangspunkt
+`0ee3d64`, sauberer Arbeitsbaum. Baseline: 712 Tests, TypeScript fehlerfrei.
+Die offenen B-2/B-4/B-5/B-6 wurden angefragt, insbesondere lokal verfügbare
+Anbieterzugänge oder bereits geprüfte Inhalte. Bis zu diesem Eintrag liegt
+keine Antwort vor. Der tatsächliche Browserbestand auf localhost:8081 ist
+leer: 0 Situationen, 0 Bilder, 0 Hörclips, acht bestehende Prüfungsaufgaben.
+
+### AE-52 — MP3 vor der Prüfung, echte Bytezahlen statt Vollmengenbehauptung
+
+**Entscheidung:** Lokaler FFmpeg-Encoder (`ffmpeg-static`, ausschließlich
+devDependency), MP3/libmp3lame mit 64 kbit/s, Mono, 24 kHz. MP3 ist bereits im
+Clip-Vertrag vorhanden und wird von `expo-audio` verwendet; kein zusätzlicher
+Codec im mobilen Build. Die menschliche Prüfung hört das endgültige MP3,
+denn die Qualität muss nach der verlustbehafteten Kompression stimmen.
+
+**Aktuelle Store-Grenzen, am 05.09.2026 selbst abgerufen:**
+[Google Play](https://support.google.com/googleplay/android-developer/answer/9859372?hl=en):
+500 MB komprimierter Download für das Basismodul, 4 GB für Module plus
+Install-time-Asset-Packs. 200 MB ist hier ein nicht blockierender Mobilfunkhinweis.
+[Apple](https://developer.apple.com/help/app-store-connect/reference/app-uploads/maximum-build-file-sizes/):
+4 GB unkomprimierte iOS-App; separat 500 MB für die `__TEXT`-Sektionen des
+ausführbaren Codes. AAB-Dateigröße, Downloadgröße und installierte Größe sind
+nicht gleichzusetzen.
+
+**Gemessen:** Fünf deutsche Referenzsätze, lokal mit Microsoft Hedda Desktop
+als 24-kHz-/16-Bit-/Mono-WAV synthetisiert: **1.414.190 Byte WAV → 239.265 Byte
+MP3**, 83,08 % Reduktion. Einzelgrößen und SHA-256 stehen in
+`content/compression-measurement.json`; `scripts/measure-sapi.ps1` und
+`scripts/measure-audio.cjs` machen den Weg reproduzierbar. Die ersten Aufrufe
+in der Sandbox scheiterten an gesperrten Unterprozessen bzw. nicht zugänglicher
+SAPI-Stimme; außerhalb dieser Prozesssperre liefen Stimme, Encoder und Tests.
+
+Das ist **kein Gemini-Lauf**, keine Messung der gesamten Dialogmenge und kein
+Thai-Tonnachweis. Die ~700 MB aus AE-30 waren schon dort eine Hochrechnung aus
+Textlänge/Sprechrate. Ein real erzeugter Vollbestand existiert weiterhin nicht.
+Beim echten Export protokolliert `content/size-report.json` jeden Clip vor/nach
+Kompression. 150 MiB ist das vorsichtige **Projektbudget** für Inhalte samt
+Metadaten, nicht eine Store-Grenze. Überschreitung bricht die gesamte Übernahme
+vor Änderungen am Katalog ab. Keine automatische Kürzung und kein heimliches
+Nachladen. Sollte die Vollmenge nicht passen, ist der Umfang explizit neu zu
+entscheiden. Die echten AAB-/IPA-Endgrößen bleiben zusätzlich B-5.
+
+### AE-53 — Versionierter Katalog plus statische Expo-Assets, vorhandener Resolver
+
+Die Daten bleiben während der Erzeugung im vorhandenen Dokumentspeicher und
+in IndexedDB (AE-14). Ein Export sendet **einen Inhalt pro Anfrage** an einen
+lokalen Begleitprozess, der nur an 127.0.0.1:8082 bindet und Änderungen nur mit
+exaktem Host, Origin `http://localhost:8081` und JSON akzeptiert. Keine
+Schlüssel, Profile, Karten oder Tagesprotokolle werden exportiert. Entwürfe
+liegen ignoriert unter `.content-studio/`.
+
+Nach Einzelprüfung schreibt die Übernahme Dateien nach `assets/content/`,
+Metadaten nach `src/content/catalog.json` und statische `require`-Verweise
+nach `src/content/assets.ts`. Die Dateinamen sind SHA-256-basiert. Der
+bisherige Resolver wird erweitert: **gebündelt → lokaler Entwurf nur im
+Entwicklerbetrieb → System-TTS**. Situationen, Bilder und zusätzliche
+Prüfungsaufgaben lesen ebenso bevorzugt den Katalog. Produktionsbuilds
+verwenden keine alten ungeprüften Laufzeitentwürfe. FSRS-/Profil-Daten bleiben
+unberührt; die vorhandenen Vokabel-IDs bleiben unverändert.
+
+[Expo Asset 57](https://docs.expo.dev/versions/v57.0.0/sdk/asset/) und die
+[Asset-Anleitung](https://docs.expo.dev/develop/user-interface/assets/) vorab
+gelesen, außerdem die installierten `expo-asset`-Quellen geprüft. Metro
+bündelt statisch referenzierte Dateien automatisch. Eine zweite explizite
+Plugin-Dateiliste wäre hier unnötig: Das SDK-57-Config-Plugin akzeptiert zudem
+WebP/.jpeg nicht, der statische Metro-Assetpfad schon. Kein neuer OTA- oder
+Web-PWA-Mechanismus wurde eingeführt.
+
+**Realer Exportnachweis mit isolierten technischen Testdateien:** Je ein MP3
+(40.365 Byte) und PNG (799.005 Byte) werden in Android- und iOS-Assetmanifesten
+gefunden und bytegenau mit den übernommenen Dateien verglichen. Beide
+Hermes-Bundles wurden erstellt; Bericht
+`content/asset-bundling-verification.json`. Diese Testfreigaben liegen nur im
+ignorierten Prüfprojekt, nicht im echten Katalog. Kein signiertes AAB/IPA,
+kein Geräte-Playback und keine menschliche Freigabe werden daraus abgeleitet.
+
+### AE-54 — Generatorcode wird aus dem Produktionsgraph entfernt
+
+Die alte Einstellungsoberfläche liegt jetzt außerhalb des Router-Verzeichnisses
+unter `src/dev/`. `DeveloperContent` lädt sie mit `require` **innerhalb** einer
+`__DEV__`-Bedingung, zusätzlich nur im Web auf exakt localhost:8081. Es gibt
+weder eine Generatorroute noch einen URL-/Profil-/Umgebungsvariablen-Schalter,
+der im Release aktivieren könnte. Ein bloßes Verstecken der Felder oder ein
+statischer Import der Entwickleroberfläche hätte nicht gereicht.
+
+Grundlage: [Expo Code Removal](https://docs.expo.dev/guides/tree-shaking/).
+`__DEV__` wird beim Produktionsbuild konstant falsch und der bedingte
+Modulzugriff entfernt. Build-Profilnamen alleine wären keine Code-Schranke;
+eine zusätzliche `EXPO_PUBLIC_*`-Variable bringt keinen Nutzen.
+
+**Nachweis:** Der Render-Test setzt `__DEV__ = false` bei ansonsten erlaubtem
+Entwicklerkontext. Er prüft null `TextInput`, null Generatorfortschrittsbalken
+und keine Schlüssel-/Anbieter-/Generatoranzeige; ein Import des Studios würde
+den Test sofort abbrechen. Zusätzlich Android/iOS/Web mit Source Maps
+exportiert und die tatsächlichen Modulgraphen sowie JS/HTML geprüft:
+**0 Generator-, Schlüssel- oder Anbieterclient-Module**. Die gerenderten
+Produktionseinstellungen auf localhost:8083 haben im Browser kein Eingabefeld.
+Bericht `content/production-verification.json`.
+
+### AE-55 — Menschen entscheiden pro Inhalt, Ablehnungen überleben neue Läufe
+
+Die Prüfliste zeigt die vollständigen Text-/Aufgabendokumente, das echte Bild
+oder den komprimierten Clip samt Transkript und Größen. Jeder Eintrag wird
+einzeln freigegeben oder mit Grund abgelehnt. Für Audio wird die Freigabetaste
+erst nach vollständigem Abspielen verfügbar. Es gibt keine Sammelfreigabe.
+Prüfername, Zeitpunkt, Entscheidung und Hash der endgültigen Bytes/Metadaten
+halten fest, **was** geprüft wurde. Änderungen verlieren die Freigabe;
+manipulierte Dateien werden vor Übernahme abgefangen.
+
+Ablehnungen stehen dauerhaft in `content/rejections.json` und werden vor jedem
+Start mit dem lokalen Speicher abgeglichen. Alle vier bestehenden Batch-Läufer
+überspringen gesperrte IDs vor dem Anbieteraufruf, auch nach Löschen aller
+Entwürfe. Die Freigabe ist ein redaktioneller Vorgang, keine durch Tests
+ersetzbare Behauptung. Aktuell gibt es **null** menschlich freigegebene
+generierte Einträge.
+
+### AE-56 — Fehlende Offline-Inhalte blockieren die Auslieferung sichtbar
+
+Der alte Plan vertonte nur Zielsprachenwörter und Thai-Dialogzüge. Der neue
+Auslieferungsplan ergänzt deutsche Kartenwörter, Hörtexte der Prüfungen und
+gesprochene Musterantworten. Außerdem ein vorhandener Fehler behoben:
+`isValidAudioClip` akzeptierte bisher nur th/de und verwarf en/es trotz Phase 16.
+
+Endnutzertexte verweisen nicht mehr auf Schlüsselfelder oder Generatoren;
+Modell-/Erzeugungsdaten verschwinden aus der Gesprächsansicht. Fehlt ein
+Hörclip, bleibt der vorhandene TTS-Fallback; für eine garantierte
+Offline-Auslieferung wird TTS ausdrücklich **nicht** als Inhalt gezählt.
+Bei vorhandenen Clips wird eine fehlende Systemstimme nicht mehr fälschlich
+als stumme Übung gemeldet.
+
+`content:integrity` prüft die Konsistenz des vorhandenen Katalogs.
+`content:check` prüft zusätzlich Vollständigkeit. EAS-Preview/Release laufen
+durch diesen Check, Entwicklungsbuilds bleiben möglich. Der aktuelle Check
+schlägt korrekt fehl: **462 Clips schon ohne Dialoge, 78 Bilder und 512
+Thai-Situationen fehlen**. Auch Gespräche für Englisch/Spanisch fehlen weiter
+(AE-48: geprüfter Sprachvertrag und Inhalte erforderlich). Ein leerer
+Gesprächsreiter ist damit kein als vollständig abgehakter Offline-Pfad.
+
+### Prüfung und offene Abnahme
+
+- 722 App-Tests in 34 Suites grün; `npx tsc --noEmit` fehlerfrei.
+- 6 Node-Pipeline-Tests mit echtem FFmpeg grün: Einzelprüfung, Wiederanlauf,
+  dauerhafte Ablehnung, Manipulation, fehlende Medien, Budget-Abbruch ohne
+  Teilübernahme und Loopback-/Origin-Schranke.
+- Offline-Resolver-Test: Netz und Systemstimme schlagen fehl, gebündelte
+  Clips/Bilder/Texte funktionieren über den bestehenden Resolver trotzdem.
+- Produktionsgraphen aller drei Plattformen geprüft; Hermes-Export für
+  iOS/Android, Web-Export und Browser-Produktionseinstellungen geprüft.
+- Auf localhost:8081 existiert der lokale Prüf-/Exportweg. Export des leeren
+  echten Laufzeitspeichers gemessen: 0 exportiert, 0 gesperrt, 0 Fehler.
+- **Offen (B-19):** echter Anbieter-Generatorlauf, tatsächliche menschliche
+  Inhaltsprüfung, Übernahme des echten Bestands und dessen gesamte
+  Kompressionsmessung. Ohne diese Daten wäre „ohne Netz vollständig“ falsch.
+- **Weiter offen:** B-2/B-5, physischer Offline-Kaltstart und native Store-Builds.
+
+Der aktuelle TODO-Vorrang und `.agent/state.json` wurden entsprechend ergänzt.
+Die Phase wird ausdrücklich nicht als vollständig erledigt protokolliert.

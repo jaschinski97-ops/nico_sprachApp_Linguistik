@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Local generator drafts and temporary verification builds (never shipped)
+/.content-studio/
+/build-verification/

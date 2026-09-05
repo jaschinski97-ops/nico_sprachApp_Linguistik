@@ -83,6 +83,10 @@ export function registerPronunciationClipLookup(lookup: PronunciationClipLookup 
   lookupClip = lookup ?? (() => null);
 }
 
+export async function hasPronunciationClip(request: { text: string; language: SpeechLanguage }): Promise<boolean> {
+  return Boolean(await Promise.resolve(lookupClip(request)).catch(() => null));
+}
+
 /** Trennt die Wiedergabe von der Entscheidungslogik, damit sie testbar bleibt. */
 export type PronunciationBackend = {
   playAsset(uri: string): Promise<void>;

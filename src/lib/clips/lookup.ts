@@ -1,5 +1,7 @@
 import { registerPronunciationClipLookup, SpeechLanguage } from '../audio';
 import { DataStore, getStore } from '../storage';
+import { bundledAssetUri } from '../content/bundled';
+import { isContentDeveloper } from '../content/developer';
 
 import { getAudioBlobStore } from './blob-store';
 import { AudioBlobStore, AudioClip, clipIdFor, isValidAudioClip } from './types';
@@ -54,6 +56,9 @@ export async function resolveClipUri(
   blobStore?: AudioBlobStore
 ): Promise<string | null> {
   const id = clipIdFor(request.language, request.text);
+  const bundled = await bundledAssetUri('audio', id);
+  if (bundled) return bundled;
+  if (!__DEV__ || (!store && !isContentDeveloper())) return null;
   const blobKey = (await clipIndex(store)).get(id);
   if (!blobKey) return null;
   const blobs = blobStore ?? (await getAudioBlobStore());

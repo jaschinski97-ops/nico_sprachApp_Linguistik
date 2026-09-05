@@ -1,0 +1,34 @@
+{
+  "verifiedAt": "2026-09-05T09:05:03.834Z",
+  "scope": "Isolated technical fixture, NOT human-approved learning content. Expo Hermes/asset export; no signed AAB or IPA and no device playback.",
+  "rows": [
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "bytes": 40365,
+      "sha256": "b8aa8057f0e46c00c7aa59db7e91fbc43b79fd6c7b7cbd7bbf808885687a91ed",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "images",
+      "bytes": 799005,
+      "sha256": "7a667804bb80a6a424a5daf18a2599c4f32237cf06fe78fc0de45dbb09e0eccf",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "bytes": 40365,
+      "sha256": "b8aa8057f0e46c00c7aa59db7e91fbc43b79fd6c7b7cbd7bbf808885687a91ed",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "images",
+      "bytes": 799005,
+      "sha256": "7a667804bb80a6a424a5daf18a2599c4f32237cf06fe78fc0de45dbb09e0eccf",
+      "identical": true
+    }
+  ]
+}

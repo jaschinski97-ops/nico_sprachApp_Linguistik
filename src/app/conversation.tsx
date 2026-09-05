@@ -69,19 +69,10 @@ export default function ConversationScreen() {
           <ThemedText type="smallBold">
             Noch keine Situationen für {languageOf(language).label}
           </ThemedText>
-          {language === 'th' ? (
-            <ThemedText type="small" themeColor="textSecondary">
-              Dialoge werden einmalig unter „Einstellungen" erzeugt — dafür wird
-              ein eigener API-Schlüssel gebraucht. Danach sind sie dauerhaft
-              gespeichert und funktionieren ohne Internet und ohne Schlüssel.
-            </ThemedText>
-          ) : (
-            <ThemedText type="small" themeColor="textSecondary">
-              Der Generator für Sprachsituationen kennt bisher nur Thai — ein
-              eigener, geprüfter Aufgabentext für {languageOf(language).label}{' '}
-              steht noch aus. Karteikarten und Übungen gibt es unter „Lernen".
-            </ThemedText>
-          )}
+          <ThemedText type="small" themeColor="textSecondary">
+            Diese App-Version enthält noch keine Dialoge für {languageOf(language).label}.
+            Karteikarten und Übungen findest du unter „Lernen“. Weitere Inhalte kommen mit App-Updates.
+          </ThemedText>
         </ThemedView>
       </ScreenScaffold>
     );
@@ -114,7 +105,7 @@ export default function ConversationScreen() {
 
       {visible.length === 0 ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Für diese Richtung wurde noch nichts erzeugt.
+          Diese App-Version enthält noch keine Dialoge für diese Richtung.
         </ThemedText>
       ) : (
         visible.map((situation) => (
@@ -200,10 +191,6 @@ function SituationCard({
             ))}
           </ThemedView>
 
-          <ThemedText type="small" themeColor="textSecondary">
-            Erzeugt am {new Date(situation.generatedAt).toLocaleDateString('de-DE')} mit{' '}
-            {situation.modelUsed}
-          </ThemedText>
         </>
       ) : null}
     </ThemedView>

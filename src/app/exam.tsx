@@ -155,8 +155,8 @@ export default function ExamScreen() {
             <ThemedText type="smallBold">{SKILL_LABELS[group.skill]}</ThemedText>
             {group.modules.length === 0 ? (
               <ThemedText type="small" themeColor="textSecondary">
-                Für {level} liegt hier noch keine Aufgabe. Lese- und Höraufgaben lassen
-                sich in den Einstellungen erzeugen.
+                Für {level} liegt hier noch keine Aufgabe. Weitere Aufgaben kommen
+                mit App-Updates dazu.
               </ThemedText>
             ) : (
               group.modules.map((entry) => (
@@ -170,7 +170,6 @@ export default function ExamScreen() {
                     <ThemedText type="small">{entry.title}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
                       etwa {entry.minutes} Min
-                      {entry.source === 'generated' ? ' · erzeugt' : ''}
                     </ThemedText>
                   </ThemedView>
                 </Pressable>

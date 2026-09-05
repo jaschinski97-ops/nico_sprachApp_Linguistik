@@ -1,6 +1,7 @@
 import { BatchProgress, missingFrom, runBatch } from '../generation/batch';
 import { BatchTask } from '../generation/types';
 import { DataStore, getStore } from '../storage';
+import { isContentRejected } from '../content/rejections';
 
 import { GenerationClient } from './generator';
 import { ConversationSituation, SituationSpec } from './types';
@@ -29,6 +30,7 @@ export type RunOptions = {
 function situationExists(db: DataStore) {
   return {
     async exists(spec: SituationSpec) {
+      if (await isContentRejected('situations', spec.id, db)) return true;
       return (await db.get<ConversationSituation>('situations', spec.id)) !== null;
     },
   };

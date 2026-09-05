@@ -7,7 +7,7 @@ import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { isLanguageAvailable, playPronunciation } from '@/lib/audio';
+import { hasPronunciationClip, isLanguageAvailable, playPronunciation } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
 import { languageOf } from '@/lib/languages/registry';
@@ -283,6 +283,13 @@ function PlayBlock({
   languageLabel: string;
 }) {
   const speak = question.speak!;
+  const [hasClip, setHasClip] = useState(false);
+  useEffect(() => {
+    let active = true;
+    setHasClip(false);
+    hasPronunciationClip(speak).then((found) => { if (active) setHasClip(found); });
+    return () => { active = false; };
+  }, [speak.text, speak.language]);
   const spokenFor = useRef<string | null>(null);
 
   const play = useCallback(() => {
@@ -308,11 +315,9 @@ function PlayBlock({
           <ThemedText type="smallBold">🔊 Noch einmal anhören</ThemedText>
         </ThemedView>
       </Pressable>
-      {voiceMissing ? (
+      {voiceMissing && !hasClip ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-          Auf diesem Gerät ist keine {languageLabel}-Stimme installiert — die
-          Übung bleibt dann stumm. Das ist eine Systemeinstellung, kein Fehler
-          der App. Erzeugte Hörclips (Einstellungen) laufen davon unabhängig.
+          Dieses Hörbeispiel ist nicht verfügbar. Du kannst unter „Lesen“ weiterüben.
         </ThemedText>
       ) : null}
     </View>

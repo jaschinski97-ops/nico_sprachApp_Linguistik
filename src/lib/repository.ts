@@ -9,6 +9,8 @@
 import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
 
 import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
+import { bundledAssetUri, bundledDocuments, preferBundled } from './content/bundled';
+import { isContentDeveloper } from './content/developer';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
 import { ExamModule, isValidExamModule } from './exam/types';
@@ -147,19 +149,19 @@ export async function loadCardStatesForDirection(
 /* ---------- Sprachsituationen ---------- */
 
 export async function loadSituations(store?: DataStore): Promise<ConversationSituation[]> {
+  if (!__DEV__ || (!store && !isContentDeveloper())) return bundledDocuments('situations');
   const db = store ?? (await getStore());
   const roh = await db.getAll<unknown>('situations');
   const situations = roh.filter(isValidSituation);
   meldeAussortierte('Sprachsituationen', roh.length, situations.length);
-  return situations.sort((a, b) => a.id.localeCompare(b.id));
+  return preferBundled('situations', situations);
 }
 
 export async function loadSituation(
   id: string,
   store?: DataStore
 ): Promise<ConversationSituation | null> {
-  const db = store ?? (await getStore());
-  return db.get<ConversationSituation>('situations', id);
+  return (await loadSituations(store)).find((situation) => situation.id === id) ?? null;
 }
 
 export async function countSituations(store?: DataStore): Promise<number> {
@@ -183,14 +185,18 @@ export async function loadVocabImage(
   vocabId: string,
   store?: DataStore
 ): Promise<VocabImage | null> {
+  const shipped = bundledDocuments('images').find((image) => image.id === vocabId);
+  if (shipped) return shipped;
+  if (!__DEV__ || (!store && !isContentDeveloper())) return null;
   const db = store ?? (await getStore());
   return db.get<VocabImage>('images', vocabId);
 }
 
 export async function loadVocabImages(store?: DataStore): Promise<VocabImage[]> {
+  if (!__DEV__ || (!store && !isContentDeveloper())) return bundledDocuments('images');
   const db = store ?? (await getStore());
   const images = await db.getAll<VocabImage>('images');
-  return images.sort((a, b) => a.id.localeCompare(b.id));
+  return preferBundled('images', images);
 }
 
 export async function countVocabImages(store?: DataStore): Promise<number> {
@@ -209,6 +215,9 @@ export async function loadVocabImageUri(
   store?: DataStore,
   blobStore?: ImageBlobStore
 ): Promise<string | null> {
+  const shipped = await bundledAssetUri('images', vocabId);
+  if (shipped) return shipped;
+  if (!__DEV__ || (!store && !isContentDeveloper())) return null;
   const doc = await loadVocabImage(vocabId, store);
   if (!doc) return null;
   const blobs = blobStore ?? (await getImageBlobStore());
@@ -236,11 +245,12 @@ export async function clearVocabImages(
  */
 
 export async function loadAudioClips(store?: DataStore): Promise<AudioClip[]> {
+  if (!__DEV__ || (!store && !isContentDeveloper())) return bundledDocuments('audio');
   const db = store ?? (await getStore());
   const raw = await db.getAll<unknown>('audio');
   const clips = raw.filter(isValidAudioClip);
   meldeAussortierte('Hoerclips', raw.length, clips.length);
-  return clips.sort((a, b) => a.id.localeCompare(b.id));
+  return preferBundled('audio', clips);
 }
 
 export async function countAudioClips(store?: DataStore): Promise<number> {
@@ -286,6 +296,7 @@ export async function seedExamModules(
 }
 
 export async function loadExamModules(store?: DataStore): Promise<ExamModule[]> {
+  if (!__DEV__ || (!store && !isContentDeveloper())) return preferBundled('exam', BUILTIN_EXAM_MODULES);
   const db = store ?? (await getStore());
   const roh = await db.getAll<unknown>('exam');
   let modules = roh.filter(isValidExamModule);
@@ -302,7 +313,7 @@ export async function loadExamModules(store?: DataStore): Promise<ExamModule[]> 
     modules = (await db.getAll<unknown>('exam')).filter(isValidExamModule);
   }
 
-  return modules.sort((a, b) => a.id.localeCompare(b.id));
+  return preferBundled('exam', modules);
 }
 
 export async function countExamModules(store?: DataStore): Promise<number> {
