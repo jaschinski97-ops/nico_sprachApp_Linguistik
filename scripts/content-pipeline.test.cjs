@@ -62,6 +62,18 @@ test('individual rejection survives restart and draft deletion; removes an alrea
   assert.equal(ledger.entries[0].id, situation.id);
 });
 
+test('re-exporting the shipped document replaces a pending edit and retains its exact review', async (t) => {
+  const { pipeline } = await setup(t);
+  const original = await pipeline.stage({ kind: 'situations', document: situation });
+  const reviewed = await approve(pipeline, original);
+  await pipeline.publish();
+  await pipeline.stage({ kind: 'situations', document: { ...situation, setting: 'pending edit' } });
+  const restored = await pipeline.stage({ kind: 'situations', document: situation });
+  assert.deepEqual(restored.review, reviewed.review);
+  assert.deepEqual((await pipeline.state()).stage.entries, [restored]);
+  assert.equal((await pipeline.publish()).pending, 0);
+});
+
 test('budget overflow stops the entire publication and preserves the previous catalog', async (t) => {
   const { pipeline } = await setup(t);
   const entry = await pipeline.stage({ kind: 'situations', document: situation });
@@ -97,7 +109,16 @@ test('real encoder, reviewed final MP3 bytes, static require, and missing/corrup
   const entry = await pipeline.stage({ kind: 'audio', document, base64: bytes.toString('base64') });
   assert.equal(entry.document.format, 'mp3');
   assert.ok(entry.byteSize < bytes.length / 3);
-  await approve(pipeline, entry);
+  const reviewed = await approve(pipeline, entry);
+  const stagedAsset = path.join(pipeline.work, entry.asset);
+  const encoded = await fs.readFile(stagedAsset);
+  for (const damage of ['missing', 'corrupt']) {
+    if (damage === 'missing') await fs.rm(stagedAsset);
+    else await fs.writeFile(stagedAsset, 'corrupt');
+    const restored = await pipeline.stage({ kind: 'audio', document, base64: bytes.toString('base64') });
+    assert.deepEqual(restored.review, reviewed.review);
+    assert.deepEqual(await fs.readFile(stagedAsset), encoded);
+  }
   const report = await pipeline.publish();
   assert.equal(report.audio[0].compressedBytes, (await fs.stat(path.join(root, 'assets/content', entry.asset))).size);
   assert.match(await fs.readFile(path.join(root, 'src/content/assets.ts'), 'utf8'), /require\('\.\.\/\.\.\/assets\/content\/[a-f0-9]{64}\.mp3'\)/);

@@ -107,12 +107,13 @@ class ContentPipeline {
       ...(media ? { asset: doc.blobKey, byteSize: bytes.length, sourceBytes } : {}) };
     const old = state.stage.entries.find((item) => keyOf(item) === keyOf(entry));
     const shipped = state.shipped.entries.find((item) => keyOf(item) === keyOf(entry));
-    if (old?.digest === digest) return old;
-    if (shipped?.digest === digest) return shipped;
+    // Re-export restores missing/corrupt staged media. Identical final bytes
+    // retain their review; reverting a pending edit restores the shipped review.
+    const current = old?.digest === digest ? old : shipped?.digest === digest ? shipped : entry;
     if (media) await fs.writeFile(path.join(this.work, entry.asset), bytes);
-    state.stage.entries = [...state.stage.entries.filter((item) => keyOf(item) !== keyOf(entry)), entry];
+    state.stage.entries = [...state.stage.entries.filter((item) => keyOf(item) !== keyOf(entry)), current];
     await atomicJson(this.stageFile, state.stage);
-    return entry;
+    return current;
   }
   async review({ kind, id, digest, status, reviewer, reason = '' }) {
     if (!['approved','rejected'].includes(status) || typeof reviewer !== 'string' || !reviewer.trim() ||

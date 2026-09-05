@@ -977,7 +977,7 @@
       "phase": 19,
       "criterion": "Tests und npx tsc --noEmit gruen; Protokoll und TODO aktualisiert",
       "done": true,
-      "verifiedHow": "722 Tests in 34 Suites, 6 Node-Pipeline-Tests mit echtem Encoder, TypeScript und content:integrity gruen; drei Produktionsbundles erstellt/geprueft."
+      "verifiedHow": "723 Tests in 35 Suites, 7 Node-Pipeline-Tests mit echtem Encoder, TypeScript und content:integrity gruen; drei Produktionsbundles erstellt/geprueft. Wiederexport repariert fehlende/defekte Staging-Medien; ungueltige Altmetadaten stoppen keine anderen Exporte."
     }
   ],
   "architectureDecisions": [
@@ -1737,9 +1737,9 @@
     "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
     "nativeEvidence": "Hermes and asset exports, isolated MP3/PNG bytes identical for iOS/Android; not a signed AAB/IPA or physical playback",
     "tests": {
-      "jest": 722,
-      "suites": 34,
-      "nodePipeline": 6,
+      "jest": 723,
+      "suites": 35,
+      "nodePipeline": 7,
       "typeScript": "pass"
     },
     "complete": false,

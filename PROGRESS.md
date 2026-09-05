@@ -4472,6 +4472,8 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
   Cache-Bereinigung testen. Hermes-/Asset-Exporte sind kein signiertes AAB/IPA.
 - [x] Phase-19-Entwicklerexport, Einzelprüfung, dauerhafte Sperren, MP3-Kompression,
   gebündelter Resolver und Produktionsausschluss implementiert und automatisiert geprüft.
+- [x] Wiederexport nach verlorenen/beschädigten Staging-Dateien, Rücknahme eines
+  ungeprüften Entwurfs und Weiterexport trotz einzelner defekter Altmetadaten geprüft.
 
 > **Neu aus Phase 18 (2026-09-04):** Jede Sprache hat jetzt Hören, Lesen und
 > Schreiben (Thai zusätzlich Sprechen), eine eigene Merkhilfe und eine
@@ -4829,8 +4831,8 @@ Gesprächsreiter ist damit kein als vollständig abgehakter Offline-Pfad.
 
 ### Prüfung und offene Abnahme
 
-- 722 App-Tests in 34 Suites grün; `npx tsc --noEmit` fehlerfrei.
-- 6 Node-Pipeline-Tests mit echtem FFmpeg grün: Einzelprüfung, Wiederanlauf,
+- 723 App-Tests in 35 Suites grün; `npx tsc --noEmit` fehlerfrei.
+- 7 Node-Pipeline-Tests mit echtem FFmpeg grün: Einzelprüfung, Wiederanlauf,
   dauerhafte Ablehnung, Manipulation, fehlende Medien, Budget-Abbruch ohne
   Teilübernahme und Loopback-/Origin-Schranke.
 - Offline-Resolver-Test: Netz und Systemstimme schlagen fehl, gebündelte
@@ -4846,3 +4848,14 @@ Gesprächsreiter ist damit kein als vollständig abgehakter Offline-Pfad.
 
 Der aktuelle TODO-Vorrang und `.agent/state.json` wurden entsprechend ergänzt.
 Die Phase wird ausdrücklich nicht als vollständig erledigt protokolliert.
+
+### Ergänzende Prüfung des Wiederexports (05.09.2026)
+
+Erneutes Exportieren desselben Mediums stellt eine fehlende oder beschädigte
+Staging-Datei wieder her. Die Freigabe bleibt nur bei identischem Hash der
+endgültigen Bytes und Metadaten erhalten. Wird ein ungeprüfter Entwurf auf die
+bereits ausgelieferte Fassung zurückgesetzt, ersetzt diese auch den veralteten
+Prüflisteneintrag. Nullwerte, falsche Datentypen oder fehlende Medien in alten
+Laufzeitdaten werden jetzt einzeln als Fehler gemeldet; gültige spätere
+Einträge werden weiter exportiert. Beide Wiederanlauffälle sind automatisiert
+geprüft, Audio erneut mit echtem FFmpeg. B-19 bleibt unverändert offen.
