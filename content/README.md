@@ -144,6 +144,11 @@ brauchen weiterhin einen eigenen Sprachvertrag; Phase 19 erfindet ihn nicht.
 Der Vollständigkeitscheck schlägt deshalb absichtlich fehl. Phase 19 und die
 Offline-Vollständigkeit sind noch **nicht abgenommen**.
 
+Der Nutzer möchte seit dem 05.09.2026 ausdrücklich **vorerst bei den 15
+geprüften Testinhalten bleiben**. Keine weiteren bezahlten Generatorläufe ohne
+neue Anweisung. Sechs beim angehaltenen Zusatzlauf entstandene Bildentwürfe
+liegen nur im Browser und sind nicht zur Auslieferung freigegeben.
+
 Technische Testfreigaben und Platzhalter liegen ausschließlich unter dem
 ignorierten `build-verification/`; sie sind kein ausgeliefertes Lernmaterial.
 

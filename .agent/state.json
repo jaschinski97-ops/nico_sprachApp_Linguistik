@@ -4,7 +4,7 @@
   "lastUpdated": "2026-09-05",
   "currentPhase": 19,
   "currentPhaseName": "Inhalte werden mitgeliefert, nicht vom Nutzer erzeugt",
-  "currentPhaseStatus": "implementation_complete_acceptance_open",
+  "currentPhaseStatus": "test_content_accepted_full_rollout_deferred_by_user",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -1316,20 +1316,20 @@
     },
     {
       "id": "B-19",
-      "title": "Restlicher Inhaltsbestand, dessen Einzelpruefung und reale Vollmengenmessung fehlen",
+      "title": "Vollauslieferung vom Nutzer vorerst zurueckgestellt",
       "affectsPhases": [
         19
       ],
       "needsUser": true,
-      "note": "Die ersten 5 Gemini-Bilder und 10 Clips wurden vom Nutzer im Chat nach eigener Pruefung freigegeben und ins Repo uebernommen. Alle 15 Medien sind in allen drei Plattformexporten bytegleich. Fuer den Gesamtbestand fehlen weitere Inhalte samt eigener Freigabe; 452 Wort-/Pruefungsclips, 73 Bilder und 512 Thai-Situationen offen. Keine Freigabe fuer zukuenftige ungepruefte Inhalte abgeleitet. AE-48 und B-5/B-2 bleiben offen.",
-      "steps": "Restlichen Bestand erzeugen, exportieren/komprimieren und menschlich einzeln pruefen. Erst Freigegebenes uebernehmen; reale Vollmenge und native Endgroessen messen, content:check gruen bekommen."
+      "note": "Die ersten 5 Gemini-Bilder und 10 Clips wurden vom Nutzer im Chat nach eigener Pruefung freigegeben und ins Repo uebernommen. Alle 15 Medien sind in allen drei Plattformexporten bytegleich. Fuer den Gesamtbestand fehlen weitere Inhalte samt eigener Freigabe; 452 Wort-/Pruefungsclips, 73 Bilder und 512 Thai-Situationen offen. Keine Freigabe fuer zukuenftige ungepruefte Inhalte abgeleitet. AE-48 und B-5/B-2 bleiben offen. ENTSCHEIDUNG 05.09.2026: Automatische Freigabepruefung lehnte den grossen kostenpflichtigen Audiolauf mangels ausdruecklicher Umfangsbestaetigung ab. Der Nutzer hat danach weitere Generierung bis insgesamt 462 Clips/78 Bilder ausdruecklich abgelehnt und moechte vorerst bei den 15 geprueften Testinhalten bleiben. Bereits zusaetzlich gestarteter Bildlauf angehalten: 6 neue ungepruefte Entwuerfe nur in Browserablage. Grosser Audiolauf nicht gestartet. Keine weiteren bezahlten Laeufe ohne neue Nutzeranweisung.",
+      "steps": "Bei den 15 geprueften, uebernommenen Medien bleiben. Erst nach neuer ausdruecklicher Nutzeranweisung weitere bezahlte Laeufe starten. Vollstaendige Phase-19-Abnahme bleibt offen."
     }
   ],
   "nextUp": {
     "phase": 19,
-    "name": "Echte Inhalte bereitstellen und abnehmen; Phase 19 noch nicht abgeschlossen",
+    "name": "Geprueften Testbestand beibehalten; Vollauslieferung vorerst zurueckgestellt",
     "tasks": [
-      "B-19: Der erste freigegebene Bestand (5 Bilder, 10 Clips) ist uebernommen. Restliche Inhalte erzeugen und einzeln pruefen; die Chat-Freigabe galt genau den 15 bereits geprueften Testmedien.",
+      "Nutzerentscheidung beachten: keine weiteren bezahlten Inhaltslaeufe. 15 freigegebene Medien bleiben im Repo; 6 weitere Bildentwuerfe nur lokal, nicht zur Auslieferung freigegeben. Vollbestand erst nach neuer Anweisung fortsetzen.",
       "Vollstaendigen Audioexport messen; kein Hochrechnen der Referenzmessung als Ist-Wert. Bei Budgetueberschreitung Umfang explizit entscheiden.",
       "content:check gruen bekommen: fehlende Medien und Situationen ergaenzen; AE-48 fuer EN/ES-Gespraeche separat sprachlich klaeren.",
       "B-2/B-5: echte Android-/iOS-Installation offline inklusive Kaltstart/Cachebereinigung; Store-Endgroessen am echten Build messen.",
@@ -1775,6 +1775,15 @@
       "source": "hab alles geprüft und ich fande es sehr gut.",
       "publishedEntries": 15,
       "budgetBytes": 2038225
+    },
+    "rolloutDecision": {
+      "date": "2026-09-05",
+      "decision": "Nein, vorerst bei den geprüften Testinhalten bleiben",
+      "shippedScope": "5 freigegebene Bilder und 10 freigegebene Clips",
+      "furtherPaidGenerationAuthorized": false,
+      "additionalUnreviewedLocalImages": 6,
+      "additionalImagesLocation": "Browser-Laufzeitablage, nicht exportiert und nicht ausgeliefert",
+      "audioFullRunStarted": false
     }
   }
 }

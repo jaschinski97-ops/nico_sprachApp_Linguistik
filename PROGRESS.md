@@ -4455,7 +4455,9 @@ Umschrift kommen nie von dort, und jeder Vorschlag durchläuft die Schritte 1–
 > TODO-Einträge darunter sind historisch; Generatoren gehören jetzt nur in
 > den Entwicklerbetrieb auf localhost:8081.
 
-- [ ] **B-19: Restlichen Bestand erzeugen, prüfen und übernehmen.** Die ersten
+- [ ] **B-19: Vollauslieferung vom Nutzer vorerst zurückgestellt.** Am 05.09.2026
+  ausdrücklich entschieden: „Nein, vorerst bei den geprüften Testinhalten bleiben“.
+  Keine weiteren bezahlten Inhaltsläufe ohne neue Nutzeranweisung. Die ersten
   5 echten Gemini-Bilder und 10 Clips sind vom Nutzer nach eigener Prüfung im
   Chat freigegeben und ins Repo übernommen. Weitere Inhalte brauchen jeweils
   ihre eigene Prüfung. Keine Freigabe für zukünftige Inhalte daraus ableiten.
@@ -4925,3 +4927,20 @@ Produktionsgraphen bleiben ohne Generator-/Schlüsselcode. Die Berichte unter
 Phase 19 bleibt für den Gesamtbestand offen: **452 Clips bereits ohne Dialoge,
 73 Bilder und 512 Thai-Situationen fehlen**, dazu AE-48. Der erste geprüfte
 Bestand ist übernommen; er wird nicht als vollständige Auslieferung ausgegeben.
+
+### Nutzerentscheidung zum weiteren Umfang (05.09.2026)
+
+Nach Commit `a661d25` wurde die Erzeugung des restlichen Wort-/Bildbestands
+angesetzt. Die automatische Freigabeprüfung hat den großen Audiolauf wegen
+möglicher API-Kosten außerhalb der ausdrücklich erlaubten Probeläufe abgelehnt.
+Der bereits gestartete Bildlauf wurde angehalten: **6 zusätzliche Bildentwürfe**
+entstanden, blieben aber ausschließlich in der Browser-Laufzeitablage. Der
+große Audiolauf wurde nicht gestartet. Beide Umfangswahlen stehen wieder auf
+„Probelauf“.
+
+Die konkrete Nachfrage zur Erweiterung auf insgesamt 462 Clips und 78 Bilder
+hat der Nutzer abgelehnt: „Nein, vorerst bei den geprüften Testinhalten bleiben“.
+Es bleibt damit beim freigegebenen und gebündelten Bestand aus **15 Medien**.
+Weitere Generierung benötigt eine neue ausdrückliche Nutzeranweisung; die
+sechs zusätzlichen Entwürfe sind nicht freigegeben und werden nicht ausgeliefert.
+Die vollständige Phase 19 ist zurückgestellt, nicht als erledigt markiert.
