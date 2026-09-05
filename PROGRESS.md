@@ -4109,6 +4109,119 @@ Der Anbieter macht dazu keine Angabe, eine Auswahl wäre geraten.
   Schlüssel (**B-6**) wurde kein einziger Clip erzeugt. Belegt ist die
   **Angabe des Anbieters**, nicht der Klang.
 - Sprechübung weiterhin nur Thai (AE-48, F0-Verfahren ungeprüft für Betonung).
+
+---
+
+### 2026-09-05 — Lernwirksamkeits-Audit (Bericht, keine Änderung)
+
+**Ergebnis:** `AUDIT-Lernwirksamkeit.md` im Projekt-Root. **Am Anwendungscode
+wurde nichts geändert** — keine Datei unter `src/`, kein Test angepasst.
+`npm test` steht vor und nach dem Audit bei **712 grünen Tests in 31 Suiten**.
+
+**Auftrag war**, zu bewerten, wie gut die App den Stand der
+Spracherwerbsforschung umsetzt, mit sechs Pflichten: Belege extern holen;
+Gerüst und Inhalt strikt trennen; gegen die eigene App argumentieren; bekannte
+Grenzen nicht unterschlagen; die vier Fertigkeiten einzeln bewerten; erheben,
+was ganz fehlt.
+
+**Das Urteil in einem Satz:** Die Mechanismen sind da und sauber gebaut, der
+Inhalt trägt sie nicht — 248 Vokabeln, 84 Beispielsätze, 20 automatisch
+bewertete Prüfungsaufgaben, **null** Sprachsituationen, **null** Bilder,
+**null** Hörclips. Die 100 verschiedenen deutschen Stichwörter stehen gegen
+~650 Einträge der Goethe-A1-Wortliste und gegen 6.000–9.000 Wortfamilien, die
+Nation (2006) für selbstständiges Lesen und Hören veranschlagt.
+
+**Vierundzwanzig Quellen** mit Abrufdatum 2026-09-05, jede mit
+gekennzeichneter Zugriffstiefe: `[V]` im Wortlaut gelesen, `[Z]` nur über die
+Zusammenfassung eines Suchindex erreicht (Bezahlschranke, oder das PDF ließ
+sich hier nicht in Text wandeln — `pdftoppm`, `pypdf` und `pymupdf` fehlen).
+Dieselbe Linie wie `sourceVerified` im Grundstock: kennzeichnen, was nicht mit
+eigenen Augen belegt ist.
+
+**Zur Krashen-Frage** steht ausdrücklich beides da: Dass Input notwendig ist,
+ist unstrittig (VanPatten & Williams führen es als Beobachtung, die jede
+Theorie erklären muss). Krashens Hypothesen **als Theorie** gelten seit Gregg
+(1984) und McLaughlin (1987) als unfalsifizierbar, und die Kritik ist bis
+heute nicht ausgeräumt. Eine Seite als Konsens auszugeben wäre falsch gewesen.
+
+**Drei Korrekturen am Auftragstext**, zwei davon zuungunsten der App:
+
+1. **„15 Sprachsituationen" stimmt nicht — es sind null.**
+   `.agent/state.json → situations.generated: 0`; es gibt keinen Seed-Pfad und
+   keine Datei mit Situationen. Zwei wurden zum Prüfen der Offline-Wiedergabe
+   eingespielt und wieder entfernt. Der Testlauf des Nutzers vom 2026-08-31 ist
+   bestätigt, aber ohne Zahlen und ohne Artefakt im Repo. Woher die 15 stammen,
+   ist hier nicht belegbar.
+2. **Die FSRS-Gewichte sind keine „Näherung".** Die 17 Werte in
+   `fsrs.ts:29-31` sind **exakt die veröffentlichten Vorgabewerte von FSRS v4**;
+   die Vergessenskurve daneben (`19/81`, Exponent `-0.5`) ist die von
+   **FSRS-4.5**. Die Kombination ist keine einzelne veröffentlichte Fassung.
+   Praktisch: „Leicht" auf einer neuen Karte ergibt ~6 Tage statt ~14
+   (FSRS-4.5) bzw. ~16 (FSRS-5) — die App plant durchgehend **enger** als der
+   aktuelle Stand. Nie an eigenen Logs optimiert: bestätigt.
+3. **„Keine Beispielsätze für EN/ES" ist für Spanisch zu grob.** Englisch: 0,
+   bestätigt. Spanisch: 30 Einträge tragen `exampleTerm`, aber das sind
+   Wortgruppen aus Artikel und Substantiv (`el libro`), keine Sätze. Für
+   „Sätze" hat der Auftrag recht.
+
+**Nicht im Auftrag genannt und im Audit ergänzt:** null Bilder ausgeliefert —
+der ganze Dual-Coding-Pfad ist Mechanismus ohne Inhalt.
+
+**Acht Befunde aufgeschrieben, keiner behoben** (F-1 bis F-8 im Bericht). Die
+drei, die über das oben Genannte hinausgehen:
+
+- **F-3:** Der Prüfungs-Screen filtert nicht nach Sprache; alle Module tragen
+  `direction: 'th_to_de'`, obwohl ihr Inhalt für jedes X→Deutsch gilt.
+- **F-5:** Im Testbrowser — der einzigen vollständig geprüften Plattform — ist
+  **keine** der drei Zielstimmen installiert. Zusammen mit null Clips heißt
+  das: der komplette Hörpfad ist nirgends im Betrieb belegt.
+- **F-6:** Die englische Merkmalsübung hat 23 Kandidaten, die
+  Verbformen-Übungen 18–20. Bei 10 Aufgaben je Runde ist der Bestand nach
+  **zwei Runden** vollständig gesehen.
+
+**Der unbequemste Befund der Recherche:** Wayland & Guion (2004) trainierten
+englische und chinesische Muttersprachler auf den Thai-Kontrast **mittel gegen
+tief**. Die chinesische Gruppe verbesserte sich signifikant, die englische
+**nicht**. Genau bei mittel und hoch liegt zugleich die gemessene Schwäche der
+TTS-Stimmen aus AE-31. Dazu verlangt HVPT (Uchihara, Karas & Thomson 2025:
+g = 0,92 über 79 Studien) **mehrere Sprecher** — die App hat immer einen. Die
+Tonhörübung ist damit das didaktische Herz der Thai-Seite und zugleich die
+Stelle mit der schwächsten Beleglage.
+
+**Die Gegenrede fällt eindeutig aus:** Ein Lernender wäre heute mit **Anki plus
+wöchentlichem Tandempartner besser dran**. Anki bringt denselben Mechanismus in
+besser (FSRS-6, an eigenen Logs optimierbar, gemessen an 350 Millionen
+Wiederholungen) plus fertige Decks mit Muttersprachler-Aufnahmen; der Tandem
+liefert Interaktion, die diese App strukturell nicht kann. Was die App dagegen
+hat und die Kombination nicht: die Tonherleitung aus der Schrift mit sieben
+Schritten und 69/69-Gegenprobe, die spanische Betonungsregel mit unabhängiger
+IPA-Gegenprobe, und die durchgehende Kennzeichnung des Unbelegten. Das sind
+drei gute Bausteine, kein Kurs.
+
+**Priorisiert nach Lernzuwachs pro Aufwand** (vollständig im Bericht):
+
+1. **Wortschatz auf ~650–1.000 je Sprache, frequenzsortiert.** Der einzige
+   Punkt, der die Kernaussage ändert; alles andere ist ein Multiplikator auf
+   die Inhaltsmenge. Der Plan steht fertig im Skalierungsplan.
+2. **Freie Eingabe für Artikel und Stammformen.** Die ganze Maschinerie aus
+   Phase 14 existiert; danach tragen drei bis vier statt einer Übung zur
+   Wiederholungsplanung bei, und das Rateproblem aus AE-16 verschwindet dort
+   von selbst.
+3. **Hörclips erzeugen — mit mehreren Stimmen.** Erweitert den bestehenden
+   TODO-Punkt um die HVPT-Bedingung: nicht eine Stimme, sondern mehrere. Danach
+   die Töne wie in AE-31 messen, bevor irgendwo steht, dass sie stimmen.
+
+Ausdrücklich **nicht** empfohlen: die Sprechübung auf Spanisch ausweiten, bevor
+gemessen ist, ob das F0-Verfahren Betonung erkennt (AE-48) — und die
+Auswahlübungen an FSRS anschließen, ohne sie auf freie Eingabe umzustellen.
+
+**Zehn Punkte, die aus dieser Position nicht beurteilbar sind**, stehen als
+eigener Abschnitt im Bericht — der erste ist der aus dem Auftrag: ob eine
+Thai-Stimme für ein menschliches Ohr richtig klingt. Eine Konturmessung sagt,
+ob die Tonhöhe die erwartete Richtung nimmt, nicht ob ein Muttersprachler die
+Silbe als richtig hört. Dazu: kein Lernender wurde getestet, keine Retention
+gemessen. Das Audit vergleicht Bauweise mit Literatur — mehr nicht.
+
 ---
 
 ## Konsolidierte Abnahme (Stand 2026-09-04)
