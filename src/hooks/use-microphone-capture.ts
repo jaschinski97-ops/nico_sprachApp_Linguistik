@@ -1,5 +1,6 @@
 import {
   requestRecordingPermissionsAsync,
+  setAudioModeAsync,
   useAudioStream,
   type AudioStreamBuffer,
 } from 'expo-audio';
@@ -53,6 +54,7 @@ export function useMicrophoneCapture(
   options: MicrophoneCaptureOptions = {}
 ): MicrophoneCaptureController {
   const maxDurationMs = captureDurationMs(options.maxDurationMs);
+  const allowPlayback = options.allowPlayback === true;
   const [view, setView] = useState<CaptureView>(INITIAL_VIEW);
   const mountedRef = useRef(true);
   const statusRef = useRef<MicrophoneCaptureStatus>('idle');
@@ -276,8 +278,14 @@ export function useMicrophoneCapture(
     try {
       acceptingRef.current = true;
       await stream.start();
+      // SDK 57 AudioStream.start setzt unter iOS selbst .record. Erst danach
+      // auf playAndRecord umstellen; sonst bleibt Shadowing stumm.
+      if (allowPlayback && generation === generationRef.current && mountedRef.current) {
+        await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      }
     } catch (error) {
       acceptingRef.current = false;
+      try { stream.stop(); } catch { /* Auch einen teilweise gestarteten Stream freigeben. */ }
       if (generation !== generationRef.current || !mountedRef.current) return false;
       statusRef.current = 'idle';
       updateView({ status: 'idle', error: nativeStartError(error) });
@@ -301,7 +309,7 @@ export function useMicrophoneCapture(
       void finishRef.current(true);
     }, maxDurationMs);
     return true;
-  }, [maxDurationMs, resetBuffers, stream, updateView]);
+  }, [allowPlayback, maxDurationMs, resetBuffers, stream, updateView]);
 
   const stop = useCallback(() => finish(false), [finish]);
 

@@ -443,6 +443,12 @@ export function GeneratorCard({
 
       {estimate ? <View style={styles.field}>
         <ThemedText type="smallBold">{estimate.count} Anbieteraufrufe · {provider} · {choice.model}</ThemedText>
+        {estimate.delivery ? <View>
+          <ThemedText type="smallBold">Auslieferungsvorschau für {estimate.delivery.total} geplante Clips</ThemedText>
+          <ThemedText type="small">{estimate.delivery.toneCheckable} Thai-Clips tonprüfbar · {estimate.delivery.technicalOnly} Clips nur technisch prüfbar · {estimate.delivery.uncheckedDelivered} Thai-Clips ungeprüft ausgeliefert · {estimate.delivery.excluded} ausgeschlossen</ThemedText>
+          <ThemedText type="small">Höchstens {estimate.delivery.total - estimate.delivery.excluded} von {estimate.delivery.total} Clips ({estimate.delivery.total ? (100 * (estimate.delivery.total - estimate.delivery.excluded) / estimate.delivery.total).toFixed(1) : '0.0'} %) können passieren. Die tatsächliche Durchlassquote steht erst nach Ton- und Integritätsprüfung fest; sie kann niedriger sein. Die Kosten gelten für die fehlenden Generierungen, auch für später ausgeschlossene Clips.</ThemedText>
+          {Object.entries(estimate.delivery.reasons).map(([reason, count]) => <ThemedText key={reason} type="small">{count}: {reason}</ThemedText>)}
+        </View> : null}
         <ThemedText type="small">{estimate.basis}</ThemedText>
         {estimate.usd === null ? <TextInput accessibilityLabel="Geschätzte Gesamtkosten in USD" value={customCost} onChangeText={setCustomCost} keyboardType="decimal-pad" placeholder="Gesamtschätzung USD" /> :
           <ThemedText type="smallBold">Geschätzte Kosten: {estimate.usd.toFixed(3)} USD</ThemedText>}

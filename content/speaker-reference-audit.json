@@ -1,0 +1,275 @@
+{
+  "measuredAt": "2026-09-05T17:27:36.684Z",
+  "source": "content/tone-calibration.json",
+  "method": "Median of accepted F0 frames per clip, then equal-weight clip summary. Frame counts are not independent repetitions.",
+  "sufficientForRegisterGate": false,
+  "conclusion": "A mixed-tone median is descriptive, not a validated register reference. One token per Microsoft word/tone, no independent repetitions or held-out labelled recordings; Gemini sample not balanced across tones. No universal minimum clip count or spread threshold established by these data.",
+  "needed": "Separate provider/model/voice and recording conditions; repeated independently verified tokens balanced across all five tones, phonetic contexts and durations; estimate within-tone and between-tone overlap, then validate thresholds and false-acceptance rate on independent held-out recordings. Determine sample size from that variability and desired error precision, not a guessed number.",
+  "voices": [
+    {
+      "voice": "gemini:Kore",
+      "clips": 10,
+      "distinctTexts": 10,
+      "clipMedians": {
+        "n": 10,
+        "medianHz": 192.79907084785134,
+        "q1Hz": 166.89342403628117,
+        "q3Hz": 220.72072072072072,
+        "minHz": 150.9433962264151,
+        "maxHz": 291.00529100529104
+      },
+      "recordings": [
+        {
+          "text": "สวัสดี",
+          "sha256": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482",
+          "target": "not-a-verified-monosyllable",
+          "n": 69,
+          "medianHz": 190.47619047619048,
+          "q1Hz": 186.04651162790697,
+          "q3Hz": 210.52631578947367,
+          "minHz": 74.07407407407408,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "ขอบคุณ",
+          "sha256": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4",
+          "target": "not-a-verified-monosyllable",
+          "n": 45,
+          "medianHz": 150.9433962264151,
+          "q1Hz": 135.59322033898306,
+          "q3Hz": 173.91304347826087,
+          "minHz": 121.21212121212122,
+          "maxHz": 242.42424242424244
+        },
+        {
+          "text": "ขอโทษ",
+          "sha256": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0",
+          "target": "not-a-verified-monosyllable",
+          "n": 43,
+          "medianHz": 216.21621621621622,
+          "q1Hz": 179.7979797979798,
+          "q3Hz": 222.22222222222223,
+          "minHz": 97.5609756097561,
+          "maxHz": 250
+        },
+        {
+          "text": "ครับ",
+          "sha256": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a",
+          "target": "high",
+          "n": 14,
+          "medianHz": 163.26530612244898,
+          "q1Hz": 163.26530612244898,
+          "q3Hz": 163.26530612244898,
+          "minHz": 148.14814814814815,
+          "maxHz": 222.22222222222223
+        },
+        {
+          "text": "ค่ะ",
+          "sha256": "16440f54287a4d83aa57d3a98bcefcf9b8512489e88b49c76ad6397e3c94cd89",
+          "target": "falling",
+          "n": 15,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 181.8181818181818,
+          "q3Hz": 216.21621621621622,
+          "minHz": 170.2127659574468,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "สวัสดี ครับ",
+          "sha256": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa",
+          "target": "not-a-verified-monosyllable",
+          "n": 38,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 157.64705882352942,
+          "q3Hz": 205.12820512820514,
+          "minHz": 89.88764044943821,
+          "maxHz": 275.86206896551727
+        },
+        {
+          "text": "ขอบคุณ มาก ครับ",
+          "sha256": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b",
+          "target": "not-a-verified-monosyllable",
+          "n": 55,
+          "medianHz": 222.22222222222223,
+          "q1Hz": 207.82726045883942,
+          "q3Hz": 242.42424242424244,
+          "minHz": 177.77777777777777,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "ขอโทษ ครับ",
+          "sha256": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71",
+          "target": "not-a-verified-monosyllable",
+          "n": 34,
+          "medianHz": 222.22222222222223,
+          "q1Hz": 201.28205128205127,
+          "q3Hz": 226.984126984127,
+          "minHz": 126.98412698412699,
+          "maxHz": 235.2941176470588
+        },
+        {
+          "text": "ใช่ ครับ",
+          "sha256": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c",
+          "target": "not-a-verified-monosyllable",
+          "n": 27,
+          "medianHz": 156.86274509803923,
+          "q1Hz": 140.39408866995075,
+          "q3Hz": 173.91304347826087,
+          "minHz": 98.76543209876543,
+          "maxHz": 186.04651162790697
+        },
+        {
+          "text": "ใช่ ค่ะ",
+          "sha256": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9",
+          "target": "not-a-verified-monosyllable",
+          "n": 20,
+          "medianHz": 291.00529100529104,
+          "q1Hz": 275.86206896551727,
+          "q3Hz": 310.7692307692308,
+          "minHz": 242.42424242424244,
+          "maxHz": 320
+        }
+      ]
+    },
+    {
+      "voice": "microsoft-edge:Premwadee",
+      "clips": 5,
+      "distinctTexts": 5,
+      "clipMedians": {
+        "n": 5,
+        "medianHz": 156.86274509803923,
+        "q1Hz": 156.86274509803923,
+        "q3Hz": 160,
+        "minHz": 152.39477503628447,
+        "maxHz": 190.47619047619048
+      },
+      "recordings": [
+        {
+          "text": "มา",
+          "sha256": "4d1c7a14e2c046db15c4a3de26e2f0c9c298998eb31fdf65bd45a4c7608d0855",
+          "target": "mid",
+          "n": 45,
+          "medianHz": 160,
+          "q1Hz": 148.14814814814815,
+          "q3Hz": 173.91304347826087,
+          "minHz": 135.59322033898306,
+          "maxHz": 195.1219512195122
+        },
+        {
+          "text": "ม้า",
+          "sha256": "a9a7e937466115bd0004fe87519efa6849dc36eb5e8809508a461bbfb8c9fc4c",
+          "target": "high",
+          "n": 40,
+          "medianHz": 156.86274509803923,
+          "q1Hz": 150.9433962264151,
+          "q3Hz": 167.5531914893617,
+          "minHz": 74.76635514018692,
+          "maxHz": 195.1219512195122
+        },
+        {
+          "text": "หมา",
+          "sha256": "b4e12541ccd6d5430ec1a54f9db224fb21ec8149bd1878487f53f0b874ef75f3",
+          "target": "rising",
+          "n": 46,
+          "medianHz": 152.39477503628447,
+          "q1Hz": 138.5359951603146,
+          "q3Hz": 169.32624113475177,
+          "minHz": 133.33333333333334,
+          "maxHz": 200
+        },
+        {
+          "text": "ไม่",
+          "sha256": "52389dbb203b77ebd7ca24a0333b6766d7d4eca0b2a9e994b6bfd36b1f5c2a03",
+          "target": "falling",
+          "n": 43,
+          "medianHz": 190.47619047619048,
+          "q1Hz": 156.9230769230769,
+          "q3Hz": 195.1219512195122,
+          "minHz": 112.67605633802818,
+          "maxHz": 200
+        },
+        {
+          "text": "ใหม่",
+          "sha256": "dfcc4846dde8a7d979b8dd9df4aa97f37b179c5237f08b0f31aa3bb6d11b793e",
+          "target": "low",
+          "n": 41,
+          "medianHz": 156.86274509803923,
+          "q1Hz": 119.40298507462687,
+          "q3Hz": 181.8181818181818,
+          "minHz": 105.26315789473684,
+          "maxHz": 210.52631578947367
+        }
+      ]
+    },
+    {
+      "voice": "microsoft-edge:Niwat",
+      "clips": 5,
+      "distinctTexts": 5,
+      "clipMedians": {
+        "n": 5,
+        "medianHz": 131.14754098360655,
+        "q1Hz": 115.94202898550725,
+        "q3Hz": 136.76212741087085,
+        "minHz": 115.94202898550725,
+        "maxHz": 150.9433962264151
+      },
+      "recordings": [
+        {
+          "text": "มา",
+          "sha256": "e1736577d513002a528b80036c57ea521724049171043f08623ec287f8f2fad5",
+          "target": "mid",
+          "n": 28,
+          "medianHz": 136.76212741087085,
+          "q1Hz": 116.99905033238366,
+          "q3Hz": 140.35087719298247,
+          "minHz": 86.95652173913044,
+          "maxHz": 170.2127659574468
+        },
+        {
+          "text": "ม้า",
+          "sha256": "8a4e86e4e6ff0fde057d37a3777b59090b9242da201f5c96ac55b814915e1dde",
+          "target": "high",
+          "n": 33,
+          "medianHz": 131.14754098360655,
+          "q1Hz": 126.98412698412699,
+          "q3Hz": 145.45454545454547,
+          "minHz": 121.21212121212122,
+          "maxHz": 177.77777777777777
+        },
+        {
+          "text": "หมา",
+          "sha256": "58c4090080acc0dcb8fd6538264e9ab6dc71030f531b4049fe22e231940711e4",
+          "target": "rising",
+          "n": 33,
+          "medianHz": 115.94202898550725,
+          "q1Hz": 112.67605633802818,
+          "q3Hz": 131.14754098360655,
+          "minHz": 109.58904109589041,
+          "maxHz": 148.14814814814815
+        },
+        {
+          "text": "ไม่",
+          "sha256": "d09b48eb7c295bab636f397375313107f417a973148751d683d3be5d0f9bfcbb",
+          "target": "falling",
+          "n": 33,
+          "medianHz": 150.9433962264151,
+          "q1Hz": 119.40298507462687,
+          "q3Hz": 160,
+          "minHz": 96.3855421686747,
+          "maxHz": 163.26530612244898
+        },
+        {
+          "text": "ใหม่",
+          "sha256": "14edc0f328c3f135ba388a16a3efec035877a19c9aed1495e769bf920a179dc2",
+          "target": "low",
+          "n": 17,
+          "medianHz": 115.94202898550725,
+          "q1Hz": 101.26582278481013,
+          "q3Hz": 148.14814814814815,
+          "minHz": 89.88764044943821,
+          "maxHz": 150.9433962264151
+        }
+      ]
+    }
+  ]
+}

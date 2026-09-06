@@ -45,6 +45,8 @@ export type MicrophoneCaptureOptions = {
    * vergessene Aufnahme den JavaScript-Speicher nicht unbegrenzt wachsen laesst.
    */
   maxDurationMs?: number;
+  /** Shadowing: native Audiositzung fuer gleichzeitige Wiedergabe offen halten. */
+  allowPlayback?: boolean;
 };
 
 export type MicrophoneCaptureController = {

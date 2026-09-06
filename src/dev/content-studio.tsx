@@ -4,6 +4,7 @@ import { ContentReport } from './content-report';
 import { estimateRunCost } from './run-cost';
 import { exportDrafts, studioRequest } from './content-client';
 import { planDeliveryAudio } from '@/lib/content/audio-plan';
+import { previewAudioDelivery } from '@/lib/content/delivery-preview';
 import { loadExamModules } from '@/lib/repository';
 import type { ExamModule } from '@/lib/exam/types';
 
@@ -273,7 +274,8 @@ export default function SettingsScreen() {
     async ({ optionId, language, apiKey, provider, model, voice, onProgress, shouldCancel, confirmRun }: StartArgs) => {
       await studioRequest('/state');
       const specs = clipRunOptions(await loadSituations(), provider, language, await loadExamModules()).specsFor(optionId);
-      if (!await confirmRun(estimateRunCost('audio', provider, model, await missingClipSpecs(specs)))) return;
+      if (!await confirmRun({ ...estimateRunCost('audio', provider, model, await missingClipSpecs(specs)),
+        delivery: previewAudioDelivery(specs) })) return;
       await runClipBatch({
         specs,
         client: createClipGenerationClient(provider, apiKey, model, voice),

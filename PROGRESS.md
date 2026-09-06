@@ -5110,3 +5110,102 @@ behauptete Vollabnahme oder durch mehr ungeprüfte Generierung verdeckt.
 - [ ] Im UI sagen, dass die App kein unvorhersehbares Gegenüber liefert.
   Gesamten Block erst feature-komplett und automatisch geprüft zum manuellen
   Test geben. Bis dahin keine spielbaren Satzübungen behaupten.
+
+## Phase 21 — Satzebene implementiert; echte Audioabdeckung offen (06.09.2026)
+
+Ausgangspunkt: Phase 20 A/B, Commit `7c93caa`. Der vorherige C-TODO-Abschnitt
+ist der historische Startstand. Aktueller Anforderungsstand siehe unten;
+**Phase 21 bleibt insgesamt unvollständig**, kein Vollmengenlauf gestartet.
+
+### AE-61 — Satz-Ausnahme nach Quellenprüfung abgelehnt
+
+Abramson/Svastikula finden alle fünf Tonkontraste auch in den untersuchten
+Thai-Sätzen. Intonation macht die lexikalischen Töne nicht bedeutungslos.
+Ein globaler Satzanstieg/-fall ist zwar kein Worttontest, daraus folgt aber
+keine wissenschaftlich begründete pauschale Ausnahme vom Tontor. Deshalb keine
+solche Kategorie eingeführt. Eine bewusste Lieferung ungeprüfter Satzclips
+bedarf einer gesonderten Entscheidung; die offene Rückfrage hat die Regel
+nicht geändert. Quellen samt Abrufdatum und genauer Reichweite stehen in
+`content/phase21-research.md`.
+
+### AE-62 — Sprecherreferenz und Vorschau vor der Kostenbestätigung
+
+20 vorhandene Kalibrierclips erneut aus den gespeicherten F0-Spuren ausgewertet,
+gleich gewichtete Clipmediane pro Stimme: Kore 192,80 Hz (10), Premwadee
+156,86 Hz (5), Niwat 131,15 Hz (5). Unausgewogene bzw. nur einmalige Tonbeispiele,
+keine unabhängig verifizierten Wiederholungen oder zurückgehaltenen Testdaten.
+Keine belastbare Mindestzahl/Streuungsgrenze ableitbar; Register bleiben
+ungeprüft. Reproduktion: `node scripts/content/measure-speaker-reference.cjs`;
+Messwerte/Quartile und nächste Evidenz in `content/speaker-reference-audit.json`.
+
+Die Generierungsbestätigung zeigt nun vor dem Bezahlen die Kategorien und
+Ausschlussgründe des konkreten Plans. Gesamtplan: 462 Clips, davon 22 Thai-
+Tonfälle prüfbar, 297 andere Clips technisch prüfbar, 0 ungeprüfte Thai-Clips
+ausgeliefert, 143 ausgeschlossen. Maximal 69,0 % können passieren; tatsächliche
+F0-/Dateifehler können die Quote weiter senken. Einmalige Kostenbestätigung
+bleibt, keine neue Einzelprüfung. Vorschautest prüft Anzeige vor Anbieteraufruf.
+
+### AE-63 — Satzübungen und ihre begrenzte Aussage
+
+Die vorhandenen 84 Beispiele vollständig auditiert (`content/sentence-data-audit.json`).
+Der ursprüngliche Datenkopf bestätigt ausdrücklich nicht jeden ganzen Satz.
+34 vollständige Satzlesarten mit verifizierten Wörtern und nachvollzogenen
+Satzregeln für die Übung übernommen; keine wörtliche Korpusbestätigung erfunden.
+Wortgruppen, unzureichend belegte Wörter und ungesicherte Konstruktionen außen.
+Originalvokabeln, IDs, Tondaten und `sourceVerified` unverändert.
+
+- Shadowing mit bestätigten Kopfhörern, Vorbildstart nach Mikrofonfreigabe,
+  flüchtigem PCM und lokaler F0-Auswertung. Keine Aussprache-/FSRS-Note.
+- Wiederholung desselben Satzes mit 12/9/6 Sekunden: ausdrücklich eine Anpassung
+  des Verhältnisses; keine Gleichsetzung mit Nations Minutenmonologen und
+  wechselnden Zuhörern. 15 Sekunden Vorbereitung vor jeder Produktion verpflichtend.
+- Satz-Hörverstehen mit drei Bedeutungsalternativen; Thai und Umschrift erst
+  nach der Antwort. Ohne verfügbares Audio bleiben Antworten gesperrt.
+- In allen drei Modi: Die App ersetzt kein unvorhersehbares Gegenüber und
+  reicht allein nicht für echte Gespräche.
+
+Recherche korrigiert die behaupteten Planungseffekte: g=0,98/0,28 stammen aus
+einem GenAI-ESL/EFL-Moderatorvergleich überwiegend zu Schreiben, kein Nachweis
+eines bestimmten Timers. DP-Modell und Shadowing-Review mit ihren Grenzen
+dokumentiert. Satzbildungsaudit umfasst Klassifikatoren, Fragen/Negation,
+Ort/Zeit/Aspekt und Rollen. Thai-Zählkonstruktion gewöhnlich Nomen + Zahl +
+Klassifikator; die Reihenfolge im Auftragsbeispiel war unzutreffend. Keine
+unbelegten neuen Sprachdaten ergänzt.
+
+Native Besonderheit aus installiertem Expo-57-Code: iOS-Streamstart setzt
+reine Aufnahme. Shadowing setzt danach die gemeinsame Aufnahme-/Wiedergabe-
+Sitzung; das Clipende darf die laufende Aufnahme nicht deaktivieren. Tests
+prüfen Startreihenfolge, Fehlerfreigabe und Player-Ende. Physische Audiorouten
+und Mikrofonabnahme weiterhin B-2, keine Behauptung einer Geräteprüfung.
+
+### Verifikation und verbleibender Blocker B-21
+
+`npx tsc --noEmit`, **741 Jest-Tests / 43 Suites**, acht FFmpeg-Pipeline-Tests,
+`content:integrity` und `content:tone-tool` grün. Alle drei Expo-Exporte unter
+`build-verification/phase21` erfolgreich, keine Generator-/Anbieterschlüssel-
+Module im Produktionsgraph. Sechs bestehende Medien in Web/iOS/Android
+18-mal bytegleich (`content/asset-bundling-verification.json`). Sandbox-EPERM
+bei Unterprozessen durch genehmigte lokale Ausführung gelöst.
+
+Im echten Browser sind die Satzmodi gerendert und die fehlende Audioabdeckung
+nachgewiesen: kein zulässiger Satzclip, keine Thai-Systemstimme; Aufnahme und
+Hörantwort bleiben entsprechend gesperrt. Kontrollierte Tests der Übungsabläufe
+ersetzen dieses fehlende Playback nicht. Kein manueller Testauftrag an den
+Nutzer, keine vollständige Spielbarkeit oder Lieferung behauptet.
+
+| Kriterium | Aktueller Nachweis |
+| --- | --- |
+| C-0a Satzkategorie belegt entscheiden | Erfüllt durch begründete Ablehnung, AE-61 |
+| C-0b Sprecherreferenz prüfen | Erfüllt als dokumentierter negativer Datenbefund |
+| C-0c Durchlassquote vor Kosten | Implementiert und automatisch geprüft |
+| C0 Lernbelege | Primärquellen mit Abrufdatum und Übertragungsgrenzen dokumentiert |
+| C1/C2/C4 vollständig spielbar | Offen: tatsächliches Satzaudio fehlt; Abläufe nur mit Testdoubles geprüft |
+| C3 verpflichtende Vorbereitung | Implementiert, Timer und Neustart zwischen Runden getestet |
+| C5/C6 Satzbildungsbefund und Grenze | Dokumentiert und Grenze in allen drei Lernmodi sichtbar |
+| Prüfungen, Protokoll, Commit | Prüfungen grün; Stand dieses Commits dokumentiert |
+
+Nächster erforderlicher Schritt: Entscheidung zum Umgang mit ungeprüften
+Satzclips und anschließend tatsächlich verfügbare Audioquellen. Das Tontor
+wird dafür nicht stillschweigend geöffnet. Ein kostenpflichtiger Lauf beginnt
+erst nach der konkreten Mengen-/Kostenbestätigung. B-19 (Vollbestand), AE-48
+und B-2/B-5 bleiben außerdem offen.

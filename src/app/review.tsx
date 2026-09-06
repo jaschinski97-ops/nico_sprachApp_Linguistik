@@ -7,6 +7,8 @@ import { Flashcard } from '@/components/flashcard';
 import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { SpeakingRunner } from '@/components/speaking-runner';
+import { SentenceRunner } from '@/components/sentence-runner';
+import type { SentenceMode } from '@/lib/speaking/sentence-session';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FeatureLegend } from '@/components/feature-legend';
@@ -25,7 +27,7 @@ import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-sessi
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
 /** Karteikarten oder eine der richtungseigenen Übungen. */
-type Mode = 'cards' | DrillId | 'speaking' | 'writing';
+type Mode = 'cards' | DrillId | 'speaking' | 'writing' | SentenceMode;
 
 /**
  * Ist das eine Richtung, die es wirklich gibt?
@@ -45,6 +47,7 @@ function isDirection(value: unknown): value is Direction {
 function parseMode(value: unknown, direction: Direction): Mode {
   const drills: string[] = drillsForDirection(direction);
   if (direction === 'de_to_th' && value === 'speaking') return 'speaking';
+  if (direction === 'de_to_th' && (value === 'shadowing' || value === 'sentenceRepeat' || value === 'sentenceListening')) return value;
   // Die Sprechuebung misst Tonhoehenkonturen und gibt es deshalb bisher nur
   // fuer Thai (AE-48) - fuer die anderen Paare faellt sie hier weg.
   // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
@@ -57,7 +60,7 @@ function modesForDirection(direction: Direction): Mode[] {
   return [
     'cards',
     ...drillsForDirection(direction),
-    ...(direction === 'de_to_th' ? (['speaking'] as const) : []),
+    ...(direction === 'de_to_th' ? (['speaking', 'shadowing', 'sentenceRepeat', 'sentenceListening'] as const) : []),
     'writing',
   ];
 }
@@ -66,6 +69,9 @@ function modeLabel(mode: Mode): string {
   if (mode === 'cards') return 'Karteikarten';
   if (mode === 'speaking') return 'Sprechen';
   if (mode === 'writing') return 'Schreiben';
+  if (mode === 'shadowing') return 'Shadowing';
+  if (mode === 'sentenceRepeat') return 'Satz wiederholen';
+  if (mode === 'sentenceListening') return 'Satz verstehen';
   return DRILL_META[mode].label;
 }
 
@@ -89,11 +95,12 @@ function groupsForDirection(direction: Direction): Group[] {
     drills.filter((drill) => DRILL_META[drill].skill === skill);
 
   const groups: Group[] = [{ label: 'Wortschatz', modes: ['cards'] }];
-  const hoeren = bySkill('hoeren');
+  const hoeren: Mode[] = bySkill('hoeren');
+  if (modes.includes('sentenceListening')) hoeren.push('sentenceListening');
   if (hoeren.length > 0) groups.push({ label: SKILL_LABELS.hoeren, modes: hoeren });
   const lesen = bySkill('lesen');
   if (lesen.length > 0) groups.push({ label: SKILL_LABELS.lesen, modes: lesen });
-  if (modes.includes('speaking')) groups.push({ label: 'Sprechen', modes: ['speaking'] });
+  if (modes.includes('speaking')) groups.push({ label: 'Sprechen', modes: ['speaking', 'shadowing', 'sentenceRepeat'] });
   if (modes.includes('writing')) groups.push({ label: 'Schreiben', modes: ['writing'] });
   const grammatik = bySkill('grammatik');
   if (grammatik.length > 0) groups.push({ label: SKILL_LABELS.grammatik, modes: grammatik });
@@ -237,6 +244,8 @@ function ReviewBody({
           direction={direction}
           onExit={onExit}
         />
+      ) : mode === 'shadowing' || mode === 'sentenceRepeat' || mode === 'sentenceListening' ? (
+        <SentenceRunner key={`${direction}:${mode}`} mode={mode} onExit={onExit} />
       ) : mode === 'speaking' ? (
         <SpeakingRunner
           key={`${direction}:speaking`}

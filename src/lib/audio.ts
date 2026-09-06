@@ -57,6 +57,8 @@ export type PronunciationRequest = {
   language: SpeechLanguage;
   /** Verweist auf einen vorproduzierten Clip, falls vorhanden. */
   audioAssetId?: string;
+  /** Nur beim Mitsprechen: Player-Ende darf den laufenden Mikrofonstream nicht stoppen. */
+  concurrentRecording?: boolean;
 };
 
 /** Was tatsächlich abgespielt wurde — nützlich für Tests und Anzeige. */
@@ -89,8 +91,8 @@ export async function hasPronunciationClip(request: { text: string; language: Sp
 
 /** Trennt die Wiedergabe von der Entscheidungslogik, damit sie testbar bleibt. */
 export type PronunciationBackend = {
-  playAsset(uri: string): Promise<void>;
-  speak(text: string, locale: string, rate: number): Promise<void>;
+  playAsset(uri: string, concurrentRecording?: boolean): Promise<void>;
+  speak(text: string, locale: string, rate: number, concurrentRecording?: boolean): Promise<void>;
   stop(): Promise<void>;
   /** Sprachkennungen der installierten Stimmen, z. B. `['de-DE', 'en-US']`. */
   availableLocales(): Promise<string[]>;
@@ -121,13 +123,11 @@ function releaseAssetPlayback(expected?: ActiveAssetPlayback): void {
 }
 
 const defaultBackend: PronunciationBackend = {
-  async playAsset(uri) {
-    // `expo-audio` wird erst hier geladen, nicht beim Import des Moduls.
-    // Es braucht ein natives Modul und laesst sich im Testprozess gar nicht
-    // importieren; ausserdem gibt es bis zum Content-Schritt noch keine Clips,
-    // dieser Zweig wird also vorerst nie betreten.
-    const { createAudioPlayer } = await import('expo-audio');
-    const player = createAudioPlayer({ uri });
+  async playAsset(uri, concurrentRecording) {
+    // Natives Modul erst bei Bedarf laden. Der Lazy-Require bleibt auch im
+    // Jest-Prozess austauschbar, damit der echte Player-Lebenszyklus pruefbar ist.
+    const { createAudioPlayer } = require('expo-audio') as typeof import('expo-audio');
+    const player = createAudioPlayer({ uri }, { keepAudioSessionActive: concurrentRecording === true });
     const playback: ActiveAssetPlayback = { player, subscription: null };
     activeAssetPlayback = playback;
     playback.subscription = player.addListener('playbackStatusUpdate', (status) => {
@@ -135,8 +135,8 @@ const defaultBackend: PronunciationBackend = {
     });
     player.play();
   },
-  async speak(text, language, rate) {
-    Speech.speak(text, { language, rate });
+  async speak(text, language, rate, concurrentRecording) {
+    Speech.speak(text, { language, rate, ...(concurrentRecording ? { useApplicationAudioSession: true } : {}) });
   },
   async stop() {
     // Wichtig fuer die Sprechuebung: Ein lokaler KI-Clip darf beim Start der
@@ -196,11 +196,13 @@ async function playPronunciationNow(
     );
   }
   if (uri) {
-    await backend.playAsset(uri);
+    if (request.concurrentRecording) await backend.playAsset(uri, true);
+    else await backend.playAsset(uri);
     return 'asset';
   }
 
-  await backend.speak(text, LOCALE[request.language], RATE[request.language]);
+  if (request.concurrentRecording) await backend.speak(text, LOCALE[request.language], RATE[request.language], true);
+  else await backend.speak(text, LOCALE[request.language], RATE[request.language]);
   return 'tts';
 }
 

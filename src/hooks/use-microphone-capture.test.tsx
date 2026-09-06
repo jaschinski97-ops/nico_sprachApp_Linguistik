@@ -4,6 +4,7 @@ import TestRenderer, { act } from 'react-test-renderer';
 import type { MicrophoneCaptureController } from '@/lib/speaking/microphone-capture';
 
 const mockRequestPermission = jest.fn();
+const mockSetAudioMode = jest.fn();
 const mockStream = {
   start: jest.fn<Promise<void>, []>(),
   stop: jest.fn<void, []>(),
@@ -19,6 +20,7 @@ let mockOnBuffer:
 
 jest.mock('expo-audio', () => ({
   requestRecordingPermissionsAsync: () => mockRequestPermission(),
+  setAudioModeAsync: (options: unknown) => mockSetAudioMode(options),
   useAudioStream: (options: { onBuffer?: typeof mockOnBuffer }) => {
     mockOnBuffer = options.onBuffer;
     return { stream: mockStream, isStreaming: false };
@@ -29,8 +31,8 @@ import { useMicrophoneCapture } from './use-microphone-capture';
 
 let current: MicrophoneCaptureController | null = null;
 
-function Harness({ maxDurationMs = 4_000 }: { maxDurationMs?: number }) {
-  current = useMicrophoneCapture({ maxDurationMs });
+function Harness({ maxDurationMs = 4_000, allowPlayback = false }: { maxDurationMs?: number; allowPlayback?: boolean }) {
+  current = useMicrophoneCapture({ maxDurationMs, allowPlayback });
   return null;
 }
 
@@ -51,6 +53,7 @@ describe('nativer Mikrofon-Lebenszyklus', () => {
     current = null;
     mockOnBuffer = undefined;
     mockRequestPermission.mockReset().mockResolvedValue({ granted: true });
+    mockSetAudioMode.mockReset().mockResolvedValue(undefined);
     mockStream.start.mockReset().mockResolvedValue(undefined);
     mockStream.stop.mockReset();
   });
@@ -75,6 +78,7 @@ describe('nativer Mikrofon-Lebenszyklus', () => {
     expect(started).toBe(true);
     expect(mockRequestPermission).toHaveBeenCalledTimes(1);
     expect(mockStream.start).toHaveBeenCalledTimes(1);
+    expect(mockSetAudioMode).not.toHaveBeenCalled();
     expect(controller().isRecording).toBe(true);
 
     await act(async () => {
@@ -101,6 +105,34 @@ describe('nativer Mikrofon-Lebenszyklus', () => {
     await act(async () => {
       renderer.unmount();
     });
+  });
+
+  it('aktiviert Wiedergabe erst nach dem Streamstart und beendet auch diese Aufnahme', async () => {
+    const order: string[] = [];
+    mockStream.start.mockImplementation(async () => { order.push('stream'); });
+    mockSetAudioMode.mockImplementation(async () => { order.push('duplex'); });
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => { renderer = TestRenderer.create(<Harness allowPlayback />); });
+    expect(mockSetAudioMode).not.toHaveBeenCalled();
+    await act(async () => { expect(await controller().start()).toBe(true); });
+    expect(order).toEqual(['stream', 'duplex']);
+    expect(mockSetAudioMode).toHaveBeenCalledWith({ allowsRecording: true, playsInSilentMode: true });
+    await act(async () => { controller().cancel(); });
+    expect(mockStream.stop).toHaveBeenCalled();
+    expect(controller().isRecording).toBe(false);
+    await act(async () => { renderer.unmount(); });
+  });
+
+  it('verwirft einen gestarteten Stream, wenn die gemeinsame Audiositzung fehlschlaegt', async () => {
+    mockSetAudioMode.mockRejectedValue(new Error('audio session failed'));
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => { renderer = TestRenderer.create(<Harness allowPlayback />); });
+    await act(async () => { expect(await controller().start()).toBe(false); });
+    expect(mockStream.stop).toHaveBeenCalled();
+    expect(controller().error?.code).toBe('start-failed');
+    expect(controller().isRecording).toBe(false);
+    expect(controller().lastCapture).toBeNull();
+    await act(async () => { renderer.unmount(); });
   });
 
   it('liefert lokales Mono-PCM und verwirft es bei clear wieder', async () => {

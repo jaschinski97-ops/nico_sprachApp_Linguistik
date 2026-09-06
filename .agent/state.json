@@ -1,10 +1,10 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-09-05",
-  "currentPhase": 20,
-  "currentPhaseName": "Automatisches Tontor und Strukturpflege; Satzuebungen als TODO",
-  "currentPhaseStatus": "blocks_a_b_complete_block_c_deferred_as_authorized",
+  "lastUpdated": "2026-09-06",
+  "currentPhase": 21,
+  "currentPhaseName": "Satzuebungen, Quellenpruefung und Durchlassvorschau; Satzaudio offen",
+  "currentPhaseStatus": "implementation_verified_audio_availability_blocked",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -1018,6 +1018,55 @@
       "done": false,
       "deferredByUserScope": true,
       "verifiedHow": "Erlaubter sauberer Stopp nach Block B. Vollstaendiger Block-C-Auftrag in PROGRESS.md / nextUp. 84 Beispielsatze laut Datenkopf NICHT einzeln als Satz quellengeprueft."
+    },
+    {
+      "phase": 21,
+      "criterion": "C-0a Satzkategorie belegt entscheiden",
+      "done": true,
+      "verifiedHow": "Begruendet abgelehnt: Thai-Tonkontraste bleiben in untersuchten Saetzen erhalten. Keine unautorisierte Ausnahme. content/phase21-research.md, AE-61."
+    },
+    {
+      "phase": 21,
+      "criterion": "C-0b Sprecherreferenz pruefen",
+      "done": true,
+      "verifiedHow": "20 gespeicherte F0-Spuren, gleichgewichtete Clipmediane je Stimme. Keine tragfaehige Registerkalibrierung oder Mindestzahl ableitbar. content/speaker-reference-audit.json."
+    },
+    {
+      "phase": 21,
+      "criterion": "C-0c Durchlassquote vor Kostenbestaetigung",
+      "done": true,
+      "verifiedHow": "previewAudioDelivery und Generator-Bestaetigungsdialog getestet vor Anbieteraufruf. Gesamtplan 462: 22 tonpruefbar, 297 technisch, 0 ungeprueft geliefert, 143 ausgeschlossen; Obergrenze 69.0 Prozent."
+    },
+    {
+      "phase": 21,
+      "criterion": "C0 Lernbelege selbst pruefen",
+      "done": true,
+      "verifiedHow": "DP, Nation, Shadowing und GenAI-Planungsmoderator mit Primaerquellen, Abrufdatum und Grenzen in content/phase21-research.md."
+    },
+    {
+      "phase": 21,
+      "criterion": "C1/C2/C4 Shadowing, sinkende Zeiten und Satzhoerverstehen vollstaendig spielbar",
+      "done": false,
+      "blocker": "B-21; B-2",
+      "verifiedHow": "34 regelbasiert nachvollzogene Satzlesarten; UI- und Audio-Lebenszyklustests gruen. Echter Browser ohne Satzclip/Thai-Systemstimme: Start gesperrt. Kontrollierte Testdoubles sind kein echtes Playback."
+    },
+    {
+      "phase": 21,
+      "criterion": "C3 Vorbereitung nicht abschaltbar",
+      "done": true,
+      "verifiedHow": "15 Sekunden vor Produktion, handlerseitig erzwungen; erneute Vorbereitung fuer 12/9/6-Sekunden-Runden getestet."
+    },
+    {
+      "phase": 21,
+      "criterion": "C5 Satzbildungsbefund und C6 Grenze im UI",
+      "done": true,
+      "verifiedHow": "Alle 84 Beispiele auditiert, 34 Satzlesarten mit Regeln/Wortquellen; Klassifikator- und Gebrauchsluecken dokumentiert. Alle drei Modi weisen auf notwendige echte Gespraechspartner hin."
+    },
+    {
+      "phase": 21,
+      "criterion": "Tests, TypeScript, Dokumentation und Commit",
+      "done": true,
+      "verifiedHow": "741 Jest-Tests/43 Suites, 8 Node-Pipeline-Tests, TypeScript, Integritaet und gemeinsamer Tonkern gruen. Drei Produktions-Exporte ohne Generatorcode, 18 Asset-Vergleiche. PROGRESS und Zustand im selben Commit."
     }
   ],
   "architectureDecisions": [
@@ -1320,6 +1369,21 @@
       "id": "AE-60",
       "title": "Content-Werkzeuge zusammengelegt; Block C sauber vertagt",
       "rationale": "Neun Pipeline-Skripte und Fixtures unter scripts/content, keine Aenderung der Lernlogik in Block B. Ungenutztes expo-device nach Import-/Plugin-/Lockfile-Pruefung entfernt; peer/transitiv benoetigte Pakete behalten. Alte Scaffold- und Einmalmessskripte entfernt, tone-contour.html bleibt. User erlaubt Stopp nach B; Satzuebungen und Recherche bleiben explizite TODOs."
+    },
+    {
+      "id": "AE-61",
+      "title": "Keine wissenschaftlich unbegruendete Satz-Ausnahme",
+      "rationale": "C-0a-Praemisse nicht bestaetigt. Tonkontraste bleiben trotz Satzintonation relevant. Bestehendes Tontor unveraendert; bewusste ungepruefte Satzlieferung ist eine noch offene separate Entscheidung."
+    },
+    {
+      "id": "AE-62",
+      "title": "Negative Registerkalibrierung und sichtbare Durchlassobergrenze",
+      "rationale": "20 Clips ohne ausreichende unabhaengige Wiederholungen/Annotation/Holdout: kein erfundener Mindestumfang oder Registergrenzwert. Vor Kostenbestaetigung konkrete Kategorien und Gruende, keine Erfolgsquote versprochen."
+    },
+    {
+      "id": "AE-63",
+      "title": "Satzuebungen ohne unbewiesene Wirksamkeits- oder Playbackbehauptung",
+      "rationale": "34 regelbasiert nachvollzogene Satzlesarten aus allen 84 auditierten Beispielen, keine Aenderung der Vokabelvertraege. Lokales Shadowing, 12/9/6-Sekunden-Anpassung, zwingende Vorbereitung, Bedeutungswahl und Grenzenhinweis implementiert. Audiorouting im SDK-Code nachvollzogen und getestet; echte Satzquellen und physische Abnahme offen."
     }
   ],
   "openBlockers": [
@@ -1333,10 +1397,11 @@
         6,
         10,
         11,
-        12
+        12,
+        21
       ],
       "needsUser": true,
-      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht. SEIT PHASE 11: Native Clip-Ablage (Paths.document/audio/) und Wiedergabe ueber expo-audio sind nur typgeprueft. SEIT PHASE 12: useAudioStream, PCM-Dekodierung, Berechtigungszeitpunkt, Auto-Stopp und Aufraeumen sind paketquellen-, typ- und Hook-getestet; ein echtes Android/iOS-Mikrofon samt tatsaechlicher Abtastrate und F0-Kontur wurde nicht ausgefuehrt.",
+      "note": "Vom Nutzer zurueckgestellt - Apple-Signierweg zu aufwendig. Im Web-Build ist alles geprueft. Ueber Android waere Expo Go deutlich einfacher. Fuer Phase 5 zusaetzlich: der native Bildpfad (expo-file-system, Datei je Bild unter Paths.document) ist bisher nur typgeprueft. Fuer Phase 6 zusaetzlich: die Ton-Uebung liess sich im Testbrowser nur bis zum Warnpfad pruefen (keine Thai-Stimme installiert). Ob eine Thai-TTS-Stimme die Toene brauchbar wiedergibt, laesst sich erst am Geraet beurteilen. SEIT PHASE 8: Der Android-Weg ueber ein preview-APK umgeht Expo Go vollstaendig; sobald B-5 erledigt ist, schliesst derselbe Schritt B-2 fuer Android mit. Fuer iOS bleibt B-2 offen, solange kein Apple-Konto da ist. SEIT PHASE 10: Betrifft zusaetzlich die drei neuen Anbieterwege nativ - ohne CORS sollte dort mehr funktionieren als im Web, insbesondere ChatGPT (AE-27). Geprueft ist das nicht. SEIT PHASE 11: Native Clip-Ablage (Paths.document/audio/) und Wiedergabe ueber expo-audio sind nur typgeprueft. SEIT PHASE 12: useAudioStream, PCM-Dekodierung, Berechtigungszeitpunkt, Auto-Stopp und Aufraeumen sind paketquellen-, typ- und Hook-getestet; ein echtes Android/iOS-Mikrofon samt tatsaechlicher Abtastrate und F0-Kontur wurde nicht ausgefuehrt. SEIT PHASE 21: Gleichzeitige Shadowing-Wiedergabe/PCM-Aufnahme, Kopfhoererroute, Streamstart und Player-Ende sind automatisch getestet, nicht am physischen iOS-/Android-Geraet.",
       "steps": "npx expo start -> QR mit Expo Go -> beide Lernrichtungen, Tonfarben bei สวัสดี, 'Thai anhoeren'; danach Deutsch -> Thai -> Sprechen, Mikrofon erst am Knopf freigeben, steigendes und fallendes Wort aufnehmen, Kontur pruefen, Auto-Stopp und erloschenen Mikrofonindikator bestaetigen."
     },
     {
@@ -1379,19 +1444,26 @@
       "needsUser": false,
       "note": "Aktueller Auftrag ersetzt den frueheren Stop beim Testbestand durch einen Vollmengen-Workflow mit einer Kostenbestaetigung je Lauf. Umbau A/B abgeschlossen; 5 Bilder und 1 Thai-Clip passieren, 9 Thai-Clips ungeprueft ausgeschlossen. 461 Clips, 73 Bilder, 512 Thai-Situationen sowie AE-48 fehlen. Kein bezahlter Vollmengenlauf im Umbau gestartet. Physische Geraete-/Endgroessenpruefung B-2/B-5 bleibt offen.",
       "steps": "Bei einem gewuenschten Generierungslauf Anzahl und Kosten einmal bestaetigen; automatisch gepruefte Inhalte werden direkt uebernommen. Fuer Thai-Mehrsilber/Register fehlen noch verifizierte Segmentierung/Kalibrierung, daher keine garantierte Vollabdeckung durch mehr Generierung."
+    },
+    {
+      "id": "B-21",
+      "title": "Satzclips und nachgewiesene Spielbarkeit fehlen",
+      "affectsPhases": [
+        21
+      ],
+      "needsUser": true,
+      "note": "Die pauschale Tontor-Ausnahme ist fachlich nicht belegt. Kein bestaetigter Produktentscheid zur Lieferung ungepruefter Saetze; kein Vollmengenlauf. Der aktuelle Browser hat weder zulaessige Satzclips noch eine Thai-Systemstimme. Automatische Tests beweisen nur die implementierten Ablaeufe mit kontrollierter Audioquelle. Keine Vollabnahme.",
+      "steps": "Entscheidung zum Umgang mit ungeprueften Satzclips, dann Audioabdeckung herstellen; kostenpflichtige Generierung erst nach konkreter Mengen-/Kostenbestaetigung. Anschliessend echtes Playback und native lokale Aufnahme pruefen."
     }
   ],
   "nextUp": {
     "phase": 21,
-    "name": "Block C: Satzproduktion und Hoerverstehen, Recherche und Datenpruefung zuerst",
+    "name": "Satz-Audioabdeckung und echte Spielbarkeit abschliessen",
     "tasks": [
-      "Block C: Declarative-Procedural-Modell, Nation 1989 / 4-3-2, Shadowing-Uebersicht ueber 44 Studien und TBLT-Planungszeit (behauptete g=0.98 gegen 0.28) primaer nachrecherchieren; Behauptungen nicht ungeprueft uebernehmen, Abrufdatum und Quellen belegen.",
-      "Block C: 84 Thai-Beispielsaetze als ganze Saetze pruefen. Datenkopf belegt nur verifizierte Einzelwoerter, keine einzeln verifizierten Saetze; keine falsche Quellenfreigabe vererben.",
-      "Block C: Satzclip-Shadowing, lokale Aufnahme und begrenzte Rueckmeldung auf Phase 12/AE-58 aufbauen. Kein Netz/Upload, keine Aussprache-Gesamtnote oder unbelegtes FSRS-Scoring (AE-32/AE-35).",
-      "Block C: Sinkende Zeitfenster als ausdrueckliche Anpassung von 4/3/2 bauen. Wechselndes Gegenueber fehlt; nicht abgedeckten Teil des belegten Effekts erklaeren. Verpflichtende, nicht abschaltbare Vorbereitungsphase vor der Produktion.",
-      "Block C: Satz hoeren und Bedeutung pruefen spielbar machen, erst auf verifiziertem Satzbestand und mit ehrlich behandelter Clip-/System-TTS-Abdeckung.",
-      "Block C: Satzbildung aus vorhandenem Wortschatz systematisch auf Luecken untersuchen, insbesondere Thai-Klassifikatoren und korrekte Wortstellung. Neue Sprachdaten nur mit Quellendisziplin aus Phase 2. Keine unpruefte Uebernahme der Mango-Beispielformulierung.",
-      "Block C: Im UI Grenze benennen, dass kein unvorhersehbares Gegenueber vorhanden ist. Erst feature-komplett und automatisiert geprueft um manuelle Tests bitten.",
+      "B-21: Satz-Audiopolitik entscheiden und echte Audioquellen bereitstellen; keine stille Tontor-Ausnahme.",
+      "Erst nach sichtbarer Menge/Kostenschaetzung einen bezahlten Lauf bestaetigen; keine Einzelfreigaben.",
+      "C1/C2/C4 mit echtem Satzaudio abnehmen, B-2 fuer physische Aufnahme/Playback weiter offen.",
+      "Bestehende B-19/AE-48 und B-5 nicht als geloest behandeln.",
       "Vollbestand nur nach einer Kostenbestaetigung je konkretem Lauf erzeugen, tatsaechliche Endgroesse messen; content:check und AE-48 bleiben Release-Gates.",
       "B-2/B-5: echte Android-/iOS-Installation offline inklusive Kaltstart/Cachebereinigung; Store-Endgroessen am echten Build messen.",
       "B-6 + B-2 zusammen: Clips fuer eine Sprache erzeugen und auf dem Geraet abspielen. Erst dann ist belegt, dass die Hoeruebungen ohne Systemstimme laufen - im Testbrowser ist WEDER eine spanische NOCH eine englische Stimme installiert.",
@@ -1842,6 +1914,43 @@
       "paidFullRunStartedDuringRefactor": false,
       "additionalLocalImages": 6,
       "additionalImagesLocation": "Browser; werden bei einem kuenftigen Lauf automatisch mitgeprueft."
+    }
+  },
+  "sentencePractice": {
+    "phase": 21,
+    "modes": [
+      "shadowing",
+      "sentenceRepeat",
+      "sentenceListening"
+    ],
+    "sourceExamples": 84,
+    "eligibleRuleReviewedSentences": 34,
+    "audit": "content/sentence-data-audit.json",
+    "research": "content/phase21-research.md",
+    "preparationMs": 15000,
+    "repetitionWindowsMs": [
+      12000,
+      9000,
+      6000
+    ],
+    "microphone": "ephemeral local PCM; no upload; no overall pronunciation or FSRS score",
+    "nativeDuplex": "SDK 57 playAndRecord after stream start; keep player session active during recording; system speech shares application session",
+    "audioEndToEndVerified": false,
+    "complete": false,
+    "blocker": "B-21; B-2",
+    "verification": {
+      "jest": 741,
+      "suites": 43,
+      "nodePipeline": 8,
+      "typeScript": "pass",
+      "exports": [
+        "web",
+        "android",
+        "ios"
+      ],
+      "exportDirectory": "build-verification/phase21",
+      "productionGraph": "no generator/key modules",
+      "existingAssetByteComparisons": 18
     }
   }
 }

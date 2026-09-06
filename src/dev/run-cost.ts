@@ -1,7 +1,8 @@
 import type { ProviderId } from '@/lib/providers/types';
 import type { GeneratorGroupId } from '@/lib/providers/settings';
 
-export type RunEstimate = { count: number; usd: number | null; basis: string };
+export type RunEstimate = { count: number; usd: number | null; basis: string;
+  delivery?: import('@/lib/content/delivery-preview').DeliveryPreview };
 /** Standard synchronous API prices, retrieved 2026-09-05. Never assume batch discounts. */
 export function estimateRunCost(group: GeneratorGroupId, provider: ProviderId, model: string,
   specs: { text?: string }[]): RunEstimate {

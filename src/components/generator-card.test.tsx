@@ -11,7 +11,10 @@ test('one cost confirmation precedes every provider call; cancel costs nothing',
   const provider = jest.fn(async () => {});
   const automaticExport = jest.fn(async () => {});
   const onStart = async ({ confirmRun }: StartArgs) => {
-    if (!await confirmRun({ count: 2, usd: 0.1, basis: 'Test estimate' })) return;
+    if (!await confirmRun({ count: 2, usd: 0.1, basis: 'Test estimate', delivery: {
+      total: 3, toneCheckable: 1, technicalOnly: 1, uncheckedDelivered: 0, excluded: 1,
+      reasons: { 'Ungeprüftes Satzaudio': 1 },
+    } })) return;
     await provider(); await provider(); await automaticExport();
   };
   let tree!: ReactTestRenderer;
@@ -26,6 +29,9 @@ test('one cost confirmation precedes every provider call; cancel costs nothing',
   };
   await act(async () => { press('Start'); });
   expect(provider).not.toHaveBeenCalled();
+  expect(JSON.stringify(tree.toJSON())).toContain('Auslieferungsvorschau');
+  expect(JSON.stringify(tree.toJSON())).toContain('66.7');
+  expect(JSON.stringify(tree.toJSON())).toContain('Ungeprüftes Satzaudio');
   await act(async () => { press('Kosten bestätigen und Lauf starten'); });
   expect(provider).toHaveBeenCalledTimes(2); expect(automaticExport).toHaveBeenCalledTimes(1);
   await act(async () => { press('Start'); });
