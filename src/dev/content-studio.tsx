@@ -281,7 +281,9 @@ export default function SettingsScreen() {
         client: createClipGenerationClient(provider, apiKey, model, voice),
         onProgress,
         shouldCancel,
-        delayMs: 600,
+        // Verified live Gemini TTS limit on 2026-09-06: 10 requests/minute.
+        // Wait after each response so even fast quota errors cannot flood it.
+        delayMs: provider === 'gemini' ? 6500 : 600,
       });
       await exportDrafts(setExportMessage);
       setReportRevision(value => value + 1);
@@ -368,7 +370,7 @@ export default function SettingsScreen() {
         group="audio"
         choice={generators.audio}
         onChoiceChange={(change) => changeGenerator('audio', change)}
-        statusLine={`Im Speicher: ${clips === null ? '…' : `${clips.count} Clips, ${formatBytes(clips.bytes)}`} · Ablage ${clipBackend ?? '…'}`}
+        statusLine={`Im Speicher: ${clips === null ? '…' : `${clips.count} Clips, ${formatBytes(clips.bytes)}`} · Ablage ${clipBackend ?? '…'}${generators.audio.provider === 'gemini' ? ' · Pause je Aufruf: 6,5 Sekunden (Gemini-Ratenlimit)' : ''}`}
         runOptions={clipRunOptions(storedSituations, generators.audio.provider, mediaLanguage, storedExams).options}
         onStart={startClips}
         onDelete={clearAudioClips}

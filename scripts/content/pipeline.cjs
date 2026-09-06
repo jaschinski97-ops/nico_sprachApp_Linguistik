@@ -28,11 +28,14 @@ async function readJson(file, fallback) {
   try { return JSON.parse(await fs.readFile(file, 'utf8')); }
   catch (error) { if (error.code === 'ENOENT') return fallback; throw error; }
 }
-async function atomicJson(file, value) {
+async function atomicFile(file, bytes) {
   await fs.mkdir(path.dirname(file), { recursive: true });
   const temp = file + '.tmp';
-  await fs.writeFile(temp, JSON.stringify(value, null, 2) + '\n');
+  await fs.writeFile(temp, bytes);
   await fs.rename(temp, file);
+}
+async function atomicJson(file, value) {
+  await atomicFile(file, JSON.stringify(value, null, 2) + '\n');
 }
 function assertDocument(kind, doc) {
   if (!KINDS.includes(kind) || !doc || !/^[a-zA-Z0-9_-]{1,180}$/.test(doc.id)) throw Error('Ungültige Inhaltsart oder ID.');
@@ -129,7 +132,7 @@ class ContentPipeline {
       'export const CONTENT_ASSETS: Record<string, number> = {\n' +
       assets.map((asset) => `  ${JSON.stringify(asset)}: require('../../assets/content/${asset}'),`).join('\n') + '\n};\n';
     await fs.mkdir(path.join(this.root, 'src/content'), { recursive: true });
-    await fs.writeFile(path.join(this.root, 'src/content/assets.ts'), source);
+    await atomicFile(path.join(this.root, 'src/content/assets.ts'), source);
     // Catalog is the last write: new entries only become visible after assets exist.
     await atomicJson(this.catalogFile, catalog);
   }
@@ -167,7 +170,9 @@ class ContentPipeline {
     }
     await fs.mkdir(assetDir, { recursive: true });
     const accepted = prepared.filter(({ entry }) => isDeliverableEntry(entry));
-    for (const { entry, bytes } of accepted) if (entry.asset) await fs.writeFile(path.join(assetDir, entry.asset), bytes);
+    // Publish complete files by rename. A watcher must never index a newly
+    // created, still-empty MP3 before its bytes have finished writing.
+    for (const { entry, bytes } of accepted) if (entry.asset) await atomicFile(path.join(assetDir, entry.asset), bytes);
     const delivered = accepted.map(({ entry }) => {
       const copy = structuredClone(entry);
       if (copy.check.tone) delete copy.check.tone.track;

@@ -1,17 +1,122 @@
 {
-  "measuredAt": "2026-09-06T06:20:21.379Z",
+  "measuredAt": "2026-09-06T12:12:02.637Z",
   "encoder": "libmp3lame, 64 kbit/s, mono, 24000 Hz",
-  "entries": 15,
-  "unchecked": 9,
-  "uncheckedThaiDelivered": 9,
-  "failed": 0,
+  "entries": 66,
+  "unchecked": 38,
+  "uncheckedThaiDelivered": 38,
+  "failed": 6,
   "contentBudgetBytes": 157286400,
-  "budgetBytes": 2039043,
+  "budgetBytes": 5234381,
   "audio": [
+    {
+      "id": "en-056c14582928b477",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
+    },
+    {
+      "id": "en-16266f554edf2164",
+      "sourceBytes": 55724,
+      "compressedBytes": 10029
+    },
+    {
+      "id": "en-18f40e39a30b84d6",
+      "sourceBytes": 61484,
+      "compressedBytes": 10989
+    },
+    {
+      "id": "en-2f69f5a5c2f2d530",
+      "sourceBytes": 59564,
+      "compressedBytes": 10605
+    },
+    {
+      "id": "en-3583acfe7101d9c9",
+      "sourceBytes": 61484,
+      "compressedBytes": 10989
+    },
+    {
+      "id": "en-888603c30ed46a64",
+      "sourceBytes": 48044,
+      "compressedBytes": 8685
+    },
+    {
+      "id": "en-aeb44395739e4574",
+      "sourceBytes": 59564,
+      "compressedBytes": 10605
+    },
+    {
+      "id": "en-ba2719ef74b46ed0",
+      "sourceBytes": 55724,
+      "compressedBytes": 10029
+    },
+    {
+      "id": "en-be2488294d3fab06",
+      "sourceBytes": 46124,
+      "compressedBytes": 8301
+    },
+    {
+      "id": "en-ca3007ab583f62dc",
+      "sourceBytes": 73004,
+      "compressedBytes": 12909
+    },
+    {
+      "id": "en-d4fa8470f38995ef",
+      "sourceBytes": 49964,
+      "compressedBytes": 9069
+    },
+    {
+      "id": "en-d52792d1b2273a3c",
+      "sourceBytes": 63404,
+      "compressedBytes": 11181
+    },
+    {
+      "id": "th-0934af5f055a3d52",
+      "sourceBytes": 59564,
+      "compressedBytes": 10605
+    },
+    {
+      "id": "th-09b0ec2315567718",
+      "sourceBytes": 49964,
+      "compressedBytes": 9069
+    },
+    {
+      "id": "th-0e9d1b00b6dcca75",
+      "sourceBytes": 69164,
+      "compressedBytes": 12141
+    },
+    {
+      "id": "th-0fca34cef66bec43",
+      "sourceBytes": 46124,
+      "compressedBytes": 8301
+    },
+    {
+      "id": "th-0ffe10317e9882ec",
+      "sourceBytes": 51884,
+      "compressedBytes": 9261
+    },
     {
       "id": "th-108bad8b3abd9bde",
       "sourceBytes": 44204,
       "compressedBytes": 8109
+    },
+    {
+      "id": "th-10cd5a34df43998b",
+      "sourceBytes": 63404,
+      "compressedBytes": 11181
+    },
+    {
+      "id": "th-15b50c708d532697",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
+    },
+    {
+      "id": "th-19a07cc9a65cd860",
+      "sourceBytes": 65324,
+      "compressedBytes": 11565
+    },
+    {
+      "id": "th-1bec7817f9d0564a",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
     },
     {
       "id": "th-1f1216e2aa97ebdb",
@@ -29,9 +134,74 @@
       "compressedBytes": 8301
     },
     {
+      "id": "th-2b6d8c1823cca21b",
+      "sourceBytes": 76844,
+      "compressedBytes": 13485
+    },
+    {
+      "id": "th-2df677dbd8e8dcc2",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
+    },
+    {
+      "id": "th-2ee19d8697f70657",
+      "sourceBytes": 42284,
+      "compressedBytes": 7725
+    },
+    {
+      "id": "th-5136d49c0361d9d3",
+      "sourceBytes": 61484,
+      "compressedBytes": 10989
+    },
+    {
+      "id": "th-561fd9fef2e5561d",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
+    },
+    {
+      "id": "th-59711cfade7ff47f",
+      "sourceBytes": 65324,
+      "compressedBytes": 11565
+    },
+    {
+      "id": "th-5a2353601e022b07",
+      "sourceBytes": 55724,
+      "compressedBytes": 10029
+    },
+    {
+      "id": "th-75254cb3befb0da8",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
+    },
+    {
+      "id": "th-8164e2a358a383a0",
+      "sourceBytes": 51884,
+      "compressedBytes": 9261
+    },
+    {
+      "id": "th-83ef545dea900680",
+      "sourceBytes": 55724,
+      "compressedBytes": 10029
+    },
+    {
+      "id": "th-84e5307a71ba5cff",
+      "sourceBytes": 49964,
+      "compressedBytes": 9069
+    },
+    {
+      "id": "th-86b1583d67530640",
+      "sourceBytes": 63404,
+      "compressedBytes": 11181
+    },
+    {
       "id": "th-8ae0473a01b209b5",
       "sourceBytes": 59564,
       "compressedBytes": 10605
+    },
+    {
+      "id": "th-8c7a2d245bba905b",
+      "sourceBytes": 51884,
+      "compressedBytes": 9261
     },
     {
       "id": "th-90b05d949e9676a9",
@@ -44,6 +214,46 @@
       "compressedBytes": 11949
     },
     {
+      "id": "th-9f564c7274d61c95",
+      "sourceBytes": 55724,
+      "compressedBytes": 10029
+    },
+    {
+      "id": "th-b9e0f9d1ca680d0a",
+      "sourceBytes": 71084,
+      "compressedBytes": 12525
+    },
+    {
+      "id": "th-bdeb9ba26240e049",
+      "sourceBytes": 55724,
+      "compressedBytes": 10029
+    },
+    {
+      "id": "th-c86b8ac60126c509",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
+    },
+    {
+      "id": "th-cf1da92880f58857",
+      "sourceBytes": 49964,
+      "compressedBytes": 9069
+    },
+    {
+      "id": "th-d3d4ed557ac4caac",
+      "sourceBytes": 51884,
+      "compressedBytes": 9261
+    },
+    {
+      "id": "th-d50f5a9850dd92f9",
+      "sourceBytes": 61484,
+      "compressedBytes": 10989
+    },
+    {
+      "id": "th-d84c46b330126f70",
+      "sourceBytes": 65324,
+      "compressedBytes": 11565
+    },
+    {
       "id": "th-df514ca440e75c41",
       "sourceBytes": 71084,
       "compressedBytes": 12525
@@ -52,6 +262,21 @@
       "id": "th-e295ddc04bde88c3",
       "sourceBytes": 69164,
       "compressedBytes": 12141
+    },
+    {
+      "id": "th-f3dc49027a8cdbc7",
+      "sourceBytes": 59564,
+      "compressedBytes": 10605
+    },
+    {
+      "id": "th-f5de8abfe88160b6",
+      "sourceBytes": 46124,
+      "compressedBytes": 8301
+    },
+    {
+      "id": "th-f7dc4f4e6e8cc8e3",
+      "sourceBytes": 57644,
+      "compressedBytes": 10221
     },
     {
       "id": "th-fb4c648b72f80cee",

@@ -5257,3 +5257,55 @@ Schlüssel wird nur im lokalen Generator benötigt, nicht im Chat. Keine
 erneute Kostenfreigabe nötig. B-21s fachliche Entscheidung ist erledigt;
 die tatsächliche Audioerzeugung und vollständige Satz-Spielbarkeit bleiben
 bis zur Schlüsselbereitstellung offen.
+
+### AE-65 — Genehmigter Audiolauf begonnen, Ratenlimit und Wiederaufnahme (06.09.2026)
+
+Der Schlüssel wurde in der lokalen Browseroberfläche übernommen. Die bereits
+erteilte Freigabe wurde für 452 fehlende Clips verwendet (462 im Plan, zehn
+vorhanden; Schätzung 0,55709 USD, keine gemessene Abrechnung).
+
+Der erste Abschnitt wurde nach 121 bearbeiteten Einträgen geordnet angehalten:
+25 erzeugt, 91 HTTP-429-Fehler, fünf übersprungen. Gemini meldete
+`generate_requests_per_model`, Limit zehn, mit Wartehinweisen bis ungefähr
+60 Sekunden. Die bisherige Pause von 600 ms reicht für dieses Projekt nicht.
+Die [Gemini-Dokumentation zu Ratenlimits](https://ai.google.dev/gemini-api/docs/rate-limits)
+wurde am 06.09.2026 abgeglichen; die konkrete Zehnergrenze stammt aus der
+tatsächlichen Anbieterantwort, nicht aus einer allgemeingültigen Modellzusage.
+
+Eine Fortsetzung wurde ebenfalls geordnet angehalten: 104 bearbeitet,
+26 erzeugt, 49 HTTP-429-Fehler, 29 übersprungen. Metro konnte neu veröffentlichte
+MP3s trotz vorhandener Dateien nicht auflösen; dadurch war die geänderte
+Wartezeit in dieser Sitzung noch nicht aktiv. Beide Abschnitte exportierten
+ihre vorhandenen Entwürfe mit null Exportfehlern. Kein erfolgreicher Clip
+wurde neu erzeugt. Insgesamt: **51 neu, 61 vorhanden, 401 noch zu erzeugen**;
+191 Anbieteranfragen, davon 140 als HTTP 429 abgelehnt. Diese Fehler sind
+keine erfolgreichen Clips und keine Aussage über die tatsächliche Abrechnung.
+
+Die Gemini-Audiopause beträgt jetzt **6500 ms nach jeder Antwort** und ist im
+Generator sichtbar. Mediendateien und Asset-Verweisliste werden nun vollständig
+in temporäre Dateien geschrieben und per Rename veröffentlicht, sodass ein
+Dateibeobachter keine gerade erst angelegte, noch leere MP3 indexieren muss.
+Die Tests prüfen weiterhin Publikation, erneuten Export und reale MP3-Integrität;
+ein vollständiger Live-Lauf mit dieser Reparatur steht noch aus.
+
+Die lokalen Serverprozesse waren nach dem Sitzungswechsel nachweislich beendet
+und wurden neu gestartet. Die alte Browserseite war nicht mehr verfügbar;
+der nur im Sitzungsspeicher gehaltene Schlüssel muss erneut im lokalen
+Generator übernommen werden. Der frische Browser zeigt den korrekten
+Medienbestand und die neue Wartezeit ohne Buildfehler. **Keine zweite
+Kostenfreigabe erforderlich:** Es geht um die Fortsetzung desselben Laufs.
+Fortsetzungsdaten: `content/audio-run-2026-09-06.json`.
+
+Aktueller Lieferbestand: **55 Audioaufnahmen und elf Bilder**, sechs weitere
+Audioaufnahmen durch den Tonfilter ausgeschlossen. `content:check` zählt
+**38 ungeprüft ausgelieferte Thai-Clips**. Die Integrität ist fehlerfrei;
+Vollständigkeit bleibt rot: 407 Lieferclips fehlen (401 noch nicht erzeugt
+und sechs ausgeschlossen), außerdem 67 Bilder, 512 Situationen und AE-48.
+Keine der 34 für Satzübungen vorgesehenen Lesarten hat bereits einen Clip;
+C1/C2/C4 bleiben deshalb offen.
+
+Verifikation nach den Reparaturen: **750 Jest-Tests / 45 Suites**, TypeScript
+und acht FFmpeg-Pipeline-Tests grün. Produktions-Exporte mit Source Maps unter
+`build-verification/phase21-run-partial`; Web/Android/iOS enthalten keinen
+Generator- oder Schlüsselcode. 66 Medien in drei Plattformen **198-mal
+bytegleich**. Kein physischer Mikrofon-/Gerätenachweis behauptet.

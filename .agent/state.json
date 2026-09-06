@@ -3,8 +3,8 @@
   "protocolVersion": 1,
   "lastUpdated": "2026-09-06",
   "currentPhase": 21,
-  "currentPhaseName": "Satz-Audiopolitik umgesetzt; genehmigte Generierung wartet auf Schluessel",
-  "currentPhaseStatus": "mode_policy_verified_awaiting_generation_key",
+  "currentPhaseName": "Audio-Vollmengenlauf begonnen; 51 neue Clips gesichert, 401 offen",
+  "currentPhaseStatus": "generation_partial_resume_needs_session_key",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -1447,25 +1447,25 @@
         19
       ],
       "needsUser": false,
-      "note": "Aktueller Auftrag ersetzt den frueheren Stop beim Testbestand durch einen Vollmengen-Workflow mit einer Kostenbestaetigung je Lauf. Umbau A/B abgeschlossen; 5 Bilder und 1 Thai-Clip passieren, 9 Thai-Clips ungeprueft ausgeschlossen. 461 Clips, 73 Bilder, 512 Thai-Situationen sowie AE-48 fehlen. Kein bezahlter Vollmengenlauf im Umbau gestartet. Physische Geraete-/Endgroessenpruefung B-2/B-5 bleibt offen.",
+      "note": "Vollbestand weiterhin offen. AE-65: 55 Audioclips und 11 Bilder geliefert; 38 Thai-Clips ungeprueft mit Moduskennzeichnung, sechs Tonfehler ausgeschlossen. content:check meldet 407 fehlende Lieferclips (401 noch nicht erzeugt plus sechs ausgeschlossene), 67 Bilder, 512 Situationen und AE-48. Der genehmigte Audiolauf ist teilweise ausgefuehrt. Physische Geraete-/Endgroessenpruefung B-2/B-5 bleibt offen.",
       "steps": "Bei einem gewuenschten Generierungslauf Anzahl und Kosten einmal bestaetigen; automatisch gepruefte Inhalte werden direkt uebernommen. Fuer Thai-Mehrsilber/Register fehlen noch verifizierte Segmentierung/Kalibrierung, daher keine garantierte Vollabdeckung durch mehr Generierung."
     },
     {
       "id": "B-21",
-      "title": "Genehmigte Satz-Audioerzeugung wartet auf Gemini-Schluessel",
+      "title": "Audio-Restlauf nach Ratenlimit und Sitzungsende fortsetzen",
       "affectsPhases": [
         21
       ],
       "needsUser": true,
-      "note": "Die Produktentscheidung ist getroffen und umgesetzt. Einmaliger Lauf ueber 459 Clips bei ungefaehr 0.54 USD explizit genehmigt. Aktueller Plan 462, zehn vorhanden, 452 fehlen, geschaetzt 0.55709 USD. Browser-Start meldet fehlenden API-Schluessel; null Anbieteraufrufe. Kein erneutes Kosten- oder Policyeinverstaendnis anfordern.",
-      "steps": "Gemini-Schluessel in der lokalen Sitzung unter Generator: Hoerclips eintragen; nicht im Chat. Bestehende einmalige Zustimmung fuer den Lauf verwenden, nur Fehlendes erzeugen, danach getrennte automatische Auslieferungspruefung. Ergebnis und echte Satzwiedergabe pruefen."
+      "note": "Kostenfreigabe verbraucht fuer denselben noch nicht abgeschlossenen Lauf, keine neue Kostenfreigabe anfordern. Zwei geordnet angehaltene Abschnitte: 25+26 neue Clips; 91+49 HTTP-429-Fehler. 61 insgesamt erzeugt, 55 ausgeliefert, 6 durch Tonfilter ausgeschlossen; 401 noch nicht erzeugt. Reparatur: Gemini-Pause 6500 ms und atomare Assetveroeffentlichung. Beide lokalen Server endeten danach; Browser-Schluessel erneut erforderlich. Details: content/audio-run-2026-09-06.json, AE-65.",
+      "steps": "Schluessel im geoeffneten lokalen Hoerclip-Generator uebernehmen. Gleichen genehmigten Vollumfang nur fuer fehlende Clips fortsetzen. Laufstatus beobachten; am Ende automatische Pipeline und echte Satzwiedergabe pruefen. Keine fehlgeschlagenen Tonclips als passed umetikettieren."
     }
   ],
   "nextUp": {
     "phase": 21,
     "name": "Satz-Audioabdeckung und echte Spielbarkeit abschliessen",
     "tasks": [
-      "B-21: Nur fehlenden Gemini-Schluessel benoetigt. Produktentscheidung und einmalige Kostenbestaetigung liegen vor (content/audio-run-2026-09-06.json). Genehmigten Lauf ausfuehren, Ergebnis messen.",
+      "B-21: Derselbe genehmigte Lauf ist teilweise ausgefuehrt (51 neu, 401 offen). Nur Sitzungsschluessel fehlt nach Serverende; Rest fortsetzen, keine bereits gespeicherten Clips regenerieren.",
       "Einmalige Kostenbestaetigung vom 06.09.2026 bleibt gueltig; keine weitere Zustimmung fuer denselben Lauf verlangen.",
       "C1/C2/C4 mit echtem Satzaudio abnehmen, B-2 fuer physische Aufnahme/Playback weiter offen.",
       "Bestehende B-19/AE-48 und B-5 nicht als geloest behandeln.",
@@ -1886,13 +1886,13 @@
     "googlePlayBaseCompressedMB": 500,
     "appleIOSUncompressedGB": 4,
     "currentMissing": {
-      "audioBeforeDialogues": 452,
-      "images": 73,
+      "audioBeforeDialogues": 407,
+      "images": 67,
       "thaiSituations": 512,
       "enEsConversations": true
     },
     "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
-    "nativeEvidence": "15 aktuelle Medien in Web-/iOS-/Android-Exporten bytegleich (45 Vergleiche); kein signiertes AAB/IPA oder physisches Playback.",
+    "nativeEvidence": "66 Medien in Web/iOS/Android bytegleich, 198 Vergleiche; kein physisches Playback oder signierter Store-Build.",
     "tests": {
       "jest": 750,
       "suites": 45,
@@ -1905,13 +1905,13 @@
     "catalogVersion": 2,
     "automaticChecks": {
       "report": "content/automatic-checks.json",
-      "passed": 6,
-      "failed": 0,
-      "unchecked": 9,
+      "passed": 28,
+      "failed": 6,
+      "unchecked": 38,
       "toneGate": "f0-hysteresis-1",
       "releasePolicy": "Thai passed/unchecked delivered; vocabulary and sentence may use unchecked with actual clip status label; tone requires passed with no TTS; failed excluded",
       "limits": "Pitch only. No consonant/vowel-length/aspiration quality claim. Register needs speaker reference; multi-syllable needs verified timed segmentation; System-TTS itself unchecked.",
-      "uncheckedThaiDelivered": 9
+      "uncheckedThaiDelivered": 38
     },
     "costConfirmation": "One count/cost confirmation before provider calls. Known exact Gemini models have dated tariff assumptions; unknown models require a user estimate. No per-item review.",
     "rolloutDecision": {
@@ -1954,9 +1954,9 @@
         "android",
         "ios"
       ],
-      "exportDirectory": "build-verification/phase21-b21-delivered",
+      "exportDirectory": "build-verification/phase21-run-partial",
       "productionGraph": "no generator/key modules",
-      "existingAssetByteComparisons": 45
+      "existingAssetByteComparisons": 198
     },
     "deliveryPolicy": {
       "decision": "AE-64",

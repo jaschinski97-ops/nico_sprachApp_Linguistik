@@ -3,6 +3,700 @@
   "entries": [
     {
       "kind": "audio",
+      "id": "en-056c14582928b477",
+      "document": {
+        "id": "en-056c14582928b477",
+        "language": "en",
+        "text": "where",
+        "kind": "vocab",
+        "sourceId": "en_where",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "5d5fea7bcb056cbb477871c8c6ef51e1f38cc38758ef826441f1283b183cacde.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696686965,
+        "synthetic": true
+      },
+      "digest": "7dbb9101a9c735f2cf9329d5704be1fc998760ae2c7815f269f3578560eca18c",
+      "asset": "5d5fea7bcb056cbb477871c8c6ef51e1f38cc38758ef826441f1283b183cacde.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.149Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-16266f554edf2164",
+      "document": {
+        "id": "en-16266f554edf2164",
+        "language": "en",
+        "text": "nine",
+        "kind": "vocab",
+        "sourceId": "en_nine",
+        "format": "mp3",
+        "byteSize": 10029,
+        "durationMs": 1160,
+        "blobKey": "045aa901c62666e41aeecdce88cb6eaebcf43512d0619168453a68c17dc46383.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696712263,
+        "synthetic": true
+      },
+      "digest": "08098ffe3483920c74e1b47a84458acac0ee8431c2f51812fb9b724ab25279f4",
+      "asset": "045aa901c62666e41aeecdce88cb6eaebcf43512d0619168453a68c17dc46383.mp3",
+      "byteSize": 10029,
+      "sourceBytes": 55724,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.180Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-18f40e39a30b84d6",
+      "document": {
+        "id": "en-18f40e39a30b84d6",
+        "language": "en",
+        "text": "why",
+        "kind": "vocab",
+        "sourceId": "en_why",
+        "format": "mp3",
+        "byteSize": 10989,
+        "durationMs": 1280,
+        "blobKey": "88d1f5c3a3f450a14713e2f6f7f2bd2cc0aa35c0badcf423771aef5fe78f7c15.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696689501,
+        "synthetic": true
+      },
+      "digest": "4a53bd927f4e83261bfe3dcdc3ce3ebd8b7700e5d2cb6d408e9397bcd24fc3ab",
+      "asset": "88d1f5c3a3f450a14713e2f6f7f2bd2cc0aa35c0badcf423771aef5fe78f7c15.mp3",
+      "byteSize": 10989,
+      "sourceBytes": 61484,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.213Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-2f69f5a5c2f2d530",
+      "document": {
+        "id": "en-2f69f5a5c2f2d530",
+        "language": "en",
+        "text": "four",
+        "kind": "vocab",
+        "sourceId": "en_four",
+        "format": "mp3",
+        "byteSize": 10605,
+        "durationMs": 1240,
+        "blobKey": "7f2e19842dc3efd0a1897d66231d3015d0125f4780da33dbc78f9de214b3e589.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696699202,
+        "synthetic": true
+      },
+      "digest": "d26a35b5b646dfd38d5fd96f1c898fd41cbea0bfe911d49bbf1c8addfc202b83",
+      "asset": "7f2e19842dc3efd0a1897d66231d3015d0125f4780da33dbc78f9de214b3e589.mp3",
+      "byteSize": 10605,
+      "sourceBytes": 59564,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.247Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-3583acfe7101d9c9",
+      "document": {
+        "id": "en-3583acfe7101d9c9",
+        "language": "en",
+        "text": "seven",
+        "kind": "vocab",
+        "sourceId": "en_seven",
+        "format": "mp3",
+        "byteSize": 10989,
+        "durationMs": 1280,
+        "blobKey": "aa6e97cae0d7c3dfa9285bba46bfa46c4e5da6195607ebdd460de13998794de5.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696707104,
+        "synthetic": true
+      },
+      "digest": "0c6def9861cd75a2a6de7ae1ca8ca5e2a185a2ceae288f8a265b2640dddda68b",
+      "asset": "aa6e97cae0d7c3dfa9285bba46bfa46c4e5da6195607ebdd460de13998794de5.mp3",
+      "byteSize": 10989,
+      "sourceBytes": 61484,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.279Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-888603c30ed46a64",
+      "document": {
+        "id": "en-888603c30ed46a64",
+        "language": "en",
+        "text": "three",
+        "kind": "vocab",
+        "sourceId": "en_three",
+        "format": "mp3",
+        "byteSize": 8685,
+        "durationMs": 1000,
+        "blobKey": "e48206c4069cf3376947305645e68e6af7f4bd74e130a816a7d9c9f09d66012b.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696696878,
+        "synthetic": true
+      },
+      "digest": "0f62df59032b2a07cfb6e39b1174618a58d04e97de8f76fbae934409b6d11579",
+      "asset": "e48206c4069cf3376947305645e68e6af7f4bd74e130a816a7d9c9f09d66012b.mp3",
+      "byteSize": 8685,
+      "sourceBytes": 48044,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.311Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-aeb44395739e4574",
+      "document": {
+        "id": "en-aeb44395739e4574",
+        "language": "en",
+        "text": "five",
+        "kind": "vocab",
+        "sourceId": "en_five",
+        "format": "mp3",
+        "byteSize": 10605,
+        "durationMs": 1240,
+        "blobKey": "dfc93e2e81535a9c5f0417f2297dcbe4b6b709def226d1f9f37c2b5f486413cc.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696702125,
+        "synthetic": true
+      },
+      "digest": "5654c8b9b48910447e2eb5927bca9d448558bbac929e9a3723024fe71510dcf4",
+      "asset": "dfc93e2e81535a9c5f0417f2297dcbe4b6b709def226d1f9f37c2b5f486413cc.mp3",
+      "byteSize": 10605,
+      "sourceBytes": 59564,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.343Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-ba2719ef74b46ed0",
+      "document": {
+        "id": "en-ba2719ef74b46ed0",
+        "language": "en",
+        "text": "one",
+        "kind": "vocab",
+        "sourceId": "en_one",
+        "format": "mp3",
+        "byteSize": 10029,
+        "durationMs": 1160,
+        "blobKey": "4fbbc20fad45753d97be3d96ef300e2ea53e956a50bb32f711d26487ad0639bc.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696691860,
+        "synthetic": true
+      },
+      "digest": "4187007b653a0f6a58daaeaf5a05fc30069deded50f00817ce4471e1ef92eddb",
+      "asset": "4fbbc20fad45753d97be3d96ef300e2ea53e956a50bb32f711d26487ad0639bc.mp3",
+      "byteSize": 10029,
+      "sourceBytes": 55724,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.374Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-be2488294d3fab06",
+      "document": {
+        "id": "en-be2488294d3fab06",
+        "language": "en",
+        "text": "two",
+        "kind": "vocab",
+        "sourceId": "en_two",
+        "format": "mp3",
+        "byteSize": 8301,
+        "durationMs": 960,
+        "blobKey": "c7aa831f6a68d7091c626c0bc499405540d713d3968c5d447c6a5fde61a41b00.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696694597,
+        "synthetic": true
+      },
+      "digest": "5e22636091654226d65a180d1be87d4fd034a60784bfa982fc7df80cf6be14a6",
+      "asset": "c7aa831f6a68d7091c626c0bc499405540d713d3968c5d447c6a5fde61a41b00.mp3",
+      "byteSize": 8301,
+      "sourceBytes": 46124,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.409Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-ca3007ab583f62dc",
+      "document": {
+        "id": "en-ca3007ab583f62dc",
+        "language": "en",
+        "text": "six",
+        "kind": "vocab",
+        "sourceId": "en_six",
+        "format": "mp3",
+        "byteSize": 12909,
+        "durationMs": 1520,
+        "blobKey": "d67d427824552c83c491c6c812db316392f6a83a3b31248e4f19392effe75c54.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696704661,
+        "synthetic": true
+      },
+      "digest": "c2a6789b30dcddc6cbc383e434fc6179415e44f075cdb2a06b2ea70bbda0bd7d",
+      "asset": "d67d427824552c83c491c6c812db316392f6a83a3b31248e4f19392effe75c54.mp3",
+      "byteSize": 12909,
+      "sourceBytes": 73004,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.443Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-d4fa8470f38995ef",
+      "document": {
+        "id": "en-d4fa8470f38995ef",
+        "language": "en",
+        "text": "eight",
+        "kind": "vocab",
+        "sourceId": "en_eight",
+        "format": "mp3",
+        "byteSize": 9069,
+        "durationMs": 1040,
+        "blobKey": "dc80e5f06b141971f014a85053193f7be896e553d38a2fff465654777fb4d89e.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696709932,
+        "synthetic": true
+      },
+      "digest": "184b8c91ca5164526129020b66282ed8c6e48f01ca18b7d41e80adc01ae0b7ec",
+      "asset": "dc80e5f06b141971f014a85053193f7be896e553d38a2fff465654777fb4d89e.mp3",
+      "byteSize": 9069,
+      "sourceBytes": 49964,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.477Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "en-d52792d1b2273a3c",
+      "document": {
+        "id": "en-d52792d1b2273a3c",
+        "language": "en",
+        "text": "love",
+        "kind": "vocab",
+        "sourceId": "en_love",
+        "format": "mp3",
+        "byteSize": 11181,
+        "durationMs": 1320,
+        "blobKey": "47d2c851571834809f8f4be866581ed0026262ebfced1515b8f8c2afa492429b.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696506762,
+        "synthetic": true
+      },
+      "digest": "cb3928136e9337704a6fc0237a5dadc79ce811df51b7f08065a9c511bf6447b8",
+      "asset": "47d2c851571834809f8f4be866581ed0026262ebfced1515b8f8c2afa492429b.mp3",
+      "byteSize": 11181,
+      "sourceBytes": 63404,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.510Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "status": "not-applicable",
+          "reason": "Kein Thai-Ton; nur technische Integritätsprüfung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-0934af5f055a3d52",
+      "document": {
+        "id": "th-0934af5f055a3d52",
+        "language": "th",
+        "text": "เวลา",
+        "kind": "vocab",
+        "sourceId": "welaa",
+        "format": "mp3",
+        "byteSize": 10605,
+        "durationMs": 1240,
+        "blobKey": "ace5014f01c49021b539a74d4142b64b697bfc529bf9223c578bf5a3c4ff23d6.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696456329,
+        "synthetic": true
+      },
+      "digest": "64749a2fdd75ef691ac0b1359c7ec9f2d1d7263c05c98e01ef906645af453a10",
+      "asset": "ace5014f01c49021b539a74d4142b64b697bfc529bf9223c578bf5a3c4ff23d6.mp3",
+      "byteSize": 10605,
+      "sourceBytes": 59564,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.583Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 640,
+          "summary": {
+            "pts": [
+              3.47407940633982,
+              2.5380492623245416,
+              0.8053703503024444,
+              -0.7695640490365869,
+              -1.5063705850063078,
+              -3.8631371386483475
+            ],
+            "start": 3.47407940633982,
+            "end": -3.8631371386483475,
+            "min": -3.8631371386483475,
+            "max": 4.980449991346128,
+            "mean": 0.36047140988216636,
+            "slope": -7.337216544988168,
+            "durMs": 530
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-09b0ec2315567718",
+      "document": {
+        "id": "th-09b0ec2315567718",
+        "language": "th",
+        "text": "สิบ",
+        "kind": "vocab",
+        "sourceId": "sip",
+        "format": "mp3",
+        "byteSize": 9069,
+        "durationMs": 1040,
+        "blobKey": "e6e6218835cd2eac73bbae37ea8f0cc2e8f0fbaee024e746fcba64c06c6f1946.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696633500,
+        "synthetic": true
+      },
+      "digest": "857d0dca42eb5d5c8869655b932520dd05211573f5bd3b09e7631c9d7001fa7f",
+      "asset": "e6e6218835cd2eac73bbae37ea8f0cc2e8f0fbaee024e746fcba64c06c6f1946.mp3",
+      "byteSize": 9069,
+      "sourceBytes": 49964,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.618Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 120,
+          "summary": {
+            "pts": [
+              2.2613410729573236,
+              1.0937746566983453,
+              0.7214519092508511,
+              -0.34975614791419807,
+              -0.692585974275446,
+              -1.3585273253758892
+            ],
+            "start": 2.2613410729573236,
+            "end": -1.3585273253758892,
+            "min": -1.3585273253758892,
+            "max": 2.2613410729573236,
+            "mean": 0.2730436878324379,
+            "slope": -3.619868398333213,
+            "durMs": 80
+          },
+          "targetTone": "low",
+          "sourceId": "sip",
+          "source": "https://en.wiktionary.org/wiki/สิบ",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-0e9d1b00b6dcca75",
+      "document": {
+        "id": "th-0e9d1b00b6dcca75",
+        "language": "th",
+        "text": "ทำไม",
+        "kind": "vocab",
+        "sourceId": "thammai",
+        "format": "mp3",
+        "byteSize": 12141,
+        "durationMs": 1440,
+        "blobKey": "fad1a775e79eaf2f5bf627e677ba79810ca4ae579f3069157cb9b0402e6c6389.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696409441,
+        "synthetic": true
+      },
+      "digest": "e2af0b5a4ef1dfbfd294270295deedc3b381f6051d26135fbfce9c13c38df4b8",
+      "asset": "fad1a775e79eaf2f5bf627e677ba79810ca4ae579f3069157cb9b0402e6c6389.mp3",
+      "byteSize": 12141,
+      "sourceBytes": 69164,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.651Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 680,
+          "summary": {
+            "pts": [
+              5.555663716110549,
+              2.9539270472327703,
+              1.0495540950040694,
+              -0.3361725140351616,
+              -2.8135830436442757,
+              -3.099743947096692
+            ],
+            "start": 5.555663716110549,
+            "end": -3.099743947096692,
+            "min": -10.024431578726407,
+            "max": 5.555663716110549,
+            "mean": -0.18743313102216616,
+            "slope": -8.65540766320724,
+            "durMs": 570
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-0fca34cef66bec43",
+      "document": {
+        "id": "th-0fca34cef66bec43",
+        "language": "th",
+        "text": "ผม",
+        "kind": "vocab",
+        "sourceId": "phom",
+        "format": "mp3",
+        "byteSize": 8301,
+        "durationMs": 960,
+        "blobKey": "eaa29972d3a44f7975d35d1422094eef236039a6d58f47e7abefd997a65289d9.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696392340,
+        "synthetic": true
+      },
+      "digest": "21d0dff241faca2ffb99e57fc6bb39ede06bfda08a8696ab8d22ff133a59fdc3",
+      "asset": "eaa29972d3a44f7975d35d1422094eef236039a6d58f47e7abefd997a65289d9.mp3",
+      "byteSize": 8301,
+      "sourceBytes": 46124,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.688Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 410,
+          "summary": {
+            "pts": [
+              3.018465203951573,
+              0,
+              -4.0010848047023,
+              -2.5694976642341683,
+              2.2130948536491273,
+              7.726274277296696
+            ],
+            "start": 3.018465203951573,
+            "end": 7.726274277296696,
+            "min": -4.0010848047023,
+            "max": 7.726274277296696,
+            "mean": 0.4941464567946509,
+            "slope": 4.707809073345123,
+            "durMs": 340
+          },
+          "targetTone": "rising",
+          "sourceId": "phom",
+          "source": "https://en.wiktionary.org/wiki/ผม",
+          "status": "passed",
+          "reason": "Relative Konturform mit verifiziertem Sollton vereinbar; nur Tonhöhe geprüft."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-0ffe10317e9882ec",
+      "document": {
+        "id": "th-0ffe10317e9882ec",
+        "language": "th",
+        "text": "หก",
+        "kind": "vocab",
+        "sourceId": "hok",
+        "format": "mp3",
+        "byteSize": 9261,
+        "durationMs": 1080,
+        "blobKey": "1466d9e049f486bb21f23ca39ef90f4f8e32f4c9970509d5d256bfabc2d35705.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696627305,
+        "synthetic": true
+      },
+      "digest": "6a718d5e4257c8b58b332ae8ad9983e650b412d70abe48f1851182eefc3b6f8e",
+      "asset": "1466d9e049f486bb21f23ca39ef90f4f8e32f4c9970509d5d256bfabc2d35705.mp3",
+      "byteSize": 9261,
+      "sourceBytes": 51884,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.722Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 120,
+          "summary": {
+            "pts": [
+              1.9043729522286987,
+              1.1173128526977774,
+              0,
+              -0.7067242686428208,
+              -1.3857266090392308,
+              -2.3567665536420375
+            ],
+            "start": 1.9043729522286987,
+            "end": -2.3567665536420375,
+            "min": -2.3567665536420375,
+            "max": 1.9043729522286987,
+            "mean": -0.26407524160993195,
+            "slope": -4.261139505870736,
+            "durMs": 70
+          },
+          "targetTone": "low",
+          "sourceId": "hok",
+          "source": "https://en.wiktionary.org/wiki/หก",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
       "id": "th-108bad8b3abd9bde",
       "document": {
         "id": "th-108bad8b3abd9bde",
@@ -27,7 +721,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:20.772Z",
+        "checkedAt": "2026-09-06T12:12:00.753Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -59,6 +753,227 @@
     },
     {
       "kind": "audio",
+      "id": "th-10cd5a34df43998b",
+      "document": {
+        "id": "th-10cd5a34df43998b",
+        "language": "th",
+        "text": "พูด",
+        "kind": "vocab",
+        "sourceId": "phuut",
+        "format": "mp3",
+        "byteSize": 11181,
+        "durationMs": 1320,
+        "blobKey": "52f138ae102e9cb03644fd1459fe7d96aefa48a78fbf7cd4146ea82e927e65ad.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696647245,
+        "synthetic": true
+      },
+      "digest": "915dc98e1705bc816e1de768145e7c1d70f9931f6b8ecf1c59a385c6f6d26944",
+      "asset": "52f138ae102e9cb03644fd1459fe7d96aefa48a78fbf7cd4146ea82e927e65ad.mp3",
+      "byteSize": 11181,
+      "sourceBytes": 63404,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:00.785Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 300,
+          "summary": {
+            "pts": [
+              2.1225331450089535,
+              0.6790023403964102,
+              0,
+              0,
+              -1.2829824469981428,
+              -5.6338233996146405
+            ],
+            "start": 2.1225331450089535,
+            "end": -5.6338233996146405,
+            "min": -5.6338233996146405,
+            "max": 2.1225331450089535,
+            "mean": -0.6662254134951374,
+            "slope": -7.7563565446235945,
+            "durMs": 230
+          },
+          "targetTone": "falling",
+          "sourceId": "phuut",
+          "source": "https://en.wiktionary.org/wiki/พูด",
+          "status": "passed",
+          "reason": "Relative Konturform mit verifiziertem Sollton vereinbar; nur Tonhöhe geprüft."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-15b50c708d532697",
+      "document": {
+        "id": "th-15b50c708d532697",
+        "language": "th",
+        "text": "สี่",
+        "kind": "vocab",
+        "sourceId": "sii",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "00dd4e657dc033e9495121653dce187ffe29b5105230f0374d7f26e22bf7643c.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696624608,
+        "synthetic": true
+      },
+      "digest": "b3a2401b1196dd94566eedeea434868b16b6dd2992ba32e1d18abe5c480193e5",
+      "asset": "00dd4e657dc033e9495121653dce187ffe29b5105230f0374d7f26e22bf7643c.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.852Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 450,
+          "summary": {
+            "pts": [
+              8.136862861351656,
+              5.969995913649802,
+              2.3117409353087535,
+              -1.0495540950040712,
+              -3.863137138648345,
+              -3.2762219328769895
+            ],
+            "start": 8.136862861351656,
+            "end": -3.2762219328769895,
+            "min": -3.863137138648345,
+            "max": 8.136862861351656,
+            "mean": 1.1501486447414766,
+            "slope": -11.413084794228645,
+            "durMs": 380
+          },
+          "targetTone": "low",
+          "sourceId": "sii",
+          "source": "https://en.wiktionary.org/wiki/สี่",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-19a07cc9a65cd860",
+      "document": {
+        "id": "th-19a07cc9a65cd860",
+        "language": "th",
+        "text": "ที่ไหน",
+        "kind": "vocab",
+        "sourceId": "thinai",
+        "format": "mp3",
+        "byteSize": 11565,
+        "durationMs": 1360,
+        "blobKey": "d488746171dca19191eac18524b461eab4e80303d9875b66cb4268067834ab44.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696406946,
+        "synthetic": true
+      },
+      "digest": "54c60e472e7b1789a64f32ce93fd03934beb636726ce309fe45d0d91b0519325",
+      "asset": "d488746171dca19191eac18524b461eab4e80303d9875b66cb4268067834ab44.mp3",
+      "byteSize": 11565,
+      "sourceBytes": 65324,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.886Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 610,
+          "summary": {
+            "pts": [
+              1.237121915569241,
+              0.30109177155396627,
+              0,
+              -0.29594465081123084,
+              -0.29594465081123084,
+              0.30109177155396627
+            ],
+            "start": 1.237121915569241,
+            "end": 0.30109177155396627,
+            "min": -0.29594465081123084,
+            "max": 1.237121915569241,
+            "mean": 0.10566579190924674,
+            "slope": -0.9360301440152747,
+            "durMs": 230
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-1bec7817f9d0564a",
+      "document": {
+        "id": "th-1bec7817f9d0564a",
+        "language": "th",
+        "text": "เงิน",
+        "kind": "vocab",
+        "sourceId": "ngoen",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "2e9ecbcf7b8c9dcf4e6d8e9709028af98e480ec6654e0ba41cc59b800324abb3.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696453932,
+        "synthetic": true
+      },
+      "digest": "5cbb8957a48ab2cb64284404e198118d2f945b07ea78f3c2944a7b36b0dfa44a",
+      "asset": "2e9ecbcf7b8c9dcf4e6d8e9709028af98e480ec6654e0ba41cc59b800324abb3.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:00.920Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 590,
+          "summary": {
+            "pts": [
+              2.6687090560373763,
+              2.6687090560373763,
+              1.2829824469981426,
+              -1.1944280826109748,
+              -3.6974675443479845,
+              -6.174878073957098
+            ],
+            "start": 2.6687090560373763,
+            "end": -6.174878073957098,
+            "min": -6.174878073957098,
+            "max": 2.6687090560373763,
+            "mean": -0.6292037713873612,
+            "slope": -8.843587129994475,
+            "durMs": 500
+          },
+          "targetTone": "mid",
+          "sourceId": "ngoen",
+          "source": "https://en.wiktionary.org/wiki/เงิน",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
       "id": "th-1f1216e2aa97ebdb",
       "document": {
         "id": "th-1f1216e2aa97ebdb",
@@ -83,7 +998,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:20.823Z",
+        "checkedAt": "2026-09-06T12:12:00.954Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -136,7 +1051,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:20.867Z",
+        "checkedAt": "2026-09-06T12:12:00.995Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -189,7 +1104,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-06T06:20:20.909Z",
+        "checkedAt": "2026-09-06T12:12:01.035Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -221,6 +1136,672 @@
     },
     {
       "kind": "audio",
+      "id": "th-2b6d8c1823cca21b",
+      "document": {
+        "id": "th-2b6d8c1823cca21b",
+        "language": "th",
+        "text": "ผลไม้",
+        "kind": "vocab",
+        "sourceId": "phonlamai",
+        "format": "mp3",
+        "byteSize": 13485,
+        "durationMs": 1600,
+        "blobKey": "2baa8b4a79719d41a0d03be503e192279d7e52b0a20b6bd9c7721816ac686ecc.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696446948,
+        "synthetic": true
+      },
+      "digest": "43538523c321bb07b99afba9b8ad9c99fae1fa340d8aea96b0aeed567256d8b7",
+      "asset": "2baa8b4a79719d41a0d03be503e192279d7e52b0a20b6bd9c7721816ac686ecc.mp3",
+      "byteSize": 13485,
+      "sourceBytes": 76844,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.070Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 920,
+          "summary": {
+            "pts": [
+              0.8657974290700248,
+              0.8657974290700248,
+              2.739227852077408,
+              -0.4171850179281197,
+              -2.3644421647146454,
+              1.7771836678696071
+            ],
+            "start": 0.8657974290700248,
+            "end": 1.7771836678696071,
+            "min": -2.3644421647146454,
+            "max": 2.739227852077408,
+            "mean": 0.10358271482964877,
+            "slope": 0.9113862387995824,
+            "durMs": 760
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-2df677dbd8e8dcc2",
+      "document": {
+        "id": "th-2df677dbd8e8dcc2",
+        "language": "th",
+        "text": "เย็น",
+        "kind": "vocab",
+        "sourceId": "yen",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "612c0ed00bef0f9b0843da18131dbfd56f2f2c892100db6c17074274834c659c.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696476660,
+        "synthetic": true
+      },
+      "digest": "62c3a3f1248932954c6d1f04f4a404dcbc88558a10ca7a15890fad0c413c1f22",
+      "asset": "612c0ed00bef0f9b0843da18131dbfd56f2f2c892100db6c17074274834c659c.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.111Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 560,
+          "summary": {
+            "pts": [
+              0.38050631672805657,
+              3.307613311361128,
+              0.7695640490365867,
+              -0.3723227474474945,
+              -1.4435308046125432,
+              -1.7863606309737925
+            ],
+            "start": 0.38050631672805657,
+            "end": -1.7863606309737925,
+            "min": -1.7863606309737925,
+            "max": 3.307613311361128,
+            "mean": 0.1958233023600752,
+            "slope": -2.166866947701849,
+            "durMs": 470
+          },
+          "targetTone": "mid",
+          "sourceId": "yen",
+          "source": "https://en.wiktionary.org/wiki/เย็น",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-2ee19d8697f70657",
+      "document": {
+        "id": "th-2ee19d8697f70657",
+        "language": "th",
+        "text": "เจ็ด",
+        "kind": "vocab",
+        "sourceId": "jet",
+        "format": "mp3",
+        "byteSize": 7725,
+        "durationMs": 880,
+        "blobKey": "7a6913287f0afc35ab2e15ecfd9395f5662d28a76a6b11e1182b7855db119fac.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696629218,
+        "synthetic": true
+      },
+      "digest": "79c0c8a31afa0c3a922c38542c261c38b0a645b65546db49acd6ce145566b821",
+      "asset": "7a6913287f0afc35ab2e15ecfd9395f5662d28a76a6b11e1182b7855db119fac.mp3",
+      "byteSize": 7725,
+      "sourceBytes": 42284,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.148Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 110,
+          "summary": {
+            "pts": [
+              0.911386238799581,
+              0.911386238799581,
+              0.4496964650239518,
+              -0.4383105123013685,
+              -1.2829824469981428,
+              -2.477410529609118
+            ],
+            "start": 0.911386238799581,
+            "end": -2.477410529609118,
+            "min": -2.477410529609118,
+            "max": 0.911386238799581,
+            "mean": -0.3448001227540582,
+            "slope": -3.3887967684086986,
+            "durMs": 80
+          },
+          "targetTone": "low",
+          "sourceId": "jet",
+          "source": "https://en.wiktionary.org/wiki/เจ็ด",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-5136d49c0361d9d3",
+      "document": {
+        "id": "th-5136d49c0361d9d3",
+        "language": "th",
+        "text": "เดือน",
+        "kind": "vocab",
+        "sourceId": "duean",
+        "format": "mp3",
+        "byteSize": 10989,
+        "durationMs": 1280,
+        "blobKey": "fb4bc5547cf3ad4c745e8600ec71900fc3c69739ce1c45854512f7108901924f.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696460812,
+        "synthetic": true
+      },
+      "digest": "444a5f1e8fc7b59f5c15035839a37592922a7be65c4c0d7e6cf60eb5011e1e1d",
+      "asset": "fb4bc5547cf3ad4c745e8600ec71900fc3c69739ce1c45854512f7108901924f.mp3",
+      "byteSize": 10989,
+      "sourceBytes": 61484,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.181Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 660,
+          "summary": {
+            "pts": [
+              -1.6903504300781962,
+              0.911386238799581,
+              0,
+              -0.4383105123013685,
+              -1.2829824469981428,
+              -7.457860520955242
+            ],
+            "start": -1.6903504300781962,
+            "end": -7.457860520955242,
+            "min": -7.457860520955242,
+            "max": 0.911386238799581,
+            "mean": -0.9013790280619043,
+            "slope": -5.767510090877046,
+            "durMs": 550
+          },
+          "targetTone": "mid",
+          "sourceId": "duean",
+          "source": "https://en.wiktionary.org/wiki/เดือน",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-561fd9fef2e5561d",
+      "document": {
+        "id": "th-561fd9fef2e5561d",
+        "language": "th",
+        "text": "ฟัง",
+        "kind": "vocab",
+        "sourceId": "fang",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "9f80198b1a513614a35ea43e16da4fbc0ced0222b8d5ce1f3fe3dff7f4a2bb78.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696651722,
+        "synthetic": true
+      },
+      "digest": "271c7a7561f59e7920e27f16ffae1d3418eaf9c5b74c5e23f080db0bb98c4cf6",
+      "asset": "9f80198b1a513614a35ea43e16da4fbc0ced0222b8d5ce1f3fe3dff7f4a2bb78.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.218Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 500,
+          "summary": {
+            "pts": [
+              4.065622961421102,
+              1.6903504300781964,
+              0,
+              -0.39800236722239146,
+              -1.5398891637064733,
+              -2.261341072957322
+            ],
+            "start": 4.065622961421102,
+            "end": -2.261341072957322,
+            "min": -2.261341072957322,
+            "max": 4.065622961421102,
+            "mean": 0.06954457238001588,
+            "slope": -6.326964034378424,
+            "durMs": 410
+          },
+          "targetTone": "mid",
+          "sourceId": "fang",
+          "source": "https://en.wiktionary.org/wiki/ฟัง",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-59711cfade7ff47f",
+      "document": {
+        "id": "th-59711cfade7ff47f",
+        "language": "th",
+        "text": "กาแฟ",
+        "kind": "vocab",
+        "sourceId": "kaafae",
+        "format": "mp3",
+        "byteSize": 11565,
+        "durationMs": 1360,
+        "blobKey": "d09c6ab3a2c37c1c37909db9476e85b2432878d1d954270c262c4bcf7ded7652.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696449153,
+        "synthetic": true
+      },
+      "digest": "1994f30ad4ca0a7fac5a2381281cb8081e8298b4fd7798d08692140bf3f08886",
+      "asset": "d09c6ab3a2c37c1c37909db9476e85b2432878d1d954270c262c4bcf7ded7652.mp3",
+      "byteSize": 11565,
+      "sourceBytes": 65324,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.251Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 470,
+          "summary": {
+            "pts": [
+              0.7368065359697229,
+              0.3644837885222281,
+              0.18128270868250063,
+              -0.35696812072862283,
+              -0.7067242686428208,
+              -1.7154954461045135
+            ],
+            "start": 0.7368065359697229,
+            "end": -1.7154954461045135,
+            "min": -1.7154954461045135,
+            "max": 0.7368065359697229,
+            "mean": -0.20772658222585563,
+            "slope": -2.4523019820742364,
+            "durMs": 200
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-5a2353601e022b07",
+      "document": {
+        "id": "th-5a2353601e022b07",
+        "language": "th",
+        "text": "ใช่",
+        "kind": "vocab",
+        "sourceId": "chai",
+        "format": "mp3",
+        "byteSize": 10029,
+        "durationMs": 1160,
+        "blobKey": "02c3cf0110b620b6272e0b621051cf822e9a7bb8699ad98f59fbd5a86edce395.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696386573,
+        "synthetic": true
+      },
+      "digest": "58919975d690b852d097ca152e5750f887ece013713deae9ae1b2b58078ebd60",
+      "asset": "02c3cf0110b620b6272e0b621051cf822e9a7bb8699ad98f59fbd5a86edce395.mp3",
+      "byteSize": 10029,
+      "sourceBytes": 55724,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:01.287Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 420,
+          "summary": {
+            "pts": [
+              1.5398891637064724,
+              0,
+              -0.3644837885222264,
+              0,
+              0.37232274744749566,
+              -3.936650372210444
+            ],
+            "start": 1.5398891637064724,
+            "end": -3.936650372210444,
+            "min": -3.936650372210444,
+            "max": 1.5398891637064724,
+            "mean": -0.289134831217976,
+            "slope": -5.476539535916917,
+            "durMs": 350
+          },
+          "targetTone": "falling",
+          "sourceId": "chai",
+          "source": "https://en.wiktionary.org/wiki/ใช่",
+          "status": "passed",
+          "reason": "Relative Konturform mit verifiziertem Sollton vereinbar; nur Tonhöhe geprüft."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-75254cb3befb0da8",
+      "document": {
+        "id": "th-75254cb3befb0da8",
+        "language": "th",
+        "text": "ใคร",
+        "kind": "vocab",
+        "sourceId": "khrai",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "30794fdf76aadb82231a847dc4f9c52a478e755e7879af66128e76de18f35fd2.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696403598,
+        "synthetic": true
+      },
+      "digest": "b9f2ef43e86ef149d02eab0c45159f0819cf982fdccb7a409f9c97ddfe6e8c31",
+      "asset": "30794fdf76aadb82231a847dc4f9c52a478e755e7879af66128e76de18f35fd2.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.391Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 480,
+          "summary": {
+            "pts": [
+              4.751144115973668,
+              2.2130948536491273,
+              1.0712080571650475,
+              -1.332375748664926,
+              -2.268405892680202,
+              -2.865442315045397
+            ],
+            "start": 4.751144115973668,
+            "end": -2.865442315045397,
+            "min": -2.865442315045397,
+            "max": 4.751144115973668,
+            "mean": 0.10862294364299242,
+            "slope": -7.616586431019066,
+            "durMs": 410
+          },
+          "targetTone": "mid",
+          "sourceId": "khrai",
+          "source": "https://en.wiktionary.org/wiki/ใคร",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-8164e2a358a383a0",
+      "document": {
+        "id": "th-8164e2a358a383a0",
+        "language": "th",
+        "text": "กิน",
+        "kind": "vocab",
+        "sourceId": "kin",
+        "format": "mp3",
+        "byteSize": 9261,
+        "durationMs": 1080,
+        "blobKey": "e75ff35a0b240d401dd1f82e3b3eb2fa8836e9bb539489bda9e59796c700120b.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696635829,
+        "synthetic": true
+      },
+      "digest": "48778349dab1b9a5677adacf1359b4e3221e4c69de0a372e9b569a0b1cf115b5",
+      "asset": "e75ff35a0b240d401dd1f82e3b3eb2fa8836e9bb539489bda9e59796c700120b.mp3",
+      "byteSize": 9261,
+      "sourceBytes": 51884,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.425Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 410,
+          "summary": {
+            "pts": [
+              3.3304077063469073,
+              0.8880069773253213,
+              0.43831051230137025,
+              -1.2520399177768273,
+              -4.542139479044759,
+              -7.305710912106289
+            ],
+            "start": 3.3304077063469073,
+            "end": -7.305710912106289,
+            "min": -7.305710912106289,
+            "max": 3.3304077063469073,
+            "mean": -1.3204044434135618,
+            "slope": -10.636118618453196,
+            "durMs": 340
+          },
+          "targetTone": "mid",
+          "sourceId": "kin",
+          "source": "https://en.wiktionary.org/wiki/กิน",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-83ef545dea900680",
+      "document": {
+        "id": "th-83ef545dea900680",
+        "language": "th",
+        "text": "ปี",
+        "kind": "vocab",
+        "sourceId": "bpii",
+        "format": "mp3",
+        "byteSize": 10029,
+        "durationMs": 1160,
+        "blobKey": "62b049bfc99b77eb94ec67b9d842147937760a51e0bf6c9605a24b5d5318e126.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696462997,
+        "synthetic": true
+      },
+      "digest": "21b91ab0dff0c98dbc4c8fe22872fc82390b3acd67d43807fbf9d32b3ec42b1b",
+      "asset": "62b049bfc99b77eb94ec67b9d842147937760a51e0bf6c9605a24b5d5318e126.mp3",
+      "byteSize": 10029,
+      "sourceBytes": 55724,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.488Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 530,
+          "summary": {
+            "pts": [
+              4.582447624123736,
+              1.2520399177768264,
+              0.40736798308005406,
+              -0.39800236722239146,
+              -1.904372952228698,
+              -3.6198683983332143
+            ],
+            "start": 4.582447624123736,
+            "end": -3.6198683983332143,
+            "min": -3.6198683983332143,
+            "max": 4.582447624123736,
+            "mean": -0.05373982997455077,
+            "slope": -8.20231602245695,
+            "durMs": 440
+          },
+          "targetTone": "mid",
+          "sourceId": "bpii",
+          "source": "https://en.wiktionary.org/wiki/ปี",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-84e5307a71ba5cff",
+      "document": {
+        "id": "th-84e5307a71ba5cff",
+        "language": "th",
+        "text": "มา",
+        "kind": "vocab",
+        "sourceId": "maa_come",
+        "format": "mp3",
+        "byteSize": 9069,
+        "durationMs": 1040,
+        "blobKey": "2e3c37ceb45639684baf43c4947e033e7e780d6fa9bf71c2af2731a304cd15c4.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696640666,
+        "synthetic": true
+      },
+      "digest": "0d52a878749c826f64e54177e4a466bb01dbb3e329bbf8275cb9e65be0713c66",
+      "asset": "2e3c37ceb45639684baf43c4947e033e7e780d6fa9bf71c2af2731a304cd15c4.mp3",
+      "byteSize": 9069,
+      "sourceBytes": 49964,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.521Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 440,
+          "summary": {
+            "pts": [
+              2.9539270472327703,
+              2.16686694770185,
+              0.6925859742754455,
+              -0.3361725140351616,
+              -1.3072124586379688,
+              -1.925576066318953
+            ],
+            "start": 2.9539270472327703,
+            "end": -1.925576066318953,
+            "min": -1.925576066318953,
+            "max": 2.9539270472327703,
+            "mean": 0.28981768828393595,
+            "slope": -4.879503113551723,
+            "durMs": 370
+          },
+          "targetTone": "mid",
+          "sourceId": "maa_come",
+          "source": "https://en.wiktionary.org/wiki/มา",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-86b1583d67530640",
+      "document": {
+        "id": "th-86b1583d67530640",
+        "language": "th",
+        "text": "ชา",
+        "kind": "vocab",
+        "sourceId": "chaa",
+        "format": "mp3",
+        "byteSize": 11181,
+        "durationMs": 1320,
+        "blobKey": "e0b4ea8d03f9a7528da6f91187f7556d807644753f044a532a3257ed0e1d3c65.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696451583,
+        "synthetic": true
+      },
+      "digest": "7195896d80ebffe1b18140690b20e23d57afb3f0783b6716847ff36112fa5b4e",
+      "asset": "e0b4ea8d03f9a7528da6f91187f7556d807644753f044a532a3257ed0e1d3c65.mp3",
+      "byteSize": 11181,
+      "sourceBytes": 63404,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.553Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 500,
+          "summary": {
+            "pts": [
+              1.6500422849992202,
+              0.8053703503024444,
+              0.39800236722239246,
+              -0.19562174794920453,
+              -0.38905773230853,
+              -0.7695640490365869
+            ],
+            "start": 1.6500422849992202,
+            "end": -0.7695640490365869,
+            "min": -0.7695640490365869,
+            "max": 1.6500422849992202,
+            "mean": 0.25432731381348384,
+            "slope": -2.419606334035807,
+            "durMs": 380
+          },
+          "targetTone": "mid",
+          "sourceId": "chaa",
+          "source": "https://en.wiktionary.org/wiki/ชา",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
       "id": "th-8ae0473a01b209b5",
       "document": {
         "id": "th-8ae0473a01b209b5",
@@ -245,7 +1826,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:20.948Z",
+        "checkedAt": "2026-09-06T12:12:01.590Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -269,6 +1850,62 @@
           },
           "status": "unchecked",
           "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-8c7a2d245bba905b",
+      "document": {
+        "id": "th-8c7a2d245bba905b",
+        "language": "th",
+        "text": "วัน",
+        "kind": "vocab",
+        "sourceId": "wan",
+        "format": "mp3",
+        "byteSize": 9261,
+        "durationMs": 1080,
+        "blobKey": "9a23e08d19cc9d9dc882d9ca3ed4a47616ea9ba321efe7c6ba7c1df2f00dbc17.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696458271,
+        "synthetic": true
+      },
+      "digest": "754efe4bcdb1d8b1dfddd0dabefd8e5d2c4aba57db468304913aaf96348d388f",
+      "asset": "9a23e08d19cc9d9dc882d9ca3ed4a47616ea9ba321efe7c6ba7c1df2f00dbc17.mp3",
+      "byteSize": 9261,
+      "sourceBytes": 51884,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.628Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 530,
+          "summary": {
+            "pts": [
+              1.5447997694664328,
+              1.7771836678696071,
+              0,
+              0,
+              -0.8245530010081724,
+              -1.9921194172671508
+            ],
+            "start": 1.5447997694664328,
+            "end": -1.9921194172671508,
+            "min": -1.9921194172671508,
+            "max": 2.251524038109255,
+            "mean": 0.15039534452866965,
+            "slope": -3.5369191867335834,
+            "durMs": 440
+          },
+          "targetTone": "mid",
+          "sourceId": "wan",
+          "source": "https://en.wiktionary.org/wiki/วัน",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
         }
       }
     },
@@ -298,7 +1935,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:20.989Z",
+        "checkedAt": "2026-09-06T12:12:01.663Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -351,7 +1988,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:21.029Z",
+        "checkedAt": "2026-09-06T12:12:01.696Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -375,6 +2012,448 @@
           },
           "status": "unchecked",
           "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-9f564c7274d61c95",
+      "document": {
+        "id": "th-9f564c7274d61c95",
+        "language": "th",
+        "text": "เรา",
+        "kind": "vocab",
+        "sourceId": "rao",
+        "format": "mp3",
+        "byteSize": 10029,
+        "durationMs": 1160,
+        "blobKey": "6cfe80b02756d9b83c536589009fdfa394148be3b7af075af77c16a7e0204044.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696399178,
+        "synthetic": true
+      },
+      "digest": "79dbe9c15c02f225a996abd20e68d9bbb85e559ad38ae6cedc61bcaaa3cef489",
+      "asset": "6cfe80b02756d9b83c536589009fdfa394148be3b7af075af77c16a7e0204044.mp3",
+      "byteSize": 10029,
+      "sourceBytes": 55724,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.731Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 520,
+          "summary": {
+            "pts": [
+              2.0391000173077485,
+              1.1944280826109726,
+              0.3890577323085291,
+              0,
+              -1.1173128526977776,
+              -4.092443014020801
+            ],
+            "start": 2.0391000173077485,
+            "end": -4.092443014020801,
+            "min": -4.092443014020801,
+            "max": 2.0391000173077485,
+            "mean": -0.10883098862615836,
+            "slope": -6.131543031328549,
+            "durMs": 410
+          },
+          "targetTone": "mid",
+          "sourceId": "rao",
+          "source": "https://en.wiktionary.org/wiki/เรา",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-b9e0f9d1ca680d0a",
+      "document": {
+        "id": "th-b9e0f9d1ca680d0a",
+        "language": "th",
+        "text": "หนังสือ",
+        "kind": "vocab",
+        "sourceId": "nangsue",
+        "format": "mp3",
+        "byteSize": 12525,
+        "durationMs": 1480,
+        "blobKey": "1e08fd4ffc40d9f74a9f53d56e1b2e15817583ba9104829f9a4c66e1cfd19d52.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696465490,
+        "synthetic": true
+      },
+      "digest": "b39d210e79160ceadba8442cdce1ebecd8f444bd7e49106eb98e6e28b252b8ae",
+      "asset": "1e08fd4ffc40d9f74a9f53d56e1b2e15817583ba9104829f9a4c66e1cfd19d52.mp3",
+      "byteSize": 12525,
+      "sourceBytes": 71084,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.763Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 760,
+          "summary": {
+            "pts": [
+              7.872547185391667,
+              2.1225331450089535,
+              -0.6533734082685155,
+              -1.5894035522837928,
+              -0.32976883706528215,
+              5.891836230145709
+            ],
+            "start": 7.872547185391667,
+            "end": 5.891836230145709,
+            "min": -1.5894035522837928,
+            "max": 7.872547185391667,
+            "mean": 1.233965383913505,
+            "slope": -1.980710955245958,
+            "durMs": 390
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-bdeb9ba26240e049",
+      "document": {
+        "id": "th-bdeb9ba26240e049",
+        "language": "th",
+        "text": "ฉัน",
+        "kind": "vocab",
+        "sourceId": "chan",
+        "format": "mp3",
+        "byteSize": 10029,
+        "durationMs": 1160,
+        "blobKey": "e23dbac3550e15bac4711053f262a64fa578e6790455ece9dc50b562c494483c.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696394690,
+        "synthetic": true
+      },
+      "digest": "dd836cacf2c6669101b78b03bc4a2a08034ff722d51e5209aa87ddb6df03f7c2",
+      "asset": "e23dbac3550e15bac4711053f262a64fa578e6790455ece9dc50b562c494483c.mp3",
+      "byteSize": 10029,
+      "sourceBytes": 55724,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:01.798Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 470,
+          "summary": {
+            "pts": [
+              0.8245530010081717,
+              -0.39800236722239146,
+              -1.904372952228698,
+              -0.7870600995309205,
+              2.1400468951021487,
+              7.426917991733927
+            ],
+            "start": 0.8245530010081717,
+            "end": 7.426917991733927,
+            "min": -1.904372952228698,
+            "max": 7.426917991733927,
+            "mean": 0.6728085610749075,
+            "slope": 6.602364990725755,
+            "durMs": 390
+          },
+          "targetTone": "rising",
+          "sourceId": "chan",
+          "source": "https://en.wiktionary.org/wiki/ฉัน",
+          "status": "passed",
+          "reason": "Relative Konturform mit verifiziertem Sollton vereinbar; nur Tonhöhe geprüft."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-c86b8ac60126c509",
+      "document": {
+        "id": "th-c86b8ac60126c509",
+        "language": "th",
+        "text": "คุณ",
+        "kind": "vocab",
+        "sourceId": "khun",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "00aef8d5a7875b64dd22f2f2eaf0fc84d7855515c06dc5a3372695fa20fc28bf.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696396969,
+        "synthetic": true
+      },
+      "digest": "c64f0f2b9ae292f19c99acb07e40bf28cdde718f2616c962cb9a7680607f8611",
+      "asset": "00aef8d5a7875b64dd22f2f2eaf0fc84d7855515c06dc5a3372695fa20fc28bf.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.865Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 450,
+          "summary": {
+            "pts": [
+              5.103670016792052,
+              2.3644421647146463,
+              0.37232274744749566,
+              -0.7214519092508509,
+              -1.4140378835262977,
+              -2.7212503421642658
+            ],
+            "start": 5.103670016792052,
+            "end": -2.7212503421642658,
+            "min": -2.7212503421642658,
+            "max": 5.103670016792052,
+            "mean": 0.399938648742069,
+            "slope": -7.824920358956318,
+            "durMs": 380
+          },
+          "targetTone": "mid",
+          "sourceId": "khun",
+          "source": "https://en.wiktionary.org/wiki/คุณ",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-cf1da92880f58857",
+      "document": {
+        "id": "th-cf1da92880f58857",
+        "language": "th",
+        "text": "หนึ่ง",
+        "kind": "vocab",
+        "sourceId": "nueng",
+        "format": "mp3",
+        "byteSize": 9069,
+        "durationMs": 1040,
+        "blobKey": "2463fe2d3e24e35ee3ecc5e089dce431479f577279dfda567d367a1731d04210.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696618256,
+        "synthetic": true
+      },
+      "digest": "3f6d6755533c94dd8c583586158e76bc869419df8a65b00101e72ef03d7c22a6",
+      "asset": "2463fe2d3e24e35ee3ecc5e089dce431479f577279dfda567d367a1731d04210.mp3",
+      "byteSize": 9069,
+      "sourceBytes": 49964,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.900Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 440,
+          "summary": {
+            "pts": [
+              4.731347269344557,
+              4.243643455376405,
+              1.9921194172671481,
+              -0.3723227474474945,
+              -4.01302846884671,
+              -5.167612251958348
+            ],
+            "start": 4.731347269344557,
+            "end": -5.167612251958348,
+            "min": -7.51422196137203,
+            "max": 4.731347269344557,
+            "mean": -0.3278681438809807,
+            "slope": -9.898959521302904,
+            "durMs": 370
+          },
+          "targetTone": "low",
+          "sourceId": "nueng",
+          "source": "https://en.wiktionary.org/wiki/หนึ่ง",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-d3d4ed557ac4caac",
+      "document": {
+        "id": "th-d3d4ed557ac4caac",
+        "language": "th",
+        "text": "อะไร",
+        "kind": "vocab",
+        "sourceId": "arai",
+        "format": "mp3",
+        "byteSize": 9261,
+        "durationMs": 1080,
+        "blobKey": "1dc143c5d01610961138918c83f57672f09e4c7e38dfe44b5a32ceef953cd645.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696401318,
+        "synthetic": true
+      },
+      "digest": "6f2ff96d59cd648d9d6023f8e0a18b2fc27faf6bad7e46457bb2c224f1c1746c",
+      "asset": "1dc143c5d01610961138918c83f57672f09e4c7e38dfe44b5a32ceef953cd645.mp3",
+      "byteSize": 9261,
+      "sourceBytes": 51884,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.932Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 430,
+          "summary": {
+            "pts": [
+              1.2520399177768264,
+              1.2520399177768264,
+              0.20248582277275726,
+              -0.7870600995309205,
+              -1.1675664162589783,
+              -1.1675664162589783
+            ],
+            "start": 1.2520399177768264,
+            "end": -1.1675664162589783,
+            "min": -1.1675664162589783,
+            "max": 1.2520399177768264,
+            "mean": -0.08719799186166248,
+            "slope": -2.4196063340358047,
+            "durMs": 360
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-d50f5a9850dd92f9",
+      "document": {
+        "id": "th-d50f5a9850dd92f9",
+        "language": "th",
+        "text": "ไป",
+        "kind": "vocab",
+        "sourceId": "bpai",
+        "format": "mp3",
+        "byteSize": 10989,
+        "durationMs": 1280,
+        "blobKey": "a0c0ec8eafd4c6e4b383a0ee9b0d82527aa3bea10a4cc70dbba49f072a8e4852.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696638379,
+        "synthetic": true
+      },
+      "digest": "28fed0d15c3d5004bc1003a4c08973d1ccb81a093a93faca5308a082b92b47e7",
+      "asset": "a0c0ec8eafd4c6e4b383a0ee9b0d82527aa3bea10a4cc70dbba49f072a8e4852.mp3",
+      "byteSize": 10989,
+      "sourceBytes": 61484,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:01.966Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 490,
+          "summary": {
+            "pts": [
+              4.1416258325842525,
+              1.9472571467865252,
+              0.37232274744749566,
+              -1.0712080571650469,
+              -2.403583805829972,
+              -4.227620927170571
+            ],
+            "start": 4.1416258325842525,
+            "end": -4.227620927170571,
+            "min": -4.227620927170571,
+            "max": 4.1416258325842525,
+            "mean": -0.27919111904530614,
+            "slope": -8.369246759754823,
+            "durMs": 390
+          },
+          "targetTone": "mid",
+          "sourceId": "bpai",
+          "source": "https://en.wiktionary.org/wiki/ไป",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-d84c46b330126f70",
+      "document": {
+        "id": "th-d84c46b330126f70",
+        "language": "th",
+        "text": "แปด",
+        "kind": "vocab",
+        "sourceId": "paet",
+        "format": "mp3",
+        "byteSize": 11565,
+        "durationMs": 1360,
+        "blobKey": "5397a8feb5581b2464e0a6914aa3cff04cfc7b60e189ea5bc6d4872203fedb6c.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696417729,
+        "synthetic": true
+      },
+      "digest": "288c3736280f4f1f06c27d53cd7ff748331933ba01fcfa8840d25e152c528ec8",
+      "asset": "5397a8feb5581b2464e0a6914aa3cff04cfc7b60e189ea5bc6d4872203fedb6c.mp3",
+      "byteSize": 11565,
+      "sourceBytes": 65324,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:02.000Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 260,
+          "summary": {
+            "pts": [
+              0.2770033573564949,
+              0.2770033573564949,
+              0,
+              0,
+              0,
+              -0.2726409180010023
+            ],
+            "start": 0.2770033573564949,
+            "end": -0.2726409180010023,
+            "min": -0.2726409180010023,
+            "max": 0.2770033573564949,
+            "mean": 0.05583691540684823,
+            "slope": -0.5496442753574973,
+            "durMs": 90
+          },
+          "targetTone": "low",
+          "sourceId": "paet",
+          "source": "https://en.wiktionary.org/wiki/แปด",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
         }
       }
     },
@@ -404,7 +2483,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:21.072Z",
+        "checkedAt": "2026-09-06T12:12:02.035Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -457,7 +2536,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:21.115Z",
+        "checkedAt": "2026-09-06T12:12:02.070Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -481,6 +2560,174 @@
           },
           "status": "unchecked",
           "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-f3dc49027a8cdbc7",
+      "document": {
+        "id": "th-f3dc49027a8cdbc7",
+        "language": "th",
+        "text": "ดี",
+        "kind": "vocab",
+        "sourceId": "dii",
+        "format": "mp3",
+        "byteSize": 10605,
+        "durationMs": 1240,
+        "blobKey": "261bfbbfd837a9b54609b20c230df8b1dfc45329d6dab52b139913c425a5939a.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696468003,
+        "synthetic": true
+      },
+      "digest": "77f0ec7f92f67c633d7f8579a50da455be42d36db30f57cfa4e9bb1bd5c3cf82",
+      "asset": "261bfbbfd837a9b54609b20c230df8b1dfc45329d6dab52b139913c425a5939a.mp3",
+      "byteSize": 10605,
+      "sourceBytes": 59564,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:02.104Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 620,
+          "summary": {
+            "pts": [
+              0.38050631672805657,
+              1.9921194172671481,
+              0.38050631672805657,
+              -0.7368065359697211,
+              -2.452301982074235,
+              -3.405515592007095
+            ],
+            "start": 0.38050631672805657,
+            "end": -3.405515592007095,
+            "min": -3.405515592007095,
+            "max": 1.9921194172671481,
+            "mean": -0.43508742876086454,
+            "slope": -3.786021908735152,
+            "durMs": 520
+          },
+          "targetTone": "mid",
+          "sourceId": "dii",
+          "source": "https://en.wiktionary.org/wiki/ดี",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-f5de8abfe88160b6",
+      "document": {
+        "id": "th-f5de8abfe88160b6",
+        "language": "th",
+        "text": "ทำ",
+        "kind": "vocab",
+        "sourceId": "tham",
+        "format": "mp3",
+        "byteSize": 8301,
+        "durationMs": 960,
+        "blobKey": "aaa974be73d268f57b244fe81e53d3338ca0b1d4a3ae15a473c8ec929a640a60.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696643956,
+        "synthetic": true
+      },
+      "digest": "d1c87f8a506bd22a5f017f866deb56f4cc37e10579502e74d9ef3032ee3837b7",
+      "asset": "aaa974be73d268f57b244fe81e53d3338ca0b1d4a3ae15a473c8ec929a640a60.mp3",
+      "byteSize": 8301,
+      "sourceBytes": 46124,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:02.136Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 410,
+          "summary": {
+            "pts": [
+              3.778480048240943,
+              1.786360630973793,
+              0,
+              0,
+              -0.6659413511004428,
+              -1.6191549610333023
+            ],
+            "start": 3.778480048240943,
+            "end": -1.6191549610333023,
+            "min": -1.6191549610333023,
+            "max": 3.778480048240943,
+            "mean": 0.43134418655784845,
+            "slope": -5.397635009274245,
+            "durMs": 340
+          },
+          "targetTone": "mid",
+          "sourceId": "tham",
+          "source": "https://en.wiktionary.org/wiki/ทำ",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-f7dc4f4e6e8cc8e3",
+      "document": {
+        "id": "th-f7dc4f4e6e8cc8e3",
+        "language": "th",
+        "text": "ดู",
+        "kind": "vocab",
+        "sourceId": "duu",
+        "format": "mp3",
+        "byteSize": 10221,
+        "durationMs": 1200,
+        "blobKey": "e57cfacd243389b45298c72dbd4552e52cc95758942e210715f3a1d206a9a202.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788696649380,
+        "synthetic": true
+      },
+      "digest": "919ec0410e433d66ac5cdcee4bb55046d3c36f44d313c49b7eac0a9859028c42",
+      "asset": "e57cfacd243389b45298c72dbd4552e52cc95758942e210715f3a1d206a9a202.mp3",
+      "byteSize": 10221,
+      "sourceBytes": 57644,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T12:12:02.167Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 530,
+          "summary": {
+            "pts": [
+              -0.573942301087382,
+              1.4181771161797665,
+              0.5936241151715951,
+              0,
+              -0.573942301087382,
+              -1.6677169577857276
+            ],
+            "start": -0.573942301087382,
+            "end": -1.6677169577857276,
+            "min": -1.6677169577857276,
+            "max": 1.4181771161797665,
+            "mean": 0.052046605187022796,
+            "slope": -1.0937746566983457,
+            "durMs": 440
+          },
+          "targetTone": "mid",
+          "sourceId": "duu",
+          "source": "https://en.wiktionary.org/wiki/ดู",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
         }
       }
     },
@@ -510,7 +2757,7 @@
       "check": {
         "status": "unchecked",
         "label": "ungeprüft",
-        "checkedAt": "2026-09-06T06:20:21.155Z",
+        "checkedAt": "2026-09-06T12:12:02.199Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -557,7 +2804,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-06T06:20:21.196Z",
+        "checkedAt": "2026-09-06T12:12:02.232Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -581,7 +2828,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-06T06:20:21.233Z",
+        "checkedAt": "2026-09-06T12:12:02.265Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -605,7 +2852,55 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-06T06:20:21.267Z",
+        "checkedAt": "2026-09-06T12:12:02.297Z",
+        "scope": "schema-integrity-decode"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "khon",
+      "document": {
+        "id": "khon",
+        "vocabId": "khon",
+        "format": "jpeg",
+        "byteSize": 415362,
+        "blobKey": "ceb4d0c228ab93a48797247ecc34ba57e88af2565dbbb553b714f8098c5c053b.jpeg",
+        "prompt": "a single friendly person standing, full figure. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788604015019
+      },
+      "digest": "23fd86d8fda844e92184616d7e42b26bdb8367d1696e47fea8b6dc9470316d62",
+      "asset": "ceb4d0c228ab93a48797247ecc34ba57e88af2565dbbb553b714f8098c5c053b.jpeg",
+      "byteSize": 415362,
+      "sourceBytes": 415362,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:02.329Z",
+        "scope": "schema-integrity-decode"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "khruu",
+      "document": {
+        "id": "khruu",
+        "vocabId": "khruu",
+        "format": "jpeg",
+        "byteSize": 376979,
+        "blobKey": "2a5e6e66e1ec9ccb17e88494dba20c4a785657ebe06c7105803423dc601044af.jpeg",
+        "prompt": "a teacher standing in front of a blackboard. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788604034441
+      },
+      "digest": "94a8b34614746804c9360df8920fe9b8023eca9a5a0e0296b01e8ddadd50debd",
+      "asset": "2a5e6e66e1ec9ccb17e88494dba20c4a785657ebe06c7105803423dc601044af.jpeg",
+      "byteSize": 376979,
+      "sourceBytes": 376979,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:02.362Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -629,7 +2924,79 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-06T06:20:21.302Z",
+        "checkedAt": "2026-09-06T12:12:02.394Z",
+        "scope": "schema-integrity-decode"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "phuean",
+      "document": {
+        "id": "phuean",
+        "vocabId": "phuean",
+        "format": "jpeg",
+        "byteSize": 444095,
+        "blobKey": "4a4586d81abee6b4ffc3348759d30c48b9b8b07d4d53bcaf91e0613d94b3af1a.jpeg",
+        "prompt": "two friends standing side by side, smiling. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788604023774
+      },
+      "digest": "c3c15567de0bfe47f43f3107c4576dcff5fad40dbbe64fecb4b3373d32a22e10",
+      "asset": "4a4586d81abee6b4ffc3348759d30c48b9b8b07d4d53bcaf91e0613d94b3af1a.jpeg",
+      "byteSize": 444095,
+      "sourceBytes": 444095,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:02.426Z",
+        "scope": "schema-integrity-decode"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "raan",
+      "document": {
+        "id": "raan",
+        "vocabId": "raan",
+        "format": "jpeg",
+        "byteSize": 552056,
+        "blobKey": "15f6a62dc23378e6da4676ba6524ca6f18ed7d802c8056b5ea41cfd43afe27ca.jpeg",
+        "prompt": "a small Thai street food stall with an awning. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788604005435
+      },
+      "digest": "766ea445d0fc79bab550012770ca992a971862079093c5c29400296dc6864f8a",
+      "asset": "15f6a62dc23378e6da4676ba6524ca6f18ed7d802c8056b5ea41cfd43afe27ca.jpeg",
+      "byteSize": 552056,
+      "sourceBytes": 552056,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:02.462Z",
+        "scope": "schema-integrity-decode"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "rongrian",
+      "document": {
+        "id": "rongrian",
+        "vocabId": "rongrian",
+        "format": "jpeg",
+        "byteSize": 365158,
+        "blobKey": "75626d85b7650ef8697c6c8bace52c9e3eefe455396c0d3a099d6831a3b7b219.jpeg",
+        "prompt": "a school building with a flag pole in front. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788603994977
+      },
+      "digest": "27fc0be291d75af70d382f016345ca213050149ab887d635f5745c63cebafbcd",
+      "asset": "75626d85b7650ef8697c6c8bace52c9e3eefe455396c0d3a099d6831a3b7b219.jpeg",
+      "byteSize": 365158,
+      "sourceBytes": 365158,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:02.495Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -653,7 +3020,31 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-06T06:20:21.337Z",
+        "checkedAt": "2026-09-06T12:12:02.527Z",
+        "scope": "schema-integrity-decode"
+      }
+    },
+    {
+      "kind": "images",
+      "id": "talaat",
+      "document": {
+        "id": "talaat",
+        "vocabId": "talaat",
+        "format": "jpeg",
+        "byteSize": 523456,
+        "blobKey": "d538e6f57caa5998719df20d181c068ed6da3cf54b01d4436e4a7f2ad6830763.jpeg",
+        "prompt": "an open air market stall with fruit and vegetables. Simple flashcard illustration, one single subject, centered, plain uncluttered background, clear outlines, friendly flat style, no text and no letters anywhere in the image.",
+        "model": "gemini-3.1-flash-image",
+        "generatedAt": 1788603985870
+      },
+      "digest": "63f71519a30593c9d307f9e139c98f861f7f792f591257d2f36657cdd2f305fa",
+      "asset": "d538e6f57caa5998719df20d181c068ed6da3cf54b01d4436e4a7f2ad6830763.jpeg",
+      "byteSize": 523456,
+      "sourceBytes": 523456,
+      "check": {
+        "status": "passed",
+        "label": "automatisch geprüft",
+        "checkedAt": "2026-09-06T12:12:02.560Z",
         "scope": "schema-integrity-decode"
       }
     }

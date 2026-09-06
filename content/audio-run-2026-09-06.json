@@ -8,14 +8,45 @@
   "voice": "Kore",
   "currentPlan": 462,
   "alreadyGenerated": 10,
-  "remainingToGenerate": 452,
+  "remainingToGenerate": 401,
   "currentEstimatedUsd": 0.55709,
   "estimateIsActualBilling": false,
-  "status": "awaiting_browser_api_key",
-  "providerCallsStarted": 0,
-  "authorizationConsumed": false,
+  "status": "paused_awaiting_session_key_after_local_server_restart",
+  "providerCallsStarted": 191,
+  "providerCallsStartedIsLowerBound": false,
+  "authorizationConsumed": true,
   "generationAndDeliverySeparate": true,
   "existingClipsRepublished": 10,
   "existingUncheckedThaiDelivered": 9,
-  "note": "Start button reports missing API key. No provider request made. Existing clips are skipped, not regenerated to reach 459. The one-time cost authorization remains valid; request only the missing credential in the local UI."
+  "note": "51 new successful clips plus 10 existing clips are saved; both segments ended through the visible Stop action and exported with zero errors. 140 failed requests returned HTTP 429. No successful clip was regenerated. The local server processes subsequently disappeared and the browser session key was lost. Servers restarted, updated 6500 ms pacing visible in the fresh UI. Original one-time authorization covers completion of the remaining 401 clips; do not request another cost approval. Actual billing is not inferred from estimates.",
+  "firstSegment": {
+    "processed": 121,
+    "generated": 25,
+    "failed": 91,
+    "skipped": 5,
+    "cancelled": true,
+    "failure": "HTTP 429 RESOURCE_EXHAUSTED; generate_requests_per_model limit 10; retry instructions below 60 seconds",
+    "exportErrors": 0
+  },
+  "continuation": {
+    "processed": 104,
+    "generated": 26,
+    "failed": 49,
+    "skipped": 29,
+    "cancelled": true,
+    "exportErrors": 0,
+    "usesOriginalAuthorization": true,
+    "note": "Metro failed to resolve newly published assets, so the 6500 ms code change was not yet active in this segment. No concurrent batch."
+  },
+  "generatedThisRun": 51,
+  "totalGenerated": 61,
+  "http429Failures": 140,
+  "nextContinuation": {
+    "missingClips": 401,
+    "delayAfterResponseMs": 6500,
+    "usesOriginalAuthorization": true
+  },
+  "deliveredAudio": 55,
+  "excludedByToneGate": 6,
+  "uncheckedThaiDelivered": 38
 }
