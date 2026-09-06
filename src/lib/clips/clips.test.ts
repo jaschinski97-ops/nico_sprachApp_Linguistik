@@ -476,11 +476,11 @@ describe('Der Auflöser: Clip bevorzugt, sonst TTS wie bisher', () => {
     expect(await playPronunciation({ text: 'ไก่', language: 'th' })).toBe('tts');
   });
 
-  it('lässt einer ausdrücklichen Asset-ID den Vortritt vor der Textsuche', async () => {
+  it('lässt bei Nicht-Thai einer ausdrücklichen Asset-ID den Vortritt vor der Textsuche', async () => {
     registerAudioAssetResolver(async (id) => (id === 'clip-1' ? 'file:///clip-1.m4a' : null));
     registerPronunciationClipLookup(() => 'data:audio/wav;base64,AAAA');
 
-    expect(await playPronunciation({ text: 'ไก่', language: 'th', audioAssetId: 'clip-1' })).toBe('asset');
+    expect(await playPronunciation({ text: 'chicken', language: 'en', audioAssetId: 'clip-1' })).toBe('asset');
     expect(calls[0].args[0]).toBe('file:///clip-1.m4a');
   });
 

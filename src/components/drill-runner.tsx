@@ -7,7 +7,7 @@ import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { hasPronunciationClip, isLanguageAvailable, playPronunciation } from '@/lib/audio';
+import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
 import { LanguageCode } from '@/lib/languages/types';
@@ -46,6 +46,7 @@ export function DrillRunner({
   const [chosen, setChosen] = useState<number | null>(null);
   const [answers, setAnswers] = useState<DrillAnswer[]>([]);
   const [voiceMissing, setVoiceMissing] = useState(false);
+  const [heardId, setHeardId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,7 +54,10 @@ export function DrillRunner({
     setIndex(0);
     setChosen(null);
     setAnswers([]);
-    buildDrillSession({ drill, language }).then((built) => {
+    setHeardId(null);
+    buildDrillSession({ drill, language, ...(drill === 'tone' ? {
+      isEligible: (entry: import('@/data/vocab-types').VocabEntry) => hasPronunciationClip({ text: entry.term, language: 'th', purpose: 'tone' }),
+    } : {}) }).then((built) => {
       if (!cancelled) setSession(built);
     });
     return () => {
@@ -82,7 +86,7 @@ export function DrillRunner({
 
   const answer = useCallback(
     async (optionIndex: number) => {
-      if (!question || chosen !== null) return;
+      if (!question || chosen !== null || (drill === 'tone' && heardId !== question.id)) return;
       const correct = optionIndex === question.correctIndex;
       setChosen(optionIndex);
       setAnswers((previous) => [...previous, { question, chosenIndex: optionIndex, correct }]);
@@ -90,11 +94,12 @@ export function DrillRunner({
         // Ein fehlgeschlagener Protokolleintrag darf die Uebung nicht stoppen.
       });
     },
-    [question, chosen]
+    [question, chosen, drill, heardId]
   );
 
   const next = useCallback(() => {
     setChosen(null);
+    setHeardId(null);
     setIndex((value) => value + 1);
   }, []);
 
@@ -111,7 +116,7 @@ export function DrillRunner({
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">Keine passenden Vokabeln</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Für „{meta.label}" gibt es im Grundstock gerade keine geeigneten Einträge.
+          {drill === 'tone' ? 'Für die Tonerkennung stehen gerade keine passenden Clips mit bestandener Tonprüfung zur Verfügung. Ungeprüfte Clips und Systemstimmen werden hier nicht verwendet.' : `Für „${meta.label}" gibt es im Grundstock gerade keine geeigneten Einträge.`}
         </ThemedText>
         <Row>
           <Button label="Zurück" onPress={onExit} />
@@ -173,8 +178,10 @@ export function DrillRunner({
 
         {question.speak ? (
           <PlayBlock
+            key={question.id}
             question={question}
             voiceMissing={voiceMissing}
+            onPlayed={setHeardId}
           />
         ) : null}
 
@@ -205,10 +212,10 @@ export function DrillRunner({
               <Pressable
                 key={option.label}
                 onPress={() => answer(optionIndex)}
-                disabled={answered}
+                disabled={answered || (drill === 'tone' && heardId !== question.id)}
                 accessibilityRole="button"
                 accessibilityLabel={option.hint ? `${option.label}, ${option.hint}` : option.label}
-                accessibilityState={{ selected: isChosen, disabled: answered }}
+                accessibilityState={{ selected: isChosen, disabled: answered || (drill === 'tone' && heardId !== question.id) }}
                 style={({ pressed }) => [styles.optionWrap, pressed && styles.pressed]}>
                 <ThemedView
                   type={isChosen ? 'backgroundSelected' : 'background'}
@@ -273,25 +280,32 @@ export function DrillRunner({
 function PlayBlock({
   question,
   voiceMissing,
+  onPlayed,
 }: {
   question: DrillQuestion;
   voiceMissing: boolean;
+  onPlayed: (id: string) => void;
 }) {
   const speak = question.speak!;
   const [hasClip, setHasClip] = useState(false);
+  const [label, setLabel] = useState('');
+  const purpose = question.drill === 'tone' ? 'tone' as const : 'general' as const;
   useEffect(() => {
     let active = true;
     setHasClip(false);
-    hasPronunciationClip(speak).then((found) => { if (active) setHasClip(found); });
+    hasPronunciationClip({ ...speak, purpose }).then((found) => { if (active) setHasClip(found); });
     return () => { active = false; };
-  }, [speak.text, speak.language]);
+  }, [speak.text, speak.language, purpose]);
   const spokenFor = useRef<string | null>(null);
 
   const play = useCallback(() => {
-    playPronunciation({ text: speak.text, language: speak.language }).catch(() => {
+    playPronunciationWithStatus({ text: speak.text, language: speak.language, purpose }).then(result => {
+      setLabel(result.label);
+      if (result.kind !== 'unavailable') onPlayed(question.id);
+    }).catch(() => {
       // Eine stumme Ausgabe darf die Uebung nicht abbrechen.
     });
-  }, [speak.text, speak.language]);
+  }, [speak.text, speak.language, purpose, question.id, onPlayed]);
 
   useEffect(() => {
     if (spokenFor.current === question.id) return;
@@ -310,6 +324,7 @@ function PlayBlock({
           <ThemedText type="smallBold">🔊 Noch einmal anhören</ThemedText>
         </ThemedView>
       </Pressable>
+      {label ? <ThemedText type="small">{label}</ThemedText> : null}
       {voiceMissing && !hasClip ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
           Dieses Hörbeispiel ist nicht verfügbar. Du kannst unter „Lesen“ weiterüben.

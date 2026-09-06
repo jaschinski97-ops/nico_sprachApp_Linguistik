@@ -7,6 +7,7 @@ const { BUILTIN_EXAM_MODULES } = domain.load('src/data/exam-modules');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { planSituations, FULL_RUN } = domain.load('src/lib/conversation/plan');
 const { checkThaiTone } = domain.load('src/lib/content/tone-gate');
+const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
 const { decodeAudio, decodeImage } = require('./media.cjs');
 const { createHash } = require('node:crypto');
 
@@ -18,13 +19,15 @@ function checkContent(root, { integrityOnly = false } = {}) {
   let audioSourceBytes = 0;
   let audioCompressedBytes = 0;
   let contentBytes = 0;
+  let uncheckedThaiDelivered = 0;
   if (catalog.version !== 2 || !Array.isArray(catalog.entries)) throw Error('Unbekannte Katalogversion.');
   for (const entry of catalog.entries) {
     try {
       assertDocument(entry.kind, entry.document);
       if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
       seen.add(keyOf(entry));
-      if (entry.review || entry.check?.status !== 'passed' || entry.check.label !== 'automatisch geprüft' || !entry.check.checkedAt) throw Error('Automatische Prüfung fehlt.');
+      if (entry.review || !isDeliverableEntry(entry) || !entry.check.checkedAt || entry.check.scope !== 'schema-integrity-decode' ||
+          entry.check.label !== (entry.check.status === 'unchecked' ? 'ungeprüft' : 'automatisch geprüft')) throw Error('Automatische Prüfung fehlt.');
       const media = entry.kind === 'audio' || entry.kind === 'images';
       if (media && !entry.asset) throw Error('Mediendatei fehlt.');
       if (entry.asset && !/^[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(entry.asset)) throw Error('Unsicherer Assetpfad.');
@@ -38,7 +41,8 @@ function checkContent(root, { integrityOnly = false } = {}) {
         audioSourceBytes += entry.sourceBytes;
         audioCompressedBytes += bytes.length;
         const tone = checkThaiTone(entry.document, decodeAudio(path.join(root, 'assets/content', entry.asset)), 24000);
-        if (entry.check.tone?.status !== tone.status || ['failed', 'unchecked'].includes(tone.status)) throw Error('Thai-Tontor nicht bestanden: ' + tone.reason);
+        if (entry.check.tone?.status !== tone.status || tone.status === 'failed') throw Error('Thai-Tontor nicht bestanden oder Status verändert: ' + tone.reason);
+        if (entry.document.language === 'th' && tone.status === 'unchecked') uncheckedThaiDelivered++;
       } else if (entry.kind === 'images') {
         decodeImage(path.join(root, 'assets/content', entry.asset));
       }
@@ -64,7 +68,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
     }
   }
   return { checkedAt: new Date().toISOString(), integrityOnly, entries: catalog.entries.length, contentBytes,
-    audioSourceBytes, audioCompressedBytes, missing: { audio: missingAudio.map((spec) => spec.id), images: missingImages.map((entry) => entry.id), situations: missingSituations.map((spec) => spec.id) }, errors };
+    audioSourceBytes, audioCompressedBytes, uncheckedThaiDelivered, missing: { audio: missingAudio.map((spec) => spec.id), images: missingImages.map((entry) => entry.id), situations: missingSituations.map((spec) => spec.id) }, errors };
 }
 if (require.main === module) {
   const result = checkContent(path.resolve(__dirname, '../..'), { integrityOnly: process.argv.includes('--integrity-only') });

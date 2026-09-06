@@ -57,7 +57,7 @@ test('automatic publication, schema, re-export and metadata tampering with no re
   assert.ok(checkContent(root).errors.some(error => error.includes('Hörclips')));
   await assert.rejects(pipeline.stage({ kind: 'situations', document: { ...situation, apiKey: 'never-export' } }), /Metadaten/);
 });
-test('tone failures and unchecked material stay out; regeneration is never permanently blocked', async (t) => {
+test('failed tones stay out; unchecked clips ship with their original status and are counted', async (t) => {
   const { root, pipeline } = await setup(t);
   const word = VOCABULARY.find(word => word.id === 'kha');
   const wrong = await pipeline.stage(audio(wav(120, 240), word));
@@ -66,10 +66,13 @@ test('tone failures and unchecked material stay out; regeneration is never perma
   assert.equal(right.check.tone.status, 'passed'); assert.equal((await pipeline.publish()).entries, 1);
   const multi = VOCABULARY.find(word => word.id === 'sawatdii');
   assert.equal((await pipeline.stage(audio(wav(), multi))).check.status, 'unchecked');
-  const report = await pipeline.publish(); assert.equal(report.entries, 1); assert.equal(report.unchecked, 1);
+  const report = await pipeline.publish(); assert.equal(report.entries, 2); assert.equal(report.unchecked, 1);
+  assert.equal(report.uncheckedThaiDelivered, 1);
+  assert.equal(checkContent(root, { integrityOnly: true }).uncheckedThaiDelivered, 1);
+  assert.equal((await pipeline.catalog()).entries.find(entry => entry.id !== right.id).check.tone.status, 'unchecked');
   assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
   await pipeline.stage(audio(wav(120, 240), word)); await pipeline.publish();
-  assert.equal((await pipeline.catalog()).entries.length, 0);
+  assert.equal((await pipeline.catalog()).entries.length, 1);
   const measurements = JSON.parse(await fs.readFile(pipeline.reportFile));
   assert.equal(measurements.entries.find(entry => entry.id === wrong.id).tone.targetTone, 'falling');
 });

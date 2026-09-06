@@ -1,5 +1,13 @@
 # Phase 21: Belege, Entscheidungen und Grenzen
 
+**Aktualisierung 06.09.2026, AE-64:** Der Nutzer hat ungeprüfte Thai-Clips
+ausdrücklich für Vokabelwiedergabe und die drei Satzmodi zugelassen. Tonerkennung
+bleibt auf `passed` beschränkt, ohne System-TTS. Diese Produktentscheidung
+ersetzt die unten historisch dokumentierte offene Rückfrage, nicht den
+Forschungsbefund von C-0a. Kennzeichnung stammt jetzt je abgespieltem Clip aus
+seinem Gate-Status. Der genehmigte Generierungslauf wartet nur auf den
+Gemini-Schlüssel in der lokalen Sitzung; siehe `audio-run-2026-09-06.json`.
+
 Abrufdatum aller folgenden Webquellen: **05.09.2026**. Forschungsaussagen,
 lokale Messbefunde und Entscheidungen für die Übung sind getrennt dokumentiert.
 

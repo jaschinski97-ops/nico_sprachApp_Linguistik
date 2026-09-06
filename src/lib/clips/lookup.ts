@@ -1,6 +1,7 @@
-import { registerPronunciationClipLookup, SpeechLanguage } from '../audio';
+import { registerPronunciationClipLookup, SpeechLanguage, type ResolvedClip } from '../audio';
 import { DataStore, getStore } from '../storage';
-import { bundledAssetUri } from '../content/bundled';
+import { bundledAssetUri, bundledEntry } from '../content/bundled';
+import { allowsThaiPlayback, type AudioPurpose } from '../content/audio-policy';
 import { isContentDeveloper } from '../content/developer';
 
 import { getAudioBlobStore } from './blob-store';
@@ -51,16 +52,18 @@ export async function clipIndex(store?: DataStore): Promise<Map<string, string>>
 }
 
 export async function resolveClipUri(
-  request: { text: string; language: SpeechLanguage },
+  request: { text: string; language: SpeechLanguage; purpose?: AudioPurpose },
   store?: DataStore,
   blobStore?: AudioBlobStore
 ): Promise<string | null> {
   const id = clipIdFor(request.language, request.text);
-  const bundled = await bundledAssetUri('audio', id);
+  const entry = bundledEntry('audio', id);
+  const allowed = request.language !== 'th' || allowsThaiPlayback(entry?.check?.tone?.status, request.purpose);
+  const bundled = allowed ? await bundledAssetUri('audio', id) : null;
   if (bundled) return bundled;
   // Learning screens must not bypass the delivery gate through old drafts.
   // Explicit stores are retained only as the dependency seam for isolated tests.
-  if (request.language === 'th' && !store) return null;
+  if (request.purpose === 'tone' || (request.language === 'th' && !store)) return null;
   if (!__DEV__ || (!store && !isContentDeveloper())) return null;
   const blobKey = (await clipIndex(store)).get(id);
   if (!blobKey) return null;
@@ -76,7 +79,10 @@ export async function resolveClipUri(
 export function installClipLookup(): void {
   registerPronunciationClipLookup(async (request) => {
     try {
-      return await resolveClipUri(request);
+      const uri = await resolveClipUri(request);
+      if (!uri) return null;
+      const id = clipIdFor(request.language, request.text);
+      return { uri, id, toneStatus: bundledEntry('audio', id)?.check?.tone?.status } satisfies ResolvedClip;
     } catch (error) {
       console.warn('[clips] Clip-Suche fehlgeschlagen, weiter mit Sprachausgabe.', error);
       return null;

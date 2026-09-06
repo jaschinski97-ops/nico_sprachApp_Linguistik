@@ -3,6 +3,168 @@
   "entries": [
     {
       "kind": "audio",
+      "id": "th-108bad8b3abd9bde",
+      "document": {
+        "id": "th-108bad8b3abd9bde",
+        "language": "th",
+        "text": "ครับ",
+        "kind": "vocab",
+        "sourceId": "khrap",
+        "format": "mp3",
+        "byteSize": 8109,
+        "durationMs": 920,
+        "blobKey": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602476000,
+        "synthetic": true
+      },
+      "digest": "bcb9716c410068a4f1e67261f0b264af756ea482e3c681554d08fc5e7303fb12",
+      "asset": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a.mp3",
+      "byteSize": 8109,
+      "sourceBytes": 44204,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:20.772Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 140,
+          "summary": {
+            "pts": [
+              0.35696812072862316,
+              0,
+              0,
+              0,
+              0,
+              -1.6821318965791232
+            ],
+            "start": 0.35696812072862316,
+            "end": -1.6821318965791232,
+            "min": -1.6821318965791232,
+            "max": 0.35696812072862316,
+            "mean": -0.11043031465420834,
+            "slope": -2.0391000173077463,
+            "durMs": 110
+          },
+          "targetTone": "high",
+          "sourceId": "khrap",
+          "source": "https://en.wiktionary.org/wiki/ครับ",
+          "status": "unchecked",
+          "reason": "Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-1f1216e2aa97ebdb",
+      "document": {
+        "id": "th-1f1216e2aa97ebdb",
+        "language": "th",
+        "text": "สวัสดี",
+        "kind": "vocab",
+        "sourceId": "sawatdii",
+        "format": "mp3",
+        "byteSize": 12525,
+        "durationMs": 1480,
+        "blobKey": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602468767,
+        "synthetic": true
+      },
+      "digest": "7d12d4d90030222781f40debcf545893e68bc00dfbee32b1c74aa13980af5b1e",
+      "asset": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482.mp3",
+      "byteSize": 12525,
+      "sourceBytes": 71084,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:20.823Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 690,
+          "summary": {
+            "pts": [
+              -4.205966965009597,
+              -1.2520399177768273,
+              -0.42748691676865647,
+              0.8880069773253213,
+              1.8240371213406008,
+              -2.0391000173077494
+            ],
+            "start": -4.205966965009597,
+            "end": -2.0391000173077494,
+            "min": -4.205966965009597,
+            "max": 1.8240371213406008,
+            "mean": -0.025689006874608348,
+            "slope": 2.1668669477018474,
+            "durMs": 410
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-25dac11d091a88b6",
+      "document": {
+        "id": "th-25dac11d091a88b6",
+        "language": "th",
+        "text": "ขอบคุณ มาก ครับ",
+        "kind": "example",
+        "sourceId": "khoopkhun",
+        "format": "mp3",
+        "byteSize": 14829,
+        "durationMs": 1760,
+        "blobKey": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602482510,
+        "synthetic": true
+      },
+      "digest": "f9cb23f08e4add38a0d8b3db8702cb3a8dce35f9e32a6c5450c69a2d3f8eee15",
+      "asset": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b.mp3",
+      "byteSize": 14829,
+      "sourceBytes": 84524,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:20.867Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 550,
+          "summary": {
+            "pts": [
+              0.5168246627026349,
+              -1.925576066318953,
+              -1.925576066318953,
+              -0.5018421083355228,
+              0.5168246627026349,
+              1.5991983703615724
+            ],
+            "start": 0.5168246627026349,
+            "end": 1.5991983703615724,
+            "min": -2.3752725313429046,
+            "max": 1.5991983703615724,
+            "mean": -0.39378966398188925,
+            "slope": 1.0823737076589375,
+            "durMs": 310
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
       "id": "th-26991523deb03340",
       "document": {
         "id": "th-26991523deb03340",
@@ -27,7 +189,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-05T14:19:24.428Z",
+        "checkedAt": "2026-09-06T06:20:20.909Z",
         "scope": "schema-integrity-decode",
         "tone": {
           "version": "f0-hysteresis-1",
@@ -58,6 +220,324 @@
       }
     },
     {
+      "kind": "audio",
+      "id": "th-8ae0473a01b209b5",
+      "document": {
+        "id": "th-8ae0473a01b209b5",
+        "language": "th",
+        "text": "ใช่ ครับ",
+        "kind": "example",
+        "sourceId": "khrap",
+        "format": "mp3",
+        "byteSize": 10605,
+        "durationMs": 1240,
+        "blobKey": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602487697,
+        "synthetic": true
+      },
+      "digest": "47a883a6cc44d1a15b5767e008cdaa2eb8592508c4d74a0ff3139d3ccf968774",
+      "asset": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c.mp3",
+      "byteSize": 10605,
+      "sourceBytes": 59564,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:20.948Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 270,
+          "summary": {
+            "pts": [
+              2.9539270472327703,
+              1.786360630973793,
+              0.6925859742754455,
+              -0.3361725140351616,
+              -1.6191549610333023,
+              -2.8135830436442757
+            ],
+            "start": 2.9539270472327703,
+            "end": -2.8135830436442757,
+            "min": -2.8135830436442757,
+            "max": 2.9539270472327703,
+            "mean": 0.10275643031136572,
+            "slope": -5.767510090877046,
+            "durMs": 210
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-90b05d949e9676a9",
+      "document": {
+        "id": "th-90b05d949e9676a9",
+        "language": "th",
+        "text": "ใช่ ค่ะ",
+        "kind": "example",
+        "sourceId": "kha",
+        "format": "mp3",
+        "byteSize": 9645,
+        "durationMs": 1120,
+        "blobKey": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602489833,
+        "synthetic": true
+      },
+      "digest": "bfb9022cc03193218b95e77e32c0399178abf8b19aa629e004c4205ec0ae62c6",
+      "asset": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9.mp3",
+      "byteSize": 9645,
+      "sourceBytes": 53804,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:20.989Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 200,
+          "summary": {
+            "pts": [
+              -1.890495323837757,
+              -1.2829824469981428,
+              -0.6533734082685155,
+              0,
+              0.6790023403964102,
+              0.6790023403964102
+            ],
+            "start": -1.890495323837757,
+            "end": 0.6790023403964102,
+            "min": -1.890495323837757,
+            "max": 0.6790023403964102,
+            "mean": -0.4392275700046098,
+            "slope": 2.5694976642341674,
+            "durMs": 130
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-93d9acf63a83c20d",
+      "document": {
+        "id": "th-93d9acf63a83c20d",
+        "language": "th",
+        "text": "ขอโทษ",
+        "kind": "vocab",
+        "sourceId": "khoothoot",
+        "format": "mp3",
+        "byteSize": 11949,
+        "durationMs": 1400,
+        "blobKey": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602473567,
+        "synthetic": true
+      },
+      "digest": "29c687060d392ee97826078880ca3258d1c18ee84776fb42e03163818b4a41a2",
+      "asset": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0.mp3",
+      "byteSize": 11949,
+      "sourceBytes": 67244,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:21.029Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 430,
+          "summary": {
+            "pts": [
+              0.9895459223036757,
+              0,
+              0,
+              0,
+              -0.4743403702396481,
+              -1.8240371213405995
+            ],
+            "start": 0.9895459223036757,
+            "end": -1.8240371213405995,
+            "min": -1.8240371213405995,
+            "max": 0.9895459223036757,
+            "mean": -0.09085585127135977,
+            "slope": -2.8135830436442753,
+            "durMs": 250
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-df514ca440e75c41",
+      "document": {
+        "id": "th-df514ca440e75c41",
+        "language": "th",
+        "text": "สวัสดี ครับ",
+        "kind": "example",
+        "sourceId": "sawatdii",
+        "format": "mp3",
+        "byteSize": 12525,
+        "durationMs": 1480,
+        "blobKey": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602480321,
+        "synthetic": true
+      },
+      "digest": "2a6a8115d89b01961c35af9053086f8e898907f981c623893ca2ac36d82fb81a",
+      "asset": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa.mp3",
+      "byteSize": 12525,
+      "sourceBytes": 71084,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:21.072Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 380,
+          "summary": {
+            "pts": [
+              -1.8240371213405995,
+              -2.8328082988022927,
+              -0.7528290641755511,
+              0,
+              0.1934359843593239,
+              0.3890577323085291
+            ],
+            "start": -1.8240371213405995,
+            "end": 0.3890577323085291,
+            "min": -2.8328082988022927,
+            "max": 0.3890577323085291,
+            "mean": -0.8583702026754528,
+            "slope": 2.2130948536491286,
+            "durMs": 200
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-e295ddc04bde88c3",
+      "document": {
+        "id": "th-e295ddc04bde88c3",
+        "language": "th",
+        "text": "ขอโทษ ครับ",
+        "kind": "example",
+        "sourceId": "khoothoot",
+        "format": "mp3",
+        "byteSize": 12141,
+        "durationMs": 1440,
+        "blobKey": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602485062,
+        "synthetic": true
+      },
+      "digest": "74bd3b274b4257d4eab02c8ba19f8b5a7c6d0c2f7486ca595c1dc1065cfd3076",
+      "asset": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71.mp3",
+      "byteSize": 12141,
+      "sourceBytes": 69164,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:21.115Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 340,
+          "summary": {
+            "pts": [
+              0,
+              0,
+              0,
+              0.487703813968153,
+              0.487703813968153,
+              0
+            ],
+            "start": 0,
+            "end": 0,
+            "min": 0,
+            "max": 0.9895459223036757,
+            "mean": 0.30039760204176624,
+            "slope": 0,
+            "durMs": 170
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
+      "kind": "audio",
+      "id": "th-fb4c648b72f80cee",
+      "document": {
+        "id": "th-fb4c648b72f80cee",
+        "language": "th",
+        "text": "ขอบคุณ",
+        "kind": "vocab",
+        "sourceId": "khoopkhun",
+        "format": "mp3",
+        "byteSize": 11565,
+        "durationMs": 1360,
+        "blobKey": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4.mp3",
+        "provider": "gemini",
+        "model": "gemini-3.1-flash-tts-preview",
+        "voice": "Kore",
+        "generatedAt": 1788602471135,
+        "synthetic": true
+      },
+      "digest": "b96405c7d89353b4096b014b07d319b48f9b84032e28be695962b1f3897e498a",
+      "asset": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4.mp3",
+      "byteSize": 11565,
+      "sourceBytes": 65324,
+      "check": {
+        "status": "unchecked",
+        "label": "ungeprüft",
+        "checkedAt": "2026-09-06T06:20:21.155Z",
+        "scope": "schema-integrity-decode",
+        "tone": {
+          "version": "f0-hysteresis-1",
+          "voicedMs": 450,
+          "summary": {
+            "pts": [
+              4.3508409526165,
+              2.0391000173077485,
+              0.3236045712032323,
+              -0.9360301440152765,
+              -3.20976373037983,
+              -1.5330665663804726
+            ],
+            "start": 4.3508409526165,
+            "end": -1.5330665663804726,
+            "min": -3.474079406339818,
+            "max": 4.3508409526165,
+            "mean": -0.08027268791756431,
+            "slope": -5.883907518996972,
+            "durMs": 340
+          },
+          "status": "unchecked",
+          "reason": "Kein verifizierter einsilbiger Wortbezug; keine automatische Silbensegmentierung."
+        }
+      }
+    },
+    {
       "kind": "images",
       "id": "aahaan",
       "document": {
@@ -77,7 +557,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-05T14:19:24.682Z",
+        "checkedAt": "2026-09-06T06:20:21.196Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -101,7 +581,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-05T14:19:24.719Z",
+        "checkedAt": "2026-09-06T06:20:21.233Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -125,7 +605,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-05T14:19:24.754Z",
+        "checkedAt": "2026-09-06T06:20:21.267Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -149,7 +629,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-05T14:19:24.788Z",
+        "checkedAt": "2026-09-06T06:20:21.302Z",
         "scope": "schema-integrity-decode"
       }
     },
@@ -173,7 +653,7 @@
       "check": {
         "status": "passed",
         "label": "automatisch geprüft",
-        "checkedAt": "2026-09-05T14:19:24.823Z",
+        "checkedAt": "2026-09-06T06:20:21.337Z",
         "scope": "schema-integrity-decode"
       }
     }

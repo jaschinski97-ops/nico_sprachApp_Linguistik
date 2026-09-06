@@ -65,6 +65,8 @@ export type DrillSessionOptions = {
   size?: number;
   /** Für Tests und reproduzierbare Sitzungen. */
   seed?: number;
+  /** Runtime media eligibility, applied before ranking/windowing the candidates. */
+  isEligible?: (entry: VocabEntry) => boolean | Promise<boolean>;
 };
 
 export type DrillSession = {
@@ -138,7 +140,9 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
   const { entries, cards } = await ensureCardStates(direction, db, now);
 
   const cardByVocabId = new Map(cards.map((card) => [card.vocabId, card]));
-  const candidates = entries.filter((entry) => canBuild(drill, entry));
+  const potential = entries.filter((entry) => canBuild(drill, entry));
+  const eligibility = options.isEligible ? await Promise.all(potential.map(options.isEligible)) : potential.map(() => true);
+  const candidates = potential.filter((_, i) => eligibility[i]);
 
   const ranked = [...candidates].sort(
     (a, b) => weakness(cardByVocabId.get(a.id), now) - weakness(cardByVocabId.get(b.id), now)

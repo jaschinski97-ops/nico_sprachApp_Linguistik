@@ -11,6 +11,7 @@ const { isValidExamModule } = domain.load('src/lib/exam/types');
 const { isValidAudioClip, clipIdFor } = domain.load('src/lib/clips/types');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { checkThaiTone, TONE_GATE_LIMITS } = domain.load('src/lib/content/tone-gate');
+const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
 const { decodeAudio, decodeImage } = require('./media.cjs');
 
 const KINDS = ['situations', 'images', 'audio', 'exam'];
@@ -165,7 +166,7 @@ class ContentPipeline {
       prepared.push({ entry, bytes });
     }
     await fs.mkdir(assetDir, { recursive: true });
-    const accepted = prepared.filter(({ entry }) => entry.check.status === 'passed');
+    const accepted = prepared.filter(({ entry }) => isDeliverableEntry(entry));
     for (const { entry, bytes } of accepted) if (entry.asset) await fs.writeFile(path.join(assetDir, entry.asset), bytes);
     const delivered = accepted.map(({ entry }) => {
       const copy = structuredClone(entry);
@@ -177,6 +178,7 @@ class ContentPipeline {
     const report = {
       measuredAt: new Date().toISOString(), encoder: 'libmp3lame, 64 kbit/s, mono, 24000 Hz',
       entries: delivered.length, unchecked: prepared.filter(({ entry }) => entry.check.status === 'unchecked').length,
+      uncheckedThaiDelivered: delivered.filter(entry => entry.kind === 'audio' && entry.document.language === 'th' && entry.check.tone?.status === 'unchecked').length,
       failed: prepared.filter(({ entry }) => entry.check.status === 'failed').length, contentBudgetBytes: BUDGET,
       budgetBytes: delivered.reduce((sum, entry) => sum + (entry.byteSize ?? 0) + Buffer.byteLength(JSON.stringify(entry)), 0),
       audio: delivered.filter((entry) => entry.kind === 'audio').map((entry) => ({ id: entry.id, sourceBytes: entry.sourceBytes, compressedBytes: entry.byteSize })),

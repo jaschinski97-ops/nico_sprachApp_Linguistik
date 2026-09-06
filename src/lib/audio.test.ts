@@ -76,13 +76,13 @@ describe('playPronunciation', () => {
     expect(calls.some((c) => c.kind === 'playAsset')).toBe(false);
   });
 
-  it('nutzt den vorproduzierten Clip, sobald ein Aufloeser ihn liefert', async () => {
+  it('nutzt fuer Nicht-Thai weiterhin einen direkten Asset-Aufloeser', async () => {
     // Das ist der spaetere Content-Schritt: nur der Aufloeser wird eingehaengt,
     // die aufrufenden Screens bleiben unveraendert.
     registerAudioAssetResolver((id) => `https://example.invalid/${id}.m4a`);
 
     expect(
-      await playPronunciation({ text: 'ไก่', language: 'th', audioAssetId: 'gai-01' })
+      await playPronunciation({ text: 'chicken', language: 'en', audioAssetId: 'gai-01' })
     ).toBe('asset');
     expect(calls.find((c) => c.kind === 'playAsset')?.args[0]).toBe(
       'https://example.invalid/gai-01.m4a'
@@ -133,7 +133,7 @@ describe('playPronunciation', () => {
       })
     );
 
-    const play = playPronunciation({ text: 'ไก่', language: 'th', audioAssetId: 'gai-01' });
+    const play = playPronunciation({ text: 'chicken', language: 'en', audioAssetId: 'gai-01' });
     // Der erste Backend-Stopp laeuft vor dem asynchronen Aufloeser.
     await resolverStarted;
     const stop = stopPronunciation();

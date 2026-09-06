@@ -1,8 +1,80 @@
 {
-  "verifiedAt": "2026-09-05T17:54:58.959Z",
+  "verifiedAt": "2026-09-06T06:22:58.262Z",
   "scope": "Actual checked-in automatically checked media, byte-identical in iOS/Android Expo asset manifests and the Web export. Hermes exports are not signed AAB/IPA files or physical device playback.",
-  "media": 6,
+  "media": 15,
   "rows": [
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-108bad8b3abd9bde",
+      "bytes": 8109,
+      "sha256": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-108bad8b3abd9bde",
+      "bytes": 8109,
+      "sha256": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-108bad8b3abd9bde",
+      "bytes": 8109,
+      "sha256": "9fe35a8857494107e22941bf5e871f34e3bc990bf7fd97fc8121bd5f99a0273a",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-1f1216e2aa97ebdb",
+      "bytes": 12525,
+      "sha256": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-1f1216e2aa97ebdb",
+      "bytes": 12525,
+      "sha256": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-1f1216e2aa97ebdb",
+      "bytes": 12525,
+      "sha256": "c5dd9f545775e61a643c9b9e6f283d39cf6df968bd9434ff8e2e486900d31482",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-25dac11d091a88b6",
+      "bytes": 14829,
+      "sha256": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-25dac11d091a88b6",
+      "bytes": 14829,
+      "sha256": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-25dac11d091a88b6",
+      "bytes": 14829,
+      "sha256": "b5f7bba15654ff3fac35ab412b273840959de0e99bc94e2d3d2eddc04ed0475b",
+      "identical": true
+    },
     {
       "platform": "ios",
       "kind": "audio",
@@ -25,6 +97,150 @@
       "id": "th-26991523deb03340",
       "bytes": 8301,
       "sha256": "16440f54287a4d83aa57d3a98bcefcf9b8512489e88b49c76ad6397e3c94cd89",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-8ae0473a01b209b5",
+      "bytes": 10605,
+      "sha256": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-8ae0473a01b209b5",
+      "bytes": 10605,
+      "sha256": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-8ae0473a01b209b5",
+      "bytes": 10605,
+      "sha256": "9ecf99a9984e9ab97713602c9afd1d4c0fb34d922a980e19a3da237794a7746c",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-90b05d949e9676a9",
+      "bytes": 9645,
+      "sha256": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-90b05d949e9676a9",
+      "bytes": 9645,
+      "sha256": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-90b05d949e9676a9",
+      "bytes": 9645,
+      "sha256": "50f623cea1195d77705182972757060ed240a6d0cfb1cea3ae844bb5fc6317a9",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-93d9acf63a83c20d",
+      "bytes": 11949,
+      "sha256": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-93d9acf63a83c20d",
+      "bytes": 11949,
+      "sha256": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-93d9acf63a83c20d",
+      "bytes": 11949,
+      "sha256": "7263243d7bf47115324307b33b6984ba36e7f0b7f02cc189263052d8cb627be0",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-df514ca440e75c41",
+      "bytes": 12525,
+      "sha256": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-df514ca440e75c41",
+      "bytes": 12525,
+      "sha256": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-df514ca440e75c41",
+      "bytes": 12525,
+      "sha256": "d0053340dc21de2f71c425e1a1a38590041e2e380b2f0674ba3bbd7bef18c3aa",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-e295ddc04bde88c3",
+      "bytes": 12141,
+      "sha256": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-e295ddc04bde88c3",
+      "bytes": 12141,
+      "sha256": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-e295ddc04bde88c3",
+      "bytes": 12141,
+      "sha256": "aa2c41e1eaa97864a028a2950854a04508d678c27bf870065cba1e42ab69fe71",
+      "identical": true
+    },
+    {
+      "platform": "ios",
+      "kind": "audio",
+      "id": "th-fb4c648b72f80cee",
+      "bytes": 11565,
+      "sha256": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4",
+      "identical": true
+    },
+    {
+      "platform": "android",
+      "kind": "audio",
+      "id": "th-fb4c648b72f80cee",
+      "bytes": 11565,
+      "sha256": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4",
+      "identical": true
+    },
+    {
+      "platform": "web",
+      "kind": "audio",
+      "id": "th-fb4c648b72f80cee",
+      "bytes": 11565,
+      "sha256": "1ec42f7efa4930f3131f8fa52a0b8d664f8ff95be03a66296f67648ede46d9b4",
       "identical": true
     },
     {

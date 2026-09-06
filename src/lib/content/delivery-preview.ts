@@ -24,7 +24,7 @@ export function previewAudioDelivery(specs: readonly AudioClipSpec[]): DeliveryP
     else if (word.syllables?.length !== 1) reason = 'Mehrsilbig: keine verifizierte zeitliche Segmentierung';
     else if (word.syllables[0].tone !== 'falling' && word.syllables[0].tone !== 'rising') reason = 'Mittel/tief/hoch: keine belastbare Sprecherreferenz';
     else { result.toneCheckable++; continue; }
-    result.excluded++;
+    result.uncheckedDelivered++;
     result.reasons[reason] = (result.reasons[reason] ?? 0) + 1;
   }
   return result;

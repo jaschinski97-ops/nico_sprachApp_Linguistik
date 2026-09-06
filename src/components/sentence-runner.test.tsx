@@ -3,7 +3,7 @@ import { SentenceAction, SentenceRunner } from './sentence-runner';
 import type { MicrophoneCaptureController } from '@/lib/speaking/microphone-capture';
 import { sentenceSession } from '@/lib/speaking/sentence-session';
 
-const mockPlay = jest.fn(async () => 'tts');
+const mockPlay = jest.fn(async () => ({ kind: 'asset', label: 'KI-Stimme, Ton nicht geprüft', toneStatus: 'unchecked' }));
 const mockStopAudio = jest.fn(async () => {});
 const mockAvailable = jest.fn(async () => true);
 const mockClip = jest.fn(async () => false);
@@ -13,7 +13,7 @@ const mockClear = jest.fn();
 const mockRecording = { samples: new Float32Array(8000), sampleRate: 8000, durationMs: 1000, reachedLimit: false };
 const mockStop = jest.fn(async () => mockRecording);
 let mockOptions: { maxDurationMs?: number; allowPlayback?: boolean };
-jest.mock('@/lib/audio', () => ({ playPronunciation: (...args: unknown[]) => mockPlay(...args as []),
+jest.mock('@/lib/audio', () => ({ playPronunciationWithStatus: (...args: unknown[]) => mockPlay(...args as []),
   stopPronunciation: () => mockStopAudio(), isLanguageAvailable: () => mockAvailable(), hasPronunciationClip: () => mockClip() }));
 jest.mock('@/hooks/use-microphone-capture', () => ({ useMicrophoneCapture: (options: typeof mockOptions): MicrophoneCaptureController => {
   mockOptions = options;
@@ -42,6 +42,7 @@ test('shadowing enforces preparation, hearing and headphones before mic; plays o
   mockPlay.mockClear();
   await press('Aufnahme starten');
   expect(mockStart).toHaveBeenCalledTimes(1); expect(mockPlay).toHaveBeenCalledTimes(1);
+  expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton nicht geprüft');
   expect(mockOptions.allowPlayback).toBe(true);
   expect(mockPlay).toHaveBeenCalledWith(expect.objectContaining({ concurrentRecording: true }));
   expect(mockStart.mock.invocationCallOrder[0]).toBeLessThan(mockPlay.mock.invocationCallOrder[0]);
@@ -71,6 +72,11 @@ test('hearing presents no transcript before answer, handles missing voice and ev
   mockAvailable.mockResolvedValue(false); await press('Satz hören');
   expect(mockPlay).not.toHaveBeenCalled(); expect(button(task.german).props.disabled).toBe(true);
   mockAvailable.mockResolvedValue(true); await press('Satz hören');
+  expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton nicht geprüft');
+  mockPlay.mockResolvedValueOnce({ kind: 'asset', label: 'KI-Stimme, Ton automatisch geprüft', toneStatus: 'passed' });
+  await press('Satz erneut hören');
+  expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton automatisch geprüft');
+  expect(JSON.stringify(tree.toJSON())).not.toContain('KI-Stimme, Ton nicht geprüft');
   await press(task.german);
   expect(JSON.stringify(tree.toJSON())).toContain('Richtig.');
   expect(JSON.stringify(tree.toJSON())).toContain(task.text);

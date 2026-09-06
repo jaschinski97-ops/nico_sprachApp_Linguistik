@@ -1,0 +1,21 @@
+{
+  "authorizationDate": "2026-09-06",
+  "source": "Explicit user message deciding B-21 and confirming one generation run",
+  "authorizedClips": 459,
+  "authorizedApproximateUsd": 0.54,
+  "provider": "gemini",
+  "model": "gemini-3.1-flash-tts-preview",
+  "voice": "Kore",
+  "currentPlan": 462,
+  "alreadyGenerated": 10,
+  "remainingToGenerate": 452,
+  "currentEstimatedUsd": 0.55709,
+  "estimateIsActualBilling": false,
+  "status": "awaiting_browser_api_key",
+  "providerCallsStarted": 0,
+  "authorizationConsumed": false,
+  "generationAndDeliverySeparate": true,
+  "existingClipsRepublished": 10,
+  "existingUncheckedThaiDelivered": 9,
+  "note": "Start button reports missing API key. No provider request made. Existing clips are skipped, not regenerated to reach 459. The one-time cost authorization remains valid; request only the missing credential in the local UI."
+}

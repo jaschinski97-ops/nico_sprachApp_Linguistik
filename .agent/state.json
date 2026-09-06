@@ -3,8 +3,8 @@
   "protocolVersion": 1,
   "lastUpdated": "2026-09-06",
   "currentPhase": 21,
-  "currentPhaseName": "Satzuebungen, Quellenpruefung und Durchlassvorschau; Satzaudio offen",
-  "currentPhaseStatus": "implementation_verified_audio_availability_blocked",
+  "currentPhaseName": "Satz-Audiopolitik umgesetzt; genehmigte Generierung wartet auf Schluessel",
+  "currentPhaseStatus": "mode_policy_verified_awaiting_generation_key",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -1023,7 +1023,7 @@
       "phase": 21,
       "criterion": "C-0a Satzkategorie belegt entscheiden",
       "done": true,
-      "verifiedHow": "Begruendet abgelehnt: Thai-Tonkontraste bleiben in untersuchten Saetzen erhalten. Keine unautorisierte Ausnahme. content/phase21-research.md, AE-61."
+      "verifiedHow": "Begruendet abgelehnt: Thai-Tonkontraste bleiben in untersuchten Saetzen erhalten. Keine unautorisierte Ausnahme. content/phase21-research.md, AE-61. AE-64: Nutzer hat anschliessend bewusst eine Produkt-Ausnahme fuer vocabulary/sentence genehmigt; umgesetzt mit unveraendertem Gate-Status."
     },
     {
       "phase": 21,
@@ -1035,7 +1035,7 @@
       "phase": 21,
       "criterion": "C-0c Durchlassquote vor Kostenbestaetigung",
       "done": true,
-      "verifiedHow": "previewAudioDelivery und Generator-Bestaetigungsdialog getestet vor Anbieteraufruf. Gesamtplan 462: 22 tonpruefbar, 297 technisch, 0 ungeprueft geliefert, 143 ausgeschlossen; Obergrenze 69.0 Prozent."
+      "verifiedHow": "Vor Kostenbestaetigung je konkretem Plan: 462 insgesamt, 22 tonpruefbar, 297 nur technisch, 143 voraussichtlich ungeprueft geliefert, 0 statisch ausgeschlossen; reale Ton-/Integritaetsfehler koennen weiter aussortieren."
     },
     {
       "phase": 21,
@@ -1048,7 +1048,7 @@
       "criterion": "C1/C2/C4 Shadowing, sinkende Zeiten und Satzhoerverstehen vollstaendig spielbar",
       "done": false,
       "blocker": "B-21; B-2",
-      "verifiedHow": "34 regelbasiert nachvollzogene Satzlesarten; UI- und Audio-Lebenszyklustests gruen. Echter Browser ohne Satzclip/Thai-Systemstimme: Start gesperrt. Kontrollierte Testdoubles sind kein echtes Playback."
+      "verifiedHow": "Modusregeln und individuelle Clipkennzeichnung automatisch geprueft; vorhandener ungepruefter Vokabelclip startet im Browser. Fuer die 34 Satzlesarten fehlen noch generierte Quellen. Genehmigter Lauf wartet auf Schluessel (B-21)."
     },
     {
       "phase": 21,
@@ -1066,7 +1066,7 @@
       "phase": 21,
       "criterion": "Tests, TypeScript, Dokumentation und Commit",
       "done": true,
-      "verifiedHow": "741 Jest-Tests/43 Suites, 8 Node-Pipeline-Tests, TypeScript, Integritaet und gemeinsamer Tonkern gruen. Drei Produktions-Exporte ohne Generatorcode, 18 Asset-Vergleiche. PROGRESS und Zustand im selben Commit."
+      "verifiedHow": "750 Jest-Tests/45 Suites, 8 Pipeline-Tests, TypeScript und Exporte gruen. 15 echte Liefermedien 45-mal bytegleich; keine Generator-/Schluesselmodule. Browser bestaetigt unterschiedliche Clipkennzeichnung fuer vocabulary und tone. content:check bleibt wegen Vollbestandsluecken rot."
     }
   ],
   "architectureDecisions": [
@@ -1384,6 +1384,11 @@
       "id": "AE-63",
       "title": "Satzuebungen ohne unbewiesene Wirksamkeits- oder Playbackbehauptung",
       "rationale": "34 regelbasiert nachvollzogene Satzlesarten aus allen 84 auditierten Beispielen, keine Aenderung der Vokabelvertraege. Lokales Shadowing, 12/9/6-Sekunden-Anpassung, zwingende Vorbereitung, Bedeutungswahl und Grenzenhinweis implementiert. Audiorouting im SDK-Code nachvollzogen und getestet; echte Satzquellen und physische Abnahme offen."
+    },
+    {
+      "id": "AE-64",
+      "title": "Ungepruefte Thai-Clips bewusst nur in nicht tonbewertenden Modi",
+      "rationale": "Explizite Nutzerentscheidung vom 06.09.2026: vocabulary/sentence duerfen unchecked spielen, tone ausschliesslich passed ohne System-TTS. failed bleibt ausgeschlossen. Kennzeichnung stammt aus dem Gate-Status des wirklich aufgeloesten Clips. content:check zaehlt uncheckedThaiDelivered. Forschung aus AE-61 bleibt richtig; keine Umdeutung als Messung."
     }
   ],
   "openBlockers": [
@@ -1447,21 +1452,21 @@
     },
     {
       "id": "B-21",
-      "title": "Satzclips und nachgewiesene Spielbarkeit fehlen",
+      "title": "Genehmigte Satz-Audioerzeugung wartet auf Gemini-Schluessel",
       "affectsPhases": [
         21
       ],
       "needsUser": true,
-      "note": "Die pauschale Tontor-Ausnahme ist fachlich nicht belegt. Kein bestaetigter Produktentscheid zur Lieferung ungepruefter Saetze; kein Vollmengenlauf. Der aktuelle Browser hat weder zulaessige Satzclips noch eine Thai-Systemstimme. Automatische Tests beweisen nur die implementierten Ablaeufe mit kontrollierter Audioquelle. Keine Vollabnahme.",
-      "steps": "Entscheidung zum Umgang mit ungeprueften Satzclips, dann Audioabdeckung herstellen; kostenpflichtige Generierung erst nach konkreter Mengen-/Kostenbestaetigung. Anschliessend echtes Playback und native lokale Aufnahme pruefen."
+      "note": "Die Produktentscheidung ist getroffen und umgesetzt. Einmaliger Lauf ueber 459 Clips bei ungefaehr 0.54 USD explizit genehmigt. Aktueller Plan 462, zehn vorhanden, 452 fehlen, geschaetzt 0.55709 USD. Browser-Start meldet fehlenden API-Schluessel; null Anbieteraufrufe. Kein erneutes Kosten- oder Policyeinverstaendnis anfordern.",
+      "steps": "Gemini-Schluessel in der lokalen Sitzung unter Generator: Hoerclips eintragen; nicht im Chat. Bestehende einmalige Zustimmung fuer den Lauf verwenden, nur Fehlendes erzeugen, danach getrennte automatische Auslieferungspruefung. Ergebnis und echte Satzwiedergabe pruefen."
     }
   ],
   "nextUp": {
     "phase": 21,
     "name": "Satz-Audioabdeckung und echte Spielbarkeit abschliessen",
     "tasks": [
-      "B-21: Satz-Audiopolitik entscheiden und echte Audioquellen bereitstellen; keine stille Tontor-Ausnahme.",
-      "Erst nach sichtbarer Menge/Kostenschaetzung einen bezahlten Lauf bestaetigen; keine Einzelfreigaben.",
+      "B-21: Nur fehlenden Gemini-Schluessel benoetigt. Produktentscheidung und einmalige Kostenbestaetigung liegen vor (content/audio-run-2026-09-06.json). Genehmigten Lauf ausfuehren, Ergebnis messen.",
+      "Einmalige Kostenbestaetigung vom 06.09.2026 bleibt gueltig; keine weitere Zustimmung fuer denselben Lauf verlangen.",
       "C1/C2/C4 mit echtem Satzaudio abnehmen, B-2 fuer physische Aufnahme/Playback weiter offen.",
       "Bestehende B-19/AE-48 und B-5 nicht als geloest behandeln.",
       "Vollbestand nur nach einer Kostenbestaetigung je konkretem Lauf erzeugen, tatsaechliche Endgroesse messen; content:check und AE-48 bleiben Release-Gates.",
@@ -1881,16 +1886,16 @@
     "googlePlayBaseCompressedMB": 500,
     "appleIOSUncompressedGB": 4,
     "currentMissing": {
-      "audioBeforeDialogues": 461,
+      "audioBeforeDialogues": 452,
       "images": 73,
       "thaiSituations": 512,
       "enEsConversations": true
     },
     "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
-    "nativeEvidence": "6 aktuelle Medien in Web-/iOS-/Android-Exporten bytegleich (18 Vergleiche); kein signiertes AAB/IPA oder physisches Playback.",
+    "nativeEvidence": "15 aktuelle Medien in Web-/iOS-/Android-Exporten bytegleich (45 Vergleiche); kein signiertes AAB/IPA oder physisches Playback.",
     "tests": {
-      "jest": 728,
-      "suites": 39,
+      "jest": 750,
+      "suites": 45,
       "nodePipeline": 8,
       "typeScript": "pass",
       "staticPagesUnchangedAcrossBlockB": 8
@@ -1904,8 +1909,9 @@
       "failed": 0,
       "unchecked": 9,
       "toneGate": "f0-hysteresis-1",
-      "releasePolicy": "Thai requires passed tone check; failed/unchecked excluded; System-TTS fallback also in developer learning screens",
-      "limits": "Pitch only. No consonant/vowel-length/aspiration quality claim. Register needs speaker reference; multi-syllable needs verified timed segmentation; System-TTS itself unchecked."
+      "releasePolicy": "Thai passed/unchecked delivered; vocabulary and sentence may use unchecked with actual clip status label; tone requires passed with no TTS; failed excluded",
+      "limits": "Pitch only. No consonant/vowel-length/aspiration quality claim. Register needs speaker reference; multi-syllable needs verified timed segmentation; System-TTS itself unchecked.",
+      "uncheckedThaiDelivered": 9
     },
     "costConfirmation": "One count/cost confirmation before provider calls. Known exact Gemini models have dated tariff assumptions; unknown models require a user estimate. No per-item review.",
     "rolloutDecision": {
@@ -1939,8 +1945,8 @@
     "complete": false,
     "blocker": "B-21; B-2",
     "verification": {
-      "jest": 741,
-      "suites": 43,
+      "jest": 750,
+      "suites": 45,
       "nodePipeline": 8,
       "typeScript": "pass",
       "exports": [
@@ -1948,9 +1954,20 @@
         "android",
         "ios"
       ],
-      "exportDirectory": "build-verification/phase21",
+      "exportDirectory": "build-verification/phase21-b21-delivered",
       "productionGraph": "no generator/key modules",
-      "existingAssetByteComparisons": 18
-    }
+      "existingAssetByteComparisons": 45
+    },
+    "deliveryPolicy": {
+      "decision": "AE-64",
+      "uncheckedModes": [
+        "vocabulary",
+        "sentence"
+      ],
+      "toneRecognition": "passed only, no system TTS",
+      "label": "per resolved clip gate status",
+      "researchUnchanged": "AE-61"
+    },
+    "generationRun": "content/audio-run-2026-09-06.json"
   }
 }

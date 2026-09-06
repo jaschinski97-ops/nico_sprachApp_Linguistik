@@ -32,12 +32,12 @@ test('every shipped media entry resolves in production with no network, draft st
     expect(await loadAudioClips()).toEqual(audio.map(entry => entry.document));
     expect(await loadVocabImages()).toEqual(images.map(entry => entry.document));
     for (const entry of [...audio, ...images]) {
-      expect(entry.check?.status).toBe('passed');
-      expect(entry.check?.label).toBe('automatisch geprüft');
+      expect(['passed', 'unchecked']).toContain(entry.check?.status);
+      expect(entry.check?.label).toBe(entry.check?.status === 'unchecked' ? 'ungeprüft' : 'automatisch geprüft');
       expect(CONTENT_ASSETS[entry.asset!]).toBeDefined();
       if (entry.kind === 'audio') {
         const clip = entry.document as { text: string; language: 'th' | 'de' | 'en' | 'es' };
-        expect(await playPronunciation(clip)).toBe('asset');
+        expect(await playPronunciation({ ...clip, purpose: 'vocabulary' })).toBe('asset');
       } else {
         expect(await loadVocabImageUri(entry.id)).toBe('file:///embedded/media');
       }

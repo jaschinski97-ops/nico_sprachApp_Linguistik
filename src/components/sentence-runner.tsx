@@ -4,9 +4,9 @@ import { MeasuredToneContour } from './measured-tone-contour';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
-import { SENTENCE_AUDIO_NOTICE, SENTENCE_LIMITS, SENTENCE_TASKS } from '@/data/sentence-tasks';
+import { SENTENCE_LIMITS, SENTENCE_TASKS } from '@/data/sentence-tasks';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
-import { hasPronunciationClip, isLanguageAvailable, playPronunciation, stopPronunciation } from '@/lib/audio';
+import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
 import type { CapturedPcm } from '@/lib/speaking';
 import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession,
   SENTENCE_WINDOWS_MS, type SentenceMeasurement, type SentenceMode } from '@/lib/speaking/sentence-session';
@@ -67,17 +67,16 @@ export function SentenceRunner({ mode, onExit }: { mode: SentenceMode; onExit: (
 
   async function play(concurrentRecording = false): Promise<boolean> {
     const turn = generation.current;
-    const request = { text: task.text, language: 'th' as const };
+    const request = { text: task.text, language: 'th' as const, purpose: 'sentence' as const };
     if (!await hasPronunciationClip(request) && await isLanguageAvailable('th') === false) {
       if (turn === generation.current) setNotice('Kein Satzclip und keine Thai-Systemstimme verfügbar. Installiere eine Thai-Stimme oder nutze ein Gerät mit Thai-Sprachausgabe. Ohne hörbaren Satz wird keine Antwort bewertet.');
       return false;
     }
     if (turn !== generation.current) return false;
-    const kind = await playPronunciation({ ...request, ...(concurrentRecording ? { concurrentRecording: true } : {}) });
+    const playback = await playPronunciationWithStatus({ ...request, ...(concurrentRecording ? { concurrentRecording: true } : {}) });
     if (turn !== generation.current) { await stopPronunciation(); return false; }
-    setNotice(kind === 'asset' ? 'Satzclip gestartet. ' + SENTENCE_AUDIO_NOTICE :
-      kind === 'tts' ? 'System-TTS gestartet. ' + SENTENCE_AUDIO_NOTICE : 'Kein Hörbeispiel verfügbar.');
-    return kind !== 'unavailable';
+    setNotice(playback.label);
+    return playback.kind !== 'unavailable';
   }
 
   async function listen() {
@@ -167,7 +166,7 @@ export function SentenceRunner({ mode, onExit }: { mode: SentenceMode; onExit: (
       </>}
     </>}
     {(listening || stage === 'prepare') && <SentenceAction label={heard ? 'Satz erneut hören' : 'Satz hören'} onPress={() => void listen()} disabled={busy} />}
-    <ThemedText type="small">{SENTENCE_AUDIO_NOTICE}</ThemedText>
+    <ThemedText type="small">Das Hörbeispiel ist kein Bewertungsmaßstab für deine Aufnahme.</ThemedText>
     <ThemedText accessibilityLiveRegion="polite" type="small">{capture.error?.message || notice}</ThemedText>
     {!listening && stage === 'prepare' && <>
       {mode === 'shadowing' && <SentenceAction label={headphones ? 'Kopfhörer bestätigt' : 'Ich verwende Kopfhörer'} onPress={() => setHeadphones(value => !value)} />}

@@ -1,5 +1,6 @@
 import * as Speech from 'expo-speech';
 import type { AudioPlayer } from 'expo-audio';
+import { allowsThaiPlayback, clipToneLabel, type AudioPurpose, type ToneStatus } from './content/audio-policy';
 
 /**
  * Aussprache-Wiedergabe.
@@ -59,10 +60,13 @@ export type PronunciationRequest = {
   audioAssetId?: string;
   /** Nur beim Mitsprechen: Player-Ende darf den laufenden Mikrofonstream nicht stoppen. */
   concurrentRecording?: boolean;
+  purpose?: AudioPurpose;
 };
 
 /** Was tatsächlich abgespielt wurde — nützlich für Tests und Anzeige. */
 export type PlaybackKind = 'asset' | 'tts' | 'unavailable';
+export type ResolvedClip = { uri: string; id: string; toneStatus?: ToneStatus };
+export type PlaybackResult = { kind: PlaybackKind; label: string; clipId?: string; toneStatus?: ToneStatus };
 
 /** Löst eine Asset-ID in eine abspielbare Quelle auf — synchron oder asynchron. */
 export type AudioAssetResolver = (assetId: string) => string | null | Promise<string | null>;
@@ -77,7 +81,8 @@ export function registerAudioAssetResolver(resolver: AudioAssetResolver): void {
 export type PronunciationClipLookup = (request: {
   text: string;
   language: SpeechLanguage;
-}) => string | null | Promise<string | null>;
+  purpose?: AudioPurpose;
+}) => string | ResolvedClip | null | Promise<string | ResolvedClip | null>;
 
 let lookupClip: PronunciationClipLookup = () => null;
 
@@ -85,8 +90,10 @@ export function registerPronunciationClipLookup(lookup: PronunciationClipLookup 
   lookupClip = lookup ?? (() => null);
 }
 
-export async function hasPronunciationClip(request: { text: string; language: SpeechLanguage }): Promise<boolean> {
-  return Boolean(await Promise.resolve(lookupClip(request)).catch(() => null));
+export async function hasPronunciationClip(request: { text: string; language: SpeechLanguage; purpose?: AudioPurpose }): Promise<boolean> {
+  const clip = await Promise.resolve(lookupClip(request)).catch(() => null);
+  if (request.purpose === 'tone') return typeof clip === 'object' && clip !== null && clip.toneStatus === 'passed';
+  return Boolean(clip);
 }
 
 /** Trennt die Wiedergabe von der Entscheidungslogik, damit sie testbar bleibt. */
@@ -176,37 +183,52 @@ export function setPronunciationBackend(next: PronunciationBackend | null): void
  */
 async function playPronunciationNow(
   request: PronunciationRequest
-): Promise<PlaybackKind> {
+): Promise<PlaybackResult> {
   const text = request.text.trim();
-  if (!text) return 'unavailable';
+  const unavailable: PlaybackResult = { kind: 'unavailable', label: 'Kein zulässiger Hörclip verfügbar' };
+  if (!text) return unavailable;
 
   await backend.stop().catch(() => {
     // Nichts lief, das ist kein Fehler.
   });
 
   let uri: string | null = null;
-  if (request.audioAssetId) {
+  let resolved: ResolvedClip | null = null;
+  if (request.audioAssetId && request.language !== 'th') {
     uri = await resolveAudioAsset(request.audioAssetId);
   }
   if (!uri) {
     // Ein Fehler beim Nachschlagen darf die Wiedergabe nicht verhindern -
     // dann eben TTS, wie vor Phase 11.
-    uri = await Promise.resolve(lookupClip({ text, language: request.language })).catch(
+    const clip = await Promise.resolve(lookupClip({ text, language: request.language, ...(request.purpose ? { purpose: request.purpose } : {}) })).catch(
       () => null
     );
+    resolved = typeof clip === 'object' ? clip : null;
+    uri = typeof clip === 'string' ? clip : clip?.uri ?? null;
+    if (request.language === 'th' && resolved && !allowsThaiPlayback(resolved.toneStatus, request.purpose)) uri = null;
+    // A legacy string resolver has no gate evidence and can never feed a tone test.
+    if (request.language === 'th' && request.purpose === 'tone' && !allowsThaiPlayback(resolved?.toneStatus, 'tone')) uri = null;
   }
   if (uri) {
     if (request.concurrentRecording) await backend.playAsset(uri, true);
     else await backend.playAsset(uri);
-    return 'asset';
+    return { kind: 'asset', label: clipToneLabel(resolved?.toneStatus ?? (request.language === 'th' ? undefined : 'not-applicable')),
+      ...(resolved ? { clipId: resolved.id, toneStatus: resolved.toneStatus } : {}) };
   }
+
+  // The scored tone-recognition exercise must never fall back to untested TTS.
+  if (request.purpose === 'tone') return unavailable;
 
   if (request.concurrentRecording) await backend.speak(text, LOCALE[request.language], RATE[request.language], true);
   else await backend.speak(text, LOCALE[request.language], RATE[request.language]);
-  return 'tts';
+  return { kind: 'tts', label: request.language === 'th' ? 'Systemstimme, Ton nicht geprüft' : 'Systemstimme' };
 }
 
 export function playPronunciation(request: PronunciationRequest): Promise<PlaybackKind> {
+  return playPronunciationWithStatus(request).then(result => result.kind);
+}
+
+export function playPronunciationWithStatus(request: PronunciationRequest): Promise<PlaybackResult> {
   return enqueuePlayback(() => playPronunciationNow(request));
 }
 

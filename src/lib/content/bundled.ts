@@ -3,11 +3,13 @@ import { Asset } from 'expo-asset';
 import catalog from '../../content/catalog.json';
 import { CONTENT_ASSETS } from '../../content/assets';
 import type { ContentCatalog, ContentDocuments, ContentKind } from './types';
+import { isDeliverableEntry } from './audio-policy';
 
-const entries = (catalog as unknown as ContentCatalog).entries.filter(
-  (entry) => entry.check?.status === 'passed' &&
-    (entry.kind !== 'audio' || (entry.document as import('../clips/types').AudioClip).language !== 'th' || entry.check.tone?.status === 'passed')
-);
+const entries = (catalog as unknown as ContentCatalog).entries.filter(isDeliverableEntry);
+
+export function bundledEntry(kind: ContentKind, id: string) {
+  return entries.find(entry => entry.kind === kind && entry.id === id);
+}
 
 export function bundledDocuments<K extends ContentKind>(kind: K): ContentDocuments[K][] {
   return entries.filter((entry) => entry.kind === kind).map((entry) => entry.document as ContentDocuments[K]);

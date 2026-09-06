@@ -5209,3 +5209,51 @@ Satzclips und anschließend tatsächlich verfügbare Audioquellen. Das Tontor
 wird dafür nicht stillschweigend geöffnet. Ein kostenpflichtiger Lauf beginnt
 erst nach der konkreten Mengen-/Kostenbestätigung. B-19 (Vollbestand), AE-48
 und B-2/B-5 bleiben außerdem offen.
+
+### AE-64 — B-21 ausdrücklich als Produktentscheidung gelöst (06.09.2026)
+
+Der Nutzer erlaubt `unchecked`-Thai-Clips für **Vokabelwiedergabe, Satz-
+Shadowing, Satzwiederholung und Satz-Hörverstehen**, sichtbar je tatsächlich
+gespieltem Clip als **„KI-Stimme, Ton nicht geprüft“**. `passed` erhält eine
+eigene Kennzeichnung. Die Entscheidung behauptet keine neue Messung und
+widerruft AE-61s Forschungsbefund nicht. `failed` bleibt ausgeschlossen.
+
+`audio-policy.ts` trennt Katalogzulassung und Verwendung. Die Tonerkennung
+filtert Kandidaten vor der Auswahl nach verfügbaren `passed`-Clips; auch der
+Player erzwingt dies, einschließlich direkter Asset-ID, ohne System-TTS-
+Ausweichweg. Antworten bleiben bis zum erfolgreichen Clipstart gesperrt.
+Ungeprüfte Entwürfe werden nicht direkt aus dem lokalen Speicher abgespielt.
+Hash/Bytes/Schema/Decode und erneute F0-Prüfung bleiben unverändert nötig.
+
+Der Playback-Rückgabewert enthält die ID und den Gate-Status der aufgelösten
+Datei. Karteikarte und Satzübungen zeigen daraus den Hinweis; der pauschale
+Satzhinweis wurde aus der Oberfläche entfernt. Der Status wird weder aufgrund
+des Modus noch einer Nutzerentscheidung auf `passed` geändert. Ein Wechsel
+des Clips ersetzt auch die Anzeige. Systemstimmen werden getrennt benannt.
+
+Vorhandene zehn Audioaufnahmen neu durch die Pipeline geschickt, **keine neue
+Generierung**: eine `passed`, neun `unchecked`; zusammen mit fünf Bildern
+15 Liefermedien. `content:check` meldet ausdrücklich
+**`uncheckedThaiDelivered: 9`**, weiterhin 452 fehlende Audioaufnahmen sowie
+73 Bilder, 512 Situationen und AE-48. Die Integritätsprüfung ist grün; der
+Vollständigkeitscheck bleibt wegen dieser echten Lücken rot.
+
+750 Jest-Tests / 45 Suites, TypeScript und acht FFmpeg-Pipeline-Tests grün.
+Produktions-Exporte Web/Android/iOS unter
+`build-verification/phase21-b21-delivered`, kein Generator-/Schlüsselcode in
+den Graphen, 15 Medien in drei Plattformen 45-mal bytegleich.
+Echte Browser-UI: `สวัสดี` auf der Vokabelkarte zeigt beim Clipstart
+„KI-Stimme, Ton nicht geprüft“; Tonerkennung enthält genau den einen aktuell
+zulässigen Clip und zeigt „KI-Stimme, Ton automatisch geprüft“. Keine
+Lernbewertung/FSRS-Antwort im Browser ausgelöst.
+
+**Einmaliger Lauf genehmigt, noch kein Anbieteraufruf:** Der Nutzer bestätigte
+459 Clips bei ungefähr 0,54 USD. Der aktuelle Plan hat 462 Einträge, davon
+zehn bereits erzeugt; folglich noch 452 neue Aufrufe, geschätzt 0,55709 USD.
+Vorhandenes wird nicht zur Erfüllung einer Zahl nochmals bezahlt. Zustimmung
+in `content/audio-run-2026-09-06.json` festgehalten und noch nicht verbraucht.
+Die echte Startaktion meldet „Erst einen API-Schlüssel eintragen“. Der
+Schlüssel wird nur im lokalen Generator benötigt, nicht im Chat. Keine
+erneute Kostenfreigabe nötig. B-21s fachliche Entscheidung ist erledigt;
+die tatsächliche Audioerzeugung und vollständige Satz-Spielbarkeit bleiben
+bis zur Schlüsselbereitstellung offen.

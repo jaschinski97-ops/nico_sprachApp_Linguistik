@@ -12,7 +12,7 @@ import { VocabImageView } from './vocab-image';
 
 import { Spacing } from '@/constants/theme';
 import { VocabEntry } from '@/data/vocabulary';
-import { PlaybackKind, playPronunciation } from '@/lib/audio';
+import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
 import { Direction } from '@/lib/fsrs/types';
 
 /**
@@ -193,7 +193,8 @@ function SpeakButton({
   assetId?: string;
   compact?: boolean;
 }) {
-  const [played, setPlayed] = useState<PlaybackKind | null>(null);
+  const [played, setPlayed] = useState<{ text: string; result: PlaybackResult } | null>(null);
+  const playback = played?.text === text ? played.result : null;
 
   return (
     <View style={compact ? undefined : styles.speakColumn}>
@@ -202,13 +203,13 @@ function SpeakButton({
           // Absichtlich ohne await: die Karte soll nicht auf die Sprachausgabe
           // warten. Fehler (z. B. keine Thai-Stimme installiert) dürfen den
           // Lernfluss nicht unterbrechen.
-          playPronunciation({ text, language, audioAssetId: assetId })
-            .then(setPlayed)
+          playPronunciationWithStatus({ text, language, audioAssetId: assetId, purpose: 'vocabulary' })
+            .then(result => setPlayed({ text, result }))
             .catch(() => {});
         }}
         accessibilityRole="button"
         accessibilityLabel={`${spokenLabel ?? label}: ${text}${
-          played === 'asset' ? ' (synthetische Stimme, keine Muttersprachler-Aufnahme)' : ''
+          playback ? ` (${playback.label})` : ''
         }`}
         style={({ pressed }) => pressed && styles.pressed}>
         <ThemedView
@@ -223,9 +224,9 @@ function SpeakButton({
           dann da, wenn einer gespielt hat - nicht als Dauerhinweis, der bald
           niemand mehr liest, und nicht bei der Sprachausgabe des Geraets, die
           ohnehin als solche erkennbar ist. */}
-      {played === 'asset' ? (
+      {playback ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.syntheticNote}>
-          {compact ? 'KI-Stimme' : 'KI-Stimme — keine Muttersprachler-Aufnahme'}
+          {playback.label}
         </ThemedText>
       ) : null}
     </View>
