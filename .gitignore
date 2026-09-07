@@ -36,8 +36,6 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-example
-
 # generated native folders
 /ios
 /android
@@ -45,3 +43,10 @@ example
 # Local generator drafts and temporary verification builds (never shipped)
 /.content-studio/
 /build-verification/
+
+# Lokale Ablage — alles, was nie auf GitHub soll, heißt *_Local
+/_Local/
+/.agent/
+/.claude/
+*_Local/
+*_Local.*

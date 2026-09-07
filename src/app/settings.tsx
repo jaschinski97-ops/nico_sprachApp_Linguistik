@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet } from 'react-native';
 
+import { ApiKeysCard } from '@/components/api-keys-card';
 import { DeveloperContent } from '@/components/developer-content';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
@@ -191,6 +192,8 @@ export default function SettingsScreen() {
         </ThemedText>
       </ThemedView>
       <BackupSection />
+      {/* Drei Schlüsselfelder für den Debug-Ablauf; in Release rendert sie nichts. */}
+      <ApiKeysCard />
       <DeveloperContent />
     </ScreenScaffold>
   );

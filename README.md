@@ -1,60 +1,72 @@
-# Welcome to your Expo app 👋
+# ThaiLernbegleiter
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Eine Offline-Lern-App für Thai (zusätzlich Englisch und Spanisch): Vokabeln mit
+Bild und Hörclip, Sätze, Übungsgespräche, Prüfungssimulation — alles wird mit
+der App **komplett offline** ausgeliefert. KI-Anbieter (Text, Sprachausgabe,
+Bilder) braucht nur, wer als Admin neuen Inhalt **erzeugen** will; die Nutzer
+bekommen den fertigen Inhalt mit dem App-Build.
 
-## Get started
+Gebaut mit Expo SDK 57 / React Native. Expo Go funktioniert nicht (native
+Audio- und SQLite-Module) — siehe „Entwicklung" unten.
 
-1. Install dependencies
+## Ordnerstruktur
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-### Native Entwicklungsumgebung
-
-`npm run android` und `npm run ios` bauen native Entwicklungsumgebungen (Development Builds) über `expo run:android` bzw. `expo run:ios`. **Expo Go funktioniert für dieses Projekt nicht**, da die App native Audio- und SQLite-Module benötigt, die Expo Go nicht enthält. Die erste Ausführung dauert deutlich länger, weil Gradle bzw. Xcode das komplette native Projekt bauen — danach sind die inkrementellen Folgebauten schnell.
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+ThaiSpeaker/
+├── src/                  App-Code
+│   ├── app/              Bildschirme (Expo Router): Übersicht, Lernen,
+│   │                     Gespräch, Prüfung, Fortschritt, Einstellungen
+│   ├── content/          Generierter Katalog (catalog.json) + Asset-Bindings
+│   ├── data/             Verifizierter Wortschatz mit Thai-Tönen
+│   ├── lib/              Fachlogik: Tonhöhenmessung, Ton-Gate, Speicher,
+│   │                     Anbieter-Clients, Übungsläufe
+│   └── components/       UI-Bausteine
+├── assets/
+│   ├── content/          Ausgelieferte Medien (Bilder + Hörclips,
+│   │                     sha256-Dateinamen) — gehört zum Offline-Bundle
+│   └── images/           App-Icon, Splash
+├── content/              Mess- und Prüfberichte (generierte Qualitätshistorie)
+├── scripts/              Werkzeuge: Inhalts-Pipeline, Tonmessung,
+│                         Freigabe-Gate, Release-Pipeline
+├── docs/                 Projektgeschichte (PROGRESS.md), Audits,
+│                         Screenshots, PIPELINE.md (Ablauf für Admins)
+├── android/              Natives Projekt — lokal generiert, nicht im Repo
+└── _Local/, .agent/, …   Nur lokal, nie auf GitHub (siehe unten)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Auf GitHub vs. nur lokal
 
-### Other setup steps
+**Auf GitHub landet:** `src/`, `assets/`, `scripts/`, `content/`, `docs/`
+und die Konfigurationsdateien — also alles, was die App braucht.
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+**Nie auf GitHub (ignoriert):** Alles, was auf `*_Local` endet bzw. im Ordner
+`_Local/` liegt, dazu die werkseigenen Ordner `.content-studio/` (Inhalt-Entwürfe),
+`.expo/`, `.agent/`, `.claude/`, `build-verification/`, `dist/`, `android/`
+(per `expo prebuild` neu erzeugbar) und `node_modules/`.
 
-## Learn more
+## Entwicklung
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npm install
+npm run android     # nativer Debug-Build (erstes Bauen dauert länger)
+npm run web         # Web-Build — Grundlage des lokalen Debug-Studios
+npm test            # Testreihe
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Inhalt erzeugen (nur Admin, Debug-Modus)
 
-## Join the community
+Der Ablauf — drei Schlüsselfelder in den Einstellungen, Generierung im
+Studio mit automatischer Tonhöhenprüfung je Clip, Publish, Gegenmessung,
+Release — steht in [docs/PIPELINE.md](docs/PIPELINE.md). Kurzform:
 
-Join our community of developers creating universal apps.
+```bash
+npm run pipeline:release   # Messkern-Check, Inhaltsprüfung, Gegenmessung, Tests
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Qualität der Sprachausgabe
+
+Thai-Töne werden automatisch gegen den verifizierten Sollton gemessen
+(`src/lib/speaking/analysis.ts`, F0-Kontur via normierter Autokorrelation —
+dieselbe Messung wie im Werkzeug `scripts/tone-contour.html`). Das ist ein
+Filter gegen grobe Fehler, kein Hörtest; Grenzen stehen in
+`src/lib/content/tone-gate.ts` und in den Berichten unter `content/`.

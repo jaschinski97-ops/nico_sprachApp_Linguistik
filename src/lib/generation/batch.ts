@@ -39,6 +39,12 @@ export type BatchProgress = {
   errors: { id: string; message: string }[];
   done: boolean;
   cancelled: boolean;
+  /**
+   * Nur beim Hörclip-Lauf gesetzt: Ergebnis der automatischen Tonmessung je
+   * Clip (`passed`/`failed`; alles Übrige — ungeprüft, nicht anwendbar,
+   * ohne Decoder — zählt unter `other`). Die anderen Läufe lassen das Feld weg.
+   */
+  tone?: { passed: number; failed: number; other: number };
 };
 
 export type BatchOptions<S extends GenerationSpec> = {

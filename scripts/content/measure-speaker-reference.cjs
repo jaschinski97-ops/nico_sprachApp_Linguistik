@@ -20,7 +20,8 @@ const result = { measuredAt: new Date().toISOString(), source: 'content/tone-cal
     const entries = report.entries.filter(entry => entry.provider + ':' + entry.voice === key);
     const clips = entries.map(entry => ({ text: entry.text, sha256: entry.sha256,
       target: entry.check.targetTone ?? 'not-a-verified-monosyllable',
-      ...summary(entry.check.track.filter(frame => frame.hz > 0).map(frame => frame.hz)) }));
+      // Nicht-Thai (not-applicable) wird ohne Messung früh abgesagt — keine Track-Frames.
+      ...summary((entry.check.track ?? []).filter(frame => frame.hz > 0).map(frame => frame.hz)) }));
     return { voice: key, clips: clips.length, distinctTexts: new Set(clips.map(clip => clip.text)).size,
       clipMedians: summary(clips.map(clip => clip.medianHz).filter(value => value !== null)), recordings: clips };
   }) };

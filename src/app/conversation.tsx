@@ -52,6 +52,20 @@ export default function ConversationScreen() {
     [situations, direction]
   );
 
+  // Gleiche Titel sind beabsichtigte Dialogvarianten (gleiche Situation,
+  // andere Gesprächsführung) — ohne Kennzeichnung wirken sie wie Duplikate.
+  // Anzeige-Reihenfolge entscheidet: der erste bleibt ohne Anhang.
+  const variantSuffix = useMemo(() => {
+    const counts = new Map<string, number>();
+    const suffix = new Map<string, string>();
+    for (const situation of visible) {
+      const count = (counts.get(situation.title) ?? 0) + 1;
+      counts.set(situation.title, count);
+      suffix.set(situation.id, count === 1 ? '' : ` · Variante ${count}`);
+    }
+    return suffix;
+  }, [visible]);
+
   if (error) {
     return (
       <ScreenScaffold title="Gespräch" subtitle="Vorproduzierte Sprachsituationen">
@@ -127,6 +141,7 @@ export default function ConversationScreen() {
           <SituationCard
             key={situation.id}
             situation={situation}
+            variantSuffix={variantSuffix.get(situation.id) ?? ''}
             open={openId === situation.id}
             onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
           />
@@ -138,10 +153,12 @@ export default function ConversationScreen() {
 
 function SituationCard({
   situation,
+  variantSuffix,
   open,
   onToggle,
 }: {
   situation: ConversationSituation;
+  variantSuffix: string;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -159,6 +176,7 @@ function SituationCard({
             <ThemedText type="smallBold">{situation.title}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
               {TOPIC_LABELS[situation.topic]} · {situation.level}
+              {variantSuffix}
             </ThemedText>
           </View>
           <ThemedText type="small" themeColor="textSecondary">
@@ -237,7 +255,8 @@ function TurnSpeakButton({ text }: { text: string }) {
         accessibilityLabel={`Anhören: ${text}${
           played === 'asset' ? ' (synthetische Stimme, keine Muttersprachler-Aufnahme)' : ''
         }`}
-        style={({ pressed }) => pressed && styles.pressed}>
+        style={({ pressed }) => pressed && styles.pressed}
+        hitSlop={12}>
         <ThemedText type="small" themeColor="textSecondary">
           🔊
         </ThemedText>
@@ -266,6 +285,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,
+    // Richtungswahl wie überall: mindestens 44 Punkte Trefferfläche
+    // (war ~36 und damit das kleinste Ziel im Gesprächs-Tab).
+    minHeight: 44,
+    justifyContent: 'center',
   },
   header: {
     flexDirection: 'row',

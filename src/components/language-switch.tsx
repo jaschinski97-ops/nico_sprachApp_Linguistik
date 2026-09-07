@@ -81,7 +81,8 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     borderWidth: 1,
     borderColor: 'transparent',
-    minHeight: 32,
+    // Der Sprachwechsel ist der häufigste Klick der App — 44 statt 32 Punkte.
+    minHeight: 44,
     justifyContent: 'center',
   },
   pressed: {

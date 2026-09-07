@@ -17,7 +17,14 @@ export type ToneCheck = {
   track?: { seconds: number; hz: number; correlation: number }[];
 };
 
-export function checkThaiTone(clip: AudioClip, pcm: Float32Array, sampleRate: number): ToneCheck {
+/**
+ * Nur die vier Felder, die die Pruefung liest. Frisch generierte Clips liegen
+ * als `AudioClipSpec` vor, noch ohne Format, Groesse und Ablageschluessel —
+ * die Pruefung soll vor dem Ablegen laufen koennen, nicht erst danach.
+ */
+export type ToneCheckClip = Pick<AudioClip, 'language' | 'text' | 'kind' | 'sourceId'>;
+
+export function checkThaiTone(clip: ToneCheckClip, pcm: Float32Array, sampleRate: number): ToneCheck {
   const base = { version: TONE_GATE_VERSION };
   if (clip.language !== 'th') return { ...base, status: 'not-applicable', reason: 'Kein Thai-Ton; nur technische Integritätsprüfung.' };
   const measurement = analyzeToneContour(pcm, sampleRate);

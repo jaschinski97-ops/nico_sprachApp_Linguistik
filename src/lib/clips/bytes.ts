@@ -112,3 +112,41 @@ export function wavDurationMs(wav: Uint8Array): number | null {
   if (!byteRate) return null;
   return Math.round((dataLength / byteRate) * 1000);
 }
+
+/**
+ * Wandelt einen WAV-Container in mono Float32-PCM um — die Eingabe der
+ * Tonmessung. Es wird nur 16-Bit-PCM gelesen, denn mehr erzeugt diese App
+ * nicht (`pcmToWav`): fremde Formate ergeben `null` statt einer Halbwahrheit.
+ * Der `data`-Block wird über die Chunk-Kette gesucht, nicht auf Kopfoffset 44
+ * getippt — Chunks können Extensoren dazwischenlegen.
+ */
+export function wavToMonoFloat32(
+  wav: Uint8Array
+): { pcm: Float32Array; sampleRate: number } | null {
+  if (wav.length < 44) return null;
+  const view = new DataView(wav.buffer, wav.byteOffset, wav.byteLength);
+  if (String.fromCharCode(wav[0], wav[1], wav[2], wav[3]) !== 'RIFF') return null;
+  let offset = 12;
+  let sampleRate = 0;
+  let bitsPerSample = 0;
+  let data: { start: number; length: number } | null = null;
+  while (offset + 8 <= wav.length) {
+    const id = String.fromCharCode(wav[offset], wav[offset + 1], wav[offset + 2], wav[offset + 3]);
+    const size = view.getUint32(offset + 4, true);
+    if (id === 'fmt ') {
+      sampleRate = view.getUint32(offset + 12, true);
+      bitsPerSample = view.getUint16(offset + 22, true);
+    } else if (id === 'data') {
+      data = { start: offset + 8, length: Math.min(size, wav.length - offset - 8) };
+    }
+    offset += 8 + size + (size % 2);
+  }
+  if (!data || !sampleRate || bitsPerSample !== 16) return null;
+  const frameCount = Math.floor(data.length / 2);
+  if (frameCount <= 0) return null;
+  const pcm = new Float32Array(frameCount);
+  for (let i = 0; i < frameCount; i++) {
+    pcm[i] = view.getInt16(data.start + i * 2, true) / 32768;
+  }
+  return { pcm, sampleRate };
+}

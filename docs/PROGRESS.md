@@ -5346,7 +5346,7 @@ Sollform Tief. Unter „Deutsch → Spanisch" zeigt Shadowing den Hinweis
 „Noch kein Satzmaterial für Spanisch" mit Zurück-Knopf. Karteikarten-Bild
 verifiziert: Karte „das Wasser" (Position 44) zeigt das gebündelte
 1024×1024-Bild auf der Vorderseite; die elf Bildwörter sind alle im
-Katalog und in `assets.ts` gemappt. Screenshots in `gui-test-screenshots/`.
+Katalog und in `assets.ts` gemappt. Screenshots in `screenshots/`.
 
 752 Jest-Tests / 45 Suites grün (zwei neue: Registry-Ehrlichkeit und
 Leerzustand ohne Mikrofonzugriff), TypeScript fehlerfrei. Der DSZ-Ansatz
@@ -5374,7 +5374,7 @@ Native ohnehin tot — `isContentDeveloper` verlangt Web auf localhost:8081.
 
 Danach lief der Development Build auf dem Emulator durch: „Android Bundled
 2208ms (2141 Module)". Echte Geräte-Verifikation (ADB-Screenshots in
-`gui-test-screenshots/`): Übersicht mit drei Sprachen, native Tab-Leiste,
+`screenshots/`): Übersicht mit drei Sprachen, native Tab-Leiste,
 Lernen-Reiter zeigt AE-66 (Thai → Deutsch mit Satz verstehen, Sprechen,
 Shadowing, Satz wiederholen, Schreiben), und Karte 1 von 84 („das Essen")
 zeigt das gebündelte generierte Bild **nativ**. Bisher gab es keinen
@@ -5538,7 +5538,7 @@ versteckt; Web-Tabs mit tablist/tab-Rolle und selected-State.
 Phase 22 danach auf dem Android-Emulator (Dev-Client, frischer Metro-Run mit
 `--clear` — der alte Bundler-Stand hatte beim Bundle-Laden noch die verwaisten
 Dateinamen aus assets.ts referenziert, DebugServerException 500, AE-68-Muster)
-durchgeklickt und hell + dunkel fotografiert (gui-test-screenshots/phase22/).
+durchgeklickt und hell + dunkel fotografiert (screenshots/phase22/).
 Befunde in zwei Folgefixes:
 
 1. **„Satzübung verlassen" war eine No-op.** onExit setzte nur `mode: undefined`
@@ -5558,3 +5558,54 @@ Daten-Duplikate. Verbleibende Polish-Notizen der Review-Agenten: Backup-Buttons
 visuell nicht unterschieden (Restore ist destruktiv), leerer „Pro Tag"-Chart
 ohne Empty-State-Text, Chip-Stile (Rahmen vs. Füllung) uneinheitlich,
 Quellen-URL bricht nach „www" um. TypeScript und 820 Tests grün.
+
+---
+
+## Gegenmessung, Admin-Pipeline und Repo-Struktur (07.09.2026)
+
+**Messprogramm verifiziert (Code + Literatur):** Der F0-Kern (40/10 ms,
+normierte Autokorrelation 70–400 Hz, Startschwelle r≥0,6, konservative
+Fortsetzung, Medianfilter, 1,8-fache Oktavkorrektur, 8 %-Randbeschnitt,
+Halbtonpunkte relativ zum Stimmenmedian) entspricht etablierter Praxis —
+Fenster-/Schrittgeometrie wie Praat für ein 75-Hz-Fundament, erwartete
+Konturen decken sich mit Abramsons Bangkok-Zitatformen, Semiton-Normierung
+mit Sprechermedian ist Standard. Verdict: belastbarer Richtungs-Filter
+(„widerrpricht der Sollton klar?"), kein Hörnachweis — Registerlage von
+mittel/tief/hoch bleibt ohne Sprecherreferenz ungeprüft (dokumentiert).
+Quellen u. a. Praat-Manual, YIN, Abramson 1962/1997, Gandour 1991,
+Thepboriruk 2009, Fuchs & Maxwell 2016 (64 kbps MP3 knapp über der
+Messgrenze — Bitrate fest dokumentiert).
+
+**Gegenmessung über alle 168 Audios** (`measure-tones.cjs` neu: Katalog +
+Studio-Entwürfe statt der veralteten Festprobengruppe, die 5 von 10 Dateien
+nicht mehr fand): 89 Thai — 10 bestanden, 12 failed (alles Studio-Entwürfe,
+beim Publish korrekt aussortiert: ข้าว พูด ค่ะ ให้ เก้า สวย ขาย หมา มาก หมู
+ห้า หมอ), **67 ungeprüft, aber ausgeliefert**. Auffällig darunter: viele
+mittel-Töne der Gemini-Stimme mit 7–11 Halbtönen Fall (คน −10,1; ครู −10,9;
+แมว +5,9 steigend statt eben) — prime Hörkandidaten für die vom Nutzer
+bemerkte „kacke"-Aufnahme; Regenerate einzeln möglich. Strukturbericht:
+siehe content/tone-calibration.json.
+
+**Auto-Ton-Check im Generierungslauf:** `src/lib/clips/batch.ts` misst jeden
+frischen WAV-Clip direkt nach der Erzeugung (neuer WAV-Reader
+`wavToMonoFloat32`), zählt bestanden/abgelehnt/ungeprüft im Fortschrittspanel
+und legt abgelehnte Clips **gar nicht erst ab** (Fehlerliste mit Grund).
+mp3 (ChatGPT) bleibt der verbindlichen Node-Prüfung beim Stage/Publish
+überlassen. Drei neue Tests in batch-tone.test.ts (flach/fallend → abgelehnt,
+aufsteigend/steigend → bestanden, Fremdsprache → ungeprüft gespeichert).
+
+**Drei Schlüsselfelder:** Neue Karte „API-Schlüssel (Debug)" in den
+Einstellungen (`api-keys-card.tsx`): Text / Audio / Bilder, je Anbieterwahl
++ Schlüssel, übernimmt die Wahl in die Generator-Gruppen. Nativ erstmals
+überhaupt ein Schlüsselfeld; in Release rendert die Karte nichts.
+
+**Struktur & GitHub-Vorbereitung:** ~4,3 GB Bauschutt gelöscht
+(android/app/build, .cxx, build-verification, dist). docs/ neu: PROGRESS.md,
+AUDIT-Lernwirksamkeit.md, screenshots/ (ehem. gui-test-screenshots/),
+PIPELINE.md (Admin-Ablauf). .agent/state.json → _Local/ (unverfolgt).
+README neu geschrieben (Struktur, GitHub-vs-lokal, Schnellstart).
+Neu: `npm run pipeline:release` (scripts/release-pipeline.cjs).
+.phone-UI: Gesprächs-Chips und Sprachumschalter auf 44 dp Trefferfläche,
+Bewertungsreihe bleibt auf 360-dp-Telefonen einzeilig (vier gleiche Viertel).
+
+TypeScript und Testreihe grün (siehe Commit).

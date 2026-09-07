@@ -1,4 +1,18 @@
 // Reproducible comparison. Optional AE-31 manifest uses file/word/voice/tone.
+//
+// GEGENMESSUNG UEBER ALLE VORHANDENEN AUDIOS (seit der Katalog-Phase):
+// 1. Der ausgelieferte Katalog (src/content/catalog.json -> assets/content/) —
+//    immer gemessen, damit der Bestand, den Nutzer hoeren, gegen denselben
+//    Messkern geprueft wird wie neue Clips.
+// 2. Unveroeffentlichte Studio-Entwuerfe (.content-studio/stage.json), soweit
+//    ihre Datei noch liegt und nicht schon im Katalog steht — hier sitzen die
+//    Clips, die den Ton-Gate beim Publish nicht bestanden haben.
+// 3. Optional ein Manifest (argv, Felder file/word/engine/voice/sha256) fuer
+//    Fremdproben, z.B. scripts/content/fixtures/tones/index.json.
+//
+// Die alte Festprobengruppe (gemini-probelauf-2026-09-05) ist abgeloesst:
+// fuenf ihrer zehn Dateien wurden zwischenzeitlich regeneriert, der Katalog
+// enthaelt dieselben Texte mit aktuellen Dateien.
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -9,30 +23,68 @@ const { checkThaiTone, TONE_GATE_LIMITS } = domain.load('src/lib/content/tone-ga
 const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { clipIdFor } = domain.load('src/lib/clips/types');
 const root = path.resolve(__dirname, '../..');
-// Use committed provenance and media, so a fresh checkout needs no local stage.
-const probe = JSON.parse(fs.readFileSync(path.join(root, 'content/gemini-probelauf-2026-09-05.json')));
-const inputs = probe.entries.filter(entry => entry.kind === 'audio').map(entry => {
-  const word = VOCABULARY.find(word => word.language === entry.language && word.term === entry.text);
-  return { file: path.join(root, 'assets/content', entry.asset), sha256: entry.sha256, document: {
-    id: entry.id, language: entry.language, text: entry.text, kind: word ? 'vocab' : 'example',
-    sourceId: word?.id, provider: 'gemini', voice: entry.voice,
-  } };
-});
+
+const inputs = [];
+const seenFiles = new Set();
+const sources = { catalog: 0, staged: 0, manifest: 0, missingFiles: 0 };
+
+function addInput(file, sha256, document, source) {
+  if (!fs.existsSync(file)) {
+    sources.missingFiles += 1;
+    return;
+  }
+  const key = path.basename(file);
+  if (seenFiles.has(key)) return;
+  seenFiles.add(key);
+  sources[source] += 1;
+  inputs.push({ file, sha256, document });
+}
+
+function documentOfEntry(entry) {
+  const doc = entry.document ?? {};
+  return {
+    id: doc.id, language: doc.language, text: doc.text,
+    kind: doc.kind, sourceId: doc.sourceId,
+    provider: doc.provider, voice: doc.voice,
+  };
+}
+
+const catalogFile = path.join(root, 'src/content/catalog.json');
+if (fs.existsSync(catalogFile)) {
+  const catalog = JSON.parse(fs.readFileSync(catalogFile, 'utf8'));
+  for (const entry of catalog.entries) {
+    if (entry.kind !== 'audio' || !entry.asset) continue;
+    addInput(path.join(root, 'assets/content', entry.asset),
+      String(entry.asset).replace(/\.[a-z0-9]+$/i, ''), documentOfEntry(entry), 'catalog');
+  }
+}
+
+const stageFile = path.join(root, '.content-studio/stage.json');
+if (fs.existsSync(stageFile)) {
+  const stage = JSON.parse(fs.readFileSync(stageFile, 'utf8'));
+  for (const entry of stage.entries) {
+    if (entry.kind !== 'audio' || !entry.asset) continue;
+    addInput(path.join(root, '.content-studio', entry.asset),
+      String(entry.asset).replace(/\.[a-z0-9]+$/i, ''), documentOfEntry(entry), 'staged');
+  }
+}
+
 const manifest = process.argv[2];
 if (manifest) {
   for (const item of JSON.parse(fs.readFileSync(manifest))) {
     const word = VOCABULARY.find(word => word.language === 'th' && word.term === item.word);
     if (!word?.sourceVerified) throw Error('Kein verifizierter Wortbezug: ' + item.word);
-    inputs.push({ file: path.resolve(path.dirname(manifest), item.file), sha256: item.sha256, document: {
+    addInput(path.resolve(path.dirname(manifest), item.file), item.sha256, {
       id: clipIdFor('th', word.term), sourceId: word.id, text: word.term, language: 'th', kind: 'vocab',
       provider: item.engine, voice: item.voice,
-    } });
+    }, 'manifest');
   }
 }
+
 const summary = measurement => ({ status: measurement.status, voicedMs: measurement.voicedMs,
   ...(measurement.summary ? { summary: measurement.summary } : {}) });
 const report = { measuredAt: new Date().toISOString(), decoder: 'FFmpeg mono 24 kHz; shared app downsampling to 8 kHz',
-  microsoftOriginalClipsAvailable: false,
+  sources, microsoftOriginalClipsAvailable: false,
   microsoftReproductionManifest: manifest ?? null, limitations: TONE_GATE_LIMITS,
   entries: inputs.map(({ file, document, sha256 }) => {
     const actualHash = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -44,5 +96,15 @@ const report = { measuredAt: new Date().toISOString(), decoder: 'FFmpeg mono 24 
       after: summary(analyzeToneContour(pcm, 24000)), check: checkThaiTone(document, pcm, 24000) };
   }) };
 fs.writeFileSync(path.join(root, 'content/tone-calibration.json'), JSON.stringify(report, null, 2) + '\n');
-console.log(JSON.stringify(report.entries.map(entry => ({ text: entry.text, before: entry.before.status,
-  after: entry.after.status, slope: entry.after.summary?.slope, check: entry.check.status })), null, 2));
+
+const thai = report.entries.filter(entry => entry.check.status !== 'not-applicable');
+const counts = {};
+for (const entry of thai) counts[entry.check.status] = (counts[entry.check.status] ?? 0) + 1;
+console.log(`Gegenmessung: ${report.entries.length} Audios gemessen (Katalog ${sources.catalog}, Entwuerfe ${sources.staged}, Manifest ${sources.manifest}), davon ${thai.length} Thai.`);
+console.log('Thai nach Gate-Status:', JSON.stringify(counts));
+console.log('Nicht bestanden / ungeprueft (Thai):');
+for (const entry of thai) {
+  if (entry.check.status === 'passed') continue;
+  console.log(`  ${entry.check.status.padEnd(9)} ${entry.text}  ${entry.check.targetTone ?? '-'}  slope=${entry.after.summary ? entry.after.summary.slope.toFixed(2) : '-'}  ${entry.file}  ${entry.check.reason}`);
+}
+console.log('Bestanden (Thai): ' + thai.filter(entry => entry.check.status === 'passed').map(entry => entry.text).join(', '));

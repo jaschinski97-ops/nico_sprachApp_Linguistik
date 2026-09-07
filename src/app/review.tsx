@@ -645,12 +645,14 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   ratingWrap: {
+    // Vier gleiche Viertel statt flexBasis 110: auf einem 360-dp-Telefon
+    // brachen 4×110 + Lücken die Zeile in ein 2×2-Raster um.
     flexGrow: 1,
-    flexBasis: 110,
+    flexBasis: 0,
   },
   ratingButton: {
     paddingVertical: Spacing.three,
-    paddingHorizontal: Spacing.three,
+    paddingHorizontal: Spacing.two,
     borderRadius: Spacing.two,
     alignItems: 'center',
   },
