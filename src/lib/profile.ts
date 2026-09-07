@@ -2,7 +2,7 @@ import { Direction } from './fsrs/types';
 import { defaultLanguage, hasContent } from './languages/registry';
 import { isLanguageCode, LanguageCode, languageOfDirection } from './languages/types';
 import { readMeta, writeMeta } from './repository';
-import { DataStore } from './storage';
+import { DataStore, getStore, withStoreLock } from './storage';
 
 /**
  * Lernprofil: welche Sprache gelernt wird — und wo man zuletzt stand.
@@ -103,13 +103,29 @@ async function write(profile: LearnerProfile, store?: DataStore): Promise<Learne
   return profile;
 }
 
+/**
+ * Lesen-Ändern-Schreiben am EINEN Profildokument, unter der Store-Sperre.
+ *
+ * Die Setter werden von den Reitern fire-and-forget gerufen, und zwei schnelle
+ * Wechsel (etwa Gespräch-Richtung während der Lernen-Reiter seinen Stand
+ * merkt) lesen sonst beide denselben Stand — der zweite Write wirft die
+ * Änderung des ersten ersatzlos weg. Serialisiert bleibt jedes Feld, das
+ * zuletzt gemeint war, auch wirklich gesetzt.
+ */
+async function update(
+  store: DataStore | undefined,
+  change: (current: LearnerProfile) => LearnerProfile
+): Promise<LearnerProfile> {
+  const db = store ?? (await getStore());
+  return withStoreLock(db, async () => write(change(await loadProfile(db)), db));
+}
+
 /** Merkt sich, wo der Lernen-Reiter steht. `null` vergisst den Stand. */
 export async function setReviewSpot(
   spot: ReviewSpot | null,
   store?: DataStore
 ): Promise<LearnerProfile> {
-  const current = await loadProfile(store);
-  return write({ ...current, review: spot }, store);
+  return update(store, (current) => ({ ...current, review: spot }));
 }
 
 /** Merkt sich die Richtung des Gespräch-Reiters. */
@@ -117,8 +133,7 @@ export async function setConversationDirection(
   direction: Direction | null,
   store?: DataStore
 ): Promise<LearnerProfile> {
-  const current = await loadProfile(store);
-  return write({ ...current, conversation: direction }, store);
+  return update(store, (current) => ({ ...current, conversation: direction }));
 }
 
 /**
@@ -133,5 +148,5 @@ export async function setLanguage(
   language: LanguageCode,
   store?: DataStore
 ): Promise<LearnerProfile> {
-  return write({ language, review: null, conversation: null }, store);
+  return update(store, () => ({ language, review: null, conversation: null }));
 }

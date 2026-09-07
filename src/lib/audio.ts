@@ -137,10 +137,22 @@ const defaultBackend: PronunciationBackend = {
     const player = createAudioPlayer({ uri }, { keepAudioSessionActive: concurrentRecording === true });
     const playback: ActiveAssetPlayback = { player, subscription: null };
     activeAssetPlayback = playback;
-    playback.subscription = player.addListener('playbackStatusUpdate', (status) => {
-      if (status.didJustFinish) releaseAssetPlayback(playback);
-    });
-    player.play();
+    try {
+      playback.subscription = player.addListener('playbackStatusUpdate', (status) => {
+        // `didJustFinish` erreicht eine gescheiterte Wiedergabe nie. expo-audio
+        // (v57) meldet das als `error` am Status — ohne Freigabe auch in diesem
+        // Fall bliebe der Player bis zum naechsten Stopp als aktiv belegt.
+        if (status.didJustFinish || status.error !== null) releaseAssetPlayback(playback);
+      });
+      player.play();
+    } catch (error) {
+      // Weder Listener noch play() duerfen einen halb angelegten Player als
+      // "aktiv" hinterlassen — der naechste Stopp wuerde ihn sonst trotzdem
+      // wieder freigeben wollen. Der Fehler selbst geht weiter raus: Aufrufer
+      // duerfen nicht glauben, es waere etwas zu hoeren gewesen.
+      releaseAssetPlayback(playback);
+      throw error;
+    }
   },
   async speak(text, language, rate, concurrentRecording) {
     Speech.speak(text, { language, rate, ...(concurrentRecording ? { useApplicationAudioSession: true } : {}) });

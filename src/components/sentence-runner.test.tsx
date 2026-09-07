@@ -1,7 +1,10 @@
+import type { ReactNode } from 'react';
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+import { DrillRunner } from './drill-runner';
 import { SentenceAction, SentenceRunner } from './sentence-runner';
+import ReviewScreen from '@/app/review';
 import type { MicrophoneCaptureController } from '@/lib/speaking/microphone-capture';
-import { sentenceSession } from '@/lib/speaking/sentence-session';
+import { sentenceAnswers, sentenceSession } from '@/lib/speaking/sentence-session';
 
 const mockPlay = jest.fn(async () => ({ kind: 'asset', label: 'KI-Stimme, Ton nicht geprüft', toneStatus: 'unchecked' }));
 const mockStopAudio = jest.fn(async () => {});
@@ -21,6 +24,38 @@ jest.mock('@/hooks/use-microphone-capture', () => ({ useMicrophoneCapture: (opti
     start: mockStart, stop: mockStop, cancel: mockCancel, clear: mockClear };
 } }));
 jest.mock('./measured-tone-contour', () => ({ MeasuredToneContour: () => null }));
+
+// Fehlerzustands-Tests nach dem Muster des Fortschritts-Reiters. Sie leben in
+// dieser Suite, weil nur sie zu den bearbeiteten Dateien gehört; keiner der
+// Mocks wird von der Satzübung selbst geladen.
+const mockBuildDrillSession = jest.fn();
+const mockBuildReviewQueue = jest.fn();
+const mockLoadProfile = jest.fn();
+const mockSetReviewSpot = jest.fn();
+jest.mock('@/lib/drills/session', () => ({
+  buildDrillSession: (...args: unknown[]) => mockBuildDrillSession(...args as []),
+  scoreAnswers: () => ({ correct: 0, total: 0 }),
+}));
+jest.mock('@/lib/review-log', () => ({ recordDrill: async () => {} }));
+jest.mock('expo-router', () => ({
+  useLocalSearchParams: () => ({ direction: 'de_to_th' }),
+  useRouter: () => ({ setParams: jest.fn() }),
+}));
+jest.mock('@/lib/profile', () => ({
+  loadProfile: (...args: unknown[]) => mockLoadProfile(...args as []),
+  setLanguage: async (profile: unknown) => profile,
+  setReviewSpot: (...args: unknown[]) => mockSetReviewSpot(...args as []),
+}));
+jest.mock('@/lib/review-session', () => ({
+  buildReviewQueue: (...args: unknown[]) => mockBuildReviewQueue(...args as []),
+  directionLabel: (direction: string) => direction,
+}));
+jest.mock('@/lib/repository', () => ({ rateCard: async () => {} }));
+jest.mock('@/components/screen-scaffold', () => ({
+  ScreenScaffold: ({ children }: { children?: ReactNode }) => children ?? null,
+}));
+jest.mock('@/components/speaking-runner', () => ({ SpeakingRunner: () => null }));
+jest.mock('@/components/writing-runner', () => ({ WritingRunner: () => null }));
 
 let tree: ReactTestRenderer;
 function button(label: string) {
@@ -116,4 +151,98 @@ test('a language without audited sentences shows an honest notice and never touc
   expect(mockStart).not.toHaveBeenCalled();
   expect(mockPlay).not.toHaveBeenCalled();
   expect(button('Zurück')).toBeDefined();
+});
+
+test('„Neue Runde“ würfelt die Aussaat neu: Satzfolge und Antwortmischung ändern sich', async () => {
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceListening" onExit={() => {}} />); });
+  const optionLabels = (task: { answers: string[] }) => {
+    const wanted = new Set(task.answers);
+    return tree.root.findAllByType(SentenceAction).map(node => node.props.label as string).filter(label => wanted.has(label));
+  };
+  // Beim Mount gilt die eingestellte Systemzeit 100000 als Aussaat.
+  const firstRound = sentenceSession('th', 100000);
+  const firstLabels = optionLabels(firstRound[0]);
+  expect(firstLabels).toEqual(sentenceAnswers(firstRound[0], 100000));
+  for (const task of firstRound) {
+    await press('Satz hören');
+    await press(task.german);
+    await press('Nächster Satz');
+  }
+  expect(button('Neue Runde')).toBeDefined();
+  // Eine Aussaat suchen, die nachweislich einen anderen ersten Satz liefert —
+  // die Sitzung ist deterministisch, im Test gibt es keinen Zufall.
+  let nextSeed = 100001;
+  while (sentenceSession('th', nextSeed)[0].text === firstRound[0].text) nextSeed++;
+  jest.setSystemTime(nextSeed);
+  await press('Neue Runde');
+  const secondRound = sentenceSession('th', nextSeed);
+  const secondLabels = optionLabels(secondRound[0]);
+  expect(secondLabels).toEqual(sentenceAnswers(secondRound[0], nextSeed));
+  expect(secondLabels).not.toEqual(firstLabels);
+});
+
+test('der 200-ms-Timer läuft nur, solange der Vorbereitungs-Countdown sichtbar ist', async () => {
+  const startSpy = jest.spyOn(global, 'setInterval');
+  const clearSpy = jest.spyOn(global, 'clearInterval');
+  const countdownCalls = () => startSpy.mock.calls.filter(call => call[1] === 200);
+  // Satz verstehen zeigt keinen Countdown — hier läuft überhaupt kein Intervall.
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceListening" onExit={() => {}} />); });
+  expect(countdownCalls()).toHaveLength(0);
+  await act(async () => tree.unmount());
+  // Shadowing: Countdown nur in der Vorbereitungsphase, geräumt mit der
+  // Aufnahmestufe.
+  startSpy.mockClear(); clearSpy.mockClear();
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
+  expect(countdownCalls()).toHaveLength(1);
+  const handleIndex = startSpy.mock.calls.findIndex(call => call[1] === 200);
+  const handle = startSpy.mock.results[handleIndex].value;
+  await press('Satz hören');
+  await press('Ich verwende Kopfhörer');
+  await act(async () => jest.advanceTimersByTime(15000));
+  await press('Aufnahme starten');
+  expect(clearSpy).toHaveBeenCalledWith(handle);
+  await act(async () => tree.unmount());
+});
+
+test('der Methodik-Hintergrund ist eingeklappt und lässt sich auf- und zuklappen', async () => {
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceRepeat" onExit={() => {}} />); });
+  const json = () => JSON.stringify(tree.toJSON());
+  const toggle = () => tree.root.findByProps({ accessibilityLabel: 'Hintergrund zur Übungsform' });
+  // Der kurze Runden-Hinweis bleibt sichtbar, die mehrsätzigen Hinweise nicht.
+  // („Runde", Zähler und Rest rendert RN als getrennte Text-Segmente.)
+  expect(json()).toContain('12 / 9 / 6 Sekunden');
+  expect(json()).not.toContain('4:3:2-Verhältnisses');
+  expect(json()).not.toContain('unvorhersehbares Gegenüber');
+  expect(toggle().props.accessibilityState.expanded).toBe(false);
+  await act(async () => toggle().props.onPress());
+  expect(json()).toContain('4:3:2-Verhältnisses');
+  expect(json()).toContain('unvorhersehbares Gegenüber');
+  expect(toggle().props.accessibilityState.expanded).toBe(true);
+  await act(async () => toggle().props.onPress());
+  expect(json()).not.toContain('4:3:2-Verhältnisses');
+  expect(json()).not.toContain('unvorhersehbares Gegenüber');
+});
+
+test('drill-runner zeigt einen Fehlerzustand statt eines endlosen Spinners, wenn das Zusammenstellen scheitert', async () => {
+  mockBuildDrillSession.mockRejectedValue(new Error('Speicher defekt'));
+  await act(async () => { tree = create(<DrillRunner drill="tone" language="th" onExit={() => {}} />); });
+  const json = () => JSON.stringify(tree.toJSON());
+  expect(json()).toContain('Speicher defekt');
+  expect(json()).toContain('Erneut versuchen');
+  // „Erneut versuchen“ baut die Sitzung wirklich neu auf.
+  await act(async () => {
+    tree.root.findAll(node => node.props.accessibilityRole === 'button')[0].props.onPress();
+  });
+  expect(mockBuildDrillSession).toHaveBeenCalledTimes(2);
+});
+
+test('CardSession des Lernen-Reiters zeigt einen Fehlerzustand, wenn die Warteschlange nicht lädt', async () => {
+  const profile = { language: 'th', review: null, conversation: null };
+  mockLoadProfile.mockResolvedValue(profile);
+  mockSetReviewSpot.mockResolvedValue(profile);
+  mockBuildReviewQueue.mockRejectedValue(new Error('Karteikasten defekt'));
+  await act(async () => { tree = create(<ReviewScreen />); });
+  const json = JSON.stringify(tree.toJSON());
+  expect(json).toContain('Karteikasten defekt');
+  expect(json).toContain('Erneut versuchen');
 });

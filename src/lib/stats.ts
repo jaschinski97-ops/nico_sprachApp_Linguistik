@@ -26,6 +26,17 @@ export const CARD_STATE_LABELS: Record<CardState, string> = {
 
 export const CARD_STATE_ORDER: CardState[] = ['new', 'learning', 'review', 'mastered'];
 
+/**
+ * Eigenes Fenster für die Lernserie, unabhängig vom Diagrammfenster.
+ *
+ * `days` zeigt dem Nutzer die letzten Tage als Balken — aber die SERIE darf
+ * nicht an derselben 14-Tage-Grenze gekappt werden: Wer fünf Wochen durchhält,
+ * hätte sonst ab Tag 15 partout „14" gelesen. 365 statt unbegrenzt, weil das
+ * Fenster mit leeren Tagen aufgefüllt wird und eine Lernserie über ein Jahr
+ * hinaus ohnehin keine realistische Anforderung an diese App ist.
+ */
+const STREAK_WINDOW_DAYS = 365;
+
 export type LearningStats = {
   perDirection: DirectionSummary[];
   /** Kartenzustände über beide Richtungen zusammen. */
@@ -108,6 +119,9 @@ export async function loadLearningStats(
 
   const log = await loadReviewLog(db);
   const days = lastDays(log, windowDays, now);
+  // max, damit ein künftig größer gewähltes Diagrammfenster die Serie nicht
+  // hinter dem Streak-Fenster zurücklässt.
+  const streakDays = lastDays(log, Math.max(windowDays, STREAK_WINDOW_DAYS), now);
   const todayKey = days[days.length - 1]?.date;
   const today = log.find((entry) => entry.date === todayKey);
 
@@ -120,7 +134,7 @@ export async function loadLearningStats(
     totalReviews: log.reduce((sum, entry) => sum + entry.total, 0),
     reviewsToday: today?.total ?? 0,
     loggedSince: log.length > 0 ? log[0].date : null,
-    streak: computeStreak(days),
+    streak: computeStreak(streakDays),
     drillsToday: today ? drillCount(today) : 0,
     totalDrills: log.reduce((sum, entry) => sum + drillCount(entry), 0),
     totalDrillsCorrect: log.reduce((sum, entry) => sum + (entry.drillsCorrect ?? 0), 0),

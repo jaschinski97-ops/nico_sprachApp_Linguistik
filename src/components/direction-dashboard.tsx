@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from './themed-text';
+import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
@@ -79,7 +79,15 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
                 </ThemedText>
 
                 <View style={styles.numbers}>
-                  <ThemedText style={styles.dueNumber}>{summary.due}</ThemedText>
+                  {/* Gleiche Kennzahl-Stufe wie die Kacheln im Fortschritts
+                      Reiter (`stat`) — dieselbe Aussage, dieselbe Schrift
+                      (UI-Review 2026-09-07). */}
+                  <ThemedText
+                    type="stat"
+                    maxFontSizeMultiplier={2}
+                    style={{ lineHeight: displayLineHeight(34, 2, 1.17) }}>
+                    {summary.due}
+                  </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {summary.due === 1 ? 'Karte fällig' : 'Karten fällig'}
                   </ThemedText>
@@ -131,11 +139,6 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: Spacing.two,
     marginTop: Spacing.one,
-  },
-  dueNumber: {
-    fontSize: 40,
-    lineHeight: 46,
-    fontWeight: '700',
   },
   cta: {
     marginTop: 'auto',

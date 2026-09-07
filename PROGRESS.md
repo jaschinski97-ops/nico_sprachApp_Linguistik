@@ -5420,3 +5420,115 @@ Offen: ~3.300 Clips der vollen Auslieferung (3436 geplant) stehen wegen der
 Tageslimits aus — Fortsetzung nach Googles Reset oder mit aktivierter
 Abrechnung (geschätzt 1–2 USD für alles), danach einfacher Neustart des
 Hörclip-Laufs im Studio. 27 Situationen (Schwanz des Plans) ebenso.
+
+## Phase 22 — Review-Fixes: Robustheit, Design-System, Backup/Export (07.09.2026)
+
+Ausgangspunkt: Phase 21/AE-68, Commit `0ed5035`. Vorab drei-Agenten-Review
+(Code-Qualität, UI/Design, Backend-Architektur) über den Ist-Stand; alle
+Befunde gegen den Code verifiziert, Alt-Findings vom 06.09. neu geprüft
+(1 von 7 behoben, Audio-Leak teils behoben, Rest offen). Danach Umsetzung in
+zwei Wellen mit parallelen Agenten. Ergebnis: TypeScript clean, **820
+Jest-Tests in 49 Suiten grün** (vorher 752/45, +68 Tests), 9 Node-Pipeline-
+Tests grün (vorher 8), Content-Integrität fehlerfrei. Orphan-GC: 102 Dateien
+(5,27 MiB) aus `assets/content/` entfernt — der Ordner enthält nur noch
+katalogreferenzierte Medien.
+
+### AE-69 — Speicherausfall wird sichtbar statt still ignoriert
+
+Schlägt SQLite fehl, lief die App bislang im RAM weiter — Fortschritt ging
+beim Schließen verloren, ohne Hinweis. Da ein RAM-Backend nichts persistent
+speichern kann, ist kein Meta-Flag möglich: die Degradation wird per
+Laufzeitanfrage `isStorageDegraded()` (src/lib/storage/index.ts) abgefragt
+und im Einstellungs-Screen als Warnkarte angezeigt. Zusätzlich die
+Review-Findings-Familie geschlossen: store-weite Promise-Kette im Web-Backend
+(kein „letzter Flush gewinnt" mehr), `withTransactionAsync`/`transact` am
+Store (Sperrpflicht dokumentiert; Memory-Store serialisiert ohne Crash-
+Rollback), `rateCard` liest den Kartenstand innerhalb der Transaktion neu und
+schreibt Karte+Protokoll atomar, `recordReview`/`recordDrill` laufen unter
+`withStoreLock`, Profil-Setter serialisiert (kein gegenseitiges Überschreiben
+der Felder mehr). `getActiveBackend()` bleibt synchron für den Diagnose-Screen.
+
+### AE-70 — Backup-Format v1 mit Replace-Strategie; Schlüssel ausgeschlossen
+
+Neu `src/lib/backup.ts`: Export von Kartenzuständen (FSRS), Review-Log und
+Profil als `{ format: 'thaispeaker-backup', version: 1, exportedAt, data }`.
+Import **ersetzt** die Sammlungen — Karten+Protokoll in EINER Transaktion,
+Profil danach über die öffentlichen Setter (Sperrhierarchie: `withStoreLock`
+ist nicht verschachtelbar). Validierung mit Größenlimit (20 MB) und
+deutschen Fehlermeldungen. Native: neue File/Directory-API des
+expo-file-system (Legacy-API der v57 ist deprecated) + `Sharing.shareAsync`;
+Web: Blob-Download, Bestätigung über `window.confirm` (`Alert.alert` ist in
+react-native-web ein No-Op). Module via `npx expo install` (file-system
+~57.0.6, sharing ~57.0.18, document-picker ~57.0.1). **Bewusst nicht im
+Backup:** API-Schlüssel (SecureStore) und Provider-Einstellungen — sie gehören
+nicht in eine weitergegebene Datei. Neue Native-Module → Dev-Client-Rebuild
+erforderlich; Ende-zu-Ende auf dem Emulator noch nicht gefahren (Tests decken
+die Logik + gemockten Rampen ab).
+
+### AE-71 — Katalog ist Definitions-Hoheit für Medien-Assets
+
+Neu `scripts/content/prune-orphans.cjs` (Dry-Run als Default, `--apply`,
+Löschkandidaten nur bei Hash-Namen mit Media-Endung; alles andere wird nur
+gemeldet). check.cjs prüft jetzt zusätzlich die Gegenrichtung — jede Datei in
+`assets/content/` und jeder Key in assets.ts muss im Katalog referenziert
+sein, sonst Fehler (in beiden Modi, auch `--integrity-only`). Eine der 102
+gelöschten Dateien war Test-Fixture und lebt jetzt als
+`scripts/content/fixtures/real-dead-syllable.mp3` (sha256-Verifikation im
+Test). Metro löst `@anthropic-ai/sdk` auf Native statt auf ein leeres Modul
+auf ein Stub mit klarer Fehlermeldung („Inhaltsstudio nur im Web-Debug-Studio")
+— gleiche Bundle-Wirkung, Diagnose statt `undefined is not a constructor`.
+README dokumentiert: `npm run android/ios` = native Dev-Builds, Expo Go
+funktioniert nicht.
+
+### AE-72 — Semantische Farbtokens, entkoppelt von den Tonfarben
+
+Neu in theme.ts: `accent`/`accentText` (Primary-CTA), `link`, `success`,
+`error`, `badge`, `borderSubtle`, `decorGrey` — mit AA-Kontrasttests je
+Light/Dark gegen `backgroundSelected` und einem Test, der Richtig/Falsch mit
+Hue-Abstand ≥ 20° von allen fünf Thai-Tonfarben fernhält (davor waren
+richtig/falsch = mid/falling). `ThemedButton` (primary/secondary, 44 pt,
+accessibilityRole/State) für die Kern-CTAs (Aufdecken, Weiter, Aufnahme,
+Auswerten, Erneut versuchen). Modusleiste in review.tsx bricht um
+(`flexWrap`) und hat 44-pt-Chips — „Satz wiederholen" ist nicht mehr
+abgeschnitten. Thai-Display-Text mit `maxFontSizeMultiplier` (1,4 groß/2
+mittel) und mitwachsender Zeilenhöhe; Typo-Skala (`thaiLarge`/`thaiMedium`/
+`stat`) zentral in themed-text.tsx. Fortschritts-Chart pro Spalte
+ansagbar („12. Mai: 8 Wiederholungen, 3 Übungen"), Balken für Screenreader
+versteckt; Web-Tabs mit tablist/tab-Rolle und selected-State.
+
+### Weitere Robustheit (Review-Findings ohne eigenen AE)
+
+- audio.ts: try/catch um Player-Erzeugung/`play()` und Release bei
+  Fehlerstatus (`AudioStatus.error`, v57-Docs) — Rest des alten P1-Findings
+  geschlossen; Wiedergabefehler werfen ehrlich statt „asset" vorzutäuschen.
+- `.catch`-Familie: drill-runner, speaking-runner, conversation, exam
+  (Overview/Modul getrennt), review (Profil, CardSession, restart) zeigen
+  jetzt Fehlerkarten mit „Erneut versuchen"/„Zurück" nach dem
+  progress.tsx-Muster statt Endlos-Spinner.
+- sentence-runner: „Neue Runde" würfelt neuen Seed (vorher exakt dieselbe
+  Task-Reihenfolge und Antwortmischung), der 200-ms-Timer läuft nur noch in
+  der Countdown-Phase, der Methodik-Disclaimer ist einklappbar (Standard zu,
+  44-pt-Toggle) und steht nicht mehr bei jedem Satz im Lernfluss.
+- providers/http.ts: 30-s-Timeout (`AbortSignal.timeout`), genau ein Retry
+  nur bei Netzwerk-/Timeout-Fehlern, 4xx/5xx nie — betrifft das Dev-Studio.
+- fsrs: `NEW_CARDS_PER_SESSION = 10` — neue Karten reihen nach den fälligen,
+  gedeckelt. **Sichtbare Semantikänderung:** die Dashboard-Zahl „fällig"
+  zeigt jetzt die nächste Sitzung (max. 10 neue je Richtung), nicht mehr das
+  Gesamt-Backlog; `fresh` zeigt weiterhin alle neuen Karten.
+- stats: Streak-Fenster 365 Tage statt 14 (Kappung behoben; Diagrammfenster
+  unverändert). `_layout.tsx`: `preventAutoHideAsync().catch(...)`.
+
+### Offen nach Phase 22 (bewusst nicht hier)
+
+- **EAS:** `eas init` nie ausgeführt (CLI nicht eingeloggt),
+  `extra.eas.projectId` fehlt — jeder `eas build` scheitert. Nutzeraktion:
+  `npx eas login`, `npx eas init`, dann Test-Build gegen das eas-gate.
+- Neuer Dev-Client-Build nötig (Backup-Module sind nativ); Backup auf dem
+  Emulator Ende-zu-Ende fahren.
+- Die 4 vorbestehenden content:check-Vollständigkeitsfehler (Hörclips,
+  Situationen en/es) unverändert — Content-Ausbau nach Tageslimit-Reset,
+  siehe Phase 21.
+- Modus-Chips/Sprach-Optionen nutzen weiterhin `toneColor('mid')` als
+  Auswahlrahmen (bewusst zurückgestellt, kein Review-Befund).
+- Katalog-Skalierung: bei Annäherung an 3436 Clips catalog.json aus dem
+  JS-Bundle lösen (SQLite-Vorbefüllung oder gesplittete Lazy-Module).

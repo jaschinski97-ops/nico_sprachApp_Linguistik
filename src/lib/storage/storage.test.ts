@@ -2,7 +2,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { createDataStore as createWebStore } from './backend.web';
 import { MemoryDataStore } from './memory-store';
+import {
+  getActiveBackend,
+  isStorageDegraded,
+  resetStoreForTests,
+  TransactionalDataStore,
+} from './index';
 import { DataStore } from './types';
+
+// Der Ausfallpfad von `getStore()` laesst sich nur pruefen, wenn das
+// Plattform-Backend bestimmt versagt — das echte SQLite braucht ein natives
+// Modul und ist hier ohnehin nicht pruefbar (siehe Modulkommentar unten).
+jest.mock('./backend', () => ({
+  BACKEND_NAME: 'expo-sqlite',
+  createDataStore: () => {
+    throw new Error('Datenbank kaputt');
+  },
+}));
 
 /**
  * Ein und dieselbe Vertragsprüfung für alle Backends.
@@ -142,3 +158,137 @@ describe('AsyncStorageDataStore (web) - Persistenz ueber einen Neustart', () => 
     expect(await store.get('cards', 'a')).toEqual({ n: 1 });
   });
 });
+
+describe('AsyncStorageDataStore (web) - Zugriffsracen', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('verliert bei parallelem Erstzugriff keinen der Schreibvorgaenge', async () => {
+    // Vor der Serialisierungskette (Code-Review 2026-09-07): putMany und put
+    // starteten beide mit einem leeren Cache, bauten je einen Bucket, und der
+    // zweite ueberschrieb den ersten — im Cache UND im geflushten Blob blieb
+    // nur eine Haelfte zurueck.
+    const store = createWebStore();
+    await store.init();
+
+    await Promise.all([
+      store.putMany('vocab', [
+        { id: 'a', value: { n: 1 } },
+        { id: 'b', value: { n: 2 } },
+      ]),
+      store.put('vocab', 'c', { n: 3 }),
+      store.getAll('vocab'),
+    ]);
+
+    expect((await store.getAll('vocab')).length).toBe(3);
+    // Auch der Persistierung ist nichts verloren gegangen — neuer Store,
+    // gleicher AsyncStorage-Inhalt.
+    const nachNeustart = createWebStore();
+    await nachNeustart.init();
+    expect((await nachNeustart.getAll('vocab')).length).toBe(3);
+  });
+
+  it('flusht interleaved put- und putMany-Aufrufe in einer nachvollziehbaren Reihenfolge', async () => {
+    const store = createWebStore();
+    await store.init();
+
+    // Alles parallel auf dieselbe ID: die Serialisierung ordnet die
+    // Schreibvorgaenge, und der finale Zustand ist der LETZTE in der
+    // Aufrufreihenfolge — nicht der zufaellig letzte Flush.
+    const jobs = Array.from({ length: 10 }, (_, i) =>
+      i % 2 === 0
+        ? store.put('cards', 'gai:th_to_de', { n: i })
+        : store.putMany('cards', [{ id: 'gai:th_to_de', value: { n: i } }])
+    );
+    await Promise.all(jobs);
+
+    expect(await store.get('cards', 'gai:th_to_de')).toEqual({ n: 9 });
+    const nachNeustart = createWebStore();
+    await nachNeustart.init();
+    expect(await nachNeustart.get('cards', 'gai:th_to_de')).toEqual({ n: 9 });
+  });
+});
+
+describe('AsyncStorageDataStore (web) - Transaktion', () => {
+  beforeEach(async () => {
+    await AsyncStorage.clear();
+  });
+
+  it('haelt Schreibvorgaenge zusammen und fluht sie erst am Ende', async () => {
+    const store = createWebStore() as TransactionalDataStore;
+    await store.init();
+
+    const ergebnis = await store.withTransactionAsync(async () => {
+      await store.put('cards', 'a', { n: 1 });
+      await store.put('reviewLog', '2026-09-07', { total: 1 });
+      return 'fertig';
+    });
+    expect(ergebnis).toBe('fertig');
+
+    const nachNeustart = createWebStore();
+    await nachNeustart.init();
+    expect(await nachNeustart.get('cards', 'a')).toEqual({ n: 1 });
+    expect(await nachNeustart.get('reviewLog', '2026-09-07')).toEqual({ total: 1 });
+  });
+
+  it('rollt bei einem Fehler ALLE Schreibvorgaenge der Transaktion zurueck', async () => {
+    const store = createWebStore() as TransactionalDataStore;
+    await store.init();
+    // Zustand von vor der Transaktion — der muss bleiben.
+    await store.put('cards', 'alt', { n: 0 });
+
+    await expect(
+      store.withTransactionAsync(async () => {
+        await store.put('cards', 'neu', { n: 1 });
+        await store.put('reviewLog', '2026-09-07', { total: 1 });
+        throw new Error('Absturz dazwischen');
+      })
+    ).rejects.toThrow('Absturz dazwischen');
+
+    // Weder im Cache ...
+    expect(await store.get('cards', 'neu')).toBeNull();
+    expect(await store.getAll('reviewLog')).toEqual([]);
+    // ... noch im Persistierten ist etwas hängen geblieben.
+    const nachNeustart = createWebStore();
+    await nachNeustart.init();
+    expect(await nachNeustart.get('cards', 'neu')).toBeNull();
+    expect(await nachNeustart.getAll('reviewLog')).toEqual([]);
+    expect(await nachNeustart.get('cards', 'alt')).toEqual({ n: 0 });
+  });
+
+  it('rollt auch Loeschungen innerhalb einer gescheiterten Transaktion zurueck', async () => {
+    const store = createWebStore() as TransactionalDataStore;
+    await store.init();
+    await store.put('cards', 'a', { n: 1 });
+    await store.put('cards', 'b', { n: 2 });
+
+    await expect(
+      store.withTransactionAsync(async () => {
+        await store.remove('cards', 'a');
+        await store.clear('reviewLog');
+        throw new Error('doch nicht');
+      })
+    ).rejects.toThrow('doch nicht');
+
+    expect(await store.get('cards', 'a')).toEqual({ n: 1 });
+  });
+});
+
+describe('Backend-Ausfall zur Laufzeit', () => {
+  afterEach(() => {
+    resetStoreForTests();
+  });
+
+  it('meldet isStorageDegraded() nach dem stillen RAM-Rueckfall als true', async () => {
+    // Vorher fiel die App bei kaputtem Backend stillschweigend auf den
+    // RAM-Speicher zurueck, ohne dass jemand es erfragen konnte (P1 im
+    // Code-Review 2026-09-07) — der Lernfortschritt waere beim Schliessen
+    // verloren gegangen.
+    resetStoreForTests();
+    await expect(isStorageDegraded()).resolves.toBe(true);
+    // Der synchron abfragbare Name sagt dasselbe (der Diagnose-Screen liest ihn).
+    expect(getActiveBackend()).toMatch(/memory/);
+  });
+});
+

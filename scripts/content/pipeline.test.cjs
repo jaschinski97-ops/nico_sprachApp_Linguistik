@@ -6,6 +6,7 @@ const path = require('node:path');
 const { ContentPipeline, BUDGET } = require('./pipeline.cjs');
 const { createStudio } = require('./studio.cjs');
 const { checkContent } = require('./check.cjs');
+const { pruneOrphans } = require('./prune-orphans.cjs');
 const domain = require('./domain.cjs');
 const { clipIdFor } = domain.load('src/lib/clips/types');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
@@ -110,6 +111,37 @@ test('images require real decoding and concrete-word schema', async (t) => {
   const broken = Buffer.from('89504e470d0a1a0a', 'hex');
   await assert.rejects(pipeline.stage({ kind: 'images', document: { ...document, byteSize: broken.length }, base64: broken.toString('base64') }));
 });
+test('reverse consistency: orphan assets and stray require-map keys fail every check mode; prune removes only orphans', async (t) => {
+  const { root, pipeline } = await setup(t);
+  const id = VOCABULARY.find(word => word.isConcrete).id;
+  const bytes = await fs.readFile(path.join(__dirname, '../../assets/images/icon.png'));
+  await pipeline.stage({ kind: 'images', document: { id, vocabId: id, format: 'png', byteSize: bytes.length, blobKey: id + '.png', prompt: 'TEST', model: 'TEST', generatedAt: 1 }, base64: bytes.toString('base64') });
+  await pipeline.publish();
+  assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
+  const orphan = 'b'.repeat(64) + '.mp3';
+  const stray = 'a'.repeat(64) + '.png';
+  const assetMapFile = path.join(root, 'src/content/assets.ts');
+  await fs.writeFile(path.join(root, 'assets/content', orphan), 'orphan');
+  await fs.writeFile(path.join(root, 'assets/content', '.DS_Store'), 'junk');
+  await fs.writeFile(assetMapFile, (await fs.readFile(assetMapFile, 'utf8'))
+    .replace(/\};\s*$/, `  ${JSON.stringify(stray)}: require('../../assets/content/${stray}'),\n};\n`));
+  for (const integrityOnly of [true, false]) {
+    const errors = checkContent(root, { integrityOnly }).errors;
+    assert.ok(errors.some(error => error.includes(orphan)), 'verwaiste Datei muss in jedem Modus fehlschlagen');
+    assert.ok(errors.some(error => error.includes(stray) && error.includes('assets.ts')), 'Schlüssel ohne Katalogreferenz muss fehlschlagen');
+  }
+  const dryRun = pruneOrphans(root);
+  assert.deepEqual(dryRun.orphans.map(orphan => orphan.name), [orphan]);
+  assert.deepEqual(dryRun.unknown.map(file => file.name), ['.DS_Store']);
+  assert.equal((await fs.readFile(path.join(root, 'assets/content', orphan), 'utf8')), 'orphan');
+  const applied = pruneOrphans(root, { apply: true });
+  assert.equal(applied.deleted, 1); assert.equal(applied.freedBytes, 6);
+  await assert.rejects(fs.readFile(path.join(root, 'assets/content', orphan)));
+  assert.equal((await fs.readFile(path.join(root, 'assets/content', '.DS_Store'), 'utf8')), 'junk');
+  const errors = checkContent(root, { integrityOnly: true }).errors;
+  assert.ok(!errors.some(error => error.includes(orphan)), 'Datei-Orphan ist entfernt');
+  assert.ok(errors.some(error => error.includes(stray)), 'Schlüssel-Orphan bleibt ein Checkfehler, bis assets.ts neu generiert wird');
+});
 test('loopback API origin protections and removal of the review endpoint', async (t) => {
   const { root } = await setup(t); const server = createStudio(root);
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -126,7 +158,12 @@ test('loopback API origin protections and removal of the review endpoint', async
   assert.equal((await (await fetch(url + '/state')).json()).shipped.entries.length, 1);
 });
 test('real short dead syllable: strict threshold loses the fall, continuity recovers it', async () => {
-  const pcm = decodeAudio(path.join(__dirname, '../../assets/content/16440f54287a4d83aa57d3a98bcefcf9b8512489e88b49c76ad6397e3c94cd89.mp3'));
+  // Fixture liegt seit dem Orphan-GC (2026-09-07) bewusst unter fixtures/,
+  // nicht mehr in assets/content: Dort zählt nur katalogreferenzierter
+  // Inhalt, und dieser Clip ist keiner. Der sha256 war der Asset-Name.
+  const real = path.join(__dirname, 'fixtures/real-dead-syllable.mp3');
+  assert.equal(require('node:crypto').createHash('sha256').update(await fs.readFile(real)).digest('hex'), '16440f54287a4d83aa57d3a98bcefcf9b8512489e88b49c76ad6397e3c94cd89');
+  const pcm = decodeAudio(real);
   assert.equal(analyzeToneContour(pcm, 24000, undefined, false).status, 'unmeasurable');
   const corrected = analyzeToneContour(pcm, 24000); assert.equal(corrected.status, 'measured');
   assert.ok(corrected.summary.slope < -4.5 && corrected.summary.slope > -6);

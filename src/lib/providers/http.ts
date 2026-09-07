@@ -102,23 +102,82 @@ export type JsonPostOptions = {
   url: string;
   headers: Record<string, string>;
   body: unknown;
+  /**
+   * Zeitlimit für EINEN Versuch in Millisekunden. Standard 30 s — groß genug
+   * für langsame Bild- und Audioantworten, klein genug, dass eine tote
+   * Verbindung den Aufrufer nicht für immer hängt.
+   */
+  timeoutMs?: number;
 };
+
+const REQUEST_TIMEOUT_MS = 30_000;
+/**
+ * GENAU EIN zweiter Versuch, und zwar nur für Fehler, die fetch selbst wirft:
+ * abgebrochene Verbindung oder Zeitlimit. Eine HTTP-Fehlerantwort (4xx/5xx)
+ * ist eine ANTWORT — ein 401 bleibt auch beim zweiten Mal 401, und 5xx mit
+ * einem Retry zu begegnen, hätte der Schlüsselinhaber der App besser verboten.
+ */
+const MAX_ATTEMPTS = 2;
+/** Kurze Pause vor dem Wiederholungsversuch — lang genug, dass ein kurz gestörtes Netz sich fängt. */
+const RETRY_DELAY_MS = 250;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+/**
+ * Macht den Zeitlimit-Abbruch für die Fehlerliste benennbar.
+ *
+ * Ein roher Abbruch-Fehler heißt je nach Plattform nur „signal timed out" oder
+ * „The operation was aborted" — nach demselben Maßstab wie CORS-Meldungen
+ * (AE-27) darf das nicht als Rätsel in der Fehlerliste enden.
+ */
+function describeTimeoutFailure(error: unknown, host: string, timeoutMs: number): unknown {
+  const asError = error instanceof Error ? error : null;
+  const indikator = asError ? `${asError.name} ${asError.message}` : String(error);
+  if (!/abort|timed?[\s-]?out|timeout/i.test(indikator)) return error;
+  return new Error(
+    `Keine Antwort von ${host} innerhalb von ${Math.round(timeoutMs / 1000)} s ` +
+      '(Zeitlimit abgelaufen). Entweder ist das Netz gerade gestört oder der Anbieter ' +
+      'antwortet nicht.'
+  );
+}
+
+/**
+ * Der gemeinsame POST-Kern: Timeout je Versuch, ein Wiederholungsversuch nur
+ * bei Netzwerk-/Timeout-Fehlern. Liefert die rohe Response — HTTP-Fehler
+ * behandeln die Aufrufer mit `describeHttpError`, denn was eine Antwort ist,
+ * wird nicht erneut gefragt.
+ */
+async function postWithRetry(options: JsonPostOptions): Promise<Response> {
+  const host = hostOf(options.url);
+  const timeoutMs = options.timeoutMs ?? REQUEST_TIMEOUT_MS;
+
+  let networkFailure: unknown;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      return await fetch(options.url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        body: JSON.stringify(options.body),
+        credentials: NO_CREDENTIALS,
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (error) {
+      networkFailure = error;
+      if (attempt < MAX_ATTEMPTS) await delay(RETRY_DELAY_MS);
+    }
+  }
+  throw describeNetworkFailure(describeTimeoutFailure(networkFailure, host, timeoutMs), host);
+}
 
 /** Ein POST mit JSON hin und JSON zurück — mit sprechenden Fehlern. */
 export async function postJson(options: JsonPostOptions): Promise<unknown> {
   const host = hostOf(options.url);
 
-  let response: Response;
-  try {
-    response = await fetch(options.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      body: JSON.stringify(options.body),
-      credentials: NO_CREDENTIALS,
-    });
-  } catch (error) {
-    throw describeNetworkFailure(error, host);
-  }
+  const response = await postWithRetry(options);
 
   if (!response.ok) {
     throw new Error(describeHttpError(response.status, await response.text()));
@@ -140,17 +199,7 @@ export async function postForBytes(
 ): Promise<{ bytes: ArrayBuffer; contentType: string }> {
   const host = hostOf(options.url);
 
-  let response: Response;
-  try {
-    response = await fetch(options.url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      body: JSON.stringify(options.body),
-      credentials: NO_CREDENTIALS,
-    });
-  } catch (error) {
-    throw describeNetworkFailure(error, host);
-  }
+  const response = await postWithRetry(options);
 
   if (!response.ok) {
     throw new Error(describeHttpError(response.status, await response.text()));

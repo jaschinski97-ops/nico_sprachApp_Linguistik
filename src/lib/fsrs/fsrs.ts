@@ -150,11 +150,27 @@ export function isDue(card: FSRSCardState, now: number = Date.now()): boolean {
 }
 
 /**
- * Fällige Karten, schwächste zuerst — die Karte, die am ehesten vergessen ist,
- * wird zuerst abgefragt. Neue Karten (R = 0) stehen damit ganz vorn.
+ * Obergrenze an nie bewerteten Karten je Sitzungszusammenstellung.
+ *
+ * Neue Karten haben R = 0 und stünden sonst in JEDER Sitzung ganz vorn: bei
+ * wachsendem Grundstock fluteten sie die Sitzung, und die fälligen Karten —
+ * das, was der Spaced Repetition eigentlich gehört — verhungerten dahinter.
+ * Zehn neue Karten je Sitzung ist der übliche Bereich von Anki-Vorgaben und
+ * hält den Einstieg kurz, ohne den Fortschritt zu stoppen.
+ */
+export const NEW_CARDS_PER_SESSION = 10;
+
+/**
+ * Fällige Karten für eine Sitzung: bereits Gelernte zuerst, schwächste voran
+ * — die Karte, die am ehesten vergessen ist, wird zuerst abgefragt. Nie
+ * bewertete Karten kommen DAHINTER und höchstens `NEW_CARDS_PER_SESSION`
+ * Stück (siehe dort).
  */
 export function dueCards(cards: FSRSCardState[], now: number = Date.now()): FSRSCardState[] {
-  return cards
-    .filter((card) => isDue(card, now))
+  const due = cards.filter((card) => isDue(card, now));
+  const reviewed = due
+    .filter((card) => card.state !== 'new')
     .sort((a, b) => retrievability(a, now) - retrievability(b, now));
+  const fresh = due.filter((card) => card.state === 'new').slice(0, NEW_CARDS_PER_SESSION);
+  return [...reviewed, ...fresh];
 }

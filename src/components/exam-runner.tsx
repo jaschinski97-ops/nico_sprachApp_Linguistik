@@ -1,11 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import { ThemedButton } from './themed-button';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
 import { playPronunciation } from '@/lib/audio';
 import { scoreExamModule } from '@/lib/exam/session';
 import { ExamModule, isGradable, SKILL_LABELS, TASK_TYPE_LABELS } from '@/lib/exam/types';
@@ -29,7 +30,7 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
     isGradable(module) ? module.items.map(() => null) : []
   );
   const [checked, setChecked] = useState(false);
-  const toneColor = useToneColor();
+  const theme = useTheme();
   const [showModel, setShowModel] = useState(false);
 
   const score = useMemo(
@@ -94,14 +95,18 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
                 {item.options.map((option, optionIndex) => {
                   const chosen = answers[itemIndex] === optionIndex;
                   const correct = optionIndex === item.correctIndex;
+                  // SEIT DEM UI-REVIEW 2026-09-07 success/error STATT DER
+                  // TONFARBEN: „mittel“/„fallend“ bedeuten Thai-Töne, nicht
+                  // Richtig/Falsch. Die Auswahl VOR dem Auswerten trägt die
+                  // Akzentfarbe — sie ist eine Auswahl, kein Urteil.
                   const border = checked
                     ? correct
-                      ? toneColor('mid')
+                      ? theme.success
                       : chosen
-                        ? toneColor('falling')
+                        ? theme.error
                         : undefined
                     : chosen
-                      ? toneColor('high')
+                      ? theme.accent
                       : undefined;
 
                   return (
@@ -127,7 +132,11 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
               </View>
               {checked ? (
                 <ThemedText type="small" themeColor="textSecondary">
-                  {answers[itemIndex] === item.correctIndex ? '✓ ' : '✗ '}
+                  <ThemedText
+                    type="small"
+                    themeColor={answers[itemIndex] === item.correctIndex ? 'success' : 'error'}>
+                    {answers[itemIndex] === item.correctIndex ? '✓ ' : '✗ '}
+                  </ThemedText>
                   {item.explanation}
                 </ThemedText>
               ) : null}
@@ -160,22 +169,17 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
               wurde.
             </ThemedText>
             <View style={styles.row}>
-              <Button label="Zurück zur Übersicht" onPress={onExit} />
+              <ThemedButton label="Zurück zur Übersicht" onPress={onExit} />
             </View>
           </ThemedView>
         ) : (
-          <Pressable
+          <ThemedButton
+            label={allAnswered ? 'Auswerten' : 'Bitte alle Aufgaben beantworten'}
+            accessibilityLabel="Auswerten"
             onPress={() => setChecked(true)}
             disabled={!allAnswered}
-            accessibilityRole="button"
-            accessibilityLabel="Auswerten"
-            style={({ pressed }) => [pressed && styles.pressed, !allAnswered && styles.disabled]}>
-            <ThemedView type="backgroundSelected" style={styles.wide}>
-              <ThemedText type="smallBold">
-                {allAnswered ? 'Auswerten' : 'Bitte alle Aufgaben beantworten'}
-              </ThemedText>
-            </ThemedView>
-          </Pressable>
+            variant="primary"
+          />
         )
       ) : null}
     </>
@@ -301,23 +305,10 @@ function ProductionTask({
         </>
       ) : (
         <View style={styles.row}>
-          <Button label="Musterlösung zeigen" onPress={onShowModel} />
+          <ThemedButton label="Musterlösung zeigen" onPress={onShowModel} />
         </View>
       )}
     </>
-  );
-}
-
-function Button({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundSelected" style={styles.button}>
-        <ThemedText type="small">{label}</ThemedText>
-      </ThemedView>
-    </Pressable>
   );
 }
 
@@ -376,25 +367,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'transparent',
   },
-  wide: {
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-  },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
-  button: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.two,
-  },
   pressed: {
     opacity: 0.7,
-  },
-  disabled: {
-    opacity: 0.4,
   },
 });

@@ -5,7 +5,7 @@ import { TermWord } from './term-word';
 
 import { SpeechLanguage } from '@/lib/audio';
 import { languageOf } from '@/lib/languages/registry';
-import { ThemedText } from './themed-text';
+import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 import { VerificationBadge } from './verification-badge';
 import { VocabImageView } from './vocab-image';
@@ -59,7 +59,15 @@ export function Flashcard({ entry, direction, revealed }: Props) {
             <TermWord entry={entry} />
           ) : (
             <View style={styles.frontThai}>
-              <ThemedText style={styles.thaiPlain}>{entry.term}</ThemedText>
+              {/* Gleiche Stufe und gleicher Skalierungsschutz wie in `ThaiWord`:
+                  die Vorderseite der Karte ist dasselbe Display, nur ohne
+                  Tonfarben (die wären die halbe Antwort). */}
+              <ThemedText
+                type="thaiLarge"
+                maxFontSizeMultiplier={1.4}
+                style={{ lineHeight: displayLineHeight(56, 1.4) }}>
+                {entry.term}
+              </ThemedText>
             </View>
           )}
           <SpeakButton
@@ -119,7 +127,13 @@ function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?
 
   return (
     <View style={styles.germanBlock}>
-      <ThemedText style={headline ? styles.germanLarge : styles.germanMedium}>
+      <ThemedText
+        maxFontSizeMultiplier={2}
+        style={[
+          headline
+            ? { ...styles.germanLarge, lineHeight: displayLineHeight(34, 2, 1.35) }
+            : { ...styles.germanMedium, lineHeight: displayLineHeight(24, 2, 1.41) },
+        ]}>
         {entry.german}
       </ThemedText>
       {chips.map((chip) => (
@@ -252,25 +266,17 @@ const styles = StyleSheet.create({
   frontThai: {
     paddingVertical: Spacing.three,
   },
-  thaiPlain: {
-    fontSize: 56,
-    lineHeight: 78,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   germanBlock: {
     alignItems: 'center',
     gap: Spacing.one,
   },
   germanLarge: {
     fontSize: 34,
-    lineHeight: 46,
     fontWeight: '600',
     textAlign: 'center',
   },
   germanMedium: {
     fontSize: 24,
-    lineHeight: 34,
     fontWeight: '600',
     textAlign: 'center',
   },

@@ -31,6 +31,11 @@ function isLevel(value: unknown): value is ExamLevel {
   return EXAM_LEVELS.includes(value as ExamLevel);
 }
 
+/** Fehlertext eines gescheiterten Ladevorgangs — wie im Fortschritts-Reiter. */
+function messageOf(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 export default function ExamScreen() {
   const params = useLocalSearchParams<{ level?: string; module?: string }>();
   const router = useRouter();
@@ -39,13 +44,20 @@ export default function ExamScreen() {
   const toneColor = useToneColor();
 
   const [overview, setOverview] = useState<ExamOverview[] | null>(null);
+  const [overviewError, setOverviewError] = useState<string | null>(null);
   const [module, setModule] = useState<ExamModule | null>(null);
+  const [moduleError, setModuleError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    loadExamOverview(level).then((result) => {
-      if (!cancelled) setOverview(result);
-    });
+    setOverviewError(null);
+    loadExamOverview(level)
+      .then((result) => {
+        if (!cancelled) setOverview(result);
+      })
+      .catch((e) => {
+        if (!cancelled) setOverviewError(messageOf(e));
+      });
     return () => {
       cancelled = true;
     };
@@ -53,17 +65,35 @@ export default function ExamScreen() {
 
   useEffect(() => {
     let cancelled = false;
+    setModuleError(null);
     if (!params.module) {
       setModule(null);
       return;
     }
-    loadExamModule(params.module).then((found) => {
-      if (!cancelled) setModule(found);
-    });
+    loadExamModule(params.module)
+      .then((found) => {
+        if (!cancelled) setModule(found);
+      })
+      .catch((e) => {
+        if (!cancelled) setModuleError(messageOf(e));
+      });
     return () => {
       cancelled = true;
     };
   }, [params.module]);
+
+  if (params.module && moduleError) {
+    return (
+      <ScreenScaffold title="Prüfung" subtitle="Modul">
+        <ThemedView type="backgroundElement" style={styles.card}>
+          <ThemedText type="smallBold">Modul konnte nicht geladen werden</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Konnte nicht geladen werden: {moduleError}
+          </ThemedText>
+        </ThemedView>
+      </ScreenScaffold>
+    );
+  }
 
   if (params.module && module) {
     return (
@@ -145,7 +175,11 @@ export default function ExamScreen() {
         </ThemedText>
       </ThemedView>
 
-      {overview === null ? (
+      {overviewError ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          Konnte nicht geladen werden: {overviewError}
+        </ThemedText>
+      ) : overview === null ? (
         <ThemedText type="small" themeColor="textSecondary">
           Aufgaben werden geladen …
         </ThemedText>

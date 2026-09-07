@@ -7,7 +7,7 @@ import { ToneLegend } from './tone-legend';
 
 import { Spacing } from '@/constants/theme';
 import { VOCABULARY_ES } from '@/data/vocabulary';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { LanguageCode } from '@/lib/languages/types';
 import { graphemeGroups } from '@/lib/spelling/graphemes';
 import { analyzeStress } from '@/lib/stress/syllables';
@@ -157,6 +157,7 @@ function StressLegend({ compact }: { compact: boolean }) {
  * bedeuten Töne, und ein Ton ist keine Betonung (Pflicht 3 aus Phase 15).
  */
 function SyllablePattern({ count, stressed }: { count: number; stressed: number }) {
+  const theme = useTheme();
   const toneColor = useToneColor();
   return (
     <View style={styles.pattern} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -167,7 +168,7 @@ function SyllablePattern({ count, stressed }: { count: number; stressed: number 
             styles.dot,
             index === stressed
               ? { width: 12, height: 12, borderRadius: 6, backgroundColor: toneColor('mid') }
-              : null,
+              : { backgroundColor: theme.decorGrey },
           ]}
         />
       ))}
@@ -239,7 +240,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(127,127,127,0.7)',
   },
   stressed: {
     fontWeight: '700',

@@ -4,7 +4,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { hasContent, LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
 
@@ -31,6 +31,7 @@ export function LanguagePicker({
   onSelect: (language: LanguageCode) => void;
 }) {
   const toneColor = useToneColor();
+  const theme = useTheme();
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -68,7 +69,7 @@ export function LanguagePicker({
                 style={[
                   styles.option,
                   active ? { borderColor: toneColor('mid'), borderWidth: 2 } : styles.plain,
-                  !usable && styles.empty,
+                  !usable && { ...styles.empty, borderColor: theme.borderSubtle },
                 ]}>
                 <View style={styles.head}>
                   <ThemedText type="smallBold">{language.label}</ThemedText>
@@ -140,7 +141,6 @@ const styles = StyleSheet.create({
     opacity: 0.75,
     borderWidth: 1,
     borderStyle: 'dashed',
-    borderColor: 'rgba(127,127,127,0.6)',
   },
   head: {
     flexDirection: 'row',

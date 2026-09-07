@@ -9,6 +9,7 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { SpeakingRunner } from '@/components/speaking-runner';
 import { SentenceRunner } from '@/components/sentence-runner';
 import type { SentenceMode } from '@/lib/speaking/sentence-session';
+import { ThemedButton } from '@/components/themed-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FeatureLegend } from '@/components/feature-legend';
@@ -25,6 +26,11 @@ import { rateCard } from '@/lib/repository';
 import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
+
+/** Fehlertext eines gescheiterten Ladevorgangs — wie im Fortschritts-Reiter. */
+function messageOf(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
 
 /** Karteikarten oder eine der richtungseigenen Übungen. */
 type Mode = 'cards' | DrillId | 'speaking' | 'writing' | SentenceMode;
@@ -127,9 +133,20 @@ export default function ReviewScreen() {
   const router = useRouter();
 
   const [profile, setProfile] = useState<LearnerProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadProfile().then(setProfile);
+    let cancelled = false;
+    loadProfile()
+      .then((loaded) => {
+        if (!cancelled) setProfile(loaded);
+      })
+      .catch((e) => {
+        if (!cancelled) setProfileError(messageOf(e));
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   /**
@@ -164,6 +181,16 @@ export default function ReviewScreen() {
     },
     [router]
   );
+
+  if (profileError) {
+    return (
+      <ScreenScaffold title="Lernen" subtitle="Lernrichtung">
+        <ThemedText type="small" themeColor="textSecondary">
+          Konnte nicht geladen werden: {profileError}
+        </ThemedText>
+      </ScreenScaffold>
+    );
+  }
 
   if (!profile) {
     return (
@@ -373,7 +400,13 @@ function ModeBar({
                   accessibilityRole="button"
                   accessibilityLabel={`${group.label}: ${label}`}
                   accessibilityState={{ selected }}
-                  style={({ pressed }) => pressed && styles.pressed}>
+                  // `flexShrink` am Pressable (dem Flex-Kind der Gruppe) UND
+                  // an der Fläche: nur so gibt „Satz wiederholen“ auf schmalen
+                  // Screens seinen Platz ab, statt abgeschnitten zu werden.
+                  style={({ pressed }) => [
+                    styles.modeWrap,
+                    pressed && styles.pressed,
+                  ]}>
                   <ThemedView
                     type={selected ? 'backgroundSelected' : 'backgroundElement'}
                     style={[styles.modeButton, selected && { borderColor: toneColor('mid') }]}>
@@ -415,6 +448,7 @@ function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
 
 function CardSession({ direction }: { direction: Direction }) {
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
+  const [queueError, setQueueError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -423,9 +457,14 @@ function CardSession({ direction }: { direction: Direction }) {
 
   useEffect(() => {
     let cancelled = false;
-    buildReviewQueue(direction).then((items) => {
-      if (!cancelled) setQueue(items);
-    });
+    setQueueError(null);
+    buildReviewQueue(direction)
+      .then((items) => {
+        if (!cancelled) setQueue(items);
+      })
+      .catch((e) => {
+        if (!cancelled) setQueueError(messageOf(e));
+      });
     return () => {
       cancelled = true;
     };
@@ -450,10 +489,27 @@ function CardSession({ direction }: { direction: Direction }) {
 
   const restart = useCallback(() => {
     setQueue(null);
+    setQueueError(null);
     setIndex(0);
     setRevealed(false);
-    buildReviewQueue(direction).then(setQueue);
+    buildReviewQueue(direction)
+      .then(setQueue)
+      .catch((e) => setQueueError(messageOf(e)));
   }, [direction]);
+
+  if (queueError) {
+    return (
+      <ThemedView type="backgroundElement" style={styles.summary}>
+        <ThemedText type="smallBold">Sitzung konnte nicht geladen werden</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Konnte nicht zusammengestellt werden: {queueError}
+        </ThemedText>
+        <View style={styles.actions}>
+          <ThemedButton label="Erneut versuchen" onPress={restart} />
+        </View>
+      </ThemedView>
+    );
+  }
 
   if (!queue) {
     return (
@@ -475,7 +531,7 @@ function CardSession({ direction }: { direction: Direction }) {
             : 'In dieser Richtung ist gerade keine Karte fällig. Die Übungen oben gehen trotzdem — sie brauchen keine Fälligkeit.'}
         </ThemedText>
         <View style={styles.actions}>
-          <ActionButton label="Erneut prüfen" onPress={restart} />
+          <ThemedButton label="Erneut prüfen" onPress={restart} />
         </View>
       </ThemedView>
     );
@@ -506,30 +562,14 @@ function CardSession({ direction }: { direction: Direction }) {
           ))}
         </View>
       ) : (
-        <Pressable
-          onPress={() => setRevealed(true)}
-          accessibilityRole="button"
+        <ThemedButton
+          label="Aufdecken"
           accessibilityLabel="Antwort aufdecken"
-          style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedView type="backgroundSelected" style={styles.revealButton}>
-            <ThemedText type="smallBold">Aufdecken</ThemedText>
-          </ThemedView>
-        </Pressable>
+          onPress={() => setRevealed(true)}
+          variant="primary"
+        />
       )}
     </>
-  );
-}
-
-function ActionButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundSelected" style={styles.actionButton}>
-        <ThemedText type="small">{label}</ThemedText>
-      </ThemedView>
-    </Pressable>
   );
 }
 
@@ -555,12 +595,18 @@ const styles = StyleSheet.create({
    * Zuerst lag die Beschriftung ueber jeder Gruppe; damit stand jeder Knopf in
    * einer eigenen Zeile und die Leiste war fuenf Zeilen hoch. Jetzt laeuft
    * alles in EINER umbrechenden Reihe wie vor Phase 18 - die Fertigkeit ist
-   * nur der kleine Text davor. Die Gruppe selbst bricht nicht um, damit eine
-   * Beschriftung nie allein am Zeilenende steht.
+   * nur der kleine Text davor.
+   *
+   * SEIT DEM UI-REVIEW 2026-09-07 BRICHT DIE GRUPPE SELBST AUCH UM: Ohne
+   * `flexWrap` wurde „Satz wiederholen“ auf schmalen Screens abgeschnitten,
+   * weil kein Knopf seinen Platz abgab. Eine Beschriftung kann dadurch einmal
+   * allein am Zeilenende stehen - das kleinere Übel gegenüber einem
+   * unerreichbaren Modus.
    */
   modeGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     gap: Spacing.one,
   },
   modeBar: {
@@ -568,14 +614,19 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.two,
   },
+  /** Macht den Knopf zum flexiblen Kind seiner Gruppe (siehe oben). */
+  modeWrap: {
+    flexShrink: 1,
+  },
   modeButton: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.two,
     borderWidth: 1,
     borderColor: 'transparent',
   },
-  modeButtonSelected: {},
   directionBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -598,11 +649,6 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
     alignItems: 'center',
   },
-  revealButton: {
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-  },
   summary: {
     borderRadius: Spacing.three,
     padding: Spacing.three,
@@ -613,11 +659,6 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacing.two,
     marginTop: Spacing.one,
-  },
-  actionButton: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.two,
   },
   pressed: {
     opacity: 0.7,

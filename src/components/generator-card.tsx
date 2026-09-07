@@ -501,6 +501,7 @@ export function GeneratorCard({
 
 function ProgressPanel({ progress }: { progress: BatchProgress }) {
   const toneColor = useToneColor();
+  const theme = useTheme();
   const pct = progress.total === 0 ? 0 : Math.round((progress.processed / progress.total) * 100);
 
   return (
@@ -510,7 +511,10 @@ function ProgressPanel({ progress }: { progress: BatchProgress }) {
         {progress.cancelled ? ' — angehalten' : progress.done ? ' — fertig' : ''}
       </ThemedText>
 
-      <View style={styles.track}>
+      {/* Schiene über das `decorGrey`-Token statt hart codiertem rgba():
+          damit gibt es auch im Dunkelmodus eine abgestimmte Fassung
+          (UI-Review 2026-09-07, nur Farbe — keine Strukturänderung). */}
+      <View style={[styles.track, { backgroundColor: theme.decorGrey }]}>
         <View style={[styles.fill, { width: `${pct}%`, backgroundColor: toneColor('mid') }]} />
       </View>
 
@@ -669,7 +673,6 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     overflow: 'hidden',
-    backgroundColor: 'rgba(127,127,127,0.25)',
   },
   fill: {
     height: '100%',

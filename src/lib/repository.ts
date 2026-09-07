@@ -22,8 +22,8 @@ import { ImageBlobStore, VocabImage } from './images/types';
 
 import { createCardState, reviewCard } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
-import { recordReview } from './review-log';
-import { DataStore, getStore } from './storage';
+import { recordReviewInTransaction } from './review-log';
+import { DataStore, getStore, transact } from './storage';
 
 /**
  * Beim Lesen aussortierte Dokumente einmal melden.
@@ -123,6 +123,13 @@ export async function loadAllCardStates(store?: DataStore): Promise<FSRSCardStat
  * Die Rechnung selbst macht `reviewCard` aus dem FSRS-Modul — hier wird sie
  * nur mit der Persistenz verbunden, damit die Screens weder die Formeln noch
  * den Speicher direkt anfassen.
+ *
+ * Kartenzustand und Tagesprotokoll entstehen in EINER Transaktion: bricht die
+ * App zwischen beiden Schreibvorgängen ab, bleibt sonst eine Karte ohne
+ * Protokolleintrag zurück (oder umgekehrt). Und der Kartenzustand wird
+ * INNERHALB der Transaktion neu gelesen — der Aufruferübergabe liegt
+ * womöglich ein älterer Snapshot zugrunde, und zwei parallele Bewertungen
+ * derselben Karte würden sich sonst gegenseitig fortsetzen statt nacheinander.
  */
 export async function rateCard(
   card: FSRSCardState,
@@ -130,12 +137,17 @@ export async function rateCard(
   store?: DataStore,
   now: number = Date.now()
 ): Promise<FSRSCardState> {
-  const updated = reviewCard(card, rating, now);
-  await saveCardState(updated, store);
-  // Einziger Ort, an dem bewertet wird - deshalb auch der einzige Ort, an dem
-  // das Tagesprotokoll fortgeschrieben werden muss.
-  await recordReview(card.direction, rating, now, store);
-  return updated;
+  const db = store ?? (await getStore());
+  return transact(db, async () => {
+    const current = (await loadCardState(card.vocabId, card.direction, db)) ?? card;
+    const updated = reviewCard(current, rating, now);
+    await saveCardState(updated, db);
+    // Einziger Ort, an dem bewertet wird - deshalb auch der einzige Ort, an dem
+    // das Tagesprotokoll fortgeschrieben werden muss. Ohne eigene Sperre, weil
+    // die Transaktion den Store schon exklusiv haelt.
+    await recordReviewInTransaction(card.direction, rating, now, db);
+    return updated;
+  });
 }
 
 export async function loadCardStatesForDirection(

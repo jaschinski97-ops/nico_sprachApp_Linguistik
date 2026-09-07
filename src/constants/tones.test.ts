@@ -147,8 +147,76 @@ describe('Kontrast der Grundfarben (WCAG 2.1 AA)', () => {
   });
 });
 
-/** Farbwinkel in Grad — nur für die Prüfung, ob der Farbton erhalten bleibt. */
-function farbwinkel(hex: string): number {
+/**
+ * Kontrast der semantischen Tokens (UI-Review 2026-09-07).
+ *
+ * Die Token ersetzen hart codierte Farben (#3c87f7, #AE8B3F, #888888, …) und
+ * die Zweckentfremdung von Tonfarben für Richtig/Falsch. Damit sie das halten
+ * dürfen, was sie versprechen, rechnet dieser Block dieselben Grenzwerte nach:
+ *
+ *   link, success, error, badge — Text (4,5:1 je Modus und Untergrund)
+ *   accent, borderSubtle       — Fläche/Kante, also Nicht-Text (3:1)
+ *   accentText auf accent      — Knopfbeschriftung, also Text (4,5:1)
+ *
+ * `decorGrey` fehlt bewusst: Es füllt rein dekorative Flächen (Punktreihen,
+ * Fortschritts-Schienen), für die WCAG kein Maß verlangt — ein Grenzwert hier
+ * würde es zwingen, lauter zu sein, als sein Zweck es will.
+ */
+describe('Kontrast der semantischen Farben (WCAG 2.1 AA)', () => {
+  const TEXT_TOKENS = ['link', 'success', 'error', 'badge'] as const;
+
+  it.each(MODI)('liest sich im Modus %s auf jedem Untergrund', (modus) => {
+    for (const token of TEXT_TOKENS) {
+      for (const grund of UNTERGRUENDE[modus]) {
+        expect(kontrastVerhaeltnis(Colors[modus][token], grund)).toBeGreaterThanOrEqual(AA_TEXT);
+      }
+    }
+  });
+
+  it.each(MODI)(' hebt sich als Fläche im Modus %s von jedem Untergrund ab', (modus) => {
+    // 1.4.11: Ein gefüllter Akzent-Knopf muss als Fläche erkennbar bleiben,
+    // auch wenn er auf einer der Karten-Hintergründe liegt.
+    for (const grund of UNTERGRUENDE[modus]) {
+      expect(kontrastVerhaeltnis(Colors[modus].accent, grund)).toBeGreaterThanOrEqual(AA_GRAFIK);
+    }
+  });
+
+  it.each(MODI)('beschriftet die Akzentfläche im Modus %s lesbar', (modus) => {
+    expect(kontrastVerhaeltnis(Colors[modus].accentText, Colors[modus].accent)).toBeGreaterThanOrEqual(
+      AA_TEXT
+    );
+  });
+
+  it.each(MODI)(' grenzt borderSubtle im Modus %s gegen jeden Untergrund ab', (modus) => {
+    // Steuerkannten müssen sichtbar sein (3:1), sonst ist der Knopf nur noch
+    // eine Vermutung — besonders im Dunkelmodus, wo #888888 bisher keine
+    // eigene Fassung hatte.
+    for (const grund of UNTERGRUENDE[modus]) {
+      expect(kontrastVerhaeltnis(Colors[modus].borderSubtle, grund)).toBeGreaterThanOrEqual(
+        AA_GRAFIK
+      );
+    }
+  });
+
+  it('koppelt Richtig/Falsch von den Tonfarben ab', () => {
+    // BISHER KODIERTEN „Richtig" und „Falsch" MITTEL und FALLEND - dieselben
+    // Farben, die Thai-Töne bedeuten. Wer Tonerkennung übt, bekam damit zwei
+    // Alphabete im einen. success und error müssen von ALLEN fünf Tonfarben
+    // deutlich verschieden sein: anderer Hexwert genügt nicht, auch der
+    // Farbton muss Abstand halten (≥ 20°, über die 360°-Grenze gerechnet).
+    for (const modus of MODI) {
+      for (const token of ['success', 'error'] as const) {
+        for (const ton of TONE_KEYS) {
+          expect(Colors[modus][token]).not.toBe(toneColor(ton, modus));
+          expect(hueAbstand(Colors[modus][token], toneColor(ton, modus))).toBeGreaterThanOrEqual(20);
+        }
+      }
+    }
+  });
+});
+
+/** Farbwinkel exakt in Grad — Grundlage für den Hue-Abstand. */
+function farbwinkelExakt(hex: string): number {
   const wert = hex.replace('#', '');
   const r = parseInt(wert.slice(0, 2), 16) / 255;
   const g = parseInt(wert.slice(2, 4), 16) / 255;
@@ -161,7 +229,18 @@ function farbwinkel(hex: string): number {
   if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
   else if (max === g) h = ((b - r) / d + 2) / 6;
   else h = ((r - g) / d + 4) / 6;
+  return h * 360;
+}
+
+/** Hue-Abstand in Grad, kürzerer Weg über die 360°-Grenze. */
+function hueAbstand(a: string, b: string): number {
+  const diff = Math.abs(farbwinkelExakt(a) - farbwinkelExakt(b));
+  return Math.min(diff, 360 - diff);
+}
+
+/** Farbwinkel in Grad — nur für die Prüfung, ob der Farbton erhalten bleibt. */
+function farbwinkel(hex: string): number {
   // Auf zehn Grad gerundet: die Loesung der Helligkeit verschiebt den Winkel
   // minimal, ein Farbwechsel waere dagegen ein Sprung.
-  return Math.round((h * 360) / 10);
+  return Math.round(farbwinkelExakt(hex) / 10);
 }

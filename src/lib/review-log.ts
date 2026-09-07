@@ -1,5 +1,5 @@
 import { Direction, Rating } from './fsrs/types';
-import { DataStore, getStore } from './storage';
+import { DataStore, getStore, withStoreLock } from './storage';
 
 /**
  * Wiederholungs-Protokoll je Kalendertag.
@@ -87,7 +87,13 @@ export function dayIsActive(entry: ReviewDayLog): boolean {
   return entry.total > 0 || drillCount(entry) > 0;
 }
 
-/** Zählt eine Wiederholung im Tagesdokument mit. */
+/**
+ * Zählt eine Wiederholung im Tagesdokument mit.
+ *
+ * Lesen-Ändern-Schreiben läuft unter der Store-Sperre: schnelle Antworten
+ * nacheinander würden sonst alle denselben (leeren) Tageszähler lesen und
+ * den letzten Stand jeweils überschreiben — gezählt wäre am Ende eine.
+ */
 export async function recordReview(
   direction: Direction,
   rating: Rating,
@@ -95,6 +101,21 @@ export async function recordReview(
   store?: DataStore
 ): Promise<ReviewDayLog> {
   const db = store ?? (await getStore());
+  return withStoreLock(db, () => recordReviewInTransaction(direction, rating, at, db));
+}
+
+/**
+ * Wie `recordReview`, aber ohne eigene Sperre — für Aufrufer, die den Store
+ * bereits exklusiv halten, damit Karte und Protokolleintrag in EINER
+ * Transaktion landen (`rateCard` macht genau das). Wer diese Funktion ohne
+ * gehaltene Sperre ruft, macht die Serialisierung wieder wirkungslos.
+ */
+export async function recordReviewInTransaction(
+  direction: Direction,
+  rating: Rating,
+  at: number,
+  db: DataStore
+): Promise<ReviewDayLog> {
   const date = dayKey(at);
 
   const existing = await db.get<ReviewDayLog>('reviewLog', date);
@@ -122,15 +143,16 @@ export async function recordDrill(
 ): Promise<ReviewDayLog> {
   const db = store ?? (await getStore());
   const date = dayKey(at);
+  return withStoreLock(db, async () => {
+    const existing = await db.get<ReviewDayLog>('reviewLog', date);
+    const entry = existing ?? emptyDay(date);
 
-  const existing = await db.get<ReviewDayLog>('reviewLog', date);
-  const entry = existing ?? emptyDay(date);
+    entry.drills = (entry.drills ?? 0) + 1;
+    entry.drillsCorrect = (entry.drillsCorrect ?? 0) + (correct ? 1 : 0);
 
-  entry.drills = (entry.drills ?? 0) + 1;
-  entry.drillsCorrect = (entry.drillsCorrect ?? 0) + (correct ? 1 : 0);
-
-  await db.put('reviewLog', date, entry);
-  return entry;
+    await db.put('reviewLog', date, entry);
+    return entry;
+  });
 }
 
 export async function loadReviewLog(store?: DataStore): Promise<ReviewDayLog[]> {

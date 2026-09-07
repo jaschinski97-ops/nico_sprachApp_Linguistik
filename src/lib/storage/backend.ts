@@ -38,6 +38,24 @@ class SQLiteDataStore implements DataStore {
     return this.db;
   }
 
+  /**
+   * Führt die Arbeit in EINER SQLite-Transaktion: Commit, wenn sie durchläuft,
+   * Rollback, wenn sie wirft. Nicht Teil des `DataStore`-Interface, sondern
+   * eine optionale Fähigkeit — `transact` in `./index` nimmt sie, wo sie da
+   * ist, und serialisiert sonst selbst.
+   *
+   * expo-sqlite sperrt bei `withTransactionAsync` NICHT exklusiv: parallele
+   * Abfragen auf derselben Verbindung können in die laufende Transaktion
+   * hineingeraten. Deshalb ruft `transact` das hier nur unter der Store-Sperre.
+   */
+  async withTransactionAsync<T>(work: () => Promise<T>): Promise<T> {
+    let result: T | undefined;
+    await this.requireDb().withTransactionAsync(async () => {
+      result = await work();
+    });
+    return result as T;
+  }
+
   async get<T>(collection: CollectionName, id: string): Promise<T | null> {
     const row = await this.requireDb().getFirstAsync<{ value: string }>(
       'SELECT value FROM documents WHERE collection = ? AND id = ?',

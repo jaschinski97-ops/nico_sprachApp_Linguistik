@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ThemedText } from './themed-text';
+import { ThemedButton } from './themed-button';
+import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
@@ -38,9 +39,10 @@ export function DrillRunner({
   onExit: () => void;
 }) {
   const meta = DRILL_META[drill];
-  const toneColor = useToneColor();
+  const theme = useTheme();
 
   const [session, setSession] = useState<DrillSession | null>(null);
+  const [buildFailed, setBuildFailed] = useState<string | null>(null);
   const [round, setRound] = useState(0);
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<number | null>(null);
@@ -51,6 +53,7 @@ export function DrillRunner({
   useEffect(() => {
     let cancelled = false;
     setSession(null);
+    setBuildFailed(null);
     setIndex(0);
     setChosen(null);
     setAnswers([]);
@@ -59,6 +62,10 @@ export function DrillRunner({
       isEligible: (entry: import('@/data/vocab-types').VocabEntry) => hasPronunciationClip({ text: entry.term, language: 'th', purpose: 'tone' }),
     } : {}) }).then((built) => {
       if (!cancelled) setSession(built);
+    }).catch((e) => {
+      // Wie im Fortschritts-Reiter: Ohne den Catch bliebe der Spinner für
+      // immer stehen, wenn Zusammenstellen oder Speicher scheitern.
+      if (!cancelled) setBuildFailed(e instanceof Error ? e.message : String(e));
     });
     return () => {
       cancelled = true;
@@ -103,6 +110,21 @@ export function DrillRunner({
     setIndex((value) => value + 1);
   }, []);
 
+  if (buildFailed) {
+    return (
+      <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedText type="smallBold">Übung konnte nicht geladen werden</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Konnte nicht zusammengestellt werden: {buildFailed}
+        </ThemedText>
+        <Row>
+          <ThemedButton label="Erneut versuchen" onPress={() => setRound((value) => value + 1)} />
+          <ThemedButton label="Zurück" onPress={onExit} />
+        </Row>
+      </ThemedView>
+    );
+  }
+
   if (!session) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
@@ -119,7 +141,7 @@ export function DrillRunner({
           {drill === 'tone' ? 'Für die Tonerkennung stehen gerade keine passenden Clips mit bestandener Tonprüfung zur Verfügung. Ungeprüfte Clips und Systemstimmen werden hier nicht verwendet.' : `Für „${meta.label}" gibt es im Grundstock gerade keine geeigneten Einträge.`}
         </ThemedText>
         <Row>
-          <Button label="Zurück" onPress={onExit} />
+          <ThemedButton label="Zurück" onPress={onExit} />
         </Row>
       </ThemedView>
     );
@@ -149,8 +171,8 @@ export function DrillRunner({
           </View>
         ) : null}
         <Row>
-          <Button label="Neue Runde" onPress={() => setRound((value) => value + 1)} />
-          <Button label="Zurück" onPress={onExit} />
+          <ThemedButton label="Neue Runde" onPress={() => setRound((value) => value + 1)} />
+          <ThemedButton label="Zurück" onPress={onExit} />
         </Row>
       </ThemedView>
     );
@@ -187,7 +209,15 @@ export function DrillRunner({
 
         {question.visible ? (
           <View style={styles.promptBlock}>
-            <ThemedText style={styles.promptText}>{question.visible}</ThemedText>
+            {/* `thaiMedium` aus der Typo-Skala — bei der Tonübung ist das
+                SichtbareThai-Schrift; Zeilenhöhe wächst mit der
+                Systemschrift mit (UI-Review 2026-09-07). */}
+            <ThemedText
+              type="thaiMedium"
+              maxFontSizeMultiplier={2}
+              style={{ lineHeight: displayLineHeight(32, 2) }}>
+              {question.visible}
+            </ThemedText>
             {question.visibleHint ? (
               <ThemedText type="small" themeColor="textSecondary">
                 {question.visibleHint}
@@ -201,11 +231,15 @@ export function DrillRunner({
             const isChosen = chosen === optionIndex;
             const isCorrect = optionIndex === question.correctIndex;
             const answered = chosen !== null;
+            // SEIT DEM UI-REVIEW 2026-09-07 success/error STATT DER TONFARBEN
+            // „mittel“/„fallend“: Dieselben Farben für Richtig/Falsch und für
+            // Thai-Töne zu verwenden hieß, zwei Bedeutungen in ein Alphabet zu
+            // legen — wer Tonerkennung übt, liest sonst Farbcode doppelt.
             const border =
               answered && isCorrect
-                ? toneColor('mid')
+                ? theme.success
                 : answered && isChosen
-                  ? toneColor('falling')
+                  ? theme.error
                   : undefined;
 
             return (
@@ -242,7 +276,12 @@ export function DrillRunner({
 
         {chosen !== null ? (
           <ThemedView type="backgroundSelected" style={styles.feedback}>
-            <ThemedText type="smallBold">
+            {/* Die Farbcodierung des Urteils folgt dem Text: „✓ Richtig“ ist
+                grün (success), „✗ Nicht ganz“ rot (error) — beides Token mit
+                AA-Kontrast, beide auch ohne Farbe lesbar. */}
+            <ThemedText
+              type="smallBold"
+              themeColor={chosen === question.correctIndex ? 'success' : 'error'}>
               {chosen === question.correctIndex ? '✓ Richtig' : '✗ Nicht ganz'}
             </ThemedText>
             <ThemedText type="small">{question.solution}</ThemedText>
@@ -257,15 +296,7 @@ export function DrillRunner({
       </ThemedView>
 
       {chosen !== null ? (
-        <Pressable
-          onPress={next}
-          accessibilityRole="button"
-          accessibilityLabel="Weiter"
-          style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedView type="backgroundSelected" style={styles.wide}>
-            <ThemedText type="smallBold">Weiter</ThemedText>
-          </ThemedView>
-        </Pressable>
+        <ThemedButton label="Weiter" onPress={next} variant="primary" />
       ) : null}
     </>
   );
@@ -336,19 +367,6 @@ function PlayBlock({
 
 function Row({ children }: { children: React.ReactNode }) {
   return <View style={styles.row}>{children}</View>;
-}
-
-function Button({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      style={({ pressed }) => pressed && styles.pressed}>
-      <ThemedView type="backgroundSelected" style={styles.button}>
-        <ThemedText type="small">{label}</ThemedText>
-      </ThemedView>
-    </Pressable>
-  );
 }
 
 /**
@@ -436,12 +454,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
   },
-  promptText: {
-    fontSize: 30,
-    lineHeight: 42,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   playButton: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.four,
@@ -477,20 +489,10 @@ const styles = StyleSheet.create({
   mistakes: {
     gap: Spacing.one,
   },
-  wide: {
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-  },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
-  },
-  button: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.two,
   },
   center: {
     textAlign: 'center',

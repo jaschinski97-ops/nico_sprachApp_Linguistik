@@ -1,5 +1,6 @@
 import { VOCABULARY_EN, VOCABULARY_ES } from '@/data/vocabulary';
 
+import { NEW_CARDS_PER_SESSION } from '../fsrs/fsrs';
 import { buildReviewQueue, ensureCardStates } from '../review-session';
 import { seedVocabulary } from '../repository';
 import { MemoryDataStore } from '../storage';
@@ -42,8 +43,11 @@ describe('Der Karteikasten kennt beide neuen Paare', () => {
     const store = await frischerSpeicher();
     const hin = await buildReviewQueue('de_to_es', store, T0);
     const zurueck = await buildReviewQueue('es_to_de', store, T0);
-    expect(hin.length).toBe(VOCABULARY_ES.length);
-    expect(zurueck.length).toBe(VOCABULARY_ES.length);
+    // Neue Karten sind auf NEW_CARDS_PER_SESSION je Zusammenstellung gedeckelt
+    // (siehe dueCards) - entscheidend ist hier die Sprach-Reinheit, nicht die
+    // volle Grundstock-Laenge.
+    expect(hin.length).toBe(NEW_CARDS_PER_SESSION);
+    expect(zurueck.length).toBe(NEW_CARDS_PER_SESSION);
     for (const item of hin) expect(item.entry.language).toBe('es');
   });
 

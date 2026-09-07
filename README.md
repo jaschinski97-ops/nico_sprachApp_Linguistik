@@ -23,6 +23,10 @@ In the output, you'll find options to open the app in a
 - [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
 - [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
+### Native Entwicklungsumgebung
+
+`npm run android` und `npm run ios` bauen native Entwicklungsumgebungen (Development Builds) über `expo run:android` bzw. `expo run:ios`. **Expo Go funktioniert für dieses Projekt nicht**, da die App native Audio- und SQLite-Module benötigt, die Expo Go nicht enthält. Die erste Ausführung dauert deutlich länger, weil Gradle bzw. Xcode das komplette native Projekt bauen — danach sind die inkrementellen Folgebauten schnell.
+
 You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
 ## Get a fresh project

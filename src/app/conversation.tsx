@@ -19,6 +19,7 @@ import { directionLabel } from '@/lib/review-session';
 
 export default function ConversationScreen() {
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
   // Die Richtung haengt an der Sprache (Phase 17): gewaehlt wird eine der
   // zwei Richtungen der gerade gelernten Sprache, sonst die erste davon.
   const { language, profile, chooseLanguage } = useLearnerLanguage();
@@ -34,9 +35,13 @@ export default function ConversationScreen() {
 
   useEffect(() => {
     let cancelled = false;
-    loadSituations().then((all) => {
-      if (!cancelled) setSituations(all);
-    });
+    loadSituations()
+      .then((all) => {
+        if (!cancelled) setSituations(all);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      });
     return () => {
       cancelled = true;
     };
@@ -46,6 +51,16 @@ export default function ConversationScreen() {
     () => (situations ?? []).filter((s) => s.direction === direction),
     [situations, direction]
   );
+
+  if (error) {
+    return (
+      <ScreenScaffold title="Gespräch" subtitle="Vorproduzierte Sprachsituationen">
+        <ThemedText type="small" themeColor="textSecondary">
+          Konnte nicht geladen werden: {error}
+        </ThemedText>
+      </ScreenScaffold>
+    );
+  }
 
   if (!situations) {
     return (

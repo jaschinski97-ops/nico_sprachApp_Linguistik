@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { ThemedText } from './themed-text';
+import { ThemedText, displayLineHeight } from './themed-text';
 import { ToneContour } from './tone-contour';
 
 import { Spacing } from '@/constants/theme';
@@ -33,12 +33,19 @@ export function ThaiWord({
   const syllables = syllablesOf(entry);
   const single = uniformTone(entry);
   const toneColor = useToneColor();
+  // Skalierungsschutz (UI-Review 2026-09-07): Die sehr große Fassung darf die
+  // Systemschrift nur um den Faktor 1,4 vergrößern — mehr würde jede Karte
+  // sprengen; die Zeilenhöhe wächst über `displayLineHeight` mit, damit die
+  // oberen und unteren Thai-Diakritika nicht abgeschnitten werden.
+  const cap = size === 'large' ? 1.4 : 2;
 
   return (
     <View style={styles.wrapper}>
       <ThemedText
+        type={size === 'large' ? 'thaiLarge' : 'thaiMedium'}
+        maxFontSizeMultiplier={cap}
         style={[
-          size === 'large' ? styles.thaiLarge : styles.thaiMedium,
+          { lineHeight: displayLineHeight(size === 'large' ? 56 : 32, cap) },
           single ? { color: toneColor(single) } : null,
         ]}>
         {entry.term}
@@ -73,18 +80,6 @@ const styles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  thaiLarge: {
-    fontSize: 56,
-    lineHeight: 78,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  thaiMedium: {
-    fontSize: 32,
-    lineHeight: 46,
-    fontWeight: '600',
-    textAlign: 'center',
   },
   syllables: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@ import {
   DEFAULT_WEIGHTS,
   dueCards,
   isDue,
+  NEW_CARDS_PER_SESSION,
   nextIntervalDays,
   retrievability,
   reviewCard,
@@ -215,7 +216,7 @@ describe('isDue / dueCards', () => {
     expect(isDue(card, card.due)).toBe(true);
   });
 
-  it('gibt nur faellige Karten zurueck, schwaechste zuerst', () => {
+  it('stellt bereits gelernte Karten VOR neue - schwaechste zuerst', () => {
     const fresh = createCardState('neu', 'th_to_de', T0);
     // "Leicht" vor 10 Tagen: Intervall 6 Tage, also seit 4 Tagen faellig, aber
     // noch gut erinnert (hohe Retrievability).
@@ -230,8 +231,25 @@ describe('isDue / dueCards', () => {
 
     const due = dueCards([strong, notDue, fresh, weak], T0);
 
-    // Die neue Karte hat R = 0 und steht damit ganz vorn, danach die
-    // schwaechere vor der besser erinnerten.
-    expect(due.map((card) => card.vocabId)).toEqual(['neu', 'schwach', 'stark']);
+    // Fällige Karten zuerst, darunter die schwaechere vor der besser
+    // erinnerten; die neue Karte (R = 0) kommt ERST DANACH — sonst wuerde sie
+    // bei grossem Grundstock jede Sitzung fluten (siehe naechster Test).
+    expect(due.map((card) => card.vocabId)).toEqual(['schwach', 'stark', 'neu']);
+  });
+
+  it('deckelt neue Karten je Zusammenstellung, damit faellige nicht verhungern', () => {
+    // 30 nie bewertete Karten sind sofort faellig - dazu zwei bereits
+    // gelernte, die eigentlich dran waeren.
+    const freshCards = Array.from({ length: 30 }, (_, i) => createCardState(`neu-${i}`, 'th_to_de', T0));
+    const weak = reviewCard(createCardState('schwach', 'th_to_de', T0), 1, T0 - 1 * DAY_MS);
+    const strong = reviewCard(createCardState('stark', 'th_to_de', T0), 4, T0 - 10 * DAY_MS);
+
+    const due = dueCards([...freshCards, weak, strong], T0);
+
+    expect(due).toHaveLength(NEW_CARDS_PER_SESSION + 2);
+    // Die fälligen Karten zuerst ...
+    expect(due.slice(0, 2).map((card) => card.vocabId)).toEqual(['schwach', 'stark']);
+    // ... dann hoechstens NEW_CARDS_PER_SESSION neue.
+    expect(due.slice(2).every((card) => card.state === 'new')).toBe(true);
   });
 });

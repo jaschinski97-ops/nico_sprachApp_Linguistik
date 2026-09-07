@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MeasuredToneContour } from './measured-tone-contour';
+import { ThemedButton } from './themed-button';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { ToneContour } from './tone-contour';
@@ -42,6 +43,7 @@ type AttemptResult = {
  */
 export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   const [session, setSession] = useState<SpeakingSession | null>(null);
+  const [buildFailed, setBuildFailed] = useState<string | null>(null);
   const [round, setRound] = useState(0);
   const [index, setIndex] = useState(0);
   const [attempts, setAttempts] = useState(0);
@@ -64,13 +66,20 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   useEffect(() => {
     let cancelled = false;
     setSession(null);
+    setBuildFailed(null);
     setIndex(0);
     setAttempts(0);
     setResult(null);
     capture.cancel();
-    buildSpeakingSession().then((built) => {
-      if (!cancelled) setSession(built);
-    });
+    buildSpeakingSession()
+      .then((built) => {
+        if (!cancelled) setSession(built);
+      })
+      .catch((e) => {
+        // Wie im Fortschritts-Reiter: Ohne den Catch bliebe der Spinner für
+        // immer stehen, wenn Zusammenstellen oder Speicher scheitern.
+        if (!cancelled) setBuildFailed(e instanceof Error ? e.message : String(e));
+      });
     return () => {
       cancelled = true;
       capture.cancel();
@@ -162,6 +171,21 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
     setExampleNotice(null);
     setIndex((value) => value + 1);
   }, [capture]);
+
+  if (buildFailed) {
+    return (
+      <ThemedView type="backgroundElement" style={styles.card}>
+        <ThemedText type="smallBold">Sprechübung konnte nicht geladen werden</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Konnte nicht zusammengestellt werden: {buildFailed}
+        </ThemedText>
+        <View style={styles.buttonRow}>
+          <ActionButton label="Erneut versuchen" onPress={() => setRound((value) => value + 1)} />
+          <ActionButton label="Zurück" onPress={onExit} />
+        </View>
+      </ThemedView>
+    );
+  }
 
   if (!session) {
     return (
@@ -260,10 +284,13 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
         </ThemedView>
 
         <View style={styles.buttonRow}>
+          {/* Aufnahme-Start und -Stopp sind der Kern-CTA dieser Übung und
+              tragen deshalb die Akzentfläche (UI-Review 2026-09-07). Die
+              übrigen Aktionsflächen bleiben beim grauen Chip. */}
           {capture.isRecording ? (
-            <ActionButton label="Stoppen und lokal auswerten" onPress={stop} />
+            <ThemedButton label="Stoppen und lokal auswerten" onPress={stop} variant="primary" />
           ) : (
-            <ActionButton
+            <ThemedButton
               label={
                 capture.status === 'requesting-permission'
                   ? 'Mikrofonfreigabe wird angefragt …'
@@ -273,6 +300,7 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
               }
               onPress={start}
               disabled={capture.status !== 'idle' || processing}
+              variant="primary"
             />
           )}
           {capture.isRecording ? (

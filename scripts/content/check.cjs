@@ -49,6 +49,20 @@ function checkContent(root, { integrityOnly = false } = {}) {
       contentBytes += bytes.length + Buffer.byteLength(JSON.stringify(entry));
     } catch (error) { errors.push(`${entry.kind}:${entry.id}: ${error.message}`); }
   }
+  // Gegenrichtung (Konsistenz): Nichts darf in assets/content/ oder in der
+  // require-Map liegen, das der Katalog nicht referenziert — verwaiste Assets
+  // aus alten Generierungsläufen blähen nur das Bundle auf. Der Katalog ist
+  // die Definitions-Hoheit; assets.ts wird aus ihm generiert. Diese Prüfung
+  // läuft in beiden Modi: prune-orphans.cjs hält den Zustand sauber, der
+  // Check verhindert Regression.
+  const referencedAssets = new Set(catalog.entries.flatMap((entry) => (entry.asset ? [entry.asset] : [])));
+  const assetDir = path.join(root, 'assets/content');
+  const orphanFiles = (fs.existsSync(assetDir) ? fs.readdirSync(assetDir) : [])
+    .filter((name) => /\.(mp3|png|jpeg|webp)$/.test(name) && !referencedAssets.has(name)).sort();
+  if (orphanFiles.length) errors.push(`${orphanFiles.length} nicht referenzierte Mediendateien in assets/content (${orphanFiles.slice(0, 3).join(', ')}${orphanFiles.length > 3 ? ' …' : ''}); verwaiste Assets mit scripts/content/prune-orphans.cjs --apply entfernen.`);
+  const assetKeys = [...assetMap.matchAll(/"([a-f0-9]{64}\.(?:mp3|png|jpeg|webp))": require\('/g)].map((match) => match[1]);
+  const orphanKeys = assetKeys.filter((key) => !referencedAssets.has(key));
+  if (orphanKeys.length) errors.push(`${orphanKeys.length} Schlüssel in src/content/assets.ts ohne Katalogreferenz (${orphanKeys.slice(0, 3).join(', ')}${orphanKeys.length > 3 ? ' …' : ''}); die require-Map wird aus dem Katalog generiert und darf keine eigenen Einträge haben.`);
   if (contentBytes > BUDGET) errors.push('Inhaltsbudget von 150 MiB überschritten. Keine automatische Kürzung zulässig.');
   const situations = catalog.entries.filter((entry) => entry.kind === 'situations').map((entry) => entry.document);
   const exams = [...BUILTIN_EXAM_MODULES, ...catalog.entries.filter((entry) => entry.kind === 'exam').map((entry) => entry.document)];

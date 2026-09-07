@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { ThaiWord } from './thai-word';
-import { ThemedText } from './themed-text';
+import { ThemedText, displayLineHeight } from './themed-text';
 
 import { Spacing } from '@/constants/theme';
 import { syllablesOf } from '@/data/vocab-helpers';
@@ -38,10 +38,21 @@ export function TermWord({
 
   const syllables = syllablesOf(entry);
   const showsStress = syllables.some((syllable) => syllable.stressed);
+  // Wie bei `ThaiWord`: sehr große Fassung begrenzt, mittlere großzügiger;
+  // Zeilenhöhe wächst mit (UI-Review 2026-09-07). Die Größen selbst bleiben
+  // bewusst eigene Stufen — lateinische Schrift braucht weniger Kopffreiheit
+  // als Thai, die Skala sieht dafür eigene `thai*`-Varianten vor.
+  const base = size === 'large' ? 44 : 28;
+  const cap = size === 'large' ? 1.4 : 2;
 
   return (
     <View style={styles.wrapper}>
-      <ThemedText style={size === 'large' ? styles.termLarge : styles.termMedium}>
+      <ThemedText
+        maxFontSizeMultiplier={cap}
+        style={[
+          size === 'large' ? styles.termLarge : styles.termMedium,
+          { lineHeight: displayLineHeight(base, cap, size === 'large' ? 1.4 : 1.42) },
+        ]}>
         {entry.term}
       </ThemedText>
 
@@ -84,13 +95,11 @@ const styles = StyleSheet.create({
   },
   termLarge: {
     fontSize: 44,
-    lineHeight: 62,
     fontWeight: '600',
     textAlign: 'center',
   },
   termMedium: {
     fontSize: 28,
-    lineHeight: 40,
     fontWeight: '600',
     textAlign: 'center',
   },

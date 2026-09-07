@@ -6,7 +6,10 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { installClipLookup } from '@/lib/clips/lookup';
 
-SplashScreen.preventAutoHideAsync();
+// Lehnt ab, wenn der Splash schon versteckt oder bereits jemand anders an
+// der Steuerung ist — der Start darf daran nicht als unhandled rejection
+// scheitern.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // Hoerclips (Phase 11): der Aufloeser aus Phase 3 wird hier einmal
 // eingehaengt. Die Screens rufen weiter nur playPronunciation().

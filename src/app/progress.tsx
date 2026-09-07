@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
-import { ThemedText } from '@/components/themed-text';
+import { ThemedText, displayLineHeight } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { Tone } from '@/constants/tones';
@@ -23,6 +23,29 @@ const STATE_TONES: Record<string, Tone> = {
   review: 'high',
   mastered: 'mid',
 };
+
+/** Monatsnamen für die Screenreader-Beschriftung der Chartspalten. */
+const MONATE = [
+  'Januar',
+  'Februar',
+  'März',
+  'April',
+  'Mai',
+  'Juni',
+  'Juli',
+  'August',
+  'September',
+  'Oktober',
+  'November',
+  'Dezember',
+];
+
+/** „2026-05-12" → „12. Mai" — dieselbe Information wie die Spaltenbeschriftung, nur als ganze Ansage. */
+function tagLabel(date: string): string {
+  const tag = Number(date.slice(8, 10));
+  const monat = MONATE[Number(date.slice(5, 7)) - 1];
+  return monat ? `${tag}. ${monat}` : date;
+}
 
 export default function ProgressScreen() {
   const [stats, setStats] = useState<LearningStats | null>(null);
@@ -99,7 +122,14 @@ function Tile({ label, value, hint }: { label: string; value: string; hint?: str
         {label}
       </ThemedText>
       <View style={styles.tileValue}>
-        <ThemedText style={styles.bigNumber}>{value}</ThemedText>
+        {/* `stat` ist die gemeinsame Stufe für Kennzahlen (UI-Review
+            2026-09-07); die Zeilenhöhe wächst mit der Systemschrift mit. */}
+        <ThemedText
+          type="stat"
+          maxFontSizeMultiplier={2}
+          style={{ lineHeight: displayLineHeight(34, 2, 1.17) }}>
+          {value}
+        </ThemedText>
         {hint ? (
           <ThemedText type="small" themeColor="textSecondary">
             {hint}
@@ -128,11 +158,27 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
 
       <View style={styles.chart}>
         {stats.days.map((day) => (
-          <View key={day.date} style={styles.barColumn}>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.barValue}>
+          // Screenreader: Eine Spalte = EINE Ansage mit Datum und beiden Werten
+          // (UI-Review 2026-09-07). Balken, Ziffer und Tageszahl sind
+          // Verzierungen derselben Information und werden versteckt — sonst
+          // liest der Reader „12, 12, 8, 3, 12“ statt einem Satz.
+          <View
+            key={day.date}
+            style={styles.barColumn}
+            accessible
+            accessibilityLabel={`${tagLabel(day.date)}: ${day.total} Wiederholungen, ${drillCount(day)} Übungen`}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.barValue}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
               {day.total + drillCount(day) > 0 ? day.total + drillCount(day) : ''}
             </ThemedText>
-            <View style={styles.barTrack}>
+            <View
+              style={styles.barTrack}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
               {drillCount(day) > 0 ? (
                 <View
                   style={[
@@ -154,7 +200,12 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
                 ]}
               />
             </View>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.barLabel}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.barLabel}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
               {day.date.slice(8)}
             </ThemedText>
           </View>
@@ -182,7 +233,12 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <View style={styles.legendItem}>
-      <View style={[styles.swatch, { backgroundColor: color }]} />
+      {/* Farbfläche ist Dekoration — die Information trägt der Text daneben. */}
+      <View
+        style={[styles.swatch, { backgroundColor: color }]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
       <ThemedText type="small" themeColor="textSecondary">
         {label}
       </ThemedText>
@@ -215,13 +271,24 @@ function CardStates({ stats }: { stats: LearningStats }) {
         </ThemedText>
       ) : (
         <>
-          <View style={styles.stackedBar}>
+          {/* Als EINE Ansage statt fünf namenloser Farbsegmente: die Anteile
+              stehen ohnehin darunter, hier sagt sie der Screenreader komplett
+              (UI-Review 2026-09-07). */}
+          <View
+            style={styles.stackedBar}
+            accessible
+            accessibilityLabel={`Verteilung der begonnenen Karten: ${zustaende
+              .filter((state) => stats.cardStates[state] > 0)
+              .map((state) => `${CARD_STATE_LABELS[state]} ${stats.cardStates[state]}`)
+              .join(', ')}`}>
             {zustaende.map((state) => {
               const count = stats.cardStates[state];
               if (count === 0) return null;
               return (
                 <View
                   key={state}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
                   style={{
                     flexGrow: count,
                     flexBasis: 0,
@@ -235,7 +302,11 @@ function CardStates({ stats }: { stats: LearningStats }) {
           <View style={styles.legend}>
             {zustaende.map((state) => (
               <View key={state} style={styles.legendItem}>
-                <View style={[styles.swatch, { backgroundColor: toneColor(STATE_TONES[state]) }]} />
+                <View
+                  style={[styles.swatch, { backgroundColor: toneColor(STATE_TONES[state]) }]}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
                 <ThemedText type="small">{CARD_STATE_LABELS[state]}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {stats.cardStates[state]} ({Math.round((stats.cardStates[state] / begonnen) * 100)}{' '}
@@ -279,11 +350,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: Spacing.two,
-  },
-  bigNumber: {
-    fontSize: 34,
-    lineHeight: 40,
-    fontWeight: '700',
   },
   card: {
     borderRadius: Spacing.three,

@@ -3,9 +3,9 @@
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
 import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
 
-import { DAY_MS } from './fsrs/fsrs';
+import { DAY_MS, NEW_CARDS_PER_SESSION } from './fsrs/fsrs';
 import { loadCardStatesForDirection, rateCard } from './repository';
-import { dayKey, lastDays, loadReviewLog, recordReview } from './review-log';
+import { dayKey, lastDays, loadReviewLog, recordDrill, recordReview } from './review-log';
 import { ensureCardStates } from './review-session';
 import { computeStreak, loadLearningStats } from './stats';
 import { DataStore, MemoryDataStore } from './storage';
@@ -53,6 +53,38 @@ describe('recordReview', () => {
     expect(entry.total).toBe(3);
     expect(entry.byDirection).toEqual({ th_to_de: 2, de_to_th: 1 });
     expect(entry.byRating).toEqual({ '1': 1, '2': 0, '3': 1, '4': 1 });
+  });
+
+  it('verliert keine Wiederholung, wenn Antworten schnell parallel ankommen', async () => {
+    // Der Code-Review 2026-09-07 hatte Lesen-Ändern-Schreiben ohne
+    // Serialisierung gefunden: alle Aufrufe lasen denselben leeren
+    // Tageszaehler, und am Ende haette "1" statt "20" gezaehlt.
+    const store = await freshStore();
+    await Promise.all(
+      Array.from({ length: 20 }, (_, i) =>
+        recordReview(i % 2 === 0 ? 'th_to_de' : 'de_to_th', ((i % 4) + 1) as 1 | 2 | 3 | 4, T0, store)
+      )
+    );
+
+    const log = await loadReviewLog(store);
+    expect(log).toHaveLength(1);
+    expect(log[0].total).toBe(20);
+    expect(log[0].byDirection).toEqual({ th_to_de: 10, de_to_th: 10 });
+    expect(Object.values(log[0].byRating).reduce((sum, n) => sum + n, 0)).toBe(20);
+  });
+
+  it('zaehlt auch parallele uebungsaufgaben voll mit', async () => {
+    // Dieselbe Lesen-Aendern-Schreiben-Luecke wie bei recordReview.
+    const store = await freshStore();
+    await Promise.all(
+      Array.from({ length: 12 }, (_, i) => recordDrill(i % 3 !== 0, T0, store))
+    );
+
+    const log = await loadReviewLog(store);
+    expect(log).toHaveLength(1);
+    expect(log[0].drills).toBe(12);
+    // i % 3 !== 0: 8 von 12 richtig.
+    expect(log[0].drillsCorrect).toBe(8);
   });
 
   it('trennt verschiedene Tage', async () => {
@@ -156,14 +188,17 @@ describe('rateCard schreibt das Tagesprotokoll fort', () => {
 });
 
 describe('loadLearningStats', () => {
-  it('zaehlt zu Beginn alles als neu und faellig', async () => {
+  it('zaehlt zu Beginn alles als neu, die Faelligkeit aber nur bis zum Sitzungsdeckel', async () => {
     const store = await freshStore();
     const stats = await loadLearningStats(store, T0);
 
     expect(stats.totalCards).toBe(VOCABULARY.length * 2);
     expect(stats.cardStates.new).toBe(VOCABULARY.length * 2);
     expect(stats.cardStates.mastered).toBe(0);
-    expect(stats.totalDue).toBe(VOCABULARY.length * 2);
+    // Neue Karten zaehlen zur Faelligkeit nur bis NEW_CARDS_PER_SESSION je
+    // Richtung — sonst wuerde die Zahl eine Sitzung versprechen, die die
+    // Zusammenstellung (siehe dueCards) gar nicht mehr liefert.
+    expect(stats.totalDue).toBe(NEW_CARDS_PER_SESSION * 2);
     expect(stats.perDirection).toHaveLength(2);
   });
 
@@ -208,5 +243,20 @@ describe('loadLearningStats', () => {
     const store = await freshStore();
     const stats = await loadLearningStats(store, T0, 7);
     expect(stats.days).toHaveLength(7);
+  });
+
+  it('kappt eine laenger als zwei Wochen laufende Lernserie nicht mehr bei 14', async () => {
+    // Vor dem Streak-Fenster von 365 Tagen lief computeStreak ueber dasselbe
+    // 14-Tage-Fenster wie das Balkendiagramm — eine fuenfwoechige Serie
+    // haette ab Tag 15 einfach "14" gesagt.
+    const store = await freshStore();
+    for (let tag = 0; tag < 30; tag++) {
+      await recordReview('th_to_de', 3, T0 - tag * DAY_MS, store);
+    }
+
+    const stats = await loadLearningStats(store, T0);
+    expect(stats.streak).toBe(30);
+    // Das Diagrammfenster bleibt davon unberuehrt.
+    expect(stats.days).toHaveLength(14);
   });
 });

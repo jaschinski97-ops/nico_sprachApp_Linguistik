@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, Pressable, StyleSheet, View } from 'react-native';
 import { MeasuredToneContour } from './measured-tone-contour';
-import { ThemedText } from './themed-text';
+import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_LIMITS } from '@/data/sentence-tasks';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
@@ -16,15 +17,21 @@ import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession
 export function SentenceAction({ label, onPress, disabled = false }: {
   label: string; onPress: () => void; disabled?: boolean;
 }) {
+  // Rahmen über das `borderSubtle`-Token statt hart codiertem #888888: der
+  // bekam im Dunkelmodus nie eine eigene Fassung (UI-Review 2026-09-07).
+  const theme = useTheme();
   return <Pressable accessibilityRole="button" accessibilityState={{ disabled }} disabled={disabled}
-    onPress={onPress} style={({ pressed }) => [styles.action, { opacity: disabled ? .45 : pressed ? .65 : 1 }]}>
+    onPress={onPress} style={({ pressed }) => [styles.action, { borderColor: theme.borderSubtle, opacity: disabled ? .45 : pressed ? .65 : 1 }]}>
     <ThemedText type="smallBold">{label}</ThemedText>
   </Pressable>;
 }
 
 export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode; language: LanguageCode; onExit: () => void }) {
-  const [seed] = useState(() => Date.now());
-  const [tasks] = useState(() => sentenceSession(language, seed));
+  // Die Aussaat ist ein eigener Zustand: „Neue Runde“ würfelt sie neu, damit
+  // nicht dieselbe Satzfolge und Antwortmischung wie in der Runde davor
+  // herauskommt.
+  const [seed, setSeed] = useState(() => Date.now());
+  const tasks = useMemo(() => sentenceSession(language, seed), [language, seed]);
   const [index, setIndex] = useState(0);
   const [round, setRound] = useState(0);
   const [preparedAt, setPreparedAt] = useState(() => Date.now());
@@ -37,6 +44,8 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
   const [notice, setNotice] = useState('');
   const [result, setResult] = useState<SentenceMeasurement | null>(null);
   const [stage, setStage] = useState<'prepare' | 'record' | 'result'>('prepare');
+  const [hintOpen, setHintOpen] = useState(false);
+  const listening = mode === 'sentenceListening';
   const task = tasks[index];
   const windowMs = mode === 'sentenceRepeat' ? SENTENCE_WINDOWS_MS[round] : 15_000;
   const capture = useMicrophoneCapture({ maxDurationMs: windowMs, allowPlayback: mode === 'shadowing' });
@@ -48,10 +57,15 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
   const stageRef = useRef(stage); stageRef.current = stage;
   const remaining = preparationRemaining(preparedAt, now);
 
+  // Die Uhr wird nur gebraucht, solange der Vorbereitungs-Countdown der
+  // Sprechübungen sichtbar ist; in der Hörübung und in der Ergebnisstufe läuft
+  // kein Intervall.
+  const countingDown = !listening && stage === 'prepare';
   useEffect(() => {
+    if (!countingDown) return;
     const timer = setInterval(() => setNow(Date.now()), 200);
     return () => clearInterval(timer);
-  }, []);
+  }, [countingDown]);
   useEffect(() => {
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') return;
@@ -158,20 +172,33 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     <ThemedText type="subtitle">Runde abgeschlossen</ThemedText>
     <ThemedText>{mode === 'sentenceListening' ? `${correct} von ${tasks.length} Satzbedeutungen richtig gewählt.` : `${tasks.length} Sätze bearbeitet. Keine Aussprachebewertung und keine Änderung am Wiederholungsplan.`}</ThemedText>
     <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
-    <SentenceAction label="Neue Runde" onPress={() => { setCorrect(0); reset(0); }} />
+    <SentenceAction label="Neue Runde" onPress={() => { setCorrect(0); setSeed(Date.now()); reset(0); }} />
     <SentenceAction label="Zurück" onPress={onExit} />
   </ThemedView>;
 
-  const listening = mode === 'sentenceListening';
   return <ThemedView style={styles.card} type="backgroundElement">
     <View style={styles.row}><ThemedText type="small">Satz {index + 1} von {tasks.length}</ThemedText>
       <SentenceAction label="Satzübung verlassen" onPress={onExit} /></View>
     <ThemedText type="subtitle">{listening ? 'Satz verstehen' : mode === 'shadowing' ? 'Mit dem Satz mitsprechen' : 'Denselben Satz wiederholen'}</ThemedText>
-    <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
+    {mode === 'sentenceRepeat' && <ThemedText type="small">Runde {round + 1} von 3 · 12 / 9 / 6 Sekunden.</ThemedText>}
+    {/* Die mehrsätzigen Methodik-Hinweise stehen bewusst NICHT mehr bei jedem
+        Satz im Lernfluss: Sie wiederholen sich, der Lernende will den Satz. */}
+    <Pressable accessibilityRole="button" accessibilityState={{ expanded: hintOpen }}
+      accessibilityLabel="Hintergrund zur Übungsform" onPress={() => setHintOpen(value => !value)}
+      style={styles.toggle}>
+      <ThemedText type="small" themeColor="textSecondary">{hintOpen ? '▲ Hintergrund ausblenden' : '▼ Hintergrund anzeigen'}</ThemedText>
+    </Pressable>
+    {hintOpen && <>
+      <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
+      {!listening && <ThemedText type="small">{mode === 'sentenceRepeat'
+        ? 'Anpassung des 4:3:2-Verhältnisses an kurze Sätze, kein 4/3/2-Minuten-Vortrag. Der Effekt wechselnder Zuhörer und echter Mitteilungsabsicht wird hier nicht abgedeckt.'
+        : 'Höre den Satz zuerst. Sprich danach während des Vorbilds mit. Nutze Kopfhörer: Über Lautsprecher kann das Vorbild in deiner Mikrofonmessung landen.'}</ThemedText>}
+    </>}
     {!listening && <>
-      <ThemedText type="small">{mode === 'sentenceRepeat' ? `Runde ${round + 1} von 3 · 12 / 9 / 6 Sekunden. Anpassung des 4:3:2-Verhältnisses an kurze Sätze, kein 4/3/2-Minuten-Vortrag. Der Effekt wechselnder Zuhörer und echter Mitteilungsabsicht wird hier nicht abgedeckt.` : 'Höre den Satz zuerst. Sprich danach während des Vorbilds mit. Nutze Kopfhörer: Über Lautsprecher kann das Vorbild in deiner Mikrofonmessung landen.'}</ThemedText>
       <ThemedText type="smallBold">{task.german}</ThemedText>
-      {(stage !== 'record' || mode === 'shadowing') && <><ThemedText type="subtitle">{task.text}</ThemedText><ThemedText>{task.roman}</ThemedText></>}
+      {/* Der Thai-Satz in Displaygröße: Skalierungsdeckel wie überall, sonst
+          schneiden Zeilenhöhe und Tonzeichen einander (UI-Review 2026-09-07). */}
+      {(stage !== 'record' || mode === 'shadowing') && <><ThemedText type="subtitle" maxFontSizeMultiplier={2} style={{ lineHeight: displayLineHeight(32, 2) }}>{task.text}</ThemedText><ThemedText>{task.roman}</ThemedText></>}
       {stage === 'prepare' && <>
         <ThemedText type="smallBold">Verpflichtende Vorbereitung · noch {Math.ceil(remaining / 1000)} Sekunden</ThemedText>
         <ThemedText type="small">Kläre die Bedeutung und plane den ganzen Satz. {task.focus} Die 15 Sekunden sind eine Übungsentscheidung, kein wissenschaftlich ermitteltes Optimum.</ThemedText>
@@ -214,5 +241,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
 const styles = StyleSheet.create({
   card: { padding: Spacing.three, gap: Spacing.two, borderRadius: Spacing.three },
   row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' },
-  action: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderColor: '#888888', borderRadius: 8, padding: Spacing.two },
+  action: { minHeight: 44, justifyContent: 'center', borderWidth: 1, borderRadius: Spacing.two, padding: Spacing.two },
+  /** Mindesthöhe eines Tippziels (WCAG 2.5.8), wie bei den Aktionsflächen. */
+  toggle: { minHeight: 44, justifyContent: 'center' },
 });

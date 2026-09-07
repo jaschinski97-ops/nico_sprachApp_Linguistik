@@ -1,10 +1,10 @@
 {
   "project": "Thai <-> Deutsch Lernbegleiter",
   "protocolVersion": 1,
-  "lastUpdated": "2026-09-06",
-  "currentPhase": 21,
-  "currentPhaseName": "Audio-Vollmengenlauf begonnen; 51 neue Clips gesichert, 401 offen",
-  "currentPhaseStatus": "generation_partial_resume_needs_session_key",
+  "lastUpdated": "2026-09-07",
+  "currentPhase": 22,
+  "currentPhaseName": "Review-Fixes umgesetzt: Speicher-Robustheit, Design-Tokens, Backup/Export, Content-GC",
+  "currentPhaseStatus": "review_fixes_tests_green_eas_init_pending_user",
   "stack": {
     "framework": "expo",
     "expoSdk": "57",
@@ -1894,9 +1894,9 @@
     "releaseGate": "npm run content:check; EAS preview/production gated, development exempt",
     "nativeEvidence": "66 Medien in Web/iOS/Android bytegleich, 198 Vergleiche; kein physisches Playback oder signierter Store-Build.",
     "tests": {
-      "jest": 750,
-      "suites": 45,
-      "nodePipeline": 8,
+      "jest": 820,
+      "suites": 49,
+      "nodePipeline": 9,
       "typeScript": "pass",
       "staticPagesUnchangedAcrossBlockB": 8
     },
@@ -1945,9 +1945,9 @@
     "complete": false,
     "blocker": "B-21; B-2",
     "verification": {
-      "jest": 750,
-      "suites": 45,
-      "nodePipeline": 8,
+      "jest": 820,
+      "suites": 49,
+      "nodePipeline": 9,
       "typeScript": "pass",
       "exports": [
         "web",

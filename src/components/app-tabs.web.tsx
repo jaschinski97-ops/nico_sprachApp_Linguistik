@@ -44,7 +44,9 @@ function NavBar(props: { children?: React.ReactNode }) {
         <ThemedText type="smallBold" style={styles.brand}>
           Lernbegleiter
         </ThemedText>
-        <View style={styles.links}>{props.children}</View>
+        <View style={styles.links} accessibilityRole="tablist" accessibilityLabel="Hauptnavigation">
+          {props.children}
+        </View>
       </View>
     </ThemedView>
   );
@@ -52,7 +54,14 @@ function NavBar(props: { children?: React.ReactNode }) {
 
 function NavButton({ children, isFocused, ...props }: TabTriggerSlotProps) {
   return (
-    <Pressable {...props} style={({ pressed }) => pressed && styles.pressed}>
+    <Pressable
+      {...props}
+      // Web-Tabs von Hand, was die native Tab-Leiste von expo-router mitbringt:
+      // Rolle und Auswahlzustand, sonst sagt der Screenreader nur „Link“ ohne
+      // die aktuelle Position (UI-Review 2026-09-07).
+      accessibilityRole="tab"
+      accessibilityState={{ selected: Boolean(isFocused) }}
+      style={({ pressed }) => pressed && styles.pressed}>
       <ThemedView
         type={isFocused ? 'backgroundSelected' : 'backgroundElement'}
         style={styles.navButton}>
@@ -93,6 +102,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   navButton: {
+    // Wie überall: 44 Punkte Mindesthöhe für ein Tippziel (UI-Review
+    // 2026-09-07) — die Leiste wächst dafür minimal, nimmt dafür jeden Treffer.
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,

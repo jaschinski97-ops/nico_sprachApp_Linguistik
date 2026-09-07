@@ -30,7 +30,10 @@ export function VerificationBadge({ entry }: { entry: VocabEntry }) {
         accessibilityState={{ expanded: open }}
         accessibilityLabel="Hinweis zur Quellenlage anzeigen"
         style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-        <ThemedText type="small" style={styles.mark}>
+        {/* Badge-Token statt hart codiertem #AE8B3F: mit Dunkelmodus-Fassung
+            und AA-Kontrast auf allen Untergründen (nachgerechnet in
+            `tones.test.ts`). */}
+        <ThemedText type="small" themeColor="badge">
           ⚠
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
@@ -61,9 +64,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
-  },
-  mark: {
-    color: '#AE8B3F',
   },
   label: {
     flexShrink: 1,

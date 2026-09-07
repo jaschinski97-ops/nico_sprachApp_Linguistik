@@ -93,7 +93,14 @@ function Key({
       <ThemedView
         type="backgroundSelected"
         style={[styles.key, wide && styles.keyWide, tint ? { borderColor: tint, borderWidth: 1 } : null]}>
-        <ThemedText style={styles.keyText}>{label}</ThemedText>
+        {/* Thai-Zeichen mit über/unter der Grundlinie stehenden Diakritika:
+            Zeilenhöhe statt Default und Deckel für die Systemschrift-Ver
+            größerung, sonst schneiden die Tonzeichen an der Tastenkante ab
+            (UI-Review 2026-09-07, Best-effort — 20 hat keine eigene
+            Skalenstufe). */}
+        <ThemedText maxFontSizeMultiplier={1.4} style={styles.keyText}>
+          {label}
+        </ThemedText>
       </ThemedView>
     </Pressable>
   );
@@ -284,6 +291,7 @@ const styles = StyleSheet.create({
   },
   keyText: {
     fontSize: 20,
+    lineHeight: 28,
   },
   pressed: {
     opacity: 0.7,

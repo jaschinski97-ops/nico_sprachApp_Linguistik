@@ -3,9 +3,43 @@ import {
   playPronunciation,
   PronunciationBackend,
   registerAudioAssetResolver,
+  registerPronunciationClipLookup,
   setPronunciationBackend,
   stopPronunciation,
 } from './audio';
+import { createAudioPlayer } from 'expo-audio';
+
+/**
+ * Der echte Player-Lebenszyklus des Default-Backends.
+ *
+ * `expo-audio` wird gemockt, weil es ein natives Modul ist — geprüft wird die
+ * Ressourcen-Disziplin in `defaultBackend.playAsset`: ein Fehler beim Erzeugen
+ * oder Starten darf keinen Player als "aktiv" hinterlassen, und ein
+ * Fehlerzustand während der Wiedergabe muss ihn freigeben, weil
+ * `didJustFinish` ihn nie erreichen wird.
+ */
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: jest.fn(),
+}));
+
+type StatusCallback = (status: { didJustFinish?: boolean; error?: string | null }) => void;
+
+function fakePlayer() {
+  let listener: StatusCallback | null = null;
+  const player = {
+    addListener: jest.fn((_event: string, callback: StatusCallback) => {
+      listener = callback;
+      return { remove: jest.fn() };
+    }),
+    play: jest.fn(),
+    pause: jest.fn(),
+    remove: jest.fn(),
+  };
+  return {
+    player,
+    emit: (status: { didJustFinish?: boolean; error?: string | null }) => listener!(status),
+  };
+}
 
 type Call = { kind: string; args: unknown[] };
 
@@ -199,5 +233,70 @@ describe('isLanguageAvailable', () => {
   it('sagt auch bei einem Fehler "weiss nicht"', async () => {
     withLocales(new Error('nicht unterstuetzt'));
     expect(await isLanguageAvailable('th')).toBeNull();
+  });
+});
+
+describe('defaultBackend.playAsset - Lebenszyklus', () => {
+  const typedCreateAudioPlayer = createAudioPlayer as unknown as jest.Mock;
+
+  beforeEach(() => {
+    setPronunciationBackend(null);
+    typedCreateAudioPlayer.mockReset();
+    registerPronunciationClipLookup(() => ({ uri: 'file:///clip.m4a', id: 'clip-1' }));
+  });
+
+  afterEach(() => {
+    registerPronunciationClipLookup(null);
+    setPronunciationBackend(null);
+  });
+
+  it('gibt einen Fehler beim Player-Aufbau weiter, ohne etwas zu hinterlassen', async () => {
+    typedCreateAudioPlayer.mockImplementation(() => {
+      throw new Error('natives Modul weg');
+    });
+
+    await expect(playPronunciation({ text: 'Huhn', language: 'de' })).rejects.toThrow(
+      'natives Modul weg'
+    );
+  });
+
+  it('gibt einen halb angelegten Player frei, wenn play() wirft', async () => {
+    const { player } = fakePlayer();
+    player.play.mockImplementation(() => {
+      throw new Error('play kaputt');
+    });
+    typedCreateAudioPlayer.mockReturnValue(player);
+
+    await expect(playPronunciation({ text: 'Huhn', language: 'de' })).rejects.toThrow(
+      'play kaputt'
+    );
+    // Der Player ist nicht als aktiv haengen geblieben.
+    expect(player.pause).toHaveBeenCalled();
+    expect(player.remove).toHaveBeenCalled();
+  });
+
+  it('gibt den Player frei, wenn der Status einen Fehler meldet', async () => {
+    const { player, emit } = fakePlayer();
+    typedCreateAudioPlayer.mockReturnValue(player);
+
+    await expect(playPronunciation({ text: 'Huhn', language: 'de' })).resolves.toBe('asset');
+    expect(player.remove).not.toHaveBeenCalled();
+
+    // expo-audio (v57) meldet Wiedergabefehler als `error` am Status; das
+    // Ende-Flag `didJustFinish` kommt in diesem Fall nie.
+    emit({ didJustFinish: false, error: 'decode failed' });
+
+    expect(player.pause).toHaveBeenCalled();
+    expect(player.remove).toHaveBeenCalled();
+  });
+
+  it('gibt den Player nach normalem Ende weiter frei', async () => {
+    const { player, emit } = fakePlayer();
+    typedCreateAudioPlayer.mockReturnValue(player);
+
+    await expect(playPronunciation({ text: 'Huhn', language: 'de' })).resolves.toBe('asset');
+    emit({ didJustFinish: true, error: null });
+
+    expect(player.remove).toHaveBeenCalled();
   });
 });
