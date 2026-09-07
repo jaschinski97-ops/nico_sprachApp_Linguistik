@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-09-05T14:28:40.993Z",
+  "measuredAt": "2026-09-07T16:09:57.067Z",
   "decoder": "FFmpeg mono 24 kHz; shared app downsampling to 8 kHz",
   "microsoftOriginalClipsAvailable": false,
   "microsoftReproductionManifest": "scripts/content/fixtures/tones/index.json",

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { SENTENCE_AUDIT, SENTENCE_TASKS } from '@/data/sentence-tasks';
+import { SENTENCE_AUDIT, SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_TASKS, SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 import { VOCABULARY_TH } from '@/data/vocabulary';
 import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession, SENTENCE_WINDOWS_MS } from './sentence-session';
 
@@ -24,8 +24,8 @@ test('all 84 examples have an explicit audit; tasks inherit no blanket sentence-
 test('whole-sentence contrasts, stable randomised rounds and mandatory time windows', () => {
   const task = SENTENCE_TASKS.find(task => task.vocabId === 'rak')!;
   expect(task.answers).toContain('Du liebst mich.');
-  expect(sentenceSession(3)).toEqual(sentenceSession(3));
-  expect(sentenceSession(3)).toHaveLength(SENTENCE_TASKS.length);
+  expect(sentenceSession('th', 3)).toEqual(sentenceSession('th', 3));
+  expect(sentenceSession('th', 3)).toHaveLength(SENTENCE_TASKS.length);
   expect(new Set(sentenceAnswers(task, 2))).toEqual(new Set(task.answers));
   expect(preparationRemaining(100, 101)).toBe(14999);
   expect(preparationRemaining(100, 15100)).toBe(0);
@@ -37,5 +37,20 @@ test('measurement is local descriptive F0, with no speech-recognition or learnin
   for (const file of ['src/lib/speaking/sentence-session.ts', 'src/components/sentence-runner.tsx']) {
     const source = readFileSync(path.resolve(file), 'utf8');
     expect(source).not.toMatch(/\bfetch\s*\(|saveAudioClip|rateCard|writeMeta|SpeechRecognition|createClipGenerationClient/);
+  }
+});
+test('sentence registry serves every language honestly (AE-66): Thai full, others empty instead of invented', () => {
+  expect(SENTENCE_TASKS_BY_LANGUAGE.th).toBe(SENTENCE_TASKS);
+  expect(SENTENCE_TASKS_BY_LANGUAGE.th.length).toBeGreaterThan(0);
+  // Spanisch führt 30 Beispiele, aber nur Wortgruppen — die bleiben draußen.
+  expect(SENTENCE_TASKS_BY_LANGUAGE.es).toEqual([]);
+  // Englisch hat bewusst keine Beispiele (Phase 16).
+  expect(SENTENCE_TASKS_BY_LANGUAGE.en).toEqual([]);
+  // Die Sitzung einer leeren Sprache ist leer, nicht fehlerhaft.
+  expect(sentenceSession('es', 1)).toEqual([]);
+  expect(sentenceSession('en', 1)).toEqual([]);
+  // Jede Sprache hat einen Fußtext, der Bestand oder Fehlendes benennt.
+  for (const code of ['th', 'es', 'en'] as const) {
+    expect(SENTENCE_FOOTNOTE_BY_LANGUAGE[code].length).toBeGreaterThan(10);
   }
 });

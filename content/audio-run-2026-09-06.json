@@ -11,14 +11,14 @@
   "remainingToGenerate": 401,
   "currentEstimatedUsd": 0.55709,
   "estimateIsActualBilling": false,
-  "status": "paused_awaiting_session_key_after_local_server_restart",
-  "providerCallsStarted": 191,
-  "providerCallsStartedIsLowerBound": false,
+  "status": "generating_rest_with_6500ms_pacing",
+  "providerCallsStarted": 196,
+  "providerCallsStartedIsLowerBound": true,
   "authorizationConsumed": true,
   "generationAndDeliverySeparate": true,
   "existingClipsRepublished": 10,
   "existingUncheckedThaiDelivered": 9,
-  "note": "51 new successful clips plus 10 existing clips are saved; both segments ended through the visible Stop action and exported with zero errors. 140 failed requests returned HTTP 429. No successful clip was regenerated. The local server processes subsequently disappeared and the browser session key was lost. Servers restarted, updated 6500 ms pacing visible in the fresh UI. Original one-time authorization covers completion of the remaining 401 clips; do not request another cost approval. Actual billing is not inferred from estimates.",
+  "note": "User supplied the session credential; successfully adopted via the local audio generator, never written to this record. Same authorized run resumed for 401 missing clips at displayed estimate 0.505 USD. In progress; do not restart or run concurrently. 6500 ms delay visible and active after fresh app load. Successful clips are stored individually.",
   "firstSegment": {
     "processed": 121,
     "generated": 25,
@@ -48,5 +48,15 @@
   },
   "deliveredAudio": 55,
   "excludedByToneGate": 6,
-  "uncheckedThaiDelivered": 38
+  "uncheckedThaiDelivered": 38,
+  "resumedSegment": {
+    "plannedMissing": 401,
+    "processed": 37,
+    "generated": 4,
+    "failed": 1,
+    "skipped": 32,
+    "delayAfterResponseMs": 6500,
+    "usesOriginalAuthorization": true,
+    "failureNote": "One Failed to fetch; other provider calls succeeded. No inference that all Gemini calls are blocked by CORS."
+  }
 }

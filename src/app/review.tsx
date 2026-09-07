@@ -45,22 +45,32 @@ function isDirection(value: unknown): value is Direction {
 }
 
 function parseMode(value: unknown, direction: Direction): Mode {
-  const drills: string[] = drillsForDirection(direction);
-  if (direction === 'de_to_th' && value === 'speaking') return 'speaking';
-  if (direction === 'de_to_th' && (value === 'shadowing' || value === 'sentenceRepeat' || value === 'sentenceListening')) return value;
-  // Die Sprechuebung misst Tonhoehenkonturen und gibt es deshalb bisher nur
-  // fuer Thai (AE-48) - fuer die anderen Paare faellt sie hier weg.
-  // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
-  // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
-  if (value === 'writing') return 'writing';
-  return typeof value === 'string' && drills.includes(value) ? (value as Mode) : 'cards';
+  // SEIT AE-66 ÜBER DIE MODESLISTE STATT EINZELNER LITERALE: `?mode=shadowing`
+  // ist für jede Richtung gültig oder fällt auf Karteikarten zurück — auch ein
+  // gemerkter Modus einer alten Richtung kann nie einen ungültigen Zustand
+  // ergeben.
+  const modes: string[] = modesForDirection(direction);
+  return typeof value === 'string' && modes.includes(value) ? (value as Mode) : 'cards';
 }
 
 function modesForDirection(direction: Direction): Mode[] {
+  const language = languageOfDirection(direction);
   return [
     'cards',
     ...drillsForDirection(direction),
-    ...(direction === 'de_to_th' ? (['speaking', 'shadowing', 'sentenceRepeat', 'sentenceListening'] as const) : []),
+    // Die Wort-Sprechübung misst Tonhöhenkonturen gegen geprüfte Silbentöne
+    // und ist deshalb an Thai gebunden (AE-48) — aber seit AE-66 in BEIDEN
+    // Richtungen des Thai-Paares, denn Thai aussprechen wird in beiden
+    // geübt. Für andere Sprachen fällt sie weg, bis ein vergleichbares
+    // Messverfahren gebaut ist.
+    ...(language === 'th' ? (['speaking'] as const) : []),
+    // Die Satzübungen gehören seit AE-66 zu jeder Richtung jedes Paars. Welche
+    // Sprache tatsächlich Satzstoff hat, entscheidet allein die Registry in
+    // `data/sentence-tasks.ts`; eine Sprache ohne geprüfte Sätze zeigt einen
+    // ehrlichen Hinweis statt erfundenem Stoff.
+    ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
+    // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
+    // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
     'writing',
   ];
 }
@@ -96,11 +106,16 @@ function groupsForDirection(direction: Direction): Group[] {
 
   const groups: Group[] = [{ label: 'Wortschatz', modes: ['cards'] }];
   const hoeren: Mode[] = bySkill('hoeren');
-  if (modes.includes('sentenceListening')) hoeren.push('sentenceListening');
-  if (hoeren.length > 0) groups.push({ label: SKILL_LABELS.hoeren, modes: hoeren });
+  hoeren.push('sentenceListening');
+  groups.push({ label: SKILL_LABELS.hoeren, modes: hoeren });
   const lesen = bySkill('lesen');
   if (lesen.length > 0) groups.push({ label: SKILL_LABELS.lesen, modes: lesen });
-  if (modes.includes('speaking')) groups.push({ label: 'Sprechen', modes: ['speaking', 'shadowing', 'sentenceRepeat'] });
+  // „Sprechen" enthält die Wort-Übung nur bei Thai (AE-48); die Satzübungen
+  // gehören seit AE-66 zu jeder Sprache — mit oder ohne Wort-Übung davor.
+  const sprechen: Mode[] = [];
+  if (modes.includes('speaking')) sprechen.push('speaking');
+  sprechen.push('shadowing', 'sentenceRepeat');
+  groups.push({ label: 'Sprechen', modes: sprechen });
   if (modes.includes('writing')) groups.push({ label: 'Schreiben', modes: ['writing'] });
   const grammatik = bySkill('grammatik');
   if (grammatik.length > 0) groups.push({ label: SKILL_LABELS.grammatik, modes: grammatik });
@@ -245,7 +260,12 @@ function ReviewBody({
           onExit={onExit}
         />
       ) : mode === 'shadowing' || mode === 'sentenceRepeat' || mode === 'sentenceListening' ? (
-        <SentenceRunner key={`${direction}:${mode}`} mode={mode} onExit={onExit} />
+        <SentenceRunner
+          key={`${direction}:${mode}`}
+          mode={mode}
+          language={languageOfDirection(direction)}
+          onExit={onExit}
+        />
       ) : mode === 'speaking' ? (
         <SpeakingRunner
           key={`${direction}:speaking`}

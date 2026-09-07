@@ -33,7 +33,7 @@ beforeEach(() => { jest.useFakeTimers(); jest.setSystemTime(100000); jest.clearA
 afterEach(async () => { await act(async () => tree?.unmount()); jest.useRealTimers(); });
 
 test('shadowing enforces preparation, hearing and headphones before mic; plays only after mic succeeds', async () => {
-  await act(async () => { tree = create(<SentenceRunner mode="shadowing" onExit={() => {}} />); });
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
   expect(mockStart).not.toHaveBeenCalled();
   await press('Aufnahme starten'); expect(mockStart).not.toHaveBeenCalled();
   await press('Satz hören'); await press('Ich verwende Kopfhörer');
@@ -53,7 +53,7 @@ test('shadowing enforces preparation, hearing and headphones before mic; plays o
   expect(button('Aufnahme starten').props.disabled).toBe(true);
 });
 test('sentence repetition runs 12/9/6 seconds with new mandatory preparation between rounds', async () => {
-  await act(async () => { tree = create(<SentenceRunner mode="sentenceRepeat" onExit={() => {}} />); });
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceRepeat" onExit={() => {}} />); });
   for (const [index, duration] of [12000, 9000, 6000].entries()) {
     expect(mockOptions.maxDurationMs).toBe(duration);
     expect(mockOptions.allowPlayback).toBe(false);
@@ -65,8 +65,8 @@ test('sentence repetition runs 12/9/6 seconds with new mandatory preparation bet
   expect(button('Nächster Satz')).toBeDefined();
 });
 test('hearing presents no transcript before answer, handles missing voice and evaluates sentence meaning once', async () => {
-  await act(async () => { tree = create(<SentenceRunner mode="sentenceListening" onExit={() => {}} />); });
-  const task = sentenceSession(100000)[0];
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceListening" onExit={() => {}} />); });
+  const task = sentenceSession('th', 100000)[0];
   expect(JSON.stringify(tree.toJSON())).not.toContain(task.text);
   expect(button(task.german).props.disabled).toBe(true);
   mockAvailable.mockResolvedValue(false); await press('Satz hören');
@@ -84,7 +84,7 @@ test('hearing presents no transcript before answer, handles missing voice and ev
   expect(mockStart).not.toHaveBeenCalled();
 });
 test('permission failure never plays the shadowing model into a nonexistent recording', async () => {
-  await act(async () => { tree = create(<SentenceRunner mode="shadowing" onExit={() => {}} />); });
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
   await press('Satz hören'); await press('Ich verwende Kopfhörer');
   await act(async () => jest.advanceTimersByTime(15000));
   mockStart.mockResolvedValue(false); mockPlay.mockClear(); await press('Aufnahme starten');
@@ -93,7 +93,7 @@ test('permission failure never plays the shadowing model into a nonexistent reco
 
 test('leaving during permission request cancels capture and prevents late model playback', async () => {
   let release!: (value: boolean) => void;
-  await act(async () => { tree = create(<SentenceRunner mode="shadowing" onExit={() => {}} />); });
+  await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
   await press('Satz hören'); await press('Ich verwende Kopfhörer');
   await act(async () => jest.advanceTimersByTime(15000));
   mockStart.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
@@ -101,4 +101,19 @@ test('leaving during permission request cancels capture and prevents late model 
   await act(async () => tree.unmount());
   await act(async () => release(true));
   expect(mockPlay).not.toHaveBeenCalled(); expect(mockCancel).toHaveBeenCalled();
+});
+
+test('a language without audited sentences shows an honest notice and never touches the microphone (AE-66)', async () => {
+  await act(async () => { tree = create(<SentenceRunner language="es" mode="shadowing" onExit={() => {}} />); });
+  const json = JSON.stringify(tree.toJSON());
+  // RN rendert Titel und Sprachname als getrennte Text-Segmente.
+  expect(json).toContain('Noch kein Satzmaterial für ');
+  expect(json).toContain('Spanisch');
+  expect(json).toContain('Wortgruppen');
+  // Kein Aufnahme-/Wiedergabeknopf, keine Vorbereitungsuhr — nur der Hinweis.
+  expect(json).not.toContain('Aufnahme starten');
+  expect(json).not.toContain('Satz hören');
+  expect(mockStart).not.toHaveBeenCalled();
+  expect(mockPlay).not.toHaveBeenCalled();
+  expect(button('Zurück')).toBeDefined();
 });

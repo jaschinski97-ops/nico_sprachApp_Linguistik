@@ -5309,3 +5309,114 @@ und acht FFmpeg-Pipeline-Tests grün. Produktions-Exporte mit Source Maps unter
 `build-verification/phase21-run-partial`; Web/Android/iOS enthalten keinen
 Generator- oder Schlüsselcode. 66 Medien in drei Plattformen **198-mal
 bytegleich**. Kein physischer Mikrofon-/Gerätenachweis behauptet.
+
+### AE-66 — Satzübungen in jede Richtung, Sprechen in beide Thai-Richtungen (06.09.2026)
+
+Der Nutzer entschied: Die Übungsgruppe um die Sätze — Sprechen, Shadowing,
+Satz wiederholen, Satz verstehen, Schreiben — die bislang nur unter
+„Deutsch → Thai" lag, gehört strukturell zu **jeder Richtung jedes Paars**.
+
+Umgesetzt in drei Schichten, ohne einen erfundenen Satz:
+
+1. `data/sentence-tasks.ts` führt seit AE-66 die Registry
+   `SENTENCE_TASKS_BY_LANGUAGE`: Thai trägt die 34 geprüften Satzlesarten;
+   Spanisch bleibt ehrlich leer — seine 30 Beispiele sind Nominalgruppen
+   wie „el agua", und dieselbe Prüfung, die Thai-Wortgruppen ausgeschlossen
+   hat, schließt sie hier aus; Englisch hat bewusst keine Beispiele
+   (Phase 16). `SENTENCE_FOOTNOTE_BY_LANGUAGE` benennt je Sprache Bestand
+   oder Fehlendes.
+2. `sentenceSession(language, seed)` liest nur noch die Registry; der
+   `SentenceRunner` nimmt die Zielsprache der Richtung als Prop, spricht
+   Sätze in dieser Sprache (Clips wie TTS) und zeigt für eine Sprache ohne
+   Satzstoff einen ehrlichen Hinweis — ohne Mikrofonfreigabe, ohne
+   Wiedergabe, ohne Vorbereitungsuhr.
+3. `review.tsx` hängt die Satzmodi in jede Richtung; `parseMode` validiert
+   jetzt über die Modesliste statt über Richtungs-Literale. Die Wort-
+   Sprechübung (Tonhöhenkontur gegen geprüfte Silbentöne, AE-48) bleibt an
+   Thai gebunden, steht seit AE-66 aber in **beiden** Thai-Richtungen —
+   Thai aussprechen wird in beiden geübt. Für Englisch und Spanisch fehlt
+   sie, bis ein vergleichbares Messverfahren gebaut ist; die Satzgruppen
+   stehen dort trotzdem, mit Hinweis statt Stoff.
+
+Echte Browser-Verifikation (Dev-Server, frischer Speicherstand): Alle sechs
+Richtungskarten zeigen die vollständigen Fertigkeitslisten. Unter
+„Thai → Deutsch" läuft Shadowing mit Satz 1 von 34 (ผม กิน ไข่) samt
+verpflichtender Vorbereitung; die Wort-Sprechübung läuft dort mit ไก่,
+Sollform Tief. Unter „Deutsch → Spanisch" zeigt Shadowing den Hinweis
+„Noch kein Satzmaterial für Spanisch" mit Zurück-Knopf. Karteikarten-Bild
+verifiziert: Karte „das Wasser" (Position 44) zeigt das gebündelte
+1024×1024-Bild auf der Vorderseite; die elf Bildwörter sind alle im
+Katalog und in `assets.ts` gemappt. Screenshots in `gui-test-screenshots/`.
+
+752 Jest-Tests / 45 Suites grün (zwei neue: Registry-Ehrlichkeit und
+Leerzustand ohne Mikrofonzugriff), TypeScript fehlerfrei. Der DSZ-Ansatz
+(keine Bewertung, kein FSRS-Schreiben) ist unverändert; ein Vollständiger
+Content-Check bleibt rot aus den bekannten Gründen (407 Clips, 67 Bilder,
+512 Situationen, AE-48 offen).
+
+### AE-67 — Android-Toolchain per Terminal, Generator-SDK nativ entkoppelt (07.09.2026)
+
+Der Nutzer ließ SVM im UEFI aktivieren; daraufhin wurde die komplette
+Android-Toolchain ohne Android-Studio-Installer eingerichtet: vorhandenes
+Microsoft OpenJDK 21 (JAVA_HOME), SDK unter %LOCALAPPDATA%\Android\Sdk
+(cmdline-tools 12.0, platform-tools, platform 35, build-tools 35.0.0,
+Emulator, System-Image android-35/default/x86_64), AVD „ThaiSpeaker"
+(pixel_6), AEHD-2.2-Treiber (silent_install per UAC), ANDROID_HOME und
+platform-tools im Benutzer-PATH.
+
+Der erste native Bundle-Versuch scheiterte an `@anthropic-ai/sdk`
+(`node:fs` nicht auflösbar): Das Generator-SDK gelangte über die
+require-gated, aber statisch gebündelte `DeveloperContent`-Naht in den
+nativen Graph. Metro löst das Paket auf Native jetzt zu einem leeren Modul
+auf (`metro.config.js`, resolveRequest, nur platform !== 'web'); Web bleibt
+über die `browser`-Bedingung unverändert. Zur Laufzeit ist der Weg auf
+Native ohnehin tot — `isContentDeveloper` verlangt Web auf localhost:8081.
+
+Danach lief der Development Build auf dem Emulator durch: „Android Bundled
+2208ms (2141 Module)". Echte Geräte-Verifikation (ADB-Screenshots in
+`gui-test-screenshots/`): Übersicht mit drei Sprachen, native Tab-Leiste,
+Lernen-Reiter zeigt AE-66 (Thai → Deutsch mit Satz verstehen, Sprechen,
+Shadowing, Satz wiederholen, Schreiben), und Karte 1 von 84 („das Essen")
+zeigt das gebündelte generierte Bild **nativ**. Bisher gab es keinen
+physischen Android-Nachweis der Medien; dieser belegt jetzt auch die
+native Auslieferung der Bilder.
+
+752 Jest-Tests/45 Suites und TypeScript blieben unangetastet grün (die
+Metro-Änderung berührt nur den Bundle-Schritt); Integritätsprüfung grün.
+
+### AE-68 — Erster voller KI-Generierungslauf für alle drei Sprachen (07.09.2026)
+
+Der Nutzer trug den Gemini-Schlüssel im lokalen Studio nach; der Lauf wurde
+vollständig aus dieser Session geführt. Befunde und Reparaturen:
+
+1. `gemini-2.5-flash` ist für neue Schlüssel **404** („no longer available
+   to new users") — deshalb schlugen alle 512 Situationsaufrufe fehl.
+   Wechsel auf `gemini-3.6-flash`, danach 512/512 ohne Fehler. Der Nutzer
+   hatte das Modell für die Prüfungsaufgaben eigenständig richtig geraten.
+2. `gemini-3.1-flash-tts-preview` hat im Gratis-Tarif ein **Tageslimit von
+   genau 100 Aufrufen** (429, „generate_requests_per_model_per_day, limit:
+   100"). Nach 100 Clips drosselte Google; der Lauf lief durch und zählte
+   die restlichen als fehlgeschlagen (AE-65-Muster). Wechsel auf
+   `gemini-2.5-flash-preview-tts` (dasselbe Modell der AE-31-Kalibrierung)
+   brachte weiteres Kontingent; ein drittes Tageslimit stoppte den Rest.
+3. Parallelläufe auf einem Schlüssel verschärfen 429-Kurven — Läufe
+   künftig sequenziell oder mit Pausen je Modell fahren.
+4. Das leere `error-overlay`-Div des Dev-Builds blockiert Klicks; es ist
+   ohne Inhalt und wurde entfernt. Der Publish (in `exportDrafts`
+   eingeschlossen) schrieb während laufender Batches zeitweise ein
+   `assets.ts`, dessen Dateien noch fehlten — Metro-Cache-Clear behebt die
+   Folge; der Zustand nach Abschluss ist konsistent (232 Requires, alle
+   Dateien vorhanden).
+
+Ergebnis im gebündelten Katalog (Publish 0 Exportfehler, 788 Medien):
+**89 Bilder (alle konkreten Wörter aller drei Sprachen — Bilder damit
+VOLLSTÄNDIG)**, 154 Clips (th/en/de-Mix, Ton-Gate misst passed/unchecked
+korrekt), **485 von 512 Situationen**, Prüfungsaufgaben 64/64. Verifiziert
+am Android-Emulator: Übersicht, Shadowing (Satz 1 von 34), Gespräch
+„485 Situationen — offline nutzbar", Karteikarte „das Essen" mit Bild.
+TypeScript und 752 Tests unverändert grün; Integrität fehlerfrei.
+
+Offen: ~3.300 Clips der vollen Auslieferung (3436 geplant) stehen wegen der
+Tageslimits aus — Fortsetzung nach Googles Reset oder mit aktivierter
+Abrechnung (geschätzt 1–2 USD für alles), danach einfacher Neustart des
+Hörclip-Laufs im Studio. 27 Situationen (Schwanz des Plans) ebenso.

@@ -4,9 +4,11 @@ import { MeasuredToneContour } from './measured-tone-contour';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
-import { SENTENCE_LIMITS, SENTENCE_TASKS } from '@/data/sentence-tasks';
+import { SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_LIMITS } from '@/data/sentence-tasks';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
+import { LanguageCode } from '@/lib/languages/types';
+import { languageOf } from '@/lib/languages/registry';
 import type { CapturedPcm } from '@/lib/speaking';
 import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession,
   SENTENCE_WINDOWS_MS, type SentenceMeasurement, type SentenceMode } from '@/lib/speaking/sentence-session';
@@ -20,9 +22,9 @@ export function SentenceAction({ label, onPress, disabled = false }: {
   </Pressable>;
 }
 
-export function SentenceRunner({ mode, onExit }: { mode: SentenceMode; onExit: () => void }) {
+export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode; language: LanguageCode; onExit: () => void }) {
   const [seed] = useState(() => Date.now());
-  const [tasks] = useState(() => sentenceSession(seed));
+  const [tasks] = useState(() => sentenceSession(language, seed));
   const [index, setIndex] = useState(0);
   const [round, setRound] = useState(0);
   const [preparedAt, setPreparedAt] = useState(() => Date.now());
@@ -67,9 +69,10 @@ export function SentenceRunner({ mode, onExit }: { mode: SentenceMode; onExit: (
 
   async function play(concurrentRecording = false): Promise<boolean> {
     const turn = generation.current;
-    const request = { text: task.text, language: 'th' as const, purpose: 'sentence' as const };
-    if (!await hasPronunciationClip(request) && await isLanguageAvailable('th') === false) {
-      if (turn === generation.current) setNotice('Kein Satzclip und keine Thai-Systemstimme verfügbar. Installiere eine Thai-Stimme oder nutze ein Gerät mit Thai-Sprachausgabe. Ohne hörbaren Satz wird keine Antwort bewertet.');
+    const label = languageOf(language).label;
+    const request = { text: task.text, language, purpose: 'sentence' as const };
+    if (!await hasPronunciationClip(request) && await isLanguageAvailable(language) === false) {
+      if (turn === generation.current) setNotice(`Kein Satzclip und keine ${label}-Systemstimme verfügbar. Installiere eine ${label}-Stimme oder nutze ein Gerät mit ${label}-Sprachausgabe. Ohne hörbaren Satz wird keine Antwort bewertet.`);
       return false;
     }
     if (turn !== generation.current) return false;
@@ -142,6 +145,15 @@ export function SentenceRunner({ mode, onExit }: { mode: SentenceMode; onExit: (
     setResult(null); setBusy(false); setStage('prepare'); setNotice('');
     setPreparedAt(Date.now()); setNow(Date.now());
   }
+  // Eine Sprache ohne geprüfte Sätze bekommt keinen vorgetäuschten Ablauf:
+  // kein Mikrofon, keine Wiedergabe — nur der ehrliche Hinweis, was fehlt
+  // (AE-66). Sobald die Registry Satzstoff führt, läuft alles wie bei Thai.
+  if (tasks.length === 0) return <ThemedView style={styles.card}>
+    <ThemedText type="subtitle">Noch kein Satzmaterial für {languageOf(language).label}</ThemedText>
+    <ThemedText type="small">{SENTENCE_FOOTNOTE_BY_LANGUAGE[language]}</ThemedText>
+    <SentenceAction label="Zurück" onPress={onExit} />
+  </ThemedView>;
+
   if (!task) return <ThemedView style={styles.card}>
     <ThemedText type="subtitle">Runde abgeschlossen</ThemedText>
     <ThemedText>{mode === 'sentenceListening' ? `${correct} von ${tasks.length} Satzbedeutungen richtig gewählt.` : `${tasks.length} Sätze bearbeitet. Keine Aussprachebewertung und keine Änderung am Wiederholungsplan.`}</ThemedText>
@@ -195,7 +207,7 @@ export function SentenceRunner({ mode, onExit }: { mode: SentenceMode; onExit: (
         <SentenceAction label="Nächster Satz" onPress={() => reset(index + 1)} />
       </>}
     </>}
-    <ThemedText type="small">{SENTENCE_TASKS.length} vollständige Satzlesarten aus 84 vorhandenen Beispielen. Wörter und Satzregeln nachvollzogen; keine pauschale Quellenbestätigung aller 84 Beispiele. Wortgruppen bleiben außerhalb dieser Übung.</ThemedText>
+    <ThemedText type="small">{SENTENCE_FOOTNOTE_BY_LANGUAGE[language]}</ThemedText>
   </ThemedView>;
 }
 

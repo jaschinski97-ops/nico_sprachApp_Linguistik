@@ -281,9 +281,11 @@ export default function SettingsScreen() {
         client: createClipGenerationClient(provider, apiKey, model, voice),
         onProgress,
         shouldCancel,
-        // Verified live Gemini TTS limit on 2026-09-06: 10 requests/minute.
-        // Wait after each response so even fast quota errors cannot flood it.
-        delayMs: provider === 'gemini' ? 6500 : 600,
+        // Gemessen am 2026-09-06 (Gratis-Tarif): 10 Requests/Minute — daher
+        // 6500 ms. Mit aktivierter Abrechnung (AE-68) heben sich die Limits
+        // deutlich; 1200 ms liegen mit ~50/min sicher darunter und halten
+        // einen Auslieferungslauf von Stunden auf Minuten.
+        delayMs: provider === 'gemini' ? 1200 : 600,
       });
       await exportDrafts(setExportMessage);
       setReportRevision(value => value + 1);
