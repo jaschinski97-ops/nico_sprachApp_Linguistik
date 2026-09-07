@@ -5532,3 +5532,29 @@ versteckt; Web-Tabs mit tablist/tab-Rolle und selected-State.
   Auswahlrahmen (bewusst zurückgestellt, kein Review-Befund).
 - Katalog-Skalierung: bei Annäherung an 3436 Clips catalog.json aus dem
   JS-Bundle lösen (SQLite-Vorbefüllung oder gesplittete Lazy-Module).
+
+### Verifikation auf dem Emulator + zwei Nachträge (07.09.2026)
+
+Phase 22 danach auf dem Android-Emulator (Dev-Client, frischer Metro-Run mit
+`--clear` — der alte Bundler-Stand hatte beim Bundle-Laden noch die verwaisten
+Dateinamen aus assets.ts referenziert, DebugServerException 500, AE-68-Muster)
+durchgeklickt und hell + dunkel fotografiert (gui-test-screenshots/phase22/).
+Befunde in zwei Folgefixes:
+
+1. **„Satzübung verlassen" war eine No-op.** onExit setzte nur `mode: undefined`
+   in die Adresse; ohne `?mode=` greift aber der gemerkte Profilstand, und der
+   Merk-Effekt schrieb ihn sofort zurück — die Sitzung öffnete sich erneut.
+   Betroffen waren alle Nicht-Karteikarten-Modi (Satz-, Sprech-, Schreib- und
+   Drill-Übungen), schon vor Phase 22. Fix: onExit schreibt explizit
+   `mode: 'cards'` (racefrei gegen den Profil-Fallback); im Emulator verifiziert.
+2. **Statusbar-Icons im Hellmodus unlesbar.** Der Layout setzte den Stil nie,
+   die Icons blieben weiß auf hellem Grund. `<StatusBar style="auto" />` ergänzt.
+
+Entwarnung zu zwei Design-Review-Meldungen: „Karte 1 von 10" oben abgeschnitten
+war Scroll-Position des Screenshots (in 11-lernen-dark.png vollständig sichtbar);
+die titelgleichen Situationskarten („Neue Nachbarn im Apartmenthaus") sind
+beabsichtigte Dialogvarianten (greeting-A1-de_to_th-001/002/010/…), keine
+Daten-Duplikate. Verbleibende Polish-Notizen der Review-Agenten: Backup-Buttons
+visuell nicht unterschieden (Restore ist destruktiv), leerer „Pro Tag"-Chart
+ohne Empty-State-Text, Chip-Stile (Rahmen vs. Füllung) uneinheitlich,
+Quellen-URL bricht nach „www" um. TypeScript und 820 Tests grün.

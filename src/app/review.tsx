@@ -235,7 +235,12 @@ export default function ReviewScreen() {
         router.setParams({ direction: undefined, mode: undefined, waehlen: '1' });
       }}
       onRemember={remember}
-      onExit={() => router.setParams({ direction, mode: undefined })}
+      onExit={() => {
+        // Explizit 'cards' statt `mode: undefined`: Ohne `?mode=` greift der
+        // gemerkte Profilstand, und der Merk-Effekt unten haette die Sitzung
+        // sofort wieder geoeffnet - "Verlassen" waere eine No-op.
+        router.setParams({ direction, mode: 'cards' });
+      }}
     />
   );
 }

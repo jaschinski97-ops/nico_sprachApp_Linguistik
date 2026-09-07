@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
@@ -19,6 +20,9 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      {/* auto statt der Systemvorgabe: ohne diese Angabe blieben die
+          Statusbar-Icons weiss und waren im Hellmodus unlesbar. */}
+      <StatusBar style="auto" />
       <AnimatedSplashOverlay />
       <AppTabs />
     </ThemeProvider>
