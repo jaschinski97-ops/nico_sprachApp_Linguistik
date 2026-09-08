@@ -106,7 +106,9 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     // 2025-12-15-Snapshot erkennt Woerter deutlich besser als der Alias;
     // Feld bleibt Freitext, ein anderer Name ist jederzeit eintippbar.
     modelPlaceholder: { text: 'gpt-5', image: 'gpt-image-1', audio: 'gpt-4o-mini-tts-2025-12-15' },
-    voicePlaceholder: 'alloy',
+    // Nutzerwahl 08.09.2026: 'coral' ist OpenAIs warme, freundliche Stimme —
+    // 'alloy' klingt daneben nüchtern-technisch. Freitext, jederzeit änderbar.
+    voicePlaceholder: 'coral',
     // Gemessen am 2026-09-03, siehe AE-27. Betrifft jeden echten Schluessel.
     webWarning:
       'Im Browser voraussichtlich unbrauchbar. Gemessen: Ein POST an api.openai.com mit ' +

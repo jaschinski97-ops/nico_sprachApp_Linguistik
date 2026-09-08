@@ -1,12 +1,12 @@
 {
-  "measuredAt": "2026-09-07T17:17:54.200Z",
+  "measuredAt": "2026-09-08T07:33:45.782Z",
   "encoder": "libmp3lame, 64 kbit/s, mono, 24000 Hz",
-  "entries": 783,
-  "unchecked": 67,
-  "uncheckedThaiDelivered": 67,
-  "failed": 12,
+  "entries": 863,
+  "unchecked": 143,
+  "uncheckedThaiDelivered": 143,
+  "failed": 8,
   "contentBudgetBytes": 157286400,
-  "budgetBytes": 81572271,
+  "budgetBytes": 83306067,
   "audio": [
     {
       "id": "en-032745955ed8889a",
@@ -404,9 +404,24 @@
       "compressedBytes": 7533
     },
     {
+      "id": "th-01079022231b59ed",
+      "sourceBytes": 170444,
+      "compressedBytes": 29037
+    },
+    {
       "id": "th-014955c821b7c7bf",
       "sourceBytes": 51884,
       "compressedBytes": 9261
+    },
+    {
+      "id": "th-01e618ebe9df949e",
+      "sourceBytes": 98444,
+      "compressedBytes": 17133
+    },
+    {
+      "id": "th-0463fe3fdf398b6e",
+      "sourceBytes": 189644,
+      "compressedBytes": 32301
     },
     {
       "id": "th-0640e5f74aa06598",
@@ -429,6 +444,16 @@
       "compressedBytes": 8301
     },
     {
+      "id": "th-0cd2626e265d2899",
+      "sourceBytes": 91244,
+      "compressedBytes": 15981
+    },
+    {
+      "id": "th-0d1c85ec3fcbaadb",
+      "sourceBytes": 124844,
+      "compressedBytes": 21549
+    },
+    {
       "id": "th-0e9d1b00b6dcca75",
       "sourceBytes": 67244,
       "compressedBytes": 11949
@@ -447,6 +472,11 @@
       "id": "th-108bad8b3abd9bde",
       "sourceBytes": 48044,
       "compressedBytes": 8685
+    },
+    {
+      "id": "th-10cd5a34df43998b",
+      "sourceBytes": 76844,
+      "compressedBytes": 13485
     },
     {
       "id": "th-14cede95d27b465e",
@@ -469,6 +499,11 @@
       "compressedBytes": 10029
     },
     {
+      "id": "th-1c79a42724899268",
+      "sourceBytes": 100844,
+      "compressedBytes": 17517
+    },
+    {
       "id": "th-1d3e6cd1e80adb92",
       "sourceBytes": 53804,
       "compressedBytes": 9645
@@ -479,14 +514,39 @@
       "compressedBytes": 12525
     },
     {
+      "id": "th-20df44575f6c2c86",
+      "sourceBytes": 134444,
+      "compressedBytes": 23085
+    },
+    {
+      "id": "th-25412f5eaad7a201",
+      "sourceBytes": 91244,
+      "compressedBytes": 15981
+    },
+    {
       "id": "th-25dac11d091a88b6",
       "sourceBytes": 84524,
       "compressedBytes": 14829
     },
     {
+      "id": "th-2847a43428490943",
+      "sourceBytes": 76844,
+      "compressedBytes": 13485
+    },
+    {
       "id": "th-2926ca43b31786e4",
       "sourceBytes": 55724,
       "compressedBytes": 10029
+    },
+    {
+      "id": "th-2a79b8b8f1a6d8fb",
+      "sourceBytes": 67244,
+      "compressedBytes": 11949
+    },
+    {
+      "id": "th-2ab5253bff72e6a0",
+      "sourceBytes": 115244,
+      "compressedBytes": 19821
     },
     {
       "id": "th-2b6d8c1823cca21b",
@@ -499,9 +559,59 @@
       "compressedBytes": 10605
     },
     {
+      "id": "th-2e3bdfa7627ed884",
+      "sourceBytes": 86444,
+      "compressedBytes": 15021
+    },
+    {
       "id": "th-2ee19d8697f70657",
       "sourceBytes": 51884,
       "compressedBytes": 9261
+    },
+    {
+      "id": "th-31def1a05d2d5795",
+      "sourceBytes": 122444,
+      "compressedBytes": 21165
+    },
+    {
+      "id": "th-3475133171a192bc",
+      "sourceBytes": 105644,
+      "compressedBytes": 18285
+    },
+    {
+      "id": "th-35bb323b286a2b82",
+      "sourceBytes": 105644,
+      "compressedBytes": 18285
+    },
+    {
+      "id": "th-3785881b8eae4e9c",
+      "sourceBytes": 96044,
+      "compressedBytes": 16749
+    },
+    {
+      "id": "th-38a6abb147a615cc",
+      "sourceBytes": 112844,
+      "compressedBytes": 19437
+    },
+    {
+      "id": "th-3ed74896b948b351",
+      "sourceBytes": 72044,
+      "compressedBytes": 12717
+    },
+    {
+      "id": "th-3ef6063a094b664f",
+      "sourceBytes": 96044,
+      "compressedBytes": 16749
+    },
+    {
+      "id": "th-3f17ef71d5a5ce10",
+      "sourceBytes": 103244,
+      "compressedBytes": 17901
+    },
+    {
+      "id": "th-3fd9863883631cf3",
+      "sourceBytes": 91244,
+      "compressedBytes": 15981
     },
     {
       "id": "th-433a9b3ac20ead29",
@@ -509,14 +619,64 @@
       "compressedBytes": 10029
     },
     {
+      "id": "th-48944a103c85cfa9",
+      "sourceBytes": 108044,
+      "compressedBytes": 18669
+    },
+    {
       "id": "th-497cc690c2e1f5df",
       "sourceBytes": 57644,
       "compressedBytes": 10221
     },
     {
+      "id": "th-497ef0587e087615",
+      "sourceBytes": 81644,
+      "compressedBytes": 14253
+    },
+    {
+      "id": "th-49a1c8d35ea96848",
+      "sourceBytes": 134444,
+      "compressedBytes": 23085
+    },
+    {
       "id": "th-4a20094dcdcd0356",
       "sourceBytes": 57644,
       "compressedBytes": 10221
+    },
+    {
+      "id": "th-4af3fc8655d0de71",
+      "sourceBytes": 139244,
+      "compressedBytes": 23853
+    },
+    {
+      "id": "th-4ba9995b59e47b04",
+      "sourceBytes": 115244,
+      "compressedBytes": 19821
+    },
+    {
+      "id": "th-4be27c6a8b9ad8eb",
+      "sourceBytes": 180044,
+      "compressedBytes": 30765
+    },
+    {
+      "id": "th-4d562f3a419b1fbd",
+      "sourceBytes": 110444,
+      "compressedBytes": 19053
+    },
+    {
+      "id": "th-4eb55da72d12bf64",
+      "sourceBytes": 129644,
+      "compressedBytes": 22317
+    },
+    {
+      "id": "th-50d8ad2ca8197ad5",
+      "sourceBytes": 153644,
+      "compressedBytes": 26349
+    },
+    {
+      "id": "th-510cb123f73649fe",
+      "sourceBytes": 120044,
+      "compressedBytes": 20781
     },
     {
       "id": "th-5136d49c0361d9d3",
@@ -529,9 +689,24 @@
       "compressedBytes": 10221
     },
     {
+      "id": "th-529b654f6b3b8230",
+      "sourceBytes": 115244,
+      "compressedBytes": 19821
+    },
+    {
+      "id": "th-5316c7a4a0c444f7",
+      "sourceBytes": 139244,
+      "compressedBytes": 23853
+    },
+    {
       "id": "th-561fd9fef2e5561d",
       "sourceBytes": 59564,
       "compressedBytes": 10605
+    },
+    {
+      "id": "th-56bfbef47c89f9ab",
+      "sourceBytes": 170444,
+      "compressedBytes": 29037
     },
     {
       "id": "th-57a15ffece4b8d93",
@@ -554,14 +729,49 @@
       "compressedBytes": 9645
     },
     {
+      "id": "th-5d369446ebe992b3",
+      "sourceBytes": 122444,
+      "compressedBytes": 21165
+    },
+    {
+      "id": "th-5d456d03bca9da4e",
+      "sourceBytes": 81644,
+      "compressedBytes": 14253
+    },
+    {
+      "id": "th-5dd9ce76dd99d671",
+      "sourceBytes": 93644,
+      "compressedBytes": 16365
+    },
+    {
       "id": "th-60325ffcbefa82d5",
       "sourceBytes": 71084,
       "compressedBytes": 12525
     },
     {
+      "id": "th-62019cfeaa4a0491",
+      "sourceBytes": 156044,
+      "compressedBytes": 26733
+    },
+    {
       "id": "th-662d32fe8c02df35",
       "sourceBytes": 55724,
       "compressedBytes": 10029
+    },
+    {
+      "id": "th-67edb22437624d77",
+      "sourceBytes": 69644,
+      "compressedBytes": 12333
+    },
+    {
+      "id": "th-67f6b514efec5825",
+      "sourceBytes": 81644,
+      "compressedBytes": 14253
+    },
+    {
+      "id": "th-684fa337f1c33a0c",
+      "sourceBytes": 93644,
+      "compressedBytes": 16365
     },
     {
       "id": "th-68f7a25e75723687",
@@ -574,9 +784,19 @@
       "compressedBytes": 10989
     },
     {
+      "id": "th-6cab9e5515a64b3e",
+      "sourceBytes": 86444,
+      "compressedBytes": 15021
+    },
+    {
       "id": "th-6d1813cf6c9f9506",
       "sourceBytes": 59564,
       "compressedBytes": 10605
+    },
+    {
+      "id": "th-7304b903f0ff168a",
+      "sourceBytes": 108044,
+      "compressedBytes": 18669
     },
     {
       "id": "th-75254cb3befb0da8",
@@ -589,9 +809,19 @@
       "compressedBytes": 10221
     },
     {
+      "id": "th-77007f044ff9653b",
+      "sourceBytes": 103244,
+      "compressedBytes": 17901
+    },
+    {
       "id": "th-78b775be3684f12f",
       "sourceBytes": 57644,
       "compressedBytes": 10221
+    },
+    {
+      "id": "th-78d882f172f09a3c",
+      "sourceBytes": 98444,
+      "compressedBytes": 17133
     },
     {
       "id": "th-796a32682997b49f",
@@ -599,9 +829,29 @@
       "compressedBytes": 10989
     },
     {
+      "id": "th-7d106a94fed6b305",
+      "sourceBytes": 148844,
+      "compressedBytes": 25581
+    },
+    {
+      "id": "th-7d2bfbe88b3102e5",
+      "sourceBytes": 127244,
+      "compressedBytes": 21933
+    },
+    {
       "id": "th-8164e2a358a383a0",
       "sourceBytes": 46124,
       "compressedBytes": 8301
+    },
+    {
+      "id": "th-82c20af3e36ab754",
+      "sourceBytes": 158444,
+      "compressedBytes": 27117
+    },
+    {
+      "id": "th-835913e00e8a753f",
+      "sourceBytes": 120044,
+      "compressedBytes": 20781
     },
     {
       "id": "th-838465da0256e4c9",
@@ -629,9 +879,19 @@
       "compressedBytes": 10605
     },
     {
+      "id": "th-8c119e4217f01761",
+      "sourceBytes": 141644,
+      "compressedBytes": 24237
+    },
+    {
       "id": "th-8c7a2d245bba905b",
       "sourceBytes": 55724,
       "compressedBytes": 10029
+    },
+    {
+      "id": "th-8e195a9a90ca1dbf",
+      "sourceBytes": 146444,
+      "compressedBytes": 25197
     },
     {
       "id": "th-90b05d949e9676a9",
@@ -644,6 +904,16 @@
       "compressedBytes": 12141
     },
     {
+      "id": "th-9555545c937fe8e9",
+      "sourceBytes": 117644,
+      "compressedBytes": 20397
+    },
+    {
+      "id": "th-959297e806be46e7",
+      "sourceBytes": 110444,
+      "compressedBytes": 19053
+    },
+    {
       "id": "th-9f564c7274d61c95",
       "sourceBytes": 59564,
       "compressedBytes": 10605
@@ -654,9 +924,19 @@
       "compressedBytes": 9645
     },
     {
+      "id": "th-a7dc5c43854e33e8",
+      "sourceBytes": 96044,
+      "compressedBytes": 16749
+    },
+    {
       "id": "th-a871da39b5d1e020",
       "sourceBytes": 59564,
       "compressedBytes": 10605
+    },
+    {
+      "id": "th-a8810640742da647",
+      "sourceBytes": 170444,
+      "compressedBytes": 29037
     },
     {
       "id": "th-aabb16f2c73c2d43",
@@ -674,6 +954,16 @@
       "compressedBytes": 11181
     },
     {
+      "id": "th-b625abf438df0955",
+      "sourceBytes": 132044,
+      "compressedBytes": 22701
+    },
+    {
+      "id": "th-b86e51523fc53ae1",
+      "sourceBytes": 79244,
+      "compressedBytes": 13869
+    },
+    {
       "id": "th-b9e0f9d1ca680d0a",
       "sourceBytes": 73004,
       "compressedBytes": 12909
@@ -689,6 +979,21 @@
       "compressedBytes": 10029
     },
     {
+      "id": "th-bedf6a450c0cd7a0",
+      "sourceBytes": 136844,
+      "compressedBytes": 23469
+    },
+    {
+      "id": "th-c2b78308b41be835",
+      "sourceBytes": 139244,
+      "compressedBytes": 23853
+    },
+    {
+      "id": "th-c40c20205f8e3913",
+      "sourceBytes": 172844,
+      "compressedBytes": 29421
+    },
+    {
       "id": "th-c86b8ac60126c509",
       "sourceBytes": 51884,
       "compressedBytes": 9261
@@ -697,6 +1002,11 @@
       "id": "th-c9b346fcd597d613",
       "sourceBytes": 65324,
       "compressedBytes": 11565
+    },
+    {
+      "id": "th-ce0983e56ce02be8",
+      "sourceBytes": 72044,
+      "compressedBytes": 12717
     },
     {
       "id": "th-cf1da92880f58857",
@@ -734,6 +1044,16 @@
       "compressedBytes": 8685
     },
     {
+      "id": "th-da5e19e0524cf867",
+      "sourceBytes": 194444,
+      "compressedBytes": 33069
+    },
+    {
+      "id": "th-dbeb57075e89d5ae",
+      "sourceBytes": 129644,
+      "compressedBytes": 22317
+    },
+    {
       "id": "th-dd67de2cf4b2f477",
       "sourceBytes": 61484,
       "compressedBytes": 10989
@@ -742,6 +1062,21 @@
       "id": "th-df514ca440e75c41",
       "sourceBytes": 71084,
       "compressedBytes": 12525
+    },
+    {
+      "id": "th-e1c4964a42d3d797",
+      "sourceBytes": 74444,
+      "compressedBytes": 13101
+    },
+    {
+      "id": "th-e1e7223a60187c11",
+      "sourceBytes": 172844,
+      "compressedBytes": 29421
+    },
+    {
+      "id": "th-e245fd2e86ef7821",
+      "sourceBytes": 110444,
+      "compressedBytes": 19053
     },
     {
       "id": "th-e24992decf04510f",
@@ -754,14 +1089,54 @@
       "compressedBytes": 12141
     },
     {
+      "id": "th-e2f8602de01c6192",
+      "sourceBytes": 139244,
+      "compressedBytes": 23853
+    },
+    {
       "id": "th-e322e714e759ffbd",
       "sourceBytes": 59564,
       "compressedBytes": 10605
     },
     {
+      "id": "th-e424ab0c9e8fad83",
+      "sourceBytes": 117644,
+      "compressedBytes": 20397
+    },
+    {
+      "id": "th-e75f884680d2a533",
+      "sourceBytes": 100844,
+      "compressedBytes": 17517
+    },
+    {
+      "id": "th-ee5b546d6d11979e",
+      "sourceBytes": 103244,
+      "compressedBytes": 17901
+    },
+    {
       "id": "th-eec9761fa751a294",
       "sourceBytes": 59564,
       "compressedBytes": 10605
+    },
+    {
+      "id": "th-eede2a1912ce7722",
+      "sourceBytes": 163244,
+      "compressedBytes": 27885
+    },
+    {
+      "id": "th-efe77876473bbf07",
+      "sourceBytes": 84044,
+      "compressedBytes": 14637
+    },
+    {
+      "id": "th-f1e56a2840e591f3",
+      "sourceBytes": 112844,
+      "compressedBytes": 19437
+    },
+    {
+      "id": "th-f3cc250b25ad69ba",
+      "sourceBytes": 108044,
+      "compressedBytes": 18669
     },
     {
       "id": "th-f3dc49027a8cdbc7",
@@ -779,14 +1154,39 @@
       "compressedBytes": 10221
     },
     {
+      "id": "th-f7e63155aa92fb1e",
+      "sourceBytes": 192044,
+      "compressedBytes": 32685
+    },
+    {
+      "id": "th-f81921da1fa8a34b",
+      "sourceBytes": 79244,
+      "compressedBytes": 13869
+    },
+    {
       "id": "th-f847f1dbc630cf82",
       "sourceBytes": 65324,
       "compressedBytes": 11565
     },
     {
+      "id": "th-fa1646c4a9ff54e9",
+      "sourceBytes": 88844,
+      "compressedBytes": 15597
+    },
+    {
       "id": "th-fb4c648b72f80cee",
       "sourceBytes": 69164,
       "compressedBytes": 12141
+    },
+    {
+      "id": "th-fcb1495ad14f5b8b",
+      "sourceBytes": 156044,
+      "compressedBytes": 26733
+    },
+    {
+      "id": "th-fcb77cd19c4d7b54",
+      "sourceBytes": 175244,
+      "compressedBytes": 29997
     }
   ]
 }

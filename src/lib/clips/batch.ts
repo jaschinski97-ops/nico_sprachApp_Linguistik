@@ -5,7 +5,7 @@ import { checkThaiTone } from '../content/tone-gate';
 import { DataStore, getStore } from '../storage';
 
 import { getAudioBlobStore } from './blob-store';
-import { base64ToBytes, wavToMonoFloat32 } from './bytes';
+import { decodeClipAsync } from './decode-clip';
 import { ClipGenerationClient } from './generator';
 import { invalidateClipIndex } from './lookup';
 import { AudioBlobStore, AudioClip, AudioClipSpec, clipBlobKey } from './types';
@@ -41,16 +41,17 @@ function clipExists(db: DataStore, blobs: AudioBlobStore) {
 
 /**
  * Tonprüfung des frisch generierten Clips, noch vor dem Ablegen. WAV-Klipse
- * (Gemini) tragen rohes PCM und lassen sich ohne Decoder messen — derselbe
- * Kern wie im Studio und im Messwerkzeug. mp3 (ChatGPT) braucht einen
- * Decoder, den die App nicht mitbringt: Es wird gespeichert und die Prüfung
- * beim Stage/Publish im Studio-Node nachgeholt. Ein interner Messfehler darf
- * die Erzeugung nie blockieren — dann eben ungeprüft statt gar nicht.
+ * (Gemini) tragen rohes PCM; mp3 (ChatGPT) wird im Web-Studio über
+ * `decodeAudioData` dekodiert — nativ gibt es keinen Decoder, dort bleibt
+ * die Prüfung beim Stage/Publish im Studio-Node (ffmpeg). Derselbe Messkern
+ * wie im Messwerkzeug. Ein Clip, der klar widerspricht, wird nicht
+ * abgelegt — der Lauf zählt ihn als fehlgeschlagen mit Grund, und der
+ * nächste Lauf erzeugt ihn neu. Ein interner Messfehler darf die Erzeugung
+ * nie blockieren — dann eben ungeprüft statt gar nicht.
  */
-function measureFreshClip(spec: AudioClipSpec, clip: { format: string; base64: string }) {
-  if (clip.format !== 'wav') return null;
+async function measureFreshClip(spec: AudioClipSpec, clip: { format: string; base64: string }) {
   try {
-    const decoded = wavToMonoFloat32(base64ToBytes(clip.base64));
+    const decoded = await decodeClipAsync(clip.base64, clip.format);
     if (!decoded) return null;
     return checkThaiTone(spec, decoded.pcm, decoded.sampleRate);
   } catch {
@@ -75,7 +76,7 @@ function clipTask(
       // abgelegt — der Lauf zählt ihn als fehlgeschlagen mit Grund, und der
       // nächste Lauf erzeugt ihn neu. Speichern wir ihn trotzdem, bliebe er
       // lokal abspielbar und würde nur beim Publish aussortiert.
-      const toneCheck = measureFreshClip(spec, clip);
+      const toneCheck = await measureFreshClip(spec, clip);
       if (toneCheck) {
         if (toneCheck.status === 'passed') tone.passed += 1;
         else if (toneCheck.status === 'failed') tone.failed += 1;

@@ -1,5 +1,5 @@
 {
-  "measuredAt": "2026-09-07T20:55:39.403Z",
+  "measuredAt": "2026-09-08T07:34:52.202Z",
   "source": "content/tone-calibration.json",
   "method": "Median of accepted F0 frames per clip, then equal-weight clip summary. Frame counts are not independent repetitions.",
   "sufficientForRegisterGate": false,
@@ -8,15 +8,15 @@
   "voices": [
     {
       "voice": "gemini:Kore",
-      "clips": 168,
-      "distinctTexts": 168,
+      "clips": 164,
+      "distinctTexts": 164,
       "clipMedians": {
-        "n": 89,
+        "n": 85,
         "medianHz": 188.26135105204872,
         "q1Hz": 173.91304347826087,
         "q3Hz": 205.12820512820514,
         "minHz": 129.03225806451613,
-        "maxHz": 372.2943722943723
+        "maxHz": 307.6923076923077
       },
       "recordings": [
         {
@@ -1747,17 +1747,6 @@
           "maxHz": 242.42424242424244
         },
         {
-          "text": "พูด",
-          "sha256": "378193298a9141156f342ce307f186164014844589860b2ec8761c36affab36c",
-          "target": "falling",
-          "n": 28,
-          "medianHz": 372.2943722943723,
-          "q1Hz": 347.82608695652175,
-          "q3Hz": 380.95238095238096,
-          "minHz": 210.52631578947367,
-          "maxHz": 400
-        },
-        {
           "text": "ค่ะ",
           "sha256": "3083df0b49fcd1d8ec724096c1af8a81d0029ebd56ce2cbec9f04648973f2345",
           "target": "falling",
@@ -1769,17 +1758,6 @@
           "maxHz": 250
         },
         {
-          "text": "ให้",
-          "sha256": "f527a58fc132919e28f4ba2272372445e0b17d60d753f7da45997cc2e049f18a",
-          "target": "falling",
-          "n": 42,
-          "medianHz": 246.21212121212122,
-          "q1Hz": 158.46338535414168,
-          "q3Hz": 285.7142857142857,
-          "minHz": 133.33333333333334,
-          "maxHz": 307.6923076923077
-        },
-        {
           "text": "เก้า",
           "sha256": "b7d0d519529851a4b6b60fd617c2925b0ebfb9de85ff70d1e88dba7da6b19d47",
           "target": "falling",
@@ -1789,28 +1767,6 @@
           "q3Hz": 266.6666666666667,
           "minHz": 90.9090909090909,
           "maxHz": 266.6666666666667
-        },
-        {
-          "text": "สวย",
-          "sha256": "3cd9cd559ad94c5e9dcde0c2ea8a07395342075f6140a0315a261eeb9fc98c68",
-          "target": "rising",
-          "n": 42,
-          "medianHz": 186.14718614718615,
-          "q1Hz": 157.64705882352942,
-          "q3Hz": 256.0483870967742,
-          "minHz": 126.98412698412699,
-          "maxHz": 320
-        },
-        {
-          "text": "ขาย",
-          "sha256": "ca1af04164d245fc4a5cb66155cc9e97c77482c0265c694f3f51c642bfea2cf4",
-          "target": "rising",
-          "n": 28,
-          "medianHz": 151.77304964539007,
-          "q1Hz": 131.14754098360655,
-          "q3Hz": 232.03463203463204,
-          "minHz": 129.03225806451613,
-          "maxHz": 275.86206896551727
         },
         {
           "text": "หมา",
@@ -1866,6 +1822,901 @@
           "q3Hz": 186.04651162790697,
           "minHz": 133.33333333333334,
           "maxHz": 266.6666666666667
+        }
+      ]
+    },
+    {
+      "voice": "chatgpt:coral",
+      "clips": 80,
+      "distinctTexts": 80,
+      "clipMedians": {
+        "n": 80,
+        "medianHz": 177.77777777777777,
+        "q1Hz": 170.2127659574468,
+        "q3Hz": 195.1219512195122,
+        "minHz": 139.14095583787054,
+        "maxHz": 235.2941176470588
+      },
+      "recordings": [
+        {
+          "text": "ฉัน ชอบ แมว",
+          "sha256": "f864056c6d1ec52705f706cf3ae6e72f4391eaea4c773ae89e3afb220608935f",
+          "target": "not-a-verified-monosyllable",
+          "n": 106,
+          "medianHz": 173.91304347826087,
+          "q1Hz": 146.12794612794613,
+          "q3Hz": 240.64171122994654,
+          "minHz": 123.07692307692308,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "หมู อร่อย",
+          "sha256": "0d12ac3b57469c24ade5d0a786a18521e94392ea98f247ccfa9c429ab0fbcb57",
+          "target": "not-a-verified-monosyllable",
+          "n": 128,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 156.86274509803923,
+          "q3Hz": 190.47619047619048,
+          "minHz": 96.3855421686747,
+          "maxHz": 275.86206896551727
+        },
+        {
+          "text": "โรงเรียน ใหญ่",
+          "sha256": "cd924629f7ac36b7ca0cc3ae605d8d16d4514a8c76541f209bf11cb73386284d",
+          "target": "not-a-verified-monosyllable",
+          "n": 135,
+          "medianHz": 170.2127659574468,
+          "q1Hz": 150.9433962264151,
+          "q3Hz": 181.8181818181818,
+          "minHz": 125,
+          "maxHz": 210.52631578947367
+        },
+        {
+          "text": "ข้าว อร่อย",
+          "sha256": "6e6a35857301793b321c0d31651fe0d7604b26ac290e5438533c7e748c888edb",
+          "target": "not-a-verified-monosyllable",
+          "n": 89,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 135.59322033898306,
+          "q3Hz": 235.2941176470588,
+          "minHz": 90.9090909090909,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "ใคร มา",
+          "sha256": "37b1ba5f80b5edca8f27bd8dce1e89249cbef09f85646626366e37ae8113435d",
+          "target": "not-a-verified-monosyllable",
+          "n": 100,
+          "medianHz": 173.91304347826087,
+          "q1Hz": 153.84615384615384,
+          "q3Hz": 190.47619047619048,
+          "minHz": 135.59322033898306,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "พูด",
+          "sha256": "58b384bb23c62e98d3f95caec1ee3dd919590a768620fa1f945e63d54ba3bef9",
+          "target": "falling",
+          "n": 29,
+          "medianHz": 235.2941176470588,
+          "q1Hz": 150.9433962264151,
+          "q3Hz": 285.7142857142857,
+          "minHz": 150.9433962264151,
+          "maxHz": 296.2962962962963
+        },
+        {
+          "text": "ฉัน ไป บ้าน",
+          "sha256": "f6e81f55f4581f54aa62ef0b4c997603991ba97ac0bc831518a93ac3e1598779",
+          "target": "not-a-verified-monosyllable",
+          "n": 92,
+          "medianHz": 168.43971631205673,
+          "q1Hz": 148.14814814814815,
+          "q3Hz": 195.1219512195122,
+          "minHz": 102.56410256410257,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "ร้าน ใหม่",
+          "sha256": "1d9d0f5e53c141766c9e6ec6915ffd4ad8af64997de68e4ad2d2309433d2af06",
+          "target": "not-a-verified-monosyllable",
+          "n": 92,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 206.47773279352228,
+          "minHz": 117.6470588235294,
+          "maxHz": 242.42424242424244
+        },
+        {
+          "text": "น้ำ ร้อน",
+          "sha256": "6d928ce6c2f011d5027204e5c6e70b8a89af08dd410ae47521fe8467d7190bb1",
+          "target": "not-a-verified-monosyllable",
+          "n": 112,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 186.04651162790697,
+          "q3Hz": 210.52631578947367,
+          "minHz": 89.88764044943821,
+          "maxHz": 307.6923076923077
+        },
+        {
+          "text": "หนึ่ง ปี",
+          "sha256": "810825b8cf687b19a96a3e336570576004e06b56c121bb9465e744f165790fee",
+          "target": "not-a-verified-monosyllable",
+          "n": 103,
+          "medianHz": 166.66666666666666,
+          "q1Hz": 141.60401002506268,
+          "q3Hz": 195.1219512195122,
+          "minHz": 117.6470588235294,
+          "maxHz": 216.21621621621622
+        },
+        {
+          "text": "บ้าน สวย",
+          "sha256": "acb630dffceed92f4233dc7b9fa212310dfc962c3833e2a434eaaf452bc3ecd6",
+          "target": "not-a-verified-monosyllable",
+          "n": 89,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 142.85714285714286,
+          "q3Hz": 235.2941176470588,
+          "minHz": 133.33333333333334,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "เวลา มาก",
+          "sha256": "4e661e3b1d6cf49a69a2e179e9e52bdff5fd3ecc45c8ab4118b2afffb04d8356",
+          "target": "not-a-verified-monosyllable",
+          "n": 111,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 179.7979797979798,
+          "q3Hz": 202.56410256410257,
+          "minHz": 96.3855421686747,
+          "maxHz": 275.86206896551727
+        },
+        {
+          "text": "อาหาร ดี",
+          "sha256": "8351c67abce6817e0e3e6ba69e72537bbc3f448b25812abc9620bebdd5e44b78",
+          "target": "not-a-verified-monosyllable",
+          "n": 108,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 205.12820512820514,
+          "minHz": 78.43137254901961,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "กาแฟ เย็น",
+          "sha256": "3d4e5816fd1dfa561adeebd2848f09a87707a50ffff6f23028138ede9dd8c9c5",
+          "target": "not-a-verified-monosyllable",
+          "n": 138,
+          "medianHz": 156.86274509803923,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 170.2127659574468,
+          "minHz": 72.07207207207207,
+          "maxHz": 195.1219512195122
+        },
+        {
+          "text": "เพื่อน ดี",
+          "sha256": "3574f402f9c722daec0b2ffb8f571ebf2041fef0a8f2287fc6a688e9f8406de4",
+          "target": "not-a-verified-monosyllable",
+          "n": 76,
+          "medianHz": 172.06290471785383,
+          "q1Hz": 153.84615384615384,
+          "q3Hz": 191.6376306620209,
+          "minHz": 135.59322033898306,
+          "maxHz": 216.21621621621622
+        },
+        {
+          "text": "ร้าน เล็ก",
+          "sha256": "82914ca5aa74731c9ccefb25c147d156ce8b361a40329ddb173ad9b68d8cf48e",
+          "target": "not-a-verified-monosyllable",
+          "n": 97,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 195.1219512195122,
+          "q3Hz": 222.22222222222223,
+          "minHz": 98.76543209876543,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "ฉัน ไป ตลาด",
+          "sha256": "8d13ad4fa6956d4caccb5ccc2f85d708e2d8029058e0b0e7d430d2ca9d68f6cf",
+          "target": "not-a-verified-monosyllable",
+          "n": 99,
+          "medianHz": 181.8181818181818,
+          "q1Hz": 168.43971631205673,
+          "q3Hz": 200,
+          "minHz": 117.6470588235294,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "ไก่ อร่อย",
+          "sha256": "0e0deb1877cfaabebf566e943713b2b6e5aaaa1c558178adc539cb710ec6d3c9",
+          "target": "not-a-verified-monosyllable",
+          "n": 98,
+          "medianHz": 181.8181818181818,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 210.52631578947367,
+          "minHz": 126.98412698412699,
+          "maxHz": 235.2941176470588
+        },
+        {
+          "text": "ให้",
+          "sha256": "633f5980c94431854fbec24072899c506a73077de236ab36cf77a55d441ccbf1",
+          "target": "falling",
+          "n": 44,
+          "medianHz": 216.21621621621622,
+          "q1Hz": 179.84189723320156,
+          "q3Hz": 222.22222222222223,
+          "minHz": 133.33333333333334,
+          "maxHz": 222.22222222222223
+        },
+        {
+          "text": "เงิน น้อย",
+          "sha256": "a3941c86ad09f9d092139ce2c72ede0c0b8a9af8f646c1c55a255b2d0dfe26e9",
+          "target": "not-a-verified-monosyllable",
+          "n": 134,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 190.47619047619048,
+          "q3Hz": 205.12820512820514,
+          "minHz": 96.3855421686747,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "คน ดี",
+          "sha256": "ec0f290567f3da85d19681b3e67d8b699adcfd2a8ccf8d41cedf70fffe80f88e",
+          "target": "not-a-verified-monosyllable",
+          "n": 106,
+          "medianHz": 175.84541062801932,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 195.1219512195122,
+          "minHz": 96.3855421686747,
+          "maxHz": 210.52631578947367
+        },
+        {
+          "text": "หก เดือน",
+          "sha256": "44c1ff41994ced718556550fb9ab5411c22bb8341b99280951997b9ff1cfe38f",
+          "target": "not-a-verified-monosyllable",
+          "n": 62,
+          "medianHz": 213.37126600284495,
+          "q1Hz": 167.5531914893617,
+          "q3Hz": 242.42424242424244,
+          "minHz": 126.98412698412699,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "ห้า วัน",
+          "sha256": "8bfe13cd52badc8dd33213cf90e9780e5b4fd16388b90362b86ea9a2070c3375",
+          "target": "not-a-verified-monosyllable",
+          "n": 87,
+          "medianHz": 170.2127659574468,
+          "q1Hz": 137.97204876598278,
+          "q3Hz": 250,
+          "minHz": 89.88764044943821,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "ปลา อร่อย",
+          "sha256": "bcd8d90c4139d58aca9d85e1cb047995ab3e81e4dcbea8cf788111e0dcca3929",
+          "target": "not-a-verified-monosyllable",
+          "n": 91,
+          "medianHz": 153.84615384615384,
+          "q1Hz": 131.18279569892474,
+          "q3Hz": 173.91304347826087,
+          "minHz": 86.02150537634408,
+          "maxHz": 195.1219512195122
+        },
+        {
+          "text": "คุณ ไป ที่ไหน",
+          "sha256": "8118890aa24b405e488a8a425f7060bc0fdebd3f4e102cb54c51205d209430a3",
+          "target": "not-a-verified-monosyllable",
+          "n": 141,
+          "medianHz": 205.12820512820514,
+          "q1Hz": 153.84615384615384,
+          "q3Hz": 216.21621621621622,
+          "minHz": 101.26582278481013,
+          "maxHz": 296.2962962962963
+        },
+        {
+          "text": "เรา ไป โรงเรียน",
+          "sha256": "6956d42c888216caad5b019253200e3ba4bf5653bde0c42cbf78beb7018f79e9",
+          "target": "not-a-verified-monosyllable",
+          "n": 158,
+          "medianHz": 197.5609756097561,
+          "q1Hz": 170.2127659574468,
+          "q3Hz": 235.2941176470588,
+          "minHz": 69.56521739130434,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "แมว เล็ก",
+          "sha256": "c13b3ce832dfb999fd07ccf6cf85effad7bce4f84329054fb4c76fbe0917dfe9",
+          "target": "not-a-verified-monosyllable",
+          "n": 104,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 173.91304347826087,
+          "q3Hz": 195.1219512195122,
+          "minHz": 94.11764705882354,
+          "maxHz": 320
+        },
+        {
+          "text": "ผม รัก คุณ",
+          "sha256": "491c626df8c008a2c42d2878654ca08a2382d419478a3cef2acab0e889d7b216",
+          "target": "not-a-verified-monosyllable",
+          "n": 107,
+          "medianHz": 210.52631578947367,
+          "q1Hz": 188.26135105204872,
+          "q3Hz": 231.9327731092437,
+          "minHz": 123.07692307692308,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "หมา ใหญ่",
+          "sha256": "2c4232fbaf8287906a3308b681ca2f5fb5040da6db7a0f34d1ea8a66ddc92748",
+          "target": "not-a-verified-monosyllable",
+          "n": 123,
+          "medianHz": 170.2127659574468,
+          "q1Hz": 156.86274509803923,
+          "q3Hz": 195.1219512195122,
+          "minHz": 103.8961038961039,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "สิบ ปี",
+          "sha256": "1bcd6e96636b725dec6060d9b1318f8ce21a253eac668653741216fe889bcf21",
+          "target": "not-a-verified-monosyllable",
+          "n": 58,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 154.6003016591252,
+          "q3Hz": 198.78048780487805,
+          "minHz": 119.40298507462687,
+          "maxHz": 222.22222222222223
+        },
+        {
+          "text": "ผม เขียน หนังสือ",
+          "sha256": "401fa8ae18ab4927f52eafcae6d1b5c34448d573d657a8da1df776f8ed1805b8",
+          "target": "not-a-verified-monosyllable",
+          "n": 153,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 156.86274509803923,
+          "q3Hz": 210.52631578947367,
+          "minHz": 133.33333333333334,
+          "maxHz": 400
+        },
+        {
+          "text": "ชา เย็น",
+          "sha256": "f67787cf9602a13084fa7a417d868d66a98108f22d670fff83c23b22c89c6c5d",
+          "target": "not-a-verified-monosyllable",
+          "n": 92,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 181.8181818181818,
+          "q3Hz": 210.52631578947367,
+          "minHz": 89.88764044943821,
+          "maxHz": 235.2941176470588
+        },
+        {
+          "text": "หมอ ดี",
+          "sha256": "8303dfd5c37c3b6418071bddbbacf3959c4e8e3d5320cf2e9bfe45f43da36e2f",
+          "target": "not-a-verified-monosyllable",
+          "n": 107,
+          "medianHz": 173.91304347826087,
+          "q1Hz": 146.80134680134682,
+          "q3Hz": 190.47619047619048,
+          "minHz": 97.5609756097561,
+          "maxHz": 210.52631578947367
+        },
+        {
+          "text": "รถ แพง",
+          "sha256": "189911412c11b633526d90ecf491ba0c452339f480fdc00089e42dd5fca024e5",
+          "target": "not-a-verified-monosyllable",
+          "n": 83,
+          "medianHz": 166.66666666666666,
+          "q1Hz": 144.15584415584416,
+          "q3Hz": 195.1219512195122,
+          "minHz": 125,
+          "maxHz": 400
+        },
+        {
+          "text": "ผม ไม่ กิน หมู",
+          "sha256": "e4b14ea6ad3f1a15b37d2d830d5f8243bfebc8668fc4076a3f17acd75a5f69b7",
+          "target": "not-a-verified-monosyllable",
+          "n": 175,
+          "medianHz": 200,
+          "q1Hz": 177.77777777777777,
+          "q3Hz": 222.22222222222223,
+          "minHz": 70.79646017699115,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "อร่อย มาก",
+          "sha256": "11cce7715088b66c1c1e376787b7779e9599878e434814c5832595e348592af9",
+          "target": "not-a-verified-monosyllable",
+          "n": 108,
+          "medianHz": 210.52631578947367,
+          "q1Hz": 165.81632653061223,
+          "q3Hz": 228.57142857142858,
+          "minHz": 115.94202898550725,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "รถ ใหม่",
+          "sha256": "be51a5768bd63595241acf3f006efc7324a15257e0c307f427be5dcb4a863df9",
+          "target": "not-a-verified-monosyllable",
+          "n": 66,
+          "medianHz": 179.7979797979798,
+          "q1Hz": 140.97744360902257,
+          "q3Hz": 195.1219512195122,
+          "minHz": 103.8961038961039,
+          "maxHz": 222.22222222222223
+        },
+        {
+          "text": "ปลา ใหญ่",
+          "sha256": "aba8b7667e9eaf3da7c5c3bc51a800ba9b43f70b4339fdd551511cefe4152cc2",
+          "target": "not-a-verified-monosyllable",
+          "n": 89,
+          "medianHz": 173.91304347826087,
+          "q1Hz": 163.26530612244898,
+          "q3Hz": 190.47619047619048,
+          "minHz": 96.3855421686747,
+          "maxHz": 216.21621621621622
+        },
+        {
+          "text": "ครู ให้ หนังสือ",
+          "sha256": "73fcac075f31e665892a5aa3cf7eaebfd534fb9e51eec805cfb37f9722a89dc5",
+          "target": "not-a-verified-monosyllable",
+          "n": 136,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 160,
+          "q3Hz": 228.57142857142858,
+          "minHz": 73.39449541284404,
+          "maxHz": 296.2962962962963
+        },
+        {
+          "text": "สวย",
+          "sha256": "0cb71bb72a7c4cb5b516ff58501f5e453bcd65aca3c2bf25f73e83e70e7fce14",
+          "target": "rising",
+          "n": 48,
+          "medianHz": 168.43971631205673,
+          "q1Hz": 146.82539682539684,
+          "q3Hz": 200,
+          "minHz": 133.33333333333334,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "สอง วัน",
+          "sha256": "9f1b5406796d51cdb1afbdf003039accd1ed484bf6fbf5128a305fdcbd51a1c2",
+          "target": "not-a-verified-monosyllable",
+          "n": 91,
+          "medianHz": 160,
+          "q1Hz": 139.14095583787054,
+          "q3Hz": 190.47619047619048,
+          "minHz": 125,
+          "maxHz": 250
+        },
+        {
+          "text": "แปด ปี",
+          "sha256": "c4e482628bc32d01b93ccaed25a9eccf242f0d3c96272380d0307e8e597b3268",
+          "target": "not-a-verified-monosyllable",
+          "n": 77,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 166.66666666666666,
+          "q3Hz": 216.21621621621622,
+          "minHz": 133.33333333333334,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "ขาย",
+          "sha256": "0db3ca8918987311c8f133947b15ee9658a6082f37636f16095eaafe47aba34b",
+          "target": "rising",
+          "n": 32,
+          "medianHz": 139.14095583787054,
+          "q1Hz": 131.14754098360655,
+          "q3Hz": 182.87526427061312,
+          "minHz": 129.03225806451613,
+          "maxHz": 210.52631578947367
+        },
+        {
+          "text": "สาม วัน",
+          "sha256": "3f60ac2e7f9ff390f09cae0678f64aaf8c64dfd756bcb07e66b79e671a59f1dd",
+          "target": "not-a-verified-monosyllable",
+          "n": 82,
+          "medianHz": 155.35444947209652,
+          "q1Hz": 140.35087719298247,
+          "q3Hz": 177.77777777777777,
+          "minHz": 119.40298507462687,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "ครู มา",
+          "sha256": "07aace42637c99bbd0a3c6ad6b21ac8526e9cf22d87f9115862befd31eff056b",
+          "target": "not-a-verified-monosyllable",
+          "n": 105,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 181.8181818181818,
+          "q3Hz": 210.52631578947367,
+          "minHz": 71.42857142857143,
+          "maxHz": 235.2941176470588
+        },
+        {
+          "text": "แมว นอน",
+          "sha256": "6a37715279ebd03b8f6c9e5803aac899abe5e759afcffab4a3567fdaf014d995",
+          "target": "not-a-verified-monosyllable",
+          "n": 125,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 173.91304347826087,
+          "q3Hz": 190.47619047619048,
+          "minHz": 94.11764705882354,
+          "maxHz": 205.12820512820514
+        },
+        {
+          "text": "ผม กิน ผัก",
+          "sha256": "4cd39223d5214c42ba3aff177b90ef29453e854ffc6ff71e5a5cfa5d1eed28cb",
+          "target": "not-a-verified-monosyllable",
+          "n": 98,
+          "medianHz": 207.82726045883942,
+          "q1Hz": 181.8181818181818,
+          "q3Hz": 226.984126984127,
+          "minHz": 106.66666666666667,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "กาแฟ ร้อน",
+          "sha256": "56f63942fd12c8f610a0d31f35ea761aa90932f6d9d5308d49967cf41cd77545",
+          "target": "not-a-verified-monosyllable",
+          "n": 119,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 170.2127659574468,
+          "q3Hz": 190.47619047619048,
+          "minHz": 84.21052631578948,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "ผม ทำ อาหาร",
+          "sha256": "544e441884299144aafca118af572a14a79de9887f7c4fde27644d94a0edf144",
+          "target": "not-a-verified-monosyllable",
+          "n": 145,
+          "medianHz": 160,
+          "q1Hz": 140.35087719298247,
+          "q3Hz": 177.77777777777777,
+          "minHz": 111.11111111111111,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "คุณ ทำ อะไร",
+          "sha256": "50d52aa2ddc3512b050a026391d4833dd5a0da1da58c055ff3a6b93f74b8cde8",
+          "target": "not-a-verified-monosyllable",
+          "n": 141,
+          "medianHz": 166.66666666666666,
+          "q1Hz": 148.14814814814815,
+          "q3Hz": 177.77777777777777,
+          "minHz": 70.79646017699115,
+          "maxHz": 195.1219512195122
+        },
+        {
+          "text": "ผม อยาก กิน ข้าว",
+          "sha256": "dea01636be4360c693aaa9619e0178a84489852001ac6622535051b928ccf920",
+          "target": "not-a-verified-monosyllable",
+          "n": 163,
+          "medianHz": 160,
+          "q1Hz": 144.15584415584416,
+          "q3Hz": 186.04651162790697,
+          "minHz": 74.76635514018692,
+          "maxHz": 205.12820512820514
+        },
+        {
+          "text": "ผม ไม่ รู้",
+          "sha256": "be080e25b7a4d6a0bfb6bc6c7eaaf3f9b17dea31c92d2982603e7239a99ea7c9",
+          "target": "not-a-verified-monosyllable",
+          "n": 133,
+          "medianHz": 170.2127659574468,
+          "q1Hz": 150.9433962264151,
+          "q3Hz": 195.1219512195122,
+          "minHz": 74.76635514018692,
+          "maxHz": 235.2941176470588
+        },
+        {
+          "text": "ผม กิน ไข่",
+          "sha256": "6e5581a79e00c8780cdaaca8925bd35b481da64d603a865e4702206a05bb78cc",
+          "target": "not-a-verified-monosyllable",
+          "n": 99,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 163.26530612244898,
+          "q3Hz": 195.1219512195122,
+          "minHz": 119.40298507462687,
+          "maxHz": 250
+        },
+        {
+          "text": "เก้า เดือน",
+          "sha256": "b0f3c1204a8dae4abe6759adbe8ffffecf89ced444cf3c4d7fbd932824b346f6",
+          "target": "not-a-verified-monosyllable",
+          "n": 96,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 150.24458420684837,
+          "q3Hz": 223.80952380952382,
+          "minHz": 85.1063829787234,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "เงิน มาก",
+          "sha256": "a5bcea25b939a0c585d73d05d5e8502f6be21d9b46a51667e900fbfa66edda54",
+          "target": "not-a-verified-monosyllable",
+          "n": 103,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 175.84541062801932,
+          "q3Hz": 190.47619047619048,
+          "minHz": 70.79646017699115,
+          "maxHz": 210.52631578947367
+        },
+        {
+          "text": "ผม กิน ข้าว",
+          "sha256": "48b4c60d33f2c085a5393296336ad25c7b474a861d0da662feb7f378a4400543",
+          "target": "not-a-verified-monosyllable",
+          "n": 130,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 210.52631578947367,
+          "minHz": 86.02150537634408,
+          "maxHz": 400
+        },
+        {
+          "text": "ฉัน อ่าน หนังสือ",
+          "sha256": "d3f5003c740cf73246f12677b3e8985af9863a5acb24c813bbba95f234db0a3d",
+          "target": "not-a-verified-monosyllable",
+          "n": 141,
+          "medianHz": 170.2127659574468,
+          "q1Hz": 153.84615384615384,
+          "q3Hz": 190.47619047619048,
+          "minHz": 126.98412698412699,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "น้ำ เย็น",
+          "sha256": "a1abcdd92a49e4b6efb6d8fe56a91cacda3f09928ebb431ef146572943ee8a6f",
+          "target": "not-a-verified-monosyllable",
+          "n": 98,
+          "medianHz": 181.8181818181818,
+          "q1Hz": 171.13783533765033,
+          "q3Hz": 193.96051103368177,
+          "minHz": 145.45454545454547,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "คุณ พูด อะไร",
+          "sha256": "8d8a4fbf2448c1133cb27b1c004d747da85c7ed8192221d53b57567c54ba99ed",
+          "target": "not-a-verified-monosyllable",
+          "n": 132,
+          "medianHz": 181.8181818181818,
+          "q1Hz": 156.86274509803923,
+          "q3Hz": 250,
+          "minHz": 72.07207207207207,
+          "maxHz": 307.6923076923077
+        },
+        {
+          "text": "ผลไม้ แพง",
+          "sha256": "a7d8d35be571c414c34b2a6c5fd24c9ef9739c9070adcd3bc8e9ebb61c1c2ac8",
+          "target": "not-a-verified-monosyllable",
+          "n": 141,
+          "medianHz": 181.8181818181818,
+          "q1Hz": 160,
+          "q3Hz": 195.1219512195122,
+          "minHz": 96.3855421686747,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "ผม ชอบ กาแฟ",
+          "sha256": "8c04a3703c21dfa42e87d204ac6a736bd4cb859f87a47c21c7384f2d74b047eb",
+          "target": "not-a-verified-monosyllable",
+          "n": 143,
+          "medianHz": 166.66666666666666,
+          "q1Hz": 148.14814814814815,
+          "q3Hz": 197.5609756097561,
+          "minHz": 123.07692307692308,
+          "maxHz": 266.6666666666667
+        },
+        {
+          "text": "รถ เก่า",
+          "sha256": "4133fffa014c364728576c1a996d87193503490f49badba2ce48c8627f0ca596",
+          "target": "not-a-verified-monosyllable",
+          "n": 71,
+          "medianHz": 156.86274509803923,
+          "q1Hz": 139.14095583787054,
+          "q3Hz": 173.91304347826087,
+          "minHz": 115.94202898550725,
+          "maxHz": 222.22222222222223
+        },
+        {
+          "text": "ผม ดู แมว",
+          "sha256": "2e8a1288538677aa2c5b224377236800be894a556a0b8bda5f7a9c27bc31c1bd",
+          "target": "not-a-verified-monosyllable",
+          "n": 165,
+          "medianHz": 160,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 170.2127659574468,
+          "minHz": 79.20792079207921,
+          "maxHz": 250
+        },
+        {
+          "text": "ผม ไป ตลาด",
+          "sha256": "2a3429a24200439b3ae9d45958ebcb2c26dd07433014f14d2e77835851639f3b",
+          "target": "not-a-verified-monosyllable",
+          "n": 86,
+          "medianHz": 170.2127659574468,
+          "q1Hz": 157.64705882352942,
+          "q3Hz": 195.1219512195122,
+          "minHz": 100,
+          "maxHz": 275.86206896551727
+        },
+        {
+          "text": "ตลาด ใหญ่",
+          "sha256": "e4ae79b1f5e0d9c3cb2e728fadf047c076c81e9677ffdd99c47d4a892187168b",
+          "target": "not-a-verified-monosyllable",
+          "n": 95,
+          "medianHz": 205.12820512820514,
+          "q1Hz": 183.9323467230444,
+          "q3Hz": 235.2941176470588,
+          "minHz": 131.14754098360655,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "ทำไม คุณ ไม่ กิน",
+          "sha256": "79fca87ba67cb2cd3bb8d30391a07604a092fa22f0445d26485d4d79364119e9",
+          "target": "not-a-verified-monosyllable",
+          "n": 179,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 152.39477503628447,
+          "q3Hz": 188.26135105204872,
+          "minHz": 81.63265306122449,
+          "maxHz": 222.22222222222223
+        },
+        {
+          "text": "หนังสือ ใหม่",
+          "sha256": "9ff5e5b6e38f267b040ffa373333234588be0fec58d0d4778aa69ae082a5751c",
+          "target": "not-a-verified-monosyllable",
+          "n": 140,
+          "medianHz": 173.91304347826087,
+          "q1Hz": 150.9433962264151,
+          "q3Hz": 187.15393133997785,
+          "minHz": 72.07207207207207,
+          "maxHz": 242.42424242424244
+        },
+        {
+          "text": "ผม ซื้อ ผลไม้",
+          "sha256": "2a0c0c269e852b69721c31f1be2fd953bf9d7fa0c9a390f2ce6e163c097c4080",
+          "target": "not-a-verified-monosyllable",
+          "n": 136,
+          "medianHz": 181.8181818181818,
+          "q1Hz": 173.91304347826087,
+          "q3Hz": 228.57142857142858,
+          "minHz": 87.91208791208791,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "สี่ ปี",
+          "sha256": "08c51c59a96bbc6b7ad1ebe9cd01bc95b5b1f9add22571566adf8faf8f92bc3a",
+          "target": "not-a-verified-monosyllable",
+          "n": 71,
+          "medianHz": 166.66666666666666,
+          "q1Hz": 136.76212741087085,
+          "q3Hz": 205.12820512820514,
+          "minHz": 119.40298507462687,
+          "maxHz": 242.42424242424244
+        },
+        {
+          "text": "ม้า สวย",
+          "sha256": "09fa49f8df173bb88cf172ff033c925c7022c1b4bf822045c6b8c28b1bcfed02",
+          "target": "not-a-verified-monosyllable",
+          "n": 101,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 153.84615384615384,
+          "q3Hz": 200,
+          "minHz": 98.76543209876543,
+          "maxHz": 285.7142857142857
+        },
+        {
+          "text": "เจ็ด วัน",
+          "sha256": "69b7fd13257e27f9d6c29f20c7ac868b6a9ab004dc2b43c6121d172520d2a703",
+          "target": "not-a-verified-monosyllable",
+          "n": 50,
+          "medianHz": 222.22222222222223,
+          "q1Hz": 200,
+          "q3Hz": 242.42424242424244,
+          "minHz": 163.26530612244898,
+          "maxHz": 296.2962962962963
+        },
+        {
+          "text": "ผม ไม่ เข้าใจ",
+          "sha256": "d04376d46aafc9abdc3e22d01183e2f9b176a6a3990b0b21e307910393675b60",
+          "target": "not-a-verified-monosyllable",
+          "n": 129,
+          "medianHz": 173.91304347826087,
+          "q1Hz": 145.45454545454547,
+          "q3Hz": 190.47619047619048,
+          "minHz": 101.26582278481013,
+          "maxHz": 216.21621621621622
+        },
+        {
+          "text": "บ้าน ใหม่",
+          "sha256": "487fc5f1ba0005cee2e55bc59d90422e8efac5e3998c783e09258fc99346c9fe",
+          "target": "not-a-verified-monosyllable",
+          "n": 77,
+          "medianHz": 186.04651162790697,
+          "q1Hz": 150.9433962264151,
+          "q3Hz": 258.06451612903226,
+          "minHz": 86.95652173913044,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "ครู ดี",
+          "sha256": "4eb996a14ff0184c8536d402eeb31fb8d4937626ccde756c6fb9b4307f0489b1",
+          "target": "not-a-verified-monosyllable",
+          "n": 83,
+          "medianHz": 195.1219512195122,
+          "q1Hz": 192.79907084785134,
+          "q3Hz": 216.21621621621622,
+          "minHz": 73.39449541284404,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "สาม เดือน",
+          "sha256": "9a3e739eea1c8c4458fab64d9a66d61dc01c29f0e7851ba33988d61faa1f9943",
+          "target": "not-a-verified-monosyllable",
+          "n": 68,
+          "medianHz": 200,
+          "q1Hz": 165,
+          "q3Hz": 235.2941176470588,
+          "minHz": 72.07207207207207,
+          "maxHz": 275.86206896551727
+        },
+        {
+          "text": "ร้าน ขาย กาแฟ",
+          "sha256": "2808c1d2fc45ae9ee408143d4b4a5b670fd41924b972cd5f295d9273a5996010",
+          "target": "not-a-verified-monosyllable",
+          "n": 139,
+          "medianHz": 177.77777777777777,
+          "q1Hz": 148.14814814814815,
+          "q3Hz": 195.1219512195122,
+          "minHz": 94.11764705882354,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "บ้าน ใหญ่",
+          "sha256": "257ac47b4aab5ce65ec35e885e8c7fe0e0100f4aa683890ebdfb2f183062eb94",
+          "target": "not-a-verified-monosyllable",
+          "n": 83,
+          "medianHz": 163.26530612244898,
+          "q1Hz": 130.08989952406134,
+          "q3Hz": 205.12820512820514,
+          "minHz": 106.66666666666667,
+          "maxHz": 228.57142857142858
+        },
+        {
+          "text": "อาหาร แพง",
+          "sha256": "f48bfea2e18ce048e2825fdcca8ca224410ae5c8c46126fc6dda44db7be43817",
+          "target": "not-a-verified-monosyllable",
+          "n": 89,
+          "medianHz": 160,
+          "q1Hz": 137.93103448275863,
+          "q3Hz": 186.04651162790697,
+          "minHz": 89.88764044943821,
+          "maxHz": 258.06451612903226
+        },
+        {
+          "text": "คุณ กิน อะไร",
+          "sha256": "c6dea53dd9553f57743c69b5420507f3867bf91e34c9654bc0e17454e89f01cd",
+          "target": "not-a-verified-monosyllable",
+          "n": 151,
+          "medianHz": 216.21621621621622,
+          "q1Hz": 188.26135105204872,
+          "q3Hz": 258.06451612903226,
+          "minHz": 117.6470588235294,
+          "maxHz": 333.3333333333333
+        },
+        {
+          "text": "ผม ฟัง ครู",
+          "sha256": "ae357e0eeb72a19485a72e1998e220447ca2a657082540b3f61ffbe51b216961",
+          "target": "not-a-verified-monosyllable",
+          "n": 118,
+          "medianHz": 150.9433962264151,
+          "q1Hz": 137.93103448275863,
+          "q3Hz": 173.91304347826087,
+          "minHz": 123.07692307692308,
+          "maxHz": 205.12820512820514
         }
       ]
     }

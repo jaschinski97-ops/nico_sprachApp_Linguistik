@@ -528,8 +528,9 @@ function ProgressPanel({ progress }: { progress: BatchProgress }) {
 
       {/* Automatische Tonprüfung — nur der Hörclip-Lauf liefert diese Zahlen.
           Abgelehnte Clips stehen mit Grund in der Fehlerliste und wurden nicht
-          abgelegt; ungeprüft heißt: kein Thai-Einsilbler oder mp3 ohne Decoder,
-          die verbindliche Prüfung macht dann das Studio beim Stage/Publish. */}
+          abgelegt; ungeprüft heißt: kein Thai-Einsilbler, oder mp3 nativ ohne
+          Decoder — die verbindliche Prüfung macht dann das Studio beim
+          Stage/Publish. */}
       {progress.tone ? (
         <View style={styles.counters}>
           <Counter label="Ton bestanden" value={progress.tone.passed} color={toneColor('high')} />

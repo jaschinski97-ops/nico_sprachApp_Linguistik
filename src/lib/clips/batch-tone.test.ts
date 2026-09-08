@@ -55,6 +55,21 @@ function staticClient(base64: string): ClipGenerationClient {
   };
 }
 
+function mp3Client(base64: string): ClipGenerationClient {
+  return {
+    async generate(): Promise<GeneratedClip> {
+      return {
+        base64,
+        format: 'mp3',
+        model: 'test-tts',
+        voice: 'Testa',
+        provider: 'chatgpt',
+        durationMs: 400,
+      };
+    },
+  };
+}
+
 function specOf(term: string, id: string): AudioClipSpec {
   const word = VOCABULARY_TH.find((entry) => entry.term === term);
   if (!word?.sourceVerified) throw new Error('Testwort nicht verifiziert: ' + term);
@@ -124,5 +139,48 @@ describe('Automatische Tonprüfung im Clip-Lauf', () => {
     expect(result.ok).toBe(1);
     expect(result.tone?.other).toBe(1);
     expect(await store.get('audio', spec.id)).not.toBeNull();
+  });
+
+  it('misst mp3 über den Web-AudioContext und lehnt widersprechende Clips ab', async () => {
+    const store = await freshStore();
+    const blobs = freshBlobs();
+    // Der Test kann kein echtes mp3 dekodieren — er prüft die Verdrahtung:
+    // ein gemockter AudioContext liefert das "dekodierte" PCM, und die
+    // Prüfung (mono-Mixdown, Abtastrate aus dem Puffer, Ablehnung) läuft.
+    const decoded = { sampleRate: 24000, numberOfChannels: 2, length: 9600, getChannelData: (channel: number) => channelData[channel] };
+    const channelData = [
+      new Float32Array(9600).map((_, i) => 0.5 * Math.sin(2 * Math.PI * 200 * (i / 24000))),
+      new Float32Array(9600).map((_, i) => 0.5 * Math.sin(2 * Math.PI * 200 * (i / 24000))),
+    ];
+    const decodeCalls: number[] = [];
+    (globalThis as { AudioContext?: unknown }).AudioContext = class {
+      decodeAudioData(data: ArrayBuffer) {
+        decodeCalls.push(data.byteLength);
+        return Promise.resolve(decoded);
+      }
+      close() {
+        return Promise.resolve();
+      }
+    };
+
+    try {
+      // ไม่ ist verifiziert fallend; ein ebener Ton widerspricht dem klar.
+      const spec = specOf('ไม่', 'test-mp3-flat-falling');
+      const result = await runClipBatch({
+        specs: [spec],
+        client: mp3Client('aGVsbG8='), // beliebige Bytes — dekodiert wird gemockt
+        store,
+        blobStore: blobs,
+        now: () => T0,
+      });
+
+      expect(decodeCalls.length).toBe(1);
+      expect(result.failed).toBe(1);
+      expect(result.tone?.failed).toBe(1);
+      expect(result.errors[0]?.message).toContain('Ton-Check fehlgeschlagen');
+      expect(await store.get('audio', spec.id)).toBeNull();
+    } finally {
+      delete (globalThis as { AudioContext?: unknown }).AudioContext;
+    }
   });
 });
