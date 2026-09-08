@@ -326,7 +326,7 @@ describe('Anbieter für Sprachausgabe', () => {
 
     const store = await freshStore();
     const next = await setGeneratorProvider('audio', 'chatgpt', store);
-    expect(next.audio).toEqual({ provider: 'chatgpt', model: 'gpt-4o-mini-tts', voice: 'alloy' });
+    expect(next.audio).toEqual({ provider: 'chatgpt', model: 'gpt-4o-mini-tts-2025-12-15', voice: 'alloy' });
   });
 });
 
