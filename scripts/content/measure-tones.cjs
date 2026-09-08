@@ -88,8 +88,17 @@ const report = { measuredAt: new Date().toISOString(), decoder: 'FFmpeg mono 24 
   microsoftReproductionManifest: manifest ?? null, limitations: TONE_GATE_LIMITS,
   entries: inputs.map(({ file, document, sha256 }) => {
     const actualHash = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-    if (sha256 && sha256 !== actualHash) throw Error('Messfixture verändert: ' + path.basename(file));
-    const pcm = decodeAudio(file);
+    if (sha256 && sha256 !== actualHash) throw Error('Datei veraendert (Hash weicht ab): ' + path.basename(file));
+    // Ein einzelner undekodierbarer Clip darf die Messung nicht komplett
+    // verhindern — er landet als Fehler im Bericht.
+    let pcm;
+    try { pcm = decodeAudio(file); }
+    catch (error) {
+      return { file: path.basename(file), sha256: actualHash, text: document.text, provider: document.provider,
+        voice: document.voice, error: String(error.message ?? error).split('\n')[0],
+        before: { status: 'error' }, after: { status: 'error' },
+        check: { status: document.language === 'th' ? 'unchecked' : 'not-applicable', reason: 'Dekodierung fehlgeschlagen.' } };
+    }
     return { file: path.basename(file), sha256: actualHash,
       text: document.text, provider: document.provider, voice: document.voice,
       before: summary(analyzeToneContour(pcm, 24000, undefined, false)),
@@ -100,7 +109,7 @@ fs.writeFileSync(path.join(root, 'content/tone-calibration.json'), JSON.stringif
 const thai = report.entries.filter(entry => entry.check.status !== 'not-applicable');
 const counts = {};
 for (const entry of thai) counts[entry.check.status] = (counts[entry.check.status] ?? 0) + 1;
-console.log(`Gegenmessung: ${report.entries.length} Audios gemessen (Katalog ${sources.catalog}, Entwuerfe ${sources.staged}, Manifest ${sources.manifest}), davon ${thai.length} Thai.`);
+console.log(`Gegenmessung: ${report.entries.length} Audios gemessen (Katalog ${sources.catalog}, Entwuerfe ${sources.staged}, Manifest ${sources.manifest}, fehlende Dateien ${sources.missingFiles}), davon ${thai.length} Thai.`);
 console.log('Thai nach Gate-Status:', JSON.stringify(counts));
 console.log('Nicht bestanden / ungeprueft (Thai):');
 for (const entry of thai) {

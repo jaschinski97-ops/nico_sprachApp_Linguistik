@@ -129,11 +129,15 @@ export function wavToMonoFloat32(
   let offset = 12;
   let sampleRate = 0;
   let bitsPerSample = 0;
+  let channels = 1;
   let data: { start: number; length: number } | null = null;
   while (offset + 8 <= wav.length) {
     const id = String.fromCharCode(wav[offset], wav[offset + 1], wav[offset + 2], wav[offset + 3]);
     const size = view.getUint32(offset + 4, true);
     if (id === 'fmt ') {
+      // Abgeschnittener fmt-Block: lieber null als ein RangeError.
+      if (size < 16 || offset + 24 > wav.length) return null;
+      channels = view.getUint16(offset + 10, true) || 1;
       sampleRate = view.getUint32(offset + 12, true);
       bitsPerSample = view.getUint16(offset + 22, true);
     } else if (id === 'data') {
@@ -142,11 +146,17 @@ export function wavToMonoFloat32(
     offset += 8 + size + (size % 2);
   }
   if (!data || !sampleRate || bitsPerSample !== 16) return null;
-  const frameCount = Math.floor(data.length / 2);
+  const frameCount = Math.floor(data.length / (2 * channels));
   if (frameCount <= 0) return null;
+  // Mehrkanal wird gemittelt — verschraenkte L/R-Werte als Mono zu lesen
+  // ergaebe eine Kontur aus Rauschen.
   const pcm = new Float32Array(frameCount);
   for (let i = 0; i < frameCount; i++) {
-    pcm[i] = view.getInt16(data.start + i * 2, true) / 32768;
+    let sum = 0;
+    for (let channel = 0; channel < channels; channel++) {
+      sum += view.getInt16(data.start + (i * channels + channel) * 2, true);
+    }
+    pcm[i] = sum / channels / 32768;
   }
   return { pcm, sampleRate };
 }

@@ -59,7 +59,8 @@ export async function decodeClipAsync(base64: string, format: string): Promise<D
       }
       return { pcm, sampleRate: buffer.sampleRate };
     } finally {
-      await context.close?.();
+      // Ein verweigertes close() darf einen gelungenen Decode nicht kippen.
+      await Promise.resolve(context.close?.()).catch(() => {});
     }
   } catch {
     return null;

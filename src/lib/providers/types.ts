@@ -109,15 +109,24 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     // Nutzerwahl 08.09.2026: 'coral' ist OpenAIs warme, freundliche Stimme —
     // 'alloy' klingt daneben nüchtern-technisch. Freitext, jederzeit änderbar.
     voicePlaceholder: 'coral',
-    // Gemessen am 2026-09-03, siehe AE-27. Betrifft jeden echten Schluessel.
-    webWarning:
-      'Im Browser voraussichtlich unbrauchbar. Gemessen: Ein POST an api.openai.com mit ' +
-      'einem Schlüssel, der mit „sk-" beginnt, bekommt eine Antwort ohne CORS-Header — ' +
-      'der Browser wirft sie weg, und der Lauf meldet „Keine Antwort". Genau so beginnt ' +
-      'jeder echte OpenAI-Schlüssel; mit einem anders geformten Schlüssel kommt dieselbe ' +
-      'Anfrage durch. Ob ein GÜLTIGER Schlüssel die Ausnahme ist, ließ sich ohne einen ' +
-      'solchen nicht prüfen — und die Anfrage könnte dabei trotzdem berechnet werden. ' +
-      'Auf dem Gerät (Android/iOS) gibt es kein CORS; dort ist dieser Weg offen.',
+    // Web-Warnung entfallen — beide Messungen bleiben hier dokumentiert:
+    // 2026-09-03 (AE-27): Ein POST an api.openai.com mit einem Schluessel,
+    // der mit „sk-" beginnt, bekam eine Antwort ohne CORS-Header — der
+    // Browser warf sie weg und der Lauf meldete „Keine Antwort"; nur nativ
+    // galt der Weg als offen, ein gueltiger Schluessel liess sich damals
+    // nicht pruefen.
+    // 2026-09-08 (Nachmessung, heute gueltig): Der Preflight (OPTIONS auf
+    // /v1/audio/speech, Origin http://localhost:8081, angefragt mit POST
+    // sowie authorization,content-type) antwortet HTTP 200 mit
+    // access-control-allow-origin: http://localhost:8081,
+    // access-control-allow-methods: GET, OPTIONS, POST,
+    // access-control-allow-headers: authorization, content-type,
+    // access-control-max-age: 86400 (via Cloudflare, x-openai-proxy-wasm
+    // v0.1). Der echte POST mit einem gueltigen Schluessel antwortet
+    // HTTP 200, audio/mpeg, access-control-allow-origin: *. Text, Bilder
+    // und Audio laufen damit auch im Web-Build; das Feld bleibt null, bis
+    // eine kuenftige Messung wieder etwas anderes zeigt.
+    webWarning: null,
   },
   gemini: {
     id: 'gemini',

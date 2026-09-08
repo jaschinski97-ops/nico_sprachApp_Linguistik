@@ -23,10 +23,12 @@ import { AudioClient, AudioRequest, AudioResponse, ProviderId, unsupported } fro
  * - `POST …/gemini-2.5-flash-preview-tts:generateContent` mit
  *   `responseModalities: ["AUDIO"]` kommt aus dem Browser durch (400, lesbar),
  *   ebenso der neue Endpunkt `/v1beta/interactions` aus der aktuellen Doku.
- * - `POST api.openai.com/v1/audio/speech` unterliegt derselben Regel wie
- *   Chat und Bilder (AE-27): mit `Bearer ungueltig` ein lesbares 401, mit
- *   `Bearer sk-…` „Failed to fetch". Im Web-Build ist ChatGPT damit auch für
- *   Sprachausgabe voraussichtlich unbrauchbar; nativ nicht.
+ * - `POST api.openai.com/v1/audio/speech` (AE-27, 2026-09-03): mit
+ *   `Bearer ungueltig` ein lesbares 401, mit `Bearer sk-…` „Failed to
+ *   fetch" — der Weg galt im Web als unbrauchbar. Nachmessung 2026-09-08:
+ *   Preflight und POST mit gueltigem Schluessel kommen mit CORS-Headern
+ *   durch (Einzelheiten beim webWarning-Kommentar in types.ts) —
+ *   Sprachausgabe ist auch aus dem Web-Build gemessen offen.
  *
  * WAS SICH NICHT MESSEN LIESS: die Antwortform beider Anbieter (B-6) und —
  * entscheidend für Thai — ob die **Töne** stimmen. Das Messwerkzeug dafür

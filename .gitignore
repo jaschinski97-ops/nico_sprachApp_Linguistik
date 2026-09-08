@@ -50,3 +50,6 @@ yarn-error.*
 /.claude/
 *_Local/
 *_Local.*
+
+# Playwright-Automationsartefakte (Snapshots, Konsolenlogs) — nur lokal
+/.playwright-mcp/

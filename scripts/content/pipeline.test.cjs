@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
-const { ContentPipeline, BUDGET } = require('./pipeline.cjs');
+const { ContentPipeline, BUDGET, shippingBytes } = require('./pipeline.cjs');
 const { createStudio } = require('./studio.cjs');
 const { checkContent } = require('./check.cjs');
 const { pruneOrphans } = require('./prune-orphans.cjs');
@@ -186,4 +186,22 @@ test('AE-31 reproduction: every previously measurable Microsoft contour remains 
     const result = checkThaiTone(audio(wav(), word).document, pcm, 24000);
     assert.equal(result.status, ['falling', 'rising'].includes(item.tone) ? 'passed' : 'unchecked', item.file);
   }
+});
+
+test('shippingBytes ignores the diagnostic F0 track: a multi-megabyte track never counts toward the budget', () => {
+  // Regression: publish() previously ran the 150-MiB check over entries that
+  // still carried check.tone.track, although the delivered catalog strips it.
+  // A staged set could then be refused although its shipping size fits.
+  const naive = (entry) => (entry.byteSize ?? 0) + Buffer.byteLength(JSON.stringify(entry));
+  const entry = { kind: 'situations', id: situation.id, document: { ...situation }, digest: 'unused', byteSize: 1234,
+    check: { status: 'passed', label: 'automatisch geprüft' } };
+  const withTrack = structuredClone(entry);
+  withTrack.check.tone = { status: 'passed', targetTone: 'mid',
+    track: Array.from({ length: 250000 }, (_, frame) => ({ frame, hz: 220.5 })) };
+  const stripped = structuredClone(withTrack);
+  delete stripped.check.tone.track;
+  assert.ok(Buffer.byteLength(JSON.stringify(withTrack)) > 5 * 1024 * 1024, 'Fixture-Track muss groß genug sein, um den Fehler sichtbar zu machen');
+  assert.equal(shippingBytes(withTrack), naive(stripped), 'nur die versandte Kopie ohne Track zählt');
+  assert.ok(naive(withTrack) - shippingBytes(withTrack) > 5 * 1024 * 1024, 'der mehr-Megabyte-Track ist tatsächlich ausgeklammert');
+  assert.equal(shippingBytes(entry), naive(entry), 'ohne Track bleibt die naive Größe unverändert');
 });

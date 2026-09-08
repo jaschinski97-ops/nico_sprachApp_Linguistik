@@ -67,8 +67,10 @@ export const GENERATOR_GROUP_INFO: Record<GeneratorGroupId, GeneratorGroupInfo> 
     id: 'audio',
     label: 'Hörclips',
     needs: 'audio',
-    // Kein Bestand, also die Wahl nach Messung: Gemini kommt aus dem Browser
-    // durch, ChatGPT nicht (AE-27/AE-31). Nativ ginge beides.
+    // Kein Bestand, also die Wahl nach Messung: Gemini kam zuerst aus dem
+    // Browser durch (AE-31); ChatGPT folgte mit der Nachmessung vom
+    // 08.09.2026 (CORS-Header, siehe types.ts). Der Bestand bleibt bei
+    // Gemini — ein Default wandert nicht still mit.
     defaultProvider: 'gemini',
   },
 };

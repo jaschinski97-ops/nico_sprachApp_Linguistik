@@ -394,9 +394,11 @@ export default function SettingsScreen() {
       <ThemedText type="small" themeColor="textSecondary">
         Am 03.09.2026 aus diesem Web-Build gemessen: Claude (mit seinem
         Sonderheader), Gemini und Stability AI antworten direkt aus dem Browser
-        — jeweils mit einem lesbaren Fehler statt einer CORS-Blockade. Bei
-        ChatGPT ist es der umgekehrte Fall; die Begründung steht bei der
-        Anbieterwahl. Auf dem Gerät (Android/iOS) gibt es CORS nicht, dort
+        — jeweils mit einem lesbaren Fehler statt einer CORS-Blockade. ChatGPT
+        war davon ausgenommen (AE-27), hat aber mit der Nachmessung vom
+        08.09.2026 aufgeholt: Preflight und POST mit gültigem Schlüssel
+        kommen mit CORS-Headern durch, OpenAI läuft seither ebenfalls aus
+        dem Browser. Auf dem Gerät (Android/iOS) gibt es CORS nicht, dort
         gelten diese Einschränkungen alle nicht.
       </ThemedText>
     </View>

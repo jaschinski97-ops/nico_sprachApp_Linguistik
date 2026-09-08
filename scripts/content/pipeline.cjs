@@ -15,7 +15,12 @@ const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
 const { decodeAudio, decodeImage } = require('./media.cjs');
 
 const KINDS = ['situations', 'images', 'audio', 'exam'];
-const BUDGET = 150 * 1024 * 1024;
+// TEST-BUDGET (08.09.2026): 256 MiB, damit der vollstaendige Audio-Bedarf
+// (~185 MiB Inhalt) fuer Testbuilds ausgeliefert werden kann. Das Store-Ziel
+// bleibt 150 MiB — der Hebel dafuer sind die 78 PNG-Vokabelbilder (~77 MB,
+// angezeigt mit 200 dp): als WebP 512 px waeren es ~4 MB. Erst dann den Wert
+// wieder auf 150 * 1024 * 1024 setzen.
+const BUDGET = 256 * 1024 * 1024;
 const sha = (data) => crypto.createHash('sha256').update(data).digest('hex');
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -24,6 +29,14 @@ function canonical(value) {
 }
 const digestOf = (kind, document, bytes = Buffer.alloc(0)) => sha(JSON.stringify(canonical({ kind, document, assetHash: sha(bytes) })));
 const keyOf = (entry) => `${entry.kind}:${entry.id}`;
+// Budget and size report count only what actually ships. The diagnostic F0
+// track in check.tone.track is stripped from every catalog entry (see the
+// delivered copies in publish()), so it must not count toward the budget.
+function shippingBytes(entry) {
+  const copy = structuredClone(entry);
+  if (copy.check?.tone) delete copy.check.tone.track;
+  return (entry.byteSize ?? 0) + Buffer.byteLength(JSON.stringify(copy));
+}
 async function readJson(file, fallback) {
   try { return JSON.parse(await fs.readFile(file, 'utf8')); }
   catch (error) { if (error.code === 'ENOENT') return fallback; throw error; }
@@ -142,7 +155,7 @@ class ContentPipeline {
     const assetDir = path.join(this.root, 'assets/content');
     for (const entry of state.stage.entries) merged.set(keyOf(entry), entry);
     const entries = [...merged.values()].sort((a,b) => keyOf(a).localeCompare(keyOf(b)));
-    const budgetBytes = entries.reduce((sum, entry) => sum + (entry.byteSize ?? 0) + Buffer.byteLength(JSON.stringify(entry)), 0);
+    const budgetBytes = entries.reduce((sum, entry) => sum + shippingBytes(entry), 0);
     if (budgetBytes > BUDGET) throw Error('Inhalt überschreitet das Budget von 150 MiB. Kein Teil wurde übernommen; Umfang ausdrücklich neu entscheiden.');
     // Validate the entire set before changing any versioned files.
     const prepared = [];
@@ -185,13 +198,18 @@ class ContentPipeline {
       entries: delivered.length, unchecked: prepared.filter(({ entry }) => entry.check.status === 'unchecked').length,
       uncheckedThaiDelivered: delivered.filter(entry => entry.kind === 'audio' && entry.document.language === 'th' && entry.check.tone?.status === 'unchecked').length,
       failed: prepared.filter(({ entry }) => entry.check.status === 'failed').length, contentBudgetBytes: BUDGET,
-      budgetBytes: delivered.reduce((sum, entry) => sum + (entry.byteSize ?? 0) + Buffer.byteLength(JSON.stringify(entry)), 0),
+      budgetBytes: delivered.reduce((sum, entry) => sum + shippingBytes(entry), 0),
       audio: delivered.filter((entry) => entry.kind === 'audio').map((entry) => ({ id: entry.id, sourceBytes: entry.sourceBytes, compressedBytes: entry.byteSize })),
     };
     await atomicJson(path.join(this.root, 'content/size-report.json'), report);
+    // Metro indiziert neue Dateien asynchron. Erscheint assets.ts im selben
+    // Augenblick wie hunderte neue MP3s, baut Metro mit veraltetem Index und
+    // meldet "Unable to resolve" fuer Dateien, die laengst da sind. Die kurze
+    // Ruhepause laesst den Watcher aufholen — reiner Dev-Komfort, kein Vertrag.
+    await new Promise((resolve) => setTimeout(resolve, 1500));
     await this.writeCatalog({ version: 2, entries: delivered });
     await atomicJson(this.stageFile, { version: 2, entries: prepared.map(({ entry }) => entry) });
     return report;
   }
 }
-module.exports = { ContentPipeline, compressAudio, digestOf, assertDocument, BUDGET, keyOf };
+module.exports = { ContentPipeline, compressAudio, digestOf, assertDocument, BUDGET, keyOf, shippingBytes };

@@ -151,15 +151,17 @@ describe('Fähigkeiten der Anbieter', () => {
     }
   });
 
-  it('kennzeichnet genau den Anbieter, bei dem der Browser gemessen scheitert', () => {
-    // AE-27: Nur bei OpenAI wurde eine Einschraenkung gemessen, die JEDEN
-    // echten Schluessel betrifft. Die anderen drei antworteten aus dem
-    // Browser - eine Warnung bei ihnen waere eine Behauptung ohne Messung.
-    expect(PROVIDER_INFO.chatgpt.webWarning).toMatch(/sk-/);
-    expect(PROVIDER_INFO.chatgpt.webWarning).toMatch(/Gerät/);
-    expect(PROVIDER_INFO.claude.webWarning).toBeNull();
-    expect(PROVIDER_INFO.gemini.webWarning).toBeNull();
-    expect(PROVIDER_INFO.stability.webWarning).toBeNull();
+  it('trägt nach der Nachmessung für keinen Anbieter eine Web-Warnung', () => {
+    // AE-27 (2026-09-03): Nur bei OpenAI war eine Einschraenkung gemessen,
+    // die JEDEN echten Schluessel betraf; die anderen drei antworteten aus
+    // dem Browser - eine Warnung bei ihnen waere eine Behauptung ohne
+    // Messung. Nachmessung 2026-09-08: api.openai.com liefert die
+    // CORS-Header (Preflight und POST mit gueltigem Schluessel, siehe
+    // types.ts) - die OpenAI-Warnung ist entfallen. Der Test bleibt die
+    // Wache: Eine kuenftige Warnung darf nur nach Messung einziehen.
+    for (const id of PROVIDERS) {
+      expect(PROVIDER_INFO[id].webWarning).toBeNull();
+    }
   });
 
   it('verweigert eine Kombination, die es nicht gibt, mit Begründung', () => {

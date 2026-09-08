@@ -140,6 +140,8 @@ export function ApiKeysCard() {
           `${capability.label}: Anbieter ${providerLabel(provider)} für ${capability.groups.length} Gruppe(n) gesetzt.`
         );
       } catch (error) {
+        // Halb umgestellte Gruppen nicht als alte Wahl anzeigen: Stand neu laden.
+        setSettings(await loadGeneratorSettings().catch(() => settings));
         setStatus(`Das ist schiefgegangen: ${error instanceof Error ? error.message : String(error)}`);
       } finally {
         setBusy(false);
