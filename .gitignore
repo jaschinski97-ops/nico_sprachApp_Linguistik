@@ -57,3 +57,6 @@ yarn-error.*
 # Generierte Mess-/Pruefberichte (bis 183 MB, jederzeit regenerierbar) —
 # Protokolle in pipeline/logs/ bleiben bewusst im Repo.
 /pipeline/reports/
+
+# Web-Content-Spiegel (204 MB Binärdateien, per `npm run web:content` regeneriert)
+/public/

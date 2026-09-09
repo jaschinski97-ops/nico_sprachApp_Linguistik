@@ -57,6 +57,10 @@ export default function ExamScreen() {
   const [overviewError, setOverviewError] = useState<string | null>(null);
   const [module, setModule] = useState<ExamModule | null>(null);
   const [moduleError, setModuleError] = useState<string | null>(null);
+  // Skill-Filter der Aufgabenliste: null = „Alle". Bewusst NICHT beim
+  // Levelwechsel zurückgesetzt — `router.setParams({ level })` ändert nur die
+  // Stufe, und wer denselben Skill dort sucht, behält den Filter sinnvoller bei.
+  const [skillFilter, setSkillFilter] = useState<ExamSkill | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,6 +122,19 @@ export default function ExamScreen() {
   }
 
   const certificate = certificateFor(level);
+
+  // Chip-Reihe über den Gruppenkarten: „Alle" plus ein Chip je Skill-Gruppe
+  // mit aktueller Modulzahl — auch (0); die Gruppe zeigt dann ihren
+  // bestehenden Leerzustand (exam.noModules).
+  const gesamt = (overview ?? []).reduce((summe, group) => summe + group.modules.length, 0);
+  const skillChips: { skill: ExamSkill | null; label: string; anzahl: number }[] = [
+    { skill: null, label: t('exam.filterAll'), anzahl: gesamt },
+    ...(overview ?? []).map((group) => ({
+      skill: group.skill,
+      label: t(EXAM_SKILL_KEYS[group.skill]),
+      anzahl: group.modules.length,
+    })),
+  ];
 
   return (
     <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitle')}>
@@ -203,47 +220,81 @@ export default function ExamScreen() {
           {t('exam.loading')}
         </ThemedText>
       ) : (
-        overview.map((group) => (
-          <ThemedView key={group.skill} type="backgroundElement" style={styles.card}>
-            <View style={styles.groupHead}>
-              <ThemedText type="smallBold">{t(EXAM_SKILL_KEYS[group.skill])}</ThemedText>
-              {/* Nur die Zahl: Die Menge gehoert zur Ueberschrift, nicht in
-                  jeden Eintrag — ein weiteres Wort wuerde nur Wiederholung
-                  erzeugen. */}
-              <ThemedText type="small" themeColor="textSecondary">
-                ({group.modules.length})
-              </ThemedText>
-            </View>
-            {group.modules.length === 0 ? (
-              <ThemedText type="small" themeColor="textSecondary">
-                {t('exam.noModules', { level })}
-              </ThemedText>
-            ) : (
-              group.modules.map((entry) => (
+        <>
+          <View style={styles.skillBar}>
+            {skillChips.map((chip) => {
+              const gewaehlt = chip.skill === skillFilter;
+              return (
                 <Pressable
-                  key={entry.id}
-                  onPress={() => router.setParams({ level, module: entry.id })}
+                  key={chip.skill ?? 'alle'}
+                  onPress={() => setSkillFilter(chip.skill)}
                   accessibilityRole="button"
-                  accessibilityLabel={entry.title}
+                  accessibilityState={{ selected: gewaehlt }}
                   style={({ pressed }) => pressed && styles.pressed}>
-                  {({ pressed }) => (
-                    // WHY Haarlinie statt eigene Box je Zeile: Zwanzig
-                    // abgerundete Flaechen wirken wie zwanzig Knöpfe — die
-                    // Liste ist eine Liste, gedrückt wird nur eine Zeile.
-                    <ThemedView
-                      type={pressed ? 'backgroundSelected' : 'backgroundElement'}
-                      style={[styles.moduleRow, { borderTopColor: theme.decorGrey }]}>
-                      <ThemedText type="small">{entry.title}</ThemedText>
-                      <ThemedText type="small" themeColor="textSecondary">
-                        {t('exam.moduleMinutes', { minutes: entry.minutes })}
-                      </ThemedText>
-                    </ThemedView>
-                  )}
+                  {/* Optik der Level-Chips (Akzent = gewählt) — die Leiste
+                      filtert nur die Karten darunter, am Zertifikat ändert
+                      sie nichts. */}
+                  <ThemedView
+                    type={gewaehlt ? 'accent' : 'backgroundElement'}
+                    style={styles.skillChip}>
+                    <ThemedText
+                      type="small"
+                      themeColor={gewaehlt ? 'accentText' : undefined}>
+                      {chip.label} ({chip.anzahl})
+                    </ThemedText>
+                  </ThemedView>
                 </Pressable>
-              ))
-            )}
-          </ThemedView>
-        ))
+              );
+            })}
+          </View>
+
+          {/* null = „Alle": alle Gruppen; sonst nur die gewählte — deren
+              Leerzustand (exam.noModules) bleibt unverändert erhalten. */}
+          {(skillFilter === null
+            ? overview
+            : overview.filter((group) => group.skill === skillFilter)
+          ).map((group) => (
+            <ThemedView key={group.skill} type="backgroundElement" style={styles.card}>
+              <View style={styles.groupHead}>
+                <ThemedText type="smallBold">{t(EXAM_SKILL_KEYS[group.skill])}</ThemedText>
+                {/* Nur die Zahl: Die Menge gehoert zur Ueberschrift, nicht in
+                    jeden Eintrag — ein weiteres Wort wuerde nur Wiederholung
+                    erzeugen. */}
+                <ThemedText type="small" themeColor="textSecondary">
+                  ({group.modules.length})
+                </ThemedText>
+              </View>
+              {group.modules.length === 0 ? (
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('exam.noModules', { level })}
+                </ThemedText>
+              ) : (
+                group.modules.map((entry) => (
+                  <Pressable
+                    key={entry.id}
+                    onPress={() => router.setParams({ level, module: entry.id })}
+                    accessibilityRole="button"
+                    accessibilityLabel={entry.title}
+                    style={({ pressed }) => pressed && styles.pressed}>
+                    {({ pressed }) => (
+                      // WHY Haarlinie statt eigene Box je Zeile: Zwanzig
+                      // abgerundete Flaechen wirken wie zwanzig Knöpfe — die
+                      // Liste ist eine Liste, gedrückt wird nur eine Zeile.
+                      <ThemedView
+                        type={pressed ? 'backgroundSelected' : 'backgroundElement'}
+                        style={[styles.moduleRow, { borderTopColor: theme.decorGrey }]}>
+                        <ThemedText type="small">{entry.title}</ThemedText>
+                        <ThemedText type="small" themeColor="textSecondary">
+                          {t('exam.moduleMinutes', { minutes: entry.minutes })}
+                        </ThemedText>
+                      </ThemedView>
+                    )}
+                  </Pressable>
+                ))
+              )}
+            </ThemedView>
+          ))}
+        </>
       )}
 
       <ThemedView type="backgroundElement" style={styles.card}>
@@ -271,6 +322,20 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
   },
   levelButtonSelected: {},
+  skillBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  skillChip: {
+    // Optik der Level-Chips, dazu volle 44 Punkte Trefferfläche — der Chip
+    // ist ein filternder Knopf, kein passives Etikett.
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    borderRadius: Spacing.two,
+    minHeight: 44,
+    justifyContent: 'center',
+  },
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.three,

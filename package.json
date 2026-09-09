@@ -60,7 +60,7 @@
     "lint": "expo lint",
     "test": "jest",
     "test:watch": "jest --watch",
-    "export:web": "expo export --platform web",
+    "export:web": "npm run web:content && expo export --platform web",
     "content:studio": "node scripts/content/studio.cjs",
     "content:check": "node scripts/content/check.cjs",
     "content:integrity": "node scripts/content/check.cjs --integrity-only",
@@ -72,7 +72,8 @@
     "content:measure-tones": "node scripts/content/measure-tones.cjs scripts/content/fixtures/tones/index.json",
     "pipeline:release": "node scripts/release-pipeline.cjs",
     "content:tone-tool": "node scripts/build-tone-tool.cjs --check",
-    "audit:structure": "node scripts/audit-structure.cjs"
+    "audit:structure": "node scripts/audit-structure.cjs",
+    "web:content": "node scripts/sync-web-content.cjs"
   },
   "private": true,
   "jest": {

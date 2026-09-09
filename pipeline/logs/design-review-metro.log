@@ -1,0 +1,218 @@
+env: load .env.local
+env: export OPENAI_API_KEY
+Starting project at C:\Users\root\Desktop\ThaiSpeaker
+Logs: C:\Users\root\Desktop\ThaiSpeaker\.expo\dev\logs\start.log
+Using src/app as the root directory for Expo Router.
+React Compiler enabled
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+
+Waiting on http://localhost:8090
+
+Logs for your project will appear below.
+Web Bundled 20465ms node_modules\expo-router\entry.js (1602 modules)
+λ Bundled 20597ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1657 modules)
+λ Bundled 51ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 366ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 10550ms node_modules\expo-router\entry.js (1603 modules)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 54ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 625ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 66ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+λ Bundled 49ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 381ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 72ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 47ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 373ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 70ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 51ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 365ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 65ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 56ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 385ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 69ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 32ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 346ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 65ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 43ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 371ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 64ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 50ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 387ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 71ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 46ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 361ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 71ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+λ Bundled 42ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 356ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 64ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+λ Bundled 31ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 331ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 61ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+λ Bundled 36ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 346ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 30ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 325ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 33ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 320ms node_modules\expo-router\entry.js (1 module)

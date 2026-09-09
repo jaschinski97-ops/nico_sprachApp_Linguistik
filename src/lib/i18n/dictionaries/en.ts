@@ -140,6 +140,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'conversation.aiVoice': 'AI voice',
   'conversation.listenA11y': 'Listen: {{text}}',
   'conversation.syntheticNote': ' (synthetic voice, no native-speaker recording)',
+  'conversation.topicCount': '{{count}} dialogues',
   'topic.greeting': 'Greetings & getting acquainted',
   'topic.market': 'Market & shopping',
   'topic.restaurant': 'Restaurant & food',
@@ -159,6 +160,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'exam.retrievedPrefix': 'Official exam structure, retrieved on {{date}} — source: ',
   'exam.retrievedSuffix': '',
   'exam.loading': 'Loading tasks …',
+  'exam.filterAll': 'All',
   'exam.noModules':
     'No task available yet for {{level}}. More tasks arrive with app updates.',
   'exam.moduleMinutes': 'about {{minutes}} min',

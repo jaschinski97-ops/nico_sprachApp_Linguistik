@@ -1,4 +1,5 @@
 import { Asset } from 'expo-asset';
+import { Platform } from 'react-native';
 
 import catalog from '../../content/catalog.json';
 import { CONTENT_ASSETS } from '../../content/assets';
@@ -18,6 +19,18 @@ export function bundledDocuments<K extends ContentKind>(kind: K): ContentDocumen
 export async function bundledAssetUri(kind: 'audio' | 'images', id: string): Promise<string | null> {
   const entry = entries.find((item) => item.kind === kind && item.id === id);
   if (!entry?.asset) return null;
+  // WEB: URL statt require. Der Web-Bundle enthält die Binärdateien nicht
+  // (assets.web.ts gegen den EMFILE-Kaltstart) — seitdem blieb jede
+  // thailändische Aussprache stumm, weil Desktops keine th-Stimme mitbringen
+  // (Nutzermeldung 2026-09-10). `public/content/` spiegelt die Dateien
+  // (`npm run web:content`); Expo-web serviert den Ordner statisch, und die
+  // Datei wird erst beim ersten Tipp auf „Anhören" geladen — der Kaltstart
+  // bleibt vom Katalog unabhängig. Der Ton-Status im Katalog und damit das
+  // Auslieferungs-Gate in `resolveClipUri` sind von diesem Weg nicht
+  // berührt.
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return `${window.location.origin}/content/${entry.asset}`;
+  }
   const moduleId = CONTENT_ASSETS[entry.asset];
   if (moduleId === undefined) return null;
   // Metro collects the static requires into the native application resources.

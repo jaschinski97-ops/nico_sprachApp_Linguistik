@@ -42,6 +42,18 @@ export default function ConversationScreen() {
   const aktuell = chosen ?? gemerkt;
   const direction = aktuell && directions.includes(aktuell) ? aktuell : directions[0];
   const [openId, setOpenId] = useState<string | null>(null);
+  // WHY einklappbar: Je Richtung liegen ~243 Situationen an — die volle Liste
+  // war eine Scrollwüste. Standard ist deshalb JEDES Thema zugeklappt; der
+  // Kopf öffnet nur die Liste seines Themas. `openId` bleibt vom Zuklappen
+  // unberührt: Eine offene Karte steht beim Wiederöffnen noch offen.
+  const [offeneThemen, setOffeneThemen] = useState<ReadonlySet<TopicId>>(new Set());
+  const toggleThema = (topic: TopicId) =>
+    setOffeneThemen((vorher) => {
+      const folge = new Set(vorher);
+      if (folge.has(topic)) folge.delete(topic);
+      else folge.add(topic);
+      return folge;
+    });
 
   useEffect(() => {
     let cancelled = false;
@@ -164,22 +176,47 @@ export default function ConversationScreen() {
           {t('conversation.noneForDirection')}
         </ThemedText>
       ) : (
-        groups.map(([topic, gruppe]) => (
-          <View key={topic} style={styles.topicGroup}>
-            <ThemedText type="small" themeColor="textSecondary">
-              {t(TOPIC_KEYS[topic])}
-            </ThemedText>
-            {gruppe.map((situation) => (
-              <SituationCard
-                key={situation.id}
-                situation={situation}
-                variantSuffix={variantSuffix.get(situation.id) ?? ''}
-                open={openId === situation.id}
-                onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
-              />
-            ))}
-          </View>
-        ))
+        groups.map(([topic, gruppe]) => {
+          const offen = offeneThemen.has(topic);
+          return (
+            <View key={topic} style={styles.topicGroup}>
+              <Pressable
+                onPress={() => toggleThema(topic)}
+                accessibilityRole="button"
+                accessibilityState={{ expanded: offen }}
+                accessibilityLabel={`${t(TOPIC_KEYS[topic])}, ${t(
+                  'conversation.topicCount',
+                  { count: gruppe.length }
+                )}`}
+                style={({ pressed }) => [styles.topicHead, pressed && styles.pressed]}>
+                <View style={styles.header}>
+                  <ThemedText type="smallBold" style={styles.headerText}>
+                    {t(TOPIC_KEYS[topic])}
+                  </ThemedText>
+                  <View style={styles.topicMeta}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {t('conversation.topicCount', { count: gruppe.length })}
+                    </ThemedText>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      {offen ? '▲' : '▼'}
+                    </ThemedText>
+                  </View>
+                </View>
+              </Pressable>
+              {offen
+                ? gruppe.map((situation) => (
+                    <SituationCard
+                      key={situation.id}
+                      situation={situation}
+                      variantSuffix={variantSuffix.get(situation.id) ?? ''}
+                      open={openId === situation.id}
+                      onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
+                    />
+                  ))
+                : null}
+            </View>
+          );
+        })
       )}
     </ScreenScaffold>
   );
@@ -329,9 +366,20 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   topicGroup: {
-    // Label sitzt nah an seiner Gruppe; der Abstand nach oben liefert der
+    // Kopf sitzt nah an seiner Gruppe; der Abstand nach oben liefert der
     // Spalten-Gap des Scaffolds — wie das Abschnittslabel im Mockup.
     gap: Spacing.two,
+  },
+  topicHead: {
+    // Der Themenkopf ist ein Knopf wie jede Karte: volle 44 Punkte
+    // Trefferfläche, der Inneninhalt sitzt zentriert darin.
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  topicMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   chip: {
     paddingVertical: Spacing.two,

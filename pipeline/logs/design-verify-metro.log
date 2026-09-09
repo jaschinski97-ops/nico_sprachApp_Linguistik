@@ -1,0 +1,98 @@
+env: load .env.local
+env: export OPENAI_API_KEY
+Starting project at C:\Users\root\Desktop\ThaiSpeaker
+Logs: C:\Users\root\Desktop\ThaiSpeaker\.expo\dev\logs\start.log
+Using src/app as the root directory for Expo Router.
+React Compiler enabled
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+
+Waiting on http://localhost:8090
+
+Logs for your project will appear below.
+Web Bundled 26788ms node_modules\expo-router\entry.js (1625 modules)
+λ Bundled 26915ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1674 modules)
+props.pointerEvents is deprecated. Use style.pointerEvents
+λ Bundled 41ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 368ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 10789ms node_modules\expo-router\entry.js (1625 modules)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+λ Bundled 38ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 358ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 47ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 371ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 74ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Bundling failed 9541ms node_modules\expo-router\entry.js (1184 modules)
+Unable to resolve "../../src/private/devsupport/rndevtools/ReactDevToolsSettingsManager" from "node_modules\react-native\Libraries\Core\setUpReactDevTools.js"
+[0m [90m 39 |[39m   } [33m=[39m require([32m'react-devtools-core'[39m)[33m;[39m
+ [90m 40 |[39m
+[31m[1m>[22m[39m[90m 41 |[39m   [36mconst[39m reactDevToolsSettingsManager [33m=[39m require([32m'../../src/private/devsupport/rndevtools/ReactDevToolsSettingsManager'[39m)[33m;[39m
+ [90m    |[39m                                                 [31m[1m^[22m[39m
+ [90m 42 |[39m   [36mconst[39m serializedHookSettings [33m=[39m
+ [90m 43 |[39m     reactDevToolsSettingsManager[33m.[39mgetGlobalHookSettings()[33m;[39m
+ [90m 44 |[39m   [36mconst[39m maybeReactDevToolsRuntimeSettingsModuleModule [33m=[39m[0m
+
+Import stack:
+
+ node_modules\react-native\Libraries\Core\setUpReactDevTools.js
+ | import "../../src/private/devsupport/rndevtools/ReactDevToolsSettingsManager"
+
+ node_modules\react-native\src\private\setup\setUpDefaultReactNativeEnvironment.js
+ | import "../../../Libraries/Core/setUpReactDevTools"
+
+ node_modules\react-native\Libraries\Core\InitializeCore.js
+ | import "../../src/private/setup/setUpDefaultReactNativeEnvironment"
+
+ node_modules\@expo\metro-runtime\src\location\install.native.ts
+ | import "react-native/Libraries/Core/InitializeCore"
+
+ node_modules\@expo\metro-runtime\src\index.ts
+ | import "./location/install"
+
+ node_modules\expo-router\entry-classic.js
+ | import "@expo/metro-runtime"
+
+ node_modules\expo-router\entry.js
+ | import "expo-router/entry-classic"
+
+ 
+ | import "./node_modules/expo-router/entry"
+
+λ Bundled 31ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 315ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 36ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 378ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 37ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 454ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 92ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web
+λ Bundled 33ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 318ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 29ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+props.pointerEvents is deprecated. Use style.pointerEvents
+Web Bundled 315ms node_modules\expo-router\entry.js (1 module)

@@ -154,6 +154,7 @@ const de = {
   'conversation.aiVoice': 'KI-Stimme',
   'conversation.listenA11y': 'Anhören: {{text}}',
   'conversation.syntheticNote': ' (synthetische Stimme, keine Muttersprachler-Aufnahme)',
+  'conversation.topicCount': '{{count}} Dialoge',
   'topic.greeting': 'Begrüßung & Kennenlernen',
   'topic.market': 'Markt & Einkaufen',
   'topic.restaurant': 'Restaurant & Essen',
@@ -174,6 +175,7 @@ const de = {
   'exam.retrievedPrefix': 'Offizielle Prüfungsstruktur, abgerufen am {{date}} — Quelle: ',
   'exam.retrievedSuffix': '',
   'exam.loading': 'Aufgaben werden geladen …',
+  'exam.filterAll': 'Alle',
   'exam.noModules':
     'Für {{level}} liegt hier noch keine Aufgabe. Weitere Aufgaben kommen mit App-Updates dazu.',
   'exam.moduleMinutes': 'etwa {{minutes}} Min',
