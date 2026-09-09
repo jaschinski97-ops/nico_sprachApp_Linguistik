@@ -46,11 +46,18 @@
           "enableBackgroundPlayback": false
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "pack": {
+        "repo": "OWNER/REPO",
+        "baseUrlOverride": null
+      }
     }
   }
 }

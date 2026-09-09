@@ -301,8 +301,14 @@ describe('Gemini-Audioantwort', () => {
 });
 
 describe('Anbieter für Sprachausgabe', () => {
-  it('sind genau ChatGPT und Gemini — Claude und Stability sprechen nicht', () => {
-    expect(providersForGroup('audio').map((p) => p.id)).toEqual(['chatgpt', 'gemini']);
+  it('sind ChatGPT, der Studio-Helper und Gemini — Claude und Stability sprechen nicht', () => {
+    // `chatgpt-helper` ist der lokale Durchgang des Studios, kein Cloud-Dienst —
+    // derselbe OpenAI-Aufruf, serverseitig mit Umgebungsschlüssel.
+    expect(providersForGroup('audio').map((p) => p.id)).toEqual([
+      'chatgpt',
+      'chatgpt-helper',
+      'gemini',
+    ]);
     expect(PROVIDER_INFO.claude.can.audio).toBe(false);
     expect(PROVIDER_INFO.stability.can.audio).toBe(false);
     expect(() => createAudioClient('claude', 'k', 'm', 'v')).toThrow(/keine Sprachausgabe/);

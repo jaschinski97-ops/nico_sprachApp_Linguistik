@@ -172,7 +172,7 @@ export function isValidAudioClip(value: unknown): value is AudioClip {
   return (
     typeof c.id === 'string' &&
     c.id !== '' &&
-    (c.language === 'th' || c.language === 'de' || c.language === 'en' || c.language === 'es') &&
+    (c.language === 'th' || c.language === 'de' || c.language === 'en' || c.language === 'es' || c.language === 'fr') &&
     typeof c.text === 'string' &&
     isAudioFormat(c.format) &&
     typeof c.blobKey === 'string' &&

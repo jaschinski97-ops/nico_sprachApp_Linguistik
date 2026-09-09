@@ -3,6 +3,7 @@ import { DataStore, getStore } from '../storage';
 import { bundledAssetUri, bundledEntry } from '../content/bundled';
 import { allowsThaiPlayback, type AudioPurpose } from '../content/audio-policy';
 import { isContentDeveloper } from '../content/developer';
+import { packAudioUri } from '../packs/loader';
 
 import { getAudioBlobStore } from './blob-store';
 import { AudioBlobStore, AudioClip, clipIdFor, isValidAudioClip } from './types';
@@ -59,8 +60,16 @@ export async function resolveClipUri(
   const id = clipIdFor(request.language, request.text);
   const entry = bundledEntry('audio', id);
   const allowed = request.language !== 'th' || allowsThaiPlayback(entry?.check?.tone?.status, request.purpose);
-  const bundled = allowed ? await bundledAssetUri('audio', id) : null;
-  if (bundled) return bundled;
+  if (allowed) {
+    // 1. Installiertes Sprachpaket (Paket-Architektur, ROADMAP v2). Liefert
+    //    ohne Paket sofort null — kein Dateizugriff, kein Fehlerpfad.
+    const packed = await packAudioUri(request.language, id).catch(() => null);
+    if (packed) return packed;
+    // 2. Eingebettetes Asset (Fallback bleibt komplett erhalten).
+    const bundled = await bundledAssetUri('audio', id);
+    if (bundled) return bundled;
+  }
+  // 3. Alter Entwurfsspeicher und dann TTS — unveraendert.
   // Learning screens must not bypass the delivery gate through old drafts.
   // Explicit stores are retained only as the dependency seam for isolated tests.
   if (request.purpose === 'tone' || (request.language === 'th' && !store)) return null;

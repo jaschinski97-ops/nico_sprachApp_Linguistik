@@ -18,6 +18,7 @@
     "expo-glass-effect": "~57.0.1",
     "expo-image": "~57.0.3",
     "expo-linking": "~57.0.8",
+    "expo-localization": "~57.0.1",
     "expo-router": "~57.0.17",
     "expo-secure-store": "~57.0.2",
     "expo-sharing": "~57.0.18",
@@ -36,7 +37,8 @@
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.1",
+    "react-native-zip-archive": "^9.5.1"
   },
   "devDependencies": {
     "@types/jest": "29.5.14",
@@ -63,6 +65,8 @@
     "content:check": "node scripts/content/check.cjs",
     "content:integrity": "node scripts/content/check.cjs --integrity-only",
     "test:content-pipeline": "node --test scripts/content/pipeline.test.cjs",
+    "pack:build": "node scripts/content/build-pack.cjs --lang th",
+    "test:pack-build": "node --test scripts/content/build-pack.test.cjs",
     "eas-build-post-install": "node scripts/content/eas-gate.cjs",
     "verify:production": "node scripts/content/verify-production.cjs",
     "content:measure-tones": "node scripts/content/measure-tones.cjs scripts/content/fixtures/tones/index.json",

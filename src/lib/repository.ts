@@ -22,6 +22,8 @@ import { ImageBlobStore, VocabImage } from './images/types';
 
 import { createCardState, reviewCard } from './fsrs/fsrs';
 import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
+import { packImageUri } from './packs/loader';
+import type { PackLanguage } from './packs/manifest';
 import { recordReviewInTransaction } from './review-log';
 import { DataStore, getStore, transact } from './storage';
 
@@ -218,6 +220,12 @@ export async function countVocabImages(store?: DataStore): Promise<number> {
 /**
  * Anzeigbare Quelle für das Bild einer Vokabel, oder `null`.
  *
+ * SEIT DER PAKET-ARCHITEKTUR (Roadmap v2) LÄUFT ES ZUERST ÜBERS PAKET: Ist
+ * eine Sprache installiert und trägt das Bild, gewinnt seine file://-URI —
+ * erst bei `null` greift das eingebettete Asset, dann der Ablage-Weg wie
+ * vorher. Ohne `language` (oder ohne Dateisystem, etwa im Test) bleibt es
+ * beim bisherigen Verhalten.
+ *
  * `null` heißt hier ausdrücklich auch: Metadaten vorhanden, Datei aber weg.
  * Dann zeigt die Karte einfach kein Bild, statt eine leere Fläche zu
  * reservieren — und der nächste Generierungslauf holt das Bild nach.
@@ -225,8 +233,13 @@ export async function countVocabImages(store?: DataStore): Promise<number> {
 export async function loadVocabImageUri(
   vocabId: string,
   store?: DataStore,
-  blobStore?: ImageBlobStore
+  blobStore?: ImageBlobStore,
+  language?: PackLanguage
 ): Promise<string | null> {
+  if (language) {
+    const gepackt = await packImageUri(language, vocabId).catch(() => null);
+    if (gepackt) return gepackt;
+  }
   const shipped = await bundledAssetUri('images', vocabId);
   if (shipped) return shipped;
   if (!__DEV__ || (!store && !isContentDeveloper())) return null;

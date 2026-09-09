@@ -122,6 +122,9 @@ export const CLIP_OVERHEAD_SECONDS = 1.0;
 export const BYTES_PER_SECOND: Record<ProviderId, number | null> = {
   gemini: 24000 * 2,
   chatgpt: 6000,
+  // Derselbe OpenAI-Weg wie `chatgpt`, nur über den Helper des Studios
+  // geleitet — dasselbe mp3, also dieselbe Größenordnung.
+  'chatgpt-helper': 6000,
   claude: null,
   stability: null,
 };

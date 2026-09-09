@@ -53,3 +53,7 @@ yarn-error.*
 
 # Playwright-Automationsartefakte (Snapshots, Konsolenlogs) — nur lokal
 /.playwright-mcp/
+
+# Generierte Mess-/Pruefberichte (bis 183 MB, jederzeit regenerierbar) —
+# Protokolle in pipeline/logs/ bleiben bewusst im Repo.
+/pipeline/reports/
