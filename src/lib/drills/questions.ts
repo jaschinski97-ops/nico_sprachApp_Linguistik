@@ -1,5 +1,4 @@
 import { TONE_KEYS, TONES } from '@/constants/tones';
-import { accentGraphemesOf, accentRuleFor, ACCENT_OPTIONS } from '@/data/french-spelling';
 import { TargetVocabEntry, VocabEntry } from '@/data/vocab-types';
 
 import { Direction } from '../fsrs/types';
@@ -21,9 +20,9 @@ import { DRILL_META, DrillOption, DrillQuestion } from './types';
  * spanische Artikel-Aufgabe die falsche Richtung getragen und im
  * Tagesprotokoll unter Thai gezaehlt.
  *
- * SEIT DEM PAARMATRIX-START AUF `TargetVocabEntry` GERICHTET: Auch ein
- * franzoesischer Eintrag (noch nicht ausgeliefert) bildet hier dieselben
- * Richtungen — `'fr'` liegt in `TargetLanguage`.
+ * SEIT DEM PAARMATRIX-START AUF `TargetVocabEntry` GERICHTET: Jeder
+ * Ziel-Eintrag bildet hier dieselben Richtungen — sein Sprachcode liegt in
+ * `TargetLanguage`.
  */
 function toHub(entry: VocabEntry): Direction {
   return `${entry.language}_to_${HUB_LANGUAGE}` as Direction;
@@ -553,175 +552,6 @@ export function buildSoundSpellingQuestion(
       `Alle diese Woerter tragen „${group.grapheme}" und klingen verschieden: ` +
       group.members.map((member) => `${member.entry.term} ${member.sound}`).join(' · ') +
       '.',
-  };
-}
-
-/* ---------- Betonung bestimmen (de_to_fr) ---------- */
-
-/**
- * Nur mehrsilbige Wörter, deren abgelegte Betonung der Regel entspricht.
- *
- * DIE REGEL IST ANDERS ALS BEI SPANISCH: Die Betonung liegt an der letzten
- * **vollen** Silbe (Wikipedia, French phonology — zitiert in
- * `data/french-spelling.ts`). Sie wird nicht gerechnet, sondern abgelesen:
- * Silben mit dem Flag `mute` zählen beim Sprechen nicht mit. `canBuild`
- * prüft deshalb genau diese Übereinstimmung — steht das Flag anders als die
- * Regel es verlangt, entsteht daraus keine Aufgabe, und ein Test fährt den
- * ganzen französischen Grundstock dagegen.
- */
-export function canBuildFrStressQuestion(entry: TargetVocabEntry): boolean {
-  if (entry.language !== 'fr') return false;
-  if (entry.syllables.length < 2) return false;
-  return lastFullSyllable(entry) === entry.syllables.findIndex((syllable) => syllable.stressed);
-}
-
-/** Der Index der letzten gesprochenen Silbe — „volle“ Silbe, ohne stummes e. */
-function lastFullSyllable(entry: TargetVocabEntry): number {
-  for (let index = entry.syllables.length - 1; index >= 0; index -= 1) {
-    if (!entry.syllables[index].mute) return index;
-  }
-  return -1;
-}
-
-export function buildFrStressQuestion(entry: TargetVocabEntry): DrillQuestion {
-  const stressed = entry.syllables.findIndex((syllable) => syllable.stressed);
-  const lastFull = lastFullSyllable(entry);
-  if (stressed < 0 || stressed !== lastFull) {
-    throw new Error(
-      `"${entry.id}" (${entry.term}): Die abgelegte Betonung widerspricht der Regel ` +
-        '(letzte volle Silbe) — daraus wird keine Aufgabe.'
-    );
-  }
-
-  // Die Antworten sind die Silben DIESES Worts — dieselbe Auswahl wie bei
-  // „Betonung herleiten" (Spanisch), aber aus den abgelegten Silben statt
-  // aus einer Rechenregel. Die Akzentzeichen bleiben sichtbar: Sie sagen im
-  // Franzoesischen den Vokalklang, nicht die Betonung — sie verraten die
-  // Antwort also nicht.
-  const options: DrillOption[] = entry.syllables.map((syllable, index) => ({
-    label: syllable.roman,
-    hint: `${index + 1}. Silbe`,
-  }));
-
-  const stummesE = entry.syllables.some((syllable) => syllable.mute);
-
-  return {
-    id: `stressFr:${entry.id}`,
-    drill: 'stressFr',
-    direction: toTarget(entry),
-    vocabId: entry.id,
-    // Die Schreibung IST die Aufgabe; die Silbentrennung bleibt verborgen,
-    // sonst ist die letzte Silbe zum Ablesen da.
-    visible: entry.term,
-    visibleHint: entry.german,
-    // Kein speak: Die Audio-Naht (SpeechLanguage) kennt bislang kein
-    // Franzoesisch. Eine Hoeruebung ohne Ton waere Schein — die kommt mit
-    // der Auslieferung (Roadmap v2, Phase 3).
-    speak: null,
-    options,
-    correctIndex: stressed,
-    solution: `${entry.syllables.map((syllable) => syllable.roman).join('-')} — ${entry.german}`,
-    explanation: stummesE
-      ? 'Das Schluss-e verstummt — betont ist die letzte GESPROCHENE Silbe. Im Franzoesischen liegt die Betonung fast immer dort.'
-      : 'Die Betonung liegt auf der letzten vollen Silbe — im Franzoesischen fast immer.',
-  };
-}
-
-/* ---------- Stummes e (de_to_fr) ---------- */
-
-/**
- * Nur Wörter mit stummem Schluss-e — sonst ist die Frage leer.
- *
- * DER PUNKT DER ÜBUNG: Aus der geschriebenen Silbenzahl wird eine kleinere
- * gesprochene (fro-ma-ge → [fʁɔmaʒ]). Gefragt wird nach der gesprochenen
- * Zahl; die Auswahl umfasst alle Zahlen von 1 bis zur geschriebenen Zahl,
- * damit Raten keinen Erfolg verspricht.
- */
-export function canBuildMuteEQuestion(entry: TargetVocabEntry): boolean {
-  if (entry.language !== 'fr') return false;
-  if (entry.syllables.length < 2) return false;
-  return entry.syllables[entry.syllables.length - 1].mute === true;
-}
-
-export function buildMuteEQuestion(entry: TargetVocabEntry): DrillQuestion {
-  const syllables = entry.syllables;
-  if (syllables.length < 2 || syllables[syllables.length - 1].mute !== true) {
-    throw new Error(`"${entry.id}" (${entry.term}): kein stummes Schluss-e — keine Aufgabe.`);
-  }
-
-  const gesprochen = syllables.filter((syllable) => !syllable.mute).length;
-  const geschrieben = syllables.length;
-
-  const options: DrillOption[] = Array.from({ length: geschrieben }, (_, index) => ({
-    label: `${index + 1}`,
-    hint: index + 1 === geschrieben ? 'geschriebene Silbenzahl' : undefined,
-  }));
-
-  return {
-    id: `muteE:${entry.id}`,
-    drill: 'muteE',
-    direction: toTarget(entry),
-    vocabId: entry.id,
-    visible: entry.term,
-    visibleHint: entry.german,
-    speak: null,
-    options,
-    correctIndex: gesprochen - 1,
-    solution: `${entry.romanization} — gesprochen ${gesprochen} Silbe${gesprochen === 1 ? '' : 'n'} — ${entry.german}`,
-    explanation:
-      'Das unbetonte ⟨e⟩ am Wortende hat keinen Laut (e muet): ' +
-      `${geschrieben} geschriebene Silben, ${gesprochen} gesprochene.`,
-  };
-}
-
-/* ---------- Akzentzeichen lesen (de_to_fr) ---------- */
-
-/**
- * Nur Wörter mit genau EINEM der vier gelernten Akzentzeichen.
- *
- * EHRLICHKEIT ÜBER VIELFALT: é, è, ê und ç haben eine zitierte Regel
- * (`data/french-spelling.ts`); andere Diakritika (ë, ï, ù) haben hier noch
- * keine und werden deshalb nicht gefragt. Ein Wort mit zwei verschiedenen
- * Zeichen würde die Frage mehrdeutig machen und wird übersprungen.
- */
-export function canBuildAccentFrQuestion(entry: TargetVocabEntry): boolean {
-  if (entry.language !== 'fr') return false;
-  const graphemes = accentGraphemesOf(entry.term);
-  return new Set(graphemes).size === 1;
-}
-
-export function buildAccentFrQuestion(entry: TargetVocabEntry): DrillQuestion {
-  const graphemes = [...new Set(accentGraphemesOf(entry.term))];
-  if (graphemes.length !== 1) {
-    throw new Error(
-      `"${entry.id}" (${entry.term}): kein eindeutiges Akzentzeichen — keine Aufgabe.`
-    );
-  }
-
-  const rule = accentRuleFor(graphemes[0]);
-  if (!rule) {
-    throw new Error(`"${entry.id}" (${entry.term}): keine Regel für ⟨${graphemes[0]}⟩.`);
-  }
-
-  // Festes Inventar wie bei den fuenf Thai-Toenen: Die drei Klaenge sind die
-  // echten Werte, die diese Zeichen im Franzoesischen haben koennen — kein
-  // ausgedachter Ablenker.
-  const options: DrillOption[] = ACCENT_OPTIONS.map((option) => ({
-    label: option.label,
-  }));
-
-  return {
-    id: `accentFr:${entry.id}`,
-    drill: 'accentFr',
-    direction: toTarget(entry),
-    vocabId: entry.id,
-    visible: entry.term,
-    visibleHint: entry.german,
-    speak: null,
-    options,
-    correctIndex: ACCENT_OPTIONS.findIndex((option) => option.sound === rule.sound),
-    solution: `${entry.term} — ⟨${rule.grapheme}⟩ ${rule.ipa} — ${entry.german}`,
-    explanation: rule.explanation,
   };
 }
 

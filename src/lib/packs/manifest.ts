@@ -13,9 +13,9 @@
 export const PACK_SCHEMA_VERSION = 1 as const;
 
 /** Sprachen des Start-Kanons (Roadmap v2, "Kern 5"). */
-export type PackLanguage = 'th' | 'en' | 'es' | 'fr' | 'de';
+export type PackLanguage = 'th' | 'en' | 'es' | 'de';
 
-export const PACK_LANGUAGES: readonly PackLanguage[] = ['th', 'en', 'es', 'fr', 'de'];
+export const PACK_LANGUAGES: readonly PackLanguage[] = ['th', 'en', 'es', 'de'];
 
 export function isPackLanguage(value: unknown): value is PackLanguage {
   return typeof value === 'string' && (PACK_LANGUAGES as readonly string[]).includes(value);

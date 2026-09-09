@@ -23,10 +23,9 @@
  *      (`vocabId:de_to_th`) sind davon unberührt — und `Direction` wurde nur
  *      um `de_to_fr`/`fr_to_de` erweitert, nie umgebaut.
  *
- * NEUER CODE liest Schicht 1; Schicht 2 trägt den Bestand, bis die
- * Auslieferung nachzieht. Französisch liegt als Ziel-Grundstoff vor
- * (`TARGET_LANGUAGES`, `VOCABULARY_FR`), ist aber noch nicht im
- * App-Bestand (`delivered: false`).
+ * NEUER CODE liest Schicht 1; Schicht 2 trägt den Bestand. Französisch wurde
+ * am 09.09.2026 komplett entfernt (Kern 4) — der frühere Grundstoff liegt
+ * im Git-Verlauf und ist nicht mehr Teil des Typs.
  */
 
 import { Tone } from '@/constants/tones';
@@ -68,26 +67,25 @@ export function isLanguageCode(value: unknown): value is LanguageCode {
  * Alle Zielsprachen mit geprüftem Grundstoff im Repo — die klassischen drei
  * plus Französisch.
  *
- * FRANZÖSISCH IST ENTHALTEN, ABER NICHT AUSGELIEFERT: `VOCABULARY_FR` liegt
- * quellengeprüft vor, ist aber **nicht** Teil der ausgelieferten
- * `VOCABULARY` und damit nicht im Gerätebestand. Die Registry trägt die
- * Sprache deshalb mit `delivered: false`; die Auswahl zeigt sie ehrlich als
- * „noch nicht lernbar“ (Pflicht 5 aus Phase 15). Wer Französisch freischaltet,
- * nimmt den Code in `LANGUAGE_CODES` auf und setzt `delivered: true` — mehr
- * braucht es nicht.
+ * FRANZÖSISCH WURDE AM 09.09.2026 KOMPLETT ENTFERNT (Nutzerentscheidung):
+ * Kern 4 — {de, en, es, th}. Der ganze Französisch-Grundstoff (Vokabeln,
+ * Drills, Prüfungsanker, UI-Übersetzungen) liegt im Git-Verlauf (Commits
+ * 0c96493/0bae43c) und ließe sich von dort zurückholen; der Sprachkanon ist
+ * listengetrieben, ein Wiedereinstieg wäre wieder nur ein Listen-Eintrag.
  */
-export const TARGET_LANGUAGES = ['th', 'en', 'es', 'fr'] as const;
+export const TARGET_LANGUAGES = ['th', 'en', 'es'] as const;
 export type TargetLanguage = (typeof TARGET_LANGUAGES)[number];
 
 /**
- * Der Sprachkanon des v2-Plans (Roadmap 2026-09-08): fünf Zielsprachen, und
- * die Brückensprache (= Systemsprache des Geräts) ist derselbe Kanon.
+ * Der Sprachkanon des v2-Plans: **vier** Zielsprachen (09.09.2026, vorher
+ * fünf mit Französisch), und die Brückensprache (= Systemsprache des Geräts)
+ * ist derselbe Kanon.
  *
  * DEUTSCH STEHT HIER DRIN — als Ziel, nicht mehr als Drehcheibe. `Lang`
  * ist damit die Antwort auf „welche Sprachen gibt es überhaupt“, während
  * `LanguageCode` die engere Frage „welche sind ausgeliefert“ beantwortet.
  */
-export const SUPPORTED_TARGETS = ['de', 'en', 'es', 'fr', 'th'] as const;
+export const SUPPORTED_TARGETS = ['de', 'en', 'es', 'th'] as const;
 export type Lang = (typeof SUPPORTED_TARGETS)[number];
 
 /**
@@ -117,7 +115,6 @@ export type PairId =
   | PairsFrom<'de'>
   | PairsFrom<'en'>
   | PairsFrom<'es'>
-  | PairsFrom<'fr'>
   | PairsFrom<'th'>;
 
 /** Die ID eines Paars — im selben Format wie die alten Richtungs-Strings. */
@@ -142,16 +139,16 @@ export function isPairId(value: unknown): value is PairId {
   return typeof value === 'string' && parsePairId(value) !== null;
 }
 
-/** Alle gültigen Paare des Kanons: 5 × 4 = 20, ohne Selbstpaare. */
+/** Alle gültigen Paare des Kanons: 4 × 3 = 12, ohne Selbstpaare. */
 export const PAIRS: Pair[] = SUPPORTED_TARGETS.flatMap((source) =>
   SUPPORTED_TARGETS.filter((target) => target !== source).map((target) => ({ source, target }))
 );
 
 /**
  * Alle Paare einer Brückensprache — „Was kann jemand mit dieser
- * Systemsprache lernen?“ Deutsch als Brücke liefert die vier klassischen
- * Richtungen `de_to_*`; Englisch als Brücke zusätzlich das neue `en_to_de`
- * und `en_to_es` und `en_to_fr` und `en_to_th`.
+ * Systemsprache lernen?“ Deutsch als Brücke liefert die klassischen
+ * Richtungen `de_to_*`; Englisch als Brücke zusätzlich `en_to_de`,
+ * `en_to_es` und `en_to_th`.
  */
 export function pairsFor(bridge: Lang): Pair[] {
   return PAIRS.filter((pair) => pair.source === bridge);
@@ -162,17 +159,17 @@ export function pairsFor(bridge: Lang): Pair[] {
  * hervorbringen (AE-11 gilt unverändert).
  *
  * BEWUSST UNVERÄNDERT AUF DEM BESTAND: `Direction` umfasst nur die
- * ausgelieferten Paare (de↔th/en/es). Für die neuen französischen Richtungen
- * gibt es `TargetDirection` — eine reine Erweiterung, und jeder
- * `Direction`-Wert ist zugleich ein gültiger `TargetDirection`. So bleibt
- * jede Profil- und Backup-Stelle (`profile.ts`, `backup.ts`) auf dem alten
- * Typ und muss von Französisch nichts wissen, bis es ausgeliefert ist.
+ * ausgelieferten Paare (de↔th/en/es). Für die deutsch-geankerten Richtungen
+ * über allem Grundstoff gibt es `TargetDirection` — eine reine Erweiterung,
+ * und jeder `Direction`-Wert ist zugleich ein gültiger `TargetDirection`. So
+ * bleibt jede Profil- und Backup-Stelle (`profile.ts`, `backup.ts`) auf dem
+ * alten Typ.
  */
 export type Direction = `${HubLanguage}_to_${LanguageCode}` | `${LanguageCode}_to_${HubLanguage}`;
 
 /**
  * Die deutsch-geankerten Richtungen über **allen** Ziel-Grundstücken — die
- * klassischen sechs plus `de_to_fr` und `fr_to_de`.
+ * klassischen sechs.
  *
  * WARUM WEITERHIN DEUTSCH-GEANKERT: Prüfungsmodule (Goethe-Format) und die
  * deutschen Grammatikübungen hängen an der deutschen Seite eines Paars; für
@@ -198,7 +195,7 @@ export function languageOfDirection(direction: Direction): LanguageCode {
   return (from === HUB_LANGUAGE ? to : from) as LanguageCode;
 }
 
-/** Dasselbe für die erweiterten Richtungen — hier kann `'fr'` herauskommen. */
+/** Dasselbe für die erweiterten Richtungen. */
 export function languageOfTargetDirection(direction: TargetDirection): TargetLanguage {
   const [from, , to] = direction.split('_');
   return (from === HUB_LANGUAGE ? to : from) as TargetLanguage;
@@ -227,16 +224,6 @@ export type SyllableAnnotation = {
   tone?: Tone;
   /** Spanisch: trägt diese Silbe die Betonung? */
   stressed?: boolean;
-  /**
-   * Französisch: verstummt diese Silbe beim Sprechen?
-   *
-   * NUR DAS SCHLUSS-e: Ein unbetontes ⟨e⟩ am Wortende („fro-ma-ge“) hat in
-   * der Regel keinen Lautwert (e muet / e caduc). Die Betonungsübung braucht
-   * das Flag, um die **gesprochene** Silbenzahl gegen die geschriebene zu
-   * stellen. In den anderen Sprachen bleibt das Feld weg — ein Thai- oder
-   * Spanisch-Eintrag mit `mute` wäre ein Datenfehler, ein Test fängt das ab.
-   */
-  mute?: boolean;
 };
 
 /**
@@ -246,7 +233,7 @@ export type SyllableAnnotation = {
 export type LanguageMeta = {
   /**
    * Der Bestands-Code aus `LANGUAGE_CODES`. SEIT DEM PAARMATRIX-MODELL VOM
-   * TYP `TargetLanguage`: Französisch trägt `'fr'`, obwohl es nicht im
+   * TYP `TargetLanguage`: auch Deutsch als Ziel trägt seinen Code hier,
    * App-Bestand ist (`delivered: false`).
    */
   code: TargetLanguage;

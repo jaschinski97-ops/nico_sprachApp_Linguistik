@@ -96,9 +96,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'drill.spelling': 'สะกดเหมือน เสียงต่าง',
   'drill.stressHear': 'ฟังการเน้นพยางค์',
   'drill.soundSpelling': 'ฟังคำ',
-  'drill.stressFr': 'หาพยางค์เน้น',
-  'drill.muteE': 'e ไม่ออกเสียง',
-  'drill.accentFr': 'อ่านเครื่องหมายเสียงแหลม',
   'skill.wortschatz': 'คำศัพท์',
   'skill.hoeren': 'ฟัง',
   'skill.lesen': 'อ่าน',
@@ -262,8 +259,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'drill.prompt.spelling': 'การสะกดแบบนี้อ่านว่าอย่างไร',
   'drill.prompt.stressHear': 'คุณได้ยินพยางค์ใดถูกเน้นเสียง',
   'drill.prompt.soundSpelling': 'คุณได้ยินคำว่าอะไร',
-  'drill.prompt.muteE': 'คุณได้ยินกี่พยางค์',
-  'drill.prompt.accentFr': 'อักขระที่ระบุไว้ออกเสียงว่าอย่างไร',
 
   /* ---------- งานสอบ (exam-runner) ---------- */
   'exam.taskMultipleChoice': 'ปรนัย (A/B/C)',
@@ -353,7 +348,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'dictation.promptDe': 'เขียนประโยคที่ได้ยิน โดยใช้ตัวพิมพ์ใหญ่-เล็กให้ถูก',
   'dictation.promptEs': 'เขียนประโยคที่ได้ยิน พร้อมเครื่องหมายเสียงกำกับ',
   'dictation.promptEn': 'เขียนประโยคที่ได้ยิน',
-  'dictation.promptFr': 'เขียนประโยคที่ได้ยิน',
   'dictation.noVoice':
     'ไม่มีคลิปประโยคและไม่มีเสียงอ่านของระบบภาษา{{language}} ติดตั้งเสียงภาษา{{language}} หรือใช้อุปกรณ์ที่อ่านออกเสียงภาษา{{language}}ได้',
   'dictation.slowClipOnly': 'ช้าลงได้เฉพาะคลิปประโยคที่มีในแอป — เสียงของระบบเล่นด้วยความเร็วปกติ',

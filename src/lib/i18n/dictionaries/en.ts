@@ -95,9 +95,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'drill.spelling': 'Same spelling, other sound',
   'drill.stressHear': 'Hear stress',
   'drill.soundSpelling': 'Hear the word',
-  'drill.stressFr': 'Find the stress',
-  'drill.muteE': 'Silent e',
-  'drill.accentFr': 'Read the accents',
   'skill.wortschatz': 'Vocabulary',
   'skill.hoeren': 'Listening',
   'skill.lesen': 'Reading',
@@ -267,8 +264,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'drill.prompt.spelling': 'How does this spelling sound here?',
   'drill.prompt.stressHear': 'Which syllable do you hear as stressed?',
   'drill.prompt.soundSpelling': 'Which word do you hear?',
-  'drill.prompt.muteE': 'How many syllables do you hear?',
-  'drill.prompt.accentFr': 'How does the highlighted character sound?',
 
   /* ---------- Exam task (exam-runner) ---------- */
   'exam.taskMultipleChoice': 'Multiple choice (A/B/C)',
@@ -366,7 +361,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'dictation.promptDe': 'Write down the sentence you hear — with capitalisation.',
   'dictation.promptEs': 'Write down the sentence you hear — with accents.',
   'dictation.promptEn': 'Write down the sentence you hear.',
-  'dictation.promptFr': 'Write down the sentence you hear.',
   'dictation.noVoice':
     'No sentence clip and no {{language}} system voice available. Install a {{language}} voice or use a device with {{language}} speech output.',
   'dictation.slowClipOnly':

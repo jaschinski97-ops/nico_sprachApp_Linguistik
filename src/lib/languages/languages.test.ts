@@ -81,7 +81,6 @@ describe('Deutsch als Drehscheibe (AE-42)', () => {
     // providerlose Aufruf (Tests, Rest-Bestand) bleibt beim deutschen Stand.
     expect(directionLabel('de_to_th', 'en')).toBe('German → Thai');
     expect(directionLabel('th_to_de', 'th')).toBe('ภาษาไทย → ภาษาเยอรมัน');
-    expect(directionLabel('de_to_fr', 'fr')).toBe('allemand → français');
     expect(directionLabel('de_to_es')).toBe('Deutsch → Spanisch');
   });
 });

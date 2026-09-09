@@ -7,10 +7,7 @@ import { ensureCardStates } from '../review-session';
 import { DataStore, getStore } from './../storage';
 
 import {
-  buildAccentFrQuestion,
   buildArticleQuestion,
-  buildFrStressQuestion,
-  buildMuteEQuestion,
   buildSoundSpellingQuestion,
   buildSpellingQuestion,
   buildStressHearQuestion,
@@ -18,10 +15,7 @@ import {
   buildToneQuestion,
   buildToneRuleQuestion,
   buildVerbFormQuestion,
-  canBuildAccentFrQuestion,
   canBuildArticleQuestion,
-  canBuildFrStressQuestion,
-  canBuildMuteEQuestion,
   canBuildSoundSpellingQuestion,
   canBuildSpellingQuestion,
   canBuildStressHearQuestion,
@@ -65,10 +59,9 @@ export type DrillSessionOptions = {
    * gemeint ist, kann diese Datei nicht wissen. Ein stiller Vorgabewert
    * 'th' wuerde spanische Sitzungen klammheimlich mit Thai-Karten fuellen.
    *
-   * SEIT DEM PAARMATRIX-START VOM TYP `TargetLanguage`: Auch `'fr'` ist
-   * hier formal erlaubt. Der franzoesische Grundstoff ist noch nicht im
-   * App-Bestand, eine Sitzung liefert dann schlicht `available: 0` — ehrlich
-   * leer statt falsch gefuellt.
+   * SEIT DEM PAARMATRIX-START VOM TYP `TargetLanguage`: Jede Zielsprache
+   * ohne eigenen Bestand liefert schlicht `available: 0` — ehrlich leer
+   * statt falsch gefuellt.
    */
   language: TargetLanguage;
   store?: DataStore;
@@ -105,12 +98,6 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildStressHearQuestion(entry);
     case 'soundSpelling':
       return canBuildSoundSpellingQuestion(entry);
-    case 'stressFr':
-      return canBuildFrStressQuestion(entry);
-    case 'muteE':
-      return canBuildMuteEQuestion(entry);
-    case 'accentFr':
-      return canBuildAccentFrQuestion(entry);
   }
 }
 
@@ -137,12 +124,6 @@ function buildQuestion(
       return buildStressHearQuestion(entry);
     case 'soundSpelling':
       return buildSoundSpellingQuestion(entry);
-    case 'stressFr':
-      return buildFrStressQuestion(entry);
-    case 'muteE':
-      return buildMuteEQuestion(entry);
-    case 'accentFr':
-      return buildAccentFrQuestion(entry);
   }
 }
 

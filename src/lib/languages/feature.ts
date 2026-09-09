@@ -93,29 +93,17 @@ const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
 };
 
 /**
- * Französisch: Silben mit Betonungs- und Stummheits-Flag (Paarmatrix-Start).
  *
  * ANDERS ALS BEI SPANISCH KEINE HERLEITUNG: Die Betonung liegt an der letzten
  * vollen Silbe — sie ist regelhaft, aber nicht aus der Schreibung errechnet,
  * sondern aus der Schreibung **abgelesen** (welches e ist stumm?). Die
- * Daten in `vocabulary-fr.ts` tragen deshalb `stressed` und `mute`; die
- * Regeln selbst stehen zitiert in `data/french-spelling.ts`. Drei
- * Lese-Übungen; eine Hör-Übung fehlt absichtlich, bis die Audio-Naht
- * Französisch spricht (`SpeechLanguage` in lib/audio.ts).
  */
-const FRENCH_RUNTIME: LanguageFeatureRuntime = {
-  annotate(entry) {
-    if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
-    return [{ roman: entry.romanization || entry.term }];
-  },
-  drills: ['stressFr', 'muteE', 'accentFr'],
-};
+
 
 const RUNTIMES: Record<TargetLanguage, LanguageFeatureRuntime> = {
   th: THAI_RUNTIME,
   en: ENGLISH_RUNTIME,
   es: SPANISH_RUNTIME,
-  fr: FRENCH_RUNTIME,
 };
 
 export function featureRuntime(language: TargetLanguage): LanguageFeatureRuntime {
@@ -136,7 +124,7 @@ export function featureFor(entry: VocabEntry): LanguageFeatureRuntime {
  * ist die Liste leer statt falsch gefüllt.
  *
  * SEIT DEM PAARMATRIX-START AUF `TargetDirection`: Die französischen
- * Richtungen (`de_to_fr`, `fr_to_de`) sind hierwillkommen; `directionLabel`
+ * Richtungen sind hier willkommen; `directionLabel`
  * und der App-Bestand bleiben auf `Direction` und damit auf den
  * ausgelieferten Paaren.
  */

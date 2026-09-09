@@ -23,20 +23,15 @@
  * - **Thai vergleicht zweistufig** (Basisschrift ohne Tonzeichen, dann
  *   Tonzeichen separat) — die Aufteilung steht in `scoring.ts`, hier stehen
  *   nur die Schwellen.
- * - **`ignoreFinalSilentLetters` ist bewusst AUS** und nur dokumentiert
- *   (Scoring-Spec: „VORSICHTIG"). Französisches stummes Auslaut-n zu
- *   tolerieren hieße, Plural und Singular gleichzubewerten; diese
- *   Entscheidung wird erst mit echtem französischem Stoff getroffen, nicht
- *   im Vorhinein.
  */
 
-/** Sprachen, für die es Diktat-Regeln geben kann. `de` und `fr` sind Ziel­sprachen der Roadmap v2 (Phase 1/3) und noch ohne Stoff. */
-export type DictationLanguage = 'th' | 'de' | 'en' | 'es' | 'fr';
+/** Sprachen, für die es Diktat-Regeln geben kann. `de` ist Zielsprache der Roadmap v2 und noch ohne Stoff. */
+export type DictationLanguage = 'th' | 'de' | 'en' | 'es';
 
 export type DictationLanguageConfig = {
   /** Thai vergleicht zeichenweise zweistufig, Latein wortweise. */
   script: 'thai' | 'latin';
-  /** Groß-/Kleinschreibung vor dem Vergleich absenken (en, es, fr). */
+  /** Groß-/Kleinschreibung vor dem Vergleich absenken (en, es). */
   foldCase: boolean;
   /** Den Großbuchstaben am Satzanfang tolerieren — man hört ihn nicht. */
   tolerateSentenceInitialCase: boolean;
@@ -83,7 +78,6 @@ export const DICTATION_CONFIG: Record<DictationLanguage, DictationLanguageConfig
   // Französisch: Akzentfehler werden weich gewertet (strictDiacritics: false),
   // bis mit echtem französischem Stoff entschieden ist, wie hart ein
   // Volltext-Diktat sie zählen soll. Stumme Auslaute bleiben Fehler.
-  fr: { ...BASE, script: 'latin', foldCase: true, eszettEquivalence: false, strictDiacritics: false },
 };
 
 /** Wirft für eine Sprache ohne Eintrag, statt still falsche Regeln anzuwenden. */

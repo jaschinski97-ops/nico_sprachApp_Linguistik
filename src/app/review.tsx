@@ -47,9 +47,6 @@ const DRILL_KEYS: Record<DrillId, TranslationKey> = {
   spelling: 'drill.spelling',
   stressHear: 'drill.stressHear',
   soundSpelling: 'drill.soundSpelling',
-  stressFr: 'drill.stressFr',
-  muteE: 'drill.muteE',
-  accentFr: 'drill.accentFr',
 };
 
 /** Fehlertext eines gescheiterten Ladevorgangs — wie im Fortschritts-Reiter. */

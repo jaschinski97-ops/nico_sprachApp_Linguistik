@@ -1686,7 +1686,7 @@ export type ExamOffer = {
 };
 
 /** Zielsprachen der Prüfungsangebote; Deutsch ist das Hauptziel (AE-19). */
-export type ExamOfferTarget = 'de' | 'th' | 'en' | 'es' | 'fr';
+export type ExamOfferTarget = 'de' | 'th' | 'en' | 'es';
 
 export const EXAM_OFFER_BY_TARGET: Record<ExamOfferTarget, ExamOffer> = {
   de: {
@@ -1712,10 +1712,5 @@ export const EXAM_OFFER_BY_TARGET: Record<ExamOfferTarget, ExamOffer> = {
     state: 'folgt',
     directions: [],
     note: 'Für Spanisch als Zielsprache liegen noch keine Prüfungsaufgaben vor — bewusst leer, statt Scheinaufgaben zu zeigen.',
-  },
-  fr: {
-    state: 'folgt',
-    directions: [],
-    note: 'Für Französisch als Zielsprache liegen noch keine Prüfungsaufgaben vor — bewusst leer, statt Scheinaufgaben zu zeigen.',
   },
 };

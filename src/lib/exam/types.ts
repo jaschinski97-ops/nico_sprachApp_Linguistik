@@ -430,12 +430,10 @@ type ExamModuleBase = {
    * trotzdem im Schema, damit ein recherchiertes Thai-Zertifikat später ohne
    * Umbau danebenpasst.
    *
-   * SEIT DEM PAARMATRIX-START VOM TYP `TargetDirection`: Damit sind
-   * französische A1-Module (`de_to_fr` für Deutschsprecher, `fr_to_de` für
-   * Französischsprecher im Deutschen) formal **erlaubt**. Inhalte dafür
-   * kommen in einer späteren Runde (Roadmap v2, Phase 3/4); das Typsystem
-   * stellt hier bereits die Tür offen. Bestehende Module (`th_to_de`) sind
-   * von der Erweiterung unberührt.
+   * SEIT DEM PAARMATRIX-START VOM TYP `TargetDirection`: Damit sind alle
+   * deutsch-geankerten Richtungen formal erlaubt; das Typsystem öffnet hier
+   * die Tür für spätere Zertifikatsinhalte je Sprache. Bestehende Module
+   * (`th_to_de`) sind unberührt.
    */
   direction: TargetDirection;
   title: string;

@@ -17,8 +17,8 @@ import {
  *
  * DREI AUSSAGEN TRAGEN DIESE DATEI:
  *
- * 1. **Der Kanon ist vollständig, aber ohne Selbstpaare.** 5 × 4 = 20 Paare,
- *    jede Richtung genau einmal.
+ * 1. **Der Kanon ist vollständig, aber ohne Selbstpaare.** 4 × 3 = 12 Paare,
+ *    jede Richtung genau einmal (Kern 4 seit 09.09.2026 — Französisch entfernt).
  * 2. **Die sechs klassischen Richtungen bleiben wörtlich gültig.** Sie sind
  *    Paar-IDs, `pairsFor('de')` liefert sie unverändert, und gespeicherte
  *    Kartenschlüssel im Format `vocabId:de_to_th` sind davon unberührt.
@@ -27,9 +27,9 @@ import {
  */
 
 describe('Die Paarmatrix', () => {
-  it('führt genau 20 Paare — 5 Zielsprachen, keine Selbstpaare', () => {
-    expect(SUPPORTED_TARGETS).toEqual(['de', 'en', 'es', 'fr', 'th']);
-    expect(PAIRS).toHaveLength(5 * 4);
+  it('führt genau 12 Paare — 4 Zielsprachen, keine Selbstpaare', () => {
+    expect(SUPPORTED_TARGETS).toEqual(['de', 'en', 'es', 'th']);
+    expect(PAIRS).toHaveLength(4 * 3);
     for (const pair of PAIRS) {
       expect(pair.source).not.toBe(pair.target);
     }
@@ -60,17 +60,16 @@ describe('Die Paarmatrix', () => {
   it('liefert pairsFor alle Paare einer Brückensprache und nur solche', () => {
     for (const bridge of SUPPORTED_TARGETS) {
       const pairs = pairsFor(bridge);
-      expect(pairs).toHaveLength(4);
+      expect(pairs).toHaveLength(3);
       for (const pair of pairs) {
         expect(pair.source).toBe(bridge);
         expect(pair.target).not.toBe(bridge);
       }
     }
-    // Deutsch als Brücke: die vier klassischen Richtungen.
+    // Deutsch als Brücke: die drei klassischen Richtungen.
     expect(pairsFor('de').map(pairId)).toEqual([
       'de_to_en',
       'de_to_es',
-      'de_to_fr',
       'de_to_th',
     ]);
   });
@@ -117,17 +116,17 @@ describe('Der Brückentext fällt ehrlich zurück', () => {
   const eintrag = {
     german: 'das Haus',
     term: 'la maison',
-    translations: { en: 'house', es: 'casa', th: 'บ้าน' },
+    translations: { en: 'house', es: 'casa' },
   };
 
   it('liefert den Brückentext, wenn die Sprache gedeckt ist', () => {
     expect(bridgeText(eintrag, 'en')).toEqual({ text: 'house', usedFallback: false });
     expect(bridgeText(eintrag, 'es')).toEqual({ text: 'casa', usedFallback: false });
-    expect(bridgeText(eintrag, 'th')).toEqual({ text: 'บ้าน', usedFallback: false });
   });
 
   it('fällt auf den deutschen Quelltext zurück — und sagt es', () => {
-    expect(bridgeText(eintrag, 'fr')).toEqual({ text: 'das Haus', usedFallback: true });
+    // Thai ist nicht übersetzt — der Fallback greift und wird gekennzeichnet.
+    expect(bridgeText(eintrag, 'th')).toEqual({ text: 'das Haus', usedFallback: true });
   });
 
   it('fällt bei Deutsch sinnvollerweise auf Deutsch — als gekennzeichneter Fallback', () => {
@@ -137,60 +136,47 @@ describe('Der Brückentext fällt ehrlich zurück', () => {
 
   it('trägt die Kette weiter, wenn nicht einmal Deutsch da ist', () => {
     const ohneDeutsch = { german: '', term: 'la maison', translations: { en: 'house' } };
-    expect(bridgeText(ohneDeutsch, 'fr')).toEqual({ text: 'house', usedFallback: true });
     const nackter = { german: '', term: 'maison' };
     expect(bridgeText(nackter, 'en')).toEqual({ text: 'maison', usedFallback: true });
     expect(bridgeText({ german: '' }, 'en')).toEqual({ text: '', usedFallback: true });
   });
-
-  it('liest französische Grundstoff-Einträge ohne Sonderweg', () => {
-    // Die französischen Einträge sind strukturgleich — nur halt noch nicht
-    // ausgeliefert. Der Brückentext weiß davon nichts und muss es auch nicht.
-    const eintrag = {
-      german: 'das Haus',
-      term: 'maison',
-      translations: { en: 'house', es: 'casa', th: 'บ้าน' },
-    };
-    expect(bridgeText(eintrag, 'de').text).toBe('das Haus');
-    expect(bridgeText(eintrag, 'fr')).toEqual({ text: 'das Haus', usedFallback: true });
-  });
 });
 
-describe('Das Prüfungstypsystem lässt fr-A1 formell zu', () => {
-  const frA1Modul = {
-    id: 'test-fr-a1-lesen',
-    certificate: 'delf-a1',
+describe('Das Prüfungstypsystem lässt deutsch-geankerte A1-Module formell zu', () => {
+  const a1Modul = {
+    id: 'test-a1-lesen',
+    certificate: 'goethe-a1',
     level: 'A1',
     skill: 'lesen',
     taskType: 'multipleChoice',
-    direction: 'de_to_fr',
-    title: 'Französisch A1 — Lesen',
-    instruction: 'Lisez le message.',
-    stimulus: { kind: 'text', body: 'Bonjour, le cours commence à neuf heures.' },
+    direction: 'th_to_de',
+    title: 'Deutsch A1 — Lesen',
+    instruction: 'Lesen Sie die Nachricht.',
+    stimulus: { kind: 'text', body: 'Der Kurs beginnt um neun Uhr.' },
     minutes: 5,
     source: 'builtin',
     items: [
       {
-        id: 'test-fr-a1-lesen-1',
+        id: 'test-a1-lesen-1',
         prompt: 'Wann beginnt der Kurs?',
         options: ['um 8 Uhr', 'um 9 Uhr', 'um 10 Uhr'],
         correctIndex: 1,
-        explanation: '„à neuf heures“ — um neun Uhr.',
+        explanation: '„um neun Uhr“ — um neun Uhr.',
       },
     ],
   };
 
-  it('prüft ein französisches A1-Modul als gültig', () => {
-    expect(isValidExamModule(frA1Modul)).toBe(true);
+  it('prüft ein deutsch-geankertes A1-Modul als gültig', () => {
+    expect(isValidExamModule(a1Modul)).toBe(true);
   });
 
   it('lässt die klassische Richtung th_to_de unverändert gültig', () => {
     expect(
-      isValidExamModule({ ...frA1Modul, id: 'test-th-a1', direction: 'th_to_de' })
+      isValidExamModule({ ...a1Modul, id: 'test-th-a1', direction: 'th_to_de' })
     ).toBe(true);
   });
 
   it('lehnt ein Modul ohne Aufgaben weiter ab', () => {
-    expect(isValidExamModule({ ...frA1Modul, items: [] })).toBe(false);
+    expect(isValidExamModule({ ...a1Modul, items: [] })).toBe(false);
   });
 });

@@ -26,9 +26,6 @@ const DRILL_LABEL_KEYS: Record<DrillId, TranslationKey> = {
   spelling: 'drill.spelling',
   stressHear: 'drill.stressHear',
   soundSpelling: 'drill.soundSpelling',
-  stressFr: 'drill.stressFr',
-  muteE: 'drill.muteE',
-  accentFr: 'drill.accentFr',
 };
 
 const DRILL_PROMPT_KEYS: Record<DrillId, TranslationKey> = {
@@ -41,9 +38,6 @@ const DRILL_PROMPT_KEYS: Record<DrillId, TranslationKey> = {
   stressHear: 'drill.prompt.stressHear',
   soundSpelling: 'drill.prompt.soundSpelling',
   // Dieselbe Frage wie bei stressRule — ein Schlüssel, zwei Übungen.
-  stressFr: 'drill.prompt.stressRule',
-  muteE: 'drill.prompt.muteE',
-  accentFr: 'drill.prompt.accentFr',
 };
 
 /**

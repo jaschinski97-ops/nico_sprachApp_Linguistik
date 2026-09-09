@@ -104,8 +104,6 @@ export const SENTENCE_TASKS_BY_LANGUAGE: Record<TargetLanguage, SentenceTask[]> 
   th: SENTENCE_TASKS,
   es: [],
   en: [],
-  // Runde-3-Stoff, ehrlich leer
-  fr: [],
 };
 
 /** Der ehrliche Fußtext je Sprache — Thai zählt den Bestand, die anderen sagen, was fehlt. */

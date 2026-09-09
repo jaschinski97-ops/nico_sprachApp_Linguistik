@@ -108,9 +108,6 @@ const de = {
   'drill.spelling': 'Gleiche Schreibung, anderer Laut',
   'drill.stressHear': 'Betonung hören',
   'drill.soundSpelling': 'Wort hören',
-  'drill.stressFr': 'Betonung bestimmen',
-  'drill.muteE': 'Stummes e',
-  'drill.accentFr': 'Akzentzeichen lesen',
   'skill.wortschatz': 'Wortschatz',
   'skill.hoeren': 'Hören',
   'skill.lesen': 'Lesen',
@@ -283,8 +280,6 @@ const de = {
   'drill.prompt.spelling': 'Wie klingt dieses Schriftstück hier?',
   'drill.prompt.stressHear': 'Welche Silbe hörst du betont?',
   'drill.prompt.soundSpelling': 'Welches Wort hörst du?',
-  'drill.prompt.muteE': 'Wie viele Silben hörst du?',
-  'drill.prompt.accentFr': 'Wie klingt das hervorgehobene Zeichen?',
 
   /* ---------- Prüfungsaufgabe (exam-runner) ---------- */
   'exam.taskMultipleChoice': 'Auswahl (A/B/C)',
@@ -382,7 +377,6 @@ const de = {
   'dictation.promptDe': 'Schreib den Satz auf, den du hörst — mit Groß- und Kleinschreibung.',
   'dictation.promptEs': 'Schreib den Satz auf, den du hörst — mit Akzentzeichen.',
   'dictation.promptEn': 'Write down the sentence you hear.',
-  'dictation.promptFr': 'Écris la phrase que tu entends.',
   'dictation.noVoice':
     'Kein Satzclip und keine {{language}}-Systemstimme verfügbar. Installiere eine {{language}}-Stimme oder nutze ein Gerät mit {{language}}-Sprachausgabe.',
   'dictation.slowClipOnly':

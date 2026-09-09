@@ -93,9 +93,6 @@ const es: Partial<Record<TranslationKey, string>> = {
   'drill.spelling': 'Misma escritura, otro sonido',
   'drill.stressHear': 'Oír la acentuación',
   'drill.soundSpelling': 'Oír la palabra',
-  'drill.stressFr': 'Hallar la acentuación',
-  'drill.muteE': 'E muda',
-  'drill.accentFr': 'Leer los acentos',
   'skill.wortschatz': 'Vocabulario',
   'skill.hoeren': 'Escuchar',
   'skill.lesen': 'Leer',
@@ -264,8 +261,6 @@ const es: Partial<Record<TranslationKey, string>> = {
   'drill.prompt.spelling': '¿Cómo suena esta grafía aquí?',
   'drill.prompt.stressHear': '¿Qué sílaba oyes acentuada?',
   'drill.prompt.soundSpelling': '¿Qué palabra oyes?',
-  'drill.prompt.muteE': '¿Cuántas sílabas oyes?',
-  'drill.prompt.accentFr': '¿Cómo suena el signo destacado?',
 
   /* ---------- Tarea de examen (exam-runner) ---------- */
   'exam.taskMultipleChoice': 'Opción múltiple (A/B/C)',
@@ -363,7 +358,6 @@ const es: Partial<Record<TranslationKey, string>> = {
   'dictation.promptDe': 'Escribe la frase que oyes — con mayúsculas y minúsculas.',
   'dictation.promptEs': 'Escribe la frase que oyes — con tildes.',
   'dictation.promptEn': 'Escribe la frase que oyes.',
-  'dictation.promptFr': 'Escribe la frase que oyes.',
   'dictation.noVoice':
     'Ningún clip de frases y ninguna voz del sistema en {{language}} disponibles. Instala una voz de {{language}} o usa un dispositivo con salida de voz en {{language}}.',
   'dictation.slowClipOnly':

@@ -54,8 +54,9 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
     expect(detectFrom('de')).toBe('de');
     expect(detectFrom('en')).toBe('en');
     expect(detectFrom('es')).toBe('es');
-    expect(detectFrom('fr')).toBe('fr');
     expect(detectFrom('th')).toBe('th');
+    // Französisch ist seit der Kern-4-Entscheidung kein Kanon-Code mehr.
+    expect(detectFrom('fr')).toBe('de');
   });
 
   it('normiert Region-Codes auf die Sprache (th-TH bleibt th)', () => {
@@ -83,7 +84,7 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
 
   it('normiert rohe Codes auch ohne Erkennung', () => {
     expect(normalizeLanguageCode('FR')).toBe('de'); // bewusst strikt: Kleinschreibung ist der Vertrag von expo-localization
-    expect(normalizeLanguageCode('fr')).toBe('fr');
+    expect(normalizeLanguageCode('fr')).toBe('de'); // Französisch: nicht mehr im Kanon → Fallback
     expect(normalizeLanguageCode(42)).toBe('de');
   });
 });
@@ -103,8 +104,8 @@ describe('Spracheinstellung — nachsichtiges Lesen', () => {
   it('rundet durch Speicher und Lesen', async () => {
     const store = new MemoryDataStore();
     await store.init();
-    await realPrefs.saveLanguageSetting('fr', store);
-    expect(await realPrefs.loadLanguageSetting(store)).toBe('fr');
+    await realPrefs.saveLanguageSetting('es', store);
+    expect(await realPrefs.loadLanguageSetting(store)).toBe('es');
 
     await realPrefs.saveLanguageSetting('system', store);
     expect(await realPrefs.loadLanguageSetting(store)).toBe('system');
@@ -138,7 +139,6 @@ describe('translate — Nachschlagen und Fallback', () => {
     expect(translate('de', 'tabs.settings')).toBe('Einstellungen');
     expect(translate('en', 'tabs.settings')).toBe('Settings');
     expect(translate('es', 'tabs.settings')).toBe('Ajustes');
-    expect(translate('fr', 'tabs.settings')).toBe('Réglages');
     expect(translate('th', 'tabs.settings')).toBe('ตั้งค่า');
   });
 
@@ -167,7 +167,7 @@ describe('Vollständigkeit der Wörterbücher', () => {
     expect(referenceKeys.length).toBeGreaterThan(100);
   });
 
-  it.each(['en', 'es', 'fr', 'th'] as UiLanguage[])(
+  it.each(['en', 'es', 'th'] as UiLanguage[])(
     '%s deckt alle Schlüssel ab (fehlende ⊆ FALLBACK_ALLOWED_KEYS)',
     (language) => {
       const missing = referenceKeys.filter(
@@ -250,14 +250,14 @@ describe('React-Anbindung', () => {
 
   it('eine gespeicherte Einstellung schlägt die Systemsprache', async () => {
     mockedGetLocales.mockReturnValue([{ languageCode: 'th', languageTag: 'th-TH' }]);
-    mockLoadSetting.mockResolvedValue('fr');
+    mockLoadSetting.mockResolvedValue('es');
     await act(async () => {
       tree = create(
         createElement(I18nProvider, null, createElement(Probe))
       );
     });
-    expect(captured?.uiLanguage).toBe('fr');
-    expect(captured?.t('tabs.settings')).toBe('Réglages');
+    expect(captured?.uiLanguage).toBe('es');
+    expect(captured?.t('tabs.settings')).toBe('Ajustes');
   });
 
   it('setSetting stellt sofort um und speichert im Hintergrund', async () => {

@@ -27,7 +27,7 @@ function validManifest(overrides: Partial<PackManifest> = {}): PackManifest {
 
 describe('isPackLanguage', () => {
   test('accepts the core five languages only', () => {
-    for (const language of ['th', 'en', 'es', 'fr', 'de']) {
+    for (const language of ['th', 'en', 'es', 'de']) {
       expect(isPackLanguage(language)).toBe(true);
     }
     expect(isPackLanguage('zh')).toBe(false);

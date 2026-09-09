@@ -1,13 +1,13 @@
 # Content-Authoring — Leitfaden für Runde 2
 
 Stand: 2026-09-09 · gilt für den Sprachkanon des v2-Plans
-(Deutsch, Englisch, Spanisch, Französisch, Thai; Quelle: `docs/ROADMAP-v2-sprachplattform.md`).
+**(AMENDMENT 09.09.2026: Französisch komplett entfernt — Kanon ist Kern 4: Deutsch, Englisch, Spanisch, Thai.** Quelle: `docs/ROADMAP-v2-sprachplattform.md`).
 
 Diese Datei ist die **Arbeitsanweisung für alle, die nach dieser Runde Inhalt
 anlegen**. Sie dokumentiert das Vokabel-Schema genau so, wie es in
 `src/data/vocab-types.ts` (`VocabEntry`) definiert und in den Grundstoffen
 `src/data/vocabulary.ts` (Thai, 84 Einträge), `vocabulary-en.ts`,
-`vocabulary-es.ts` und `vocabulary-fr.ts` (40 Einträge, Startumfang)
+`vocabulary-es.ts` und `vocabulary-fr.ts` — ENTFERNT 09.09.2026, im Git-Verlauf)
 verwendet wird. Wer sich an diesen Leitfaden hält, fällt automatisch durch
 alle unten genannten Tests — wer dagegen verstößt, macht einen davon rot.
 
@@ -17,7 +17,7 @@ alle unten genannten Tests — wer dagegen verstößt, macht einen davon rot.
 
 | Begriff | Bedeutung | Wo definiert |
 |---|---|---|
-| **Zielsprache** | Die Sprache, die gelernt wird. Kanon: `de, en, es, fr, th` (`SUPPORTED_TARGETS` in `src/lib/languages/types.ts`). | `Lang` |
+| **Zielsprache** | Die Sprache, die gelernt wird. Kanon: `de, en, es, th` (Kern 4) (`SUPPORTED_TARGETS` in `src/lib/languages/types.ts`). | `Lang` |
 | **Brückensprache** | Die Sprache, in der erklärt wird (= künftig die Systemsprache des Geräts). Derselbe Kanon: `BRIDGE_LOCALES`. | `Lang` |
 | **Paar / Richtung** | S→T mit S≠T; 20 Paare. IDs im Format `en_to_de`, kompatibel zu allen bestehenden Richtungs-Strings. | `Pair`, `PairId`, `pairsFor(bridge)` in `types.ts` |
 

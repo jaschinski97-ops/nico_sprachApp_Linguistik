@@ -306,13 +306,13 @@ describe('Erweiterung A1–B2 (Roadmap v2)', () => {
     }
   });
 
-  it('sagt fuer es/fr (und en) als Ziel ehrlich „folgt"', () => {
+  it('sagt fuer es (und en) als Ziel ehrlich „folgt"', () => {
     // Keine Fake-Inhalte: Die Registry behauptet nur, was existiert.
-    for (const ziel of ['es', 'fr', 'en'] as const) {
+    for (const ziel of ['es', 'en'] as const) {
       expect(EXAM_OFFER_BY_TARGET[ziel].state).toBe('folgt');
       expect(EXAM_OFFER_BY_TARGET[ziel].directions).toHaveLength(0);
     }
-    const moeglichFalsch = ['es_to_de', 'de_to_es', 'fr_to_de', 'de_to_fr'] as const;
+    const moeglichFalsch = ['es_to_de', 'de_to_es'] as const;
     for (const module of BUILTIN_EXAM_MODULES) {
       expect(moeglichFalsch).not.toContain(module.direction as (typeof moeglichFalsch)[number]);
     }

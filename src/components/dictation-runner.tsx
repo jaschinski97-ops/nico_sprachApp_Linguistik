@@ -68,7 +68,6 @@ const AUFGABEN_KEYS: Record<DictationLanguage, TranslationKey> = {
   de: 'dictation.promptDe',
   es: 'dictation.promptEs',
   en: 'dictation.promptEn',
-  fr: 'dictation.promptFr',
 };
 
 /** FSRS-Bewertung → i18n-Key (die Labels selbst stehen in den Wörterbüchern). */
@@ -84,7 +83,6 @@ const PLATZHALTER: Record<DictationLanguage, string> = {
   de: 'dein Satz',
   es: 'tu frase',
   en: 'your sentence',
-  fr: 'ta phrase',
 };
 
 /** Die Zeichenhilfe der Sprache, IN die getippt wird — übernommen vom freien Schreiben. */
@@ -101,8 +99,7 @@ function Palette({
   if (language === 'de') return <GermanPalette onInsert={onInsert} disabled={disabled} />;
   if (language === 'es') return <SpanishPalette onInsert={onInsert} disabled={disabled} />;
   // Englisch: jedes Zeichen der Zielform steht auf jeder lateinischen
-  // Tastatur. Französisch braucht später eine eigene Palette (é è ç à) —
-  // bis es Stoff hat, bleibt es ehrlich leer (siehe tasks.ts).
+  // Tastatur.
   return null;
 }
 

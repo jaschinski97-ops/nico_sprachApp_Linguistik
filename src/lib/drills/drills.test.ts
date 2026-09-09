@@ -247,7 +247,7 @@ describe('buildDrillSession', () => {
     // (`delivered: false`) — im Speicher liegen keine französischen Karten,
     // eine Sitzung wäre leer. Ihr Stoff wird in french.test.ts gegen den
     // Grundstoff in der Datei geprüft.
-    for (const drill of DRILLS.filter((candidate) => DRILL_META[candidate].feature !== 'fr')) {
+    for (const drill of DRILLS) {
       const session = await buildDrillSession({ drill, language: DRILL_META[drill].feature ?? 'th', store, now: T0, seed: 1 });
       expect(session.questions).toHaveLength(DRILL_SESSION_SIZE);
       expect(session.available).toBeGreaterThanOrEqual(DRILL_SESSION_SIZE);

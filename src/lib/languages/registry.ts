@@ -1,4 +1,4 @@
-import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_FR, VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
 import { LANGUAGE_DISPLAY_NAMES, type UiLanguage } from '@/lib/i18n';
 
 import {
@@ -114,41 +114,6 @@ export const LANGUAGES: Record<(typeof TARGET_LANGUAGES)[number], LanguageDefini
       },
     },
   },
-
-  fr: {
-    code: 'fr',
-    label: 'Französisch',
-    endonym: 'français',
-    speechLocale: 'fr-FR',
-    challenge:
-      'Die Betonung liegt fast immer auf der letzten vollen Silbe — aber viele Endungen verstummen.',
-    entryCount: VOCABULARY_FR.length,
-    hasGermanModules: true,
-    // NOCH NICHT IM APP-BESTAND: Der Grundstoff liegt in
-    // `data/vocabulary-fr.ts`, aber `VOCABULARY` (und damit Seeding, Audio und
-    // Sprachauswahl) traegt ihn noch nicht. `hasContent` haelt die Sprache
-    // deshalb aus dem Sprachwechsel; der Grundstock-Uebersicht reicht das
-    // Kennzeichen „noch nicht lernbar“ (Pflicht 5 aus Phase 15).
-    delivered: false,
-    feature: {
-      label: 'Betonung',
-      description:
-        'Die Betonung steht fast immer auf der letzten vollen Silbe — sie muss man nicht auswendig lernen, sondern nur wissen, welche Silben überhaupt gesprochen werden. Das stumme Schluss-e (e muet) und die Akzentzeichen entscheiden mit; beides ist Schrift, und beide Übungen zeigen den Weg dorthin.',
-      kind: 'derivable',
-      // Seit dem Paarmatrix-Start gebaut: drei Regeluebungen (Betonung,
-      // stummes e, Akzentzeichen). Eine HOER-Uebung fehlt bewusst — die
-      // Audio-Naht (`SpeechLanguage` in lib/audio.ts) kennt bislang kein
-      // Franzoesisch, und eine Hoeruebung ohne Ton waere Schein.
-      implemented: true,
-      source: {
-        title: 'French phonology',
-        url: 'https://en.wikipedia.org/wiki/French_phonology',
-        retrieved: '2026-09-09',
-        quote:
-          'French having lexical stress falling on the final full syllable (syllable with a vowel other than schwa) of a word … word stress is not distinctive in French, so two words cannot be distinguished based on stress placement alone.',
-      },
-    },
-  },
 };
 
 /**
@@ -248,7 +213,6 @@ export const LANGUAGE_LABELS: Record<Lang, string> = {
   de: 'Deutsch',
   en: LANGUAGES.en.label,
   es: LANGUAGES.es.label,
-  fr: LANGUAGES.fr.label,
   th: LANGUAGES.th.label,
 };
 

@@ -171,12 +171,7 @@ export type VocabEntry = {
  * **ausgelieferten** Sprachen beschränkt (`LANGUAGE_CODES`) — dadurch bleibt
  * die Audio-Naht (`SpeechLanguage` in lib/audio) und die gesamte
  * Bestands-Oberfläche schmal und zwingt niemanden, heute schon Französisch zu
- * sprechen. `FrenchVocabEntry` und spätere Grundstöcke sind dennoch
- * zuweisungskompatibel zu `TargetVocabEntry`, weil `'fr'` in
- * `TargetLanguage` liegt. Ein Builder kann also `TargetVocabEntry` nehmen,
- * per `entry.language === 'fr'` eingrenzen und beide Welten bedienen.
  */
 export type TargetVocabEntry = Omit<VocabEntry, 'language'> & { language: TargetLanguage };
 
 /** Ein Eintrag des französischen Grundstuffs (`vocabulary-fr.ts`). */
-export type FrenchVocabEntry = Omit<TargetVocabEntry, 'language'> & { language: 'fr' };

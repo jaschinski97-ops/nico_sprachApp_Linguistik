@@ -20,7 +20,6 @@ const th = DICTATION_CONFIG.th;
 const de = DICTATION_CONFIG.de;
 const en = DICTATION_CONFIG.en;
 const es = DICTATION_CONFIG.es;
-const fr = DICTATION_CONFIG.fr;
 
 // ---------------------------------------------------------------- Thai ----
 
@@ -213,24 +212,6 @@ describe('Lateinische Sprachen — case-folding, Akzente, Schwellen', () => {
     expect(score.exact).toBe(true);
   });
 
-  it('Französisch: Akzentfehler sind weich — bestanden, aber mit Warnung', () => {
-    const score = scoreDictation('je parle francais', 'je parle français', fr);
-    expect(score.baseScore).toBe(100);
-    expect(score.diacriticScore).toBe(67);
-    expect(score.passed).toBe(true);
-    expect(score.toneWarning).toBe(true);
-    expect(score.exact).toBe(false);
-    expect(ratingForScore(score)).toBe(2);
-  });
-
-  it('Französisch: stumme Auslaute bleiben dokumentiert AUS — die Abweichung fällt nur ins Tippfehler-Fenster', () => {
-    const score = scoreDictation('ils parlen', 'ils parlent', fr);
-    expect(score.passed).toBe(true);
-    expect(score.exact).toBe(false);
-    expect(score.diff.some((token) => token.status === 'typo' && token.text === 'parlent')).toBe(true);
-    expect(ratingForScore(score)).toBe(2);
-  });
-
   it('der Apostroph gehört nicht zur Hörbarkeit — dont für don\u0027t ist genau richtig', () => {
     expect(scoreDictation('dont stop', 'don\u0027t stop', en).exact).toBe(true);
   });
@@ -261,7 +242,6 @@ describe('Die FSRS-Abbildung', () => {
       scoreDictation('', 'ผม ไม่ กิน หมู', th),
       scoreDictation('ich mag kaffee', 'Ich mag Kaffee.', de),
       scoreDictation('hablo con madre', 'habló con madre', es),
-      scoreDictation('je parle francais', 'je parle français', fr),
     ];
     for (const score of scores) {
       const rating = ratingForScore(score);
@@ -276,7 +256,6 @@ describe('Die FSRS-Abbildung', () => {
   });
 
   it('zieht Diakritika für den weichen Vergleich ab', () => {
-    expect(stripLatinDiacritics('français')).toBe('francais');
     expect(stripLatinDiacritics('habló')).toBe('hablo');
   });
 });
@@ -284,12 +263,11 @@ describe('Die FSRS-Abbildung', () => {
 describe('Die Regeln stehen je Sprache an EINEM Ort', () => {
   it('Thai vergleicht zweistufig, alle Lateiner wortweise; Schwellen wie in der Spec', () => {
     expect(th.script).toBe('thai');
-    for (const language of ['de', 'en', 'es', 'fr'] as const) {
+    for (const language of ['de', 'en', 'es'] as const) {
       expect(dictationConfigFor(language).script).toBe('latin');
     }
     expect(th.passThreshold).toBe(90);
     expect(th.diacriticThreshold).toBe(50);
-    expect(fr.ignoreFinalSilentLetters).toBe(false);
     expect(de.eszettEquivalence).toBe(true);
     expect(de.foldCase).toBe(false);
     expect(en.foldCase).toBe(true);

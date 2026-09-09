@@ -9,7 +9,7 @@
  */
 
 /** Die fünf Sprachen des Kerns (Roadmap v2: „Kern 5“) — als UI- wie als Zielsprache. */
-export const UI_LANGUAGES = ['de', 'en', 'es', 'fr', 'th'] as const;
+export const UI_LANGUAGES = ['de', 'en', 'es', 'th'] as const;
 
 export type UiLanguage = (typeof UI_LANGUAGES)[number];
 

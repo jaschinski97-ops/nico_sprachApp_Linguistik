@@ -12,7 +12,6 @@ import {
 import de from './dictionaries/de';
 import en from './dictionaries/en';
 import es from './dictionaries/es';
-import fr from './dictionaries/fr';
 import th from './dictionaries/th';
 import type { TranslationKey } from './keys';
 import { detectSystemLocale } from './detect';
@@ -51,7 +50,6 @@ export const dictionaries: Record<UiLanguage, Partial<Record<TranslationKey, str
   de,
   en,
   es,
-  fr,
   th,
 };
 
@@ -97,11 +95,10 @@ export function translate(language: UiLanguage, key: TranslationKey, params?: TP
  * Endonyme („español“, „français“, „ไทย“) — die sichere Selbstbezeichnung.
  */
 export const LANGUAGE_DISPLAY_NAMES: Record<UiLanguage, Record<UiLanguage, string>> = {
-  de: { de: 'Deutsch', en: 'German', es: 'alemán', fr: 'allemand', th: 'ภาษาเยอรมัน' },
-  en: { de: 'Englisch', en: 'English', es: 'inglés', fr: 'anglais', th: 'ภาษาอังกฤษ' },
-  es: { de: 'Spanisch', en: 'Spanish', es: 'español', fr: 'espagnol', th: 'ภาษาสเปน' },
-  fr: { de: 'Französisch', en: 'French', es: 'francés', fr: 'français', th: 'ภาษาฝรั่งเศส' },
-  th: { de: 'Thai', en: 'Thai', es: 'tailandés', fr: 'thaï', th: 'ภาษาไทย' },
+  de: { de: 'Deutsch', en: 'German', es: 'alemán', th: 'ภาษาเยอรมัน' },
+  en: { de: 'Englisch', en: 'English', es: 'inglés', th: 'ภาษาอังกฤษ' },
+  es: { de: 'Spanisch', en: 'Spanish', es: 'español', th: 'ภาษาสเปน' },
+  th: { de: 'Thai', en: 'Thai', es: 'tailandés', th: 'ภาษาไทย' },
 };
 
 /** Anzeigename einer Lernsprache in der aktuellen UI-Sprache. */
@@ -123,10 +120,6 @@ export const MONTH_NAMES: Record<UiLanguage, readonly string[]> = {
     'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio',
     'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
   ],
-  fr: [
-    'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
-  ],
   th: [
     'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
     'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
@@ -142,8 +135,6 @@ export function localeTagFor(language: UiLanguage): string {
       return 'en-GB';
     case 'es':
       return 'es-ES';
-    case 'fr':
-      return 'fr-FR';
     case 'th':
       return 'th-TH';
   }

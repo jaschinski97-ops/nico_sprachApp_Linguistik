@@ -1,4 +1,6 @@
-# Roadmap v2 — Sprachlernplattform (Stand 2026-09-08)
+# Roadmap v2 — Sprachlernplattform (Stand 2026-09-09)
+
+> **AMENDMENT 09.09.2026 (Nutzerentscheidung):** Französisch wurde **komplett entfernt** — als Ziel- wie als UI-Sprache. Der Sprachkanon ist jetzt **Kern 4: Englisch, Spanisch, Deutsch, Thailändisch**. Der frühere FR-Grundstoff (150 Vokabeln, Drills, UI-Übersetzungen) liegt vollständig im Git-Verlauf (Commits `0c96493`/`0bae43c`) und kann von dort jederzeit zurückgeholt werden. Alle Nennungen von „Kern 5" und Französisch in diesem Dokument sind historisch zu lesen.
 
 Vision des Nutzers, Entscheidungen und Bauplan. Quelle: Gespräch 08.09.2026 (4 Agenten-Recherche: SLA-Forschung, Store-Limits, Code-Audit, Chat-Historie).
 

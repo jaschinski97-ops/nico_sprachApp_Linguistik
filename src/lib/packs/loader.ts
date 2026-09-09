@@ -97,7 +97,7 @@ async function packFileUri(language: PackLanguage, relativePath: string | null):
 
 /** `th-032745955ed8889a` -> `th`; fremde Formen -> null. */
 export function clipLanguageOf(clipId: string): PackLanguage | null {
-  const match = /^(th|en|es|fr|de)-/.exec(clipId);
+  const match = /^(th|en|es|de)-/.exec(clipId);
   return match ? (match[1] as PackLanguage) : null;
 }
 
