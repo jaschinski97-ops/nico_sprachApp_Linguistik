@@ -1,0 +1,11 @@
+{
+  "protocolVersion": 1,
+  "loggedAt": "2026-09-09T15:28:22.459Z",
+  "script": "studio-helper",
+  "action": "openai-tts",
+  "model": "gpt-4o-mini-tts-2025-12-15",
+  "voice": "coral",
+  "items": 1,
+  "result": "ok",
+  "notes": "Zweck th; 41088 Byte Audio"
+}
