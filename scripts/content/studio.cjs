@@ -4,6 +4,12 @@ const path = require('node:path');
 const { Readable } = require('node:stream');
 const { ContentPipeline } = require('./pipeline.cjs');
 const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
+const { loadEnvLocal } = require('../pipeline/env.cjs');
+
+// .env.local (gitignored) füllt leere Umgebungsvariablen — echte env gewinnt.
+// Nutzerentscheidung 09.09.2026: Der Schlüssel steht lokal dauerhaft, statt
+// bei jedem Sitzungsstart neu gesetzt werden zu müssen.
+loadEnvLocal();
 // Beide Loopback-Schreibweisen gültig — der Helper selbst wird über
 // 127.0.0.1 angesprochen (Review P2-5, 2026-09-09).
 const ALLOWED_ORIGINS = new Set(['http://localhost:8081', 'http://127.0.0.1:8081']);

@@ -157,7 +157,12 @@ export function GeneratorCard({
   useEffect(() => {
     (async () => {
       setMode(await getKeyStorageMode());
-      setKeyStored(Boolean(await loadApiKey(provider)));
+      // Nutzerentscheidung 09.09.2026: Der gespeicherte Schlüssel wird ins
+      // Feld geladen und im Klartext angezeigt — es steht eh nur im lokalen
+      // Debug-Studio, und nach einem Neuladen soll nichts neu getippt werden.
+      const stored = await loadApiKey(provider);
+      setKeyStored(Boolean(stored));
+      setKey(stored ?? '');
     })();
   }, [provider]);
 
@@ -168,8 +173,9 @@ export function GeneratorCard({
     }
     await saveApiKey(key, provider);
     setKeyStored(true);
-    setKey('');
-    setNotice('Schlüssel übernommen.');
+    // Feld bleibt gefüllt — der Klartext-Anzeige ist hier ausdrücklich
+    // gewollt (Nutzerentscheidung 09.09.2026).
+    setNotice('Schlüssel übernommen und gespeichert.');
   }, [key, provider]);
 
   const onClearKey = useCallback(async () => {
@@ -396,13 +402,13 @@ export function GeneratorCard({
         <TextInput
           value={key}
           onChangeText={setKey}
-          placeholder={
-            keyStored ? 'gespeichert — zum Ersetzen neu eingeben' : providerInfo.keyPlaceholder
-          }
+          placeholder={providerInfo.keyPlaceholder}
           placeholderTextColor={theme.textSecondary}
-          secureTextEntry
           autoCapitalize="none"
           autoCorrect={false}
+          // Klartext statt Maskierung — ausdrückliche Nutzerentscheidung für
+          // das lokale Debug-Studio (09.09.2026): „steht eh nur im Debugprogramm".
+          editable={!running}
           style={[
             styles.input,
             { color: theme.text, borderColor: Colors.dark.backgroundSelected },
@@ -412,7 +418,9 @@ export function GeneratorCard({
           {providerInfo.needsKey === false ? (
             `${providerInfo.keySource}. Ein hier eingetragener Schlüssel wird nicht verschickt — das Feld kann leer bleiben.`
           ) : mode === 'secure-store' ? (
-            `Wird verschlüsselt auf dem Gerät abgelegt (Keychain/Keystore) und übersteht Neustarts. Jeder Anbieter hat seinen eigenen Platz — der Wechsel hierüber löscht keinen anderen Schlüssel.`
+            `Wird verschlüsselt auf dem Gerät abgelegt (Keychain/Keystore), im Klartext angezeigt und beim Start ins Feld geladen. Jeder Anbieter hat seinen eigenen Platz — der Wechsel hierüber löscht keinen anderen Schlüssel.`
+          ) : mode === 'local-dev' ? (
+            'Wird lokal im Browser (localStorage, Klartext) gespeichert, übersteht das Neuladen und wird beim Start ins Feld geladen — nur im Entwickler-Studio (Nutzerentscheidung 09.09.2026).'
           ) : mode === 'session-only' ? (
             'Im Browser gibt es keine sichere Ablage — der Schlüssel bleibt nur für diese Sitzung im Arbeitsspeicher und ist nach dem Neuladen weg. Das ist Absicht (AE-10).'
           ) : (

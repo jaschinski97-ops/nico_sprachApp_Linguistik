@@ -22,6 +22,10 @@ const fs = require('node:fs');
 const domain = require('./domain.cjs');
 const { decodeAudio } = require('./media.cjs');
 const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
+const { loadEnvLocal } = require('../pipeline/env.cjs');
+
+// .env.local (gitignored) füllt leere Umgebungsvariablen — echte env gewinnt.
+loadEnvLocal();
 const { checkThaiTone } = domain.load('src/lib/content/tone-gate');
 const { planDeliveryAudio } = domain.load('src/lib/content/audio-plan');
 const { BUILTIN_EXAM_MODULES } = domain.load('src/data/exam-modules');

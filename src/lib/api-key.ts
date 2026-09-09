@@ -14,12 +14,18 @@ import { PROVIDERS, ProviderId } from './providers/types';
  * Daraus folgt:
  * - **Nativ (iOS/Android):** Schlüssel liegt im Keychain/Keystore und
  *   übersteht Neustarts.
- * - **Web:** Schlüssel wird **nur im Arbeitsspeicher** gehalten, für die
- *   laufende Sitzung. Nach dem Neuladen muss er erneut eingegeben werden.
- *   Bewusst NICHT in `localStorage`: das wäre für jedes Skript derselben
- *   Herkunft lesbar und bliebe dauerhaft liegen — für einen API-Schlüssel,
- *   der echtes Geld ausgibt, ein schlechter Tausch gegen etwas Bequemlichkeit.
- *   Beim späteren WordPress-Einbau (Phase 8) wäre es noch schlechter.
+ * - **Web, Entwickler-Studio (`__DEV__`):** Schlüssel wird im `localStorage`
+ *   **im Klartext** abgelegt und beim nächsten Start wieder geladen —
+ *   ausdrückliche Nutzerentscheidung vom 09.09.2026 für das lokale Debug-
+ *   Studio: Der Schlüssel soll eingetragen bleiben und sichtbar sein, „es
+ *   steht eh nur im Debug-Programm". Das Studio läuft nur auf localhost und
+ *   ist dev-gegate; Produktions-Web-Builds nutzen weiterhin den reinen
+ *   Sitzungsspeicher. Gegenüber der alten Regel (AE-10, „bewusst NICHT im
+ *   localStorage") ist das bewusste Abweichen: Komfort im lokalen Dev-Werkzeug
+ *   schlägt hier die Theorie, ein echtes Produktverhalten hat diese Ablage
+ *   nie gesehen.
+ * - **Web, Produktion:** Schlüssel bleibt **nur im Arbeitsspeicher**, für die
+ *   laufende Sitzung — nach dem Neuladen weg.
  *
  * Die Weiche stellt `isAvailableAsync()` zur Laufzeit, nicht `Platform.OS` —
  * so verhält sich der Code richtig, falls eine Plattform die sichere Ablage
@@ -32,10 +38,10 @@ import { PROVIDERS, ProviderId } from './providers/types';
  * einen Schlüssel eintippen soll, den er gar nicht braucht.
  *
  * SEIT PHASE 10 SIND ES VIER (Pflicht 4). Am Muster ändert das nichts: nativ
- * Keychain, im Web nur Arbeitsspeicher für die Sitzung, Weiche über
- * `isAvailableAsync()`. Es gilt jetzt **je Anbieter** statt einmalig — die
- * Liste der Anbieter kommt aus `providers/types.ts`, damit es nicht zwei
- * Wahrheiten darüber gibt, welche es gibt.
+ * Keychain, Web-Studio localStorage im Dev-Fall, sonst Arbeitsspeicher für
+ * die Sitzung. Es gilt **je Anbieter** statt einmalig — die Liste der Anbieter
+ * kommt aus `providers/types.ts`, damit es nicht zwei Wahrheiten darüber gibt,
+ * welche es gibt.
  *
  * DER ABLAGENAME FÜR CLAUDE BLEIBT `anthropic-api-key`. Er heißt seit Phase 4
  * so und liegt auf den Geräten der Nutzer im Keychain; ihn zur Sauberkeit
@@ -67,9 +73,41 @@ const sessionOnlyKeys: Record<Provider, string | null> = {
   stability: null,
 };
 
-export type KeyStorageMode = 'secure-store' | 'session-only';
+export type KeyStorageMode = 'secure-store' | 'local-dev' | 'session-only';
 
 let cachedMode: KeyStorageMode | null = null;
+
+/**
+ * localStorage-Nutzung nur im Entwickler-Build (das Web-Studio läuft dort).
+ * Produktions-Web bekommt den reinen Sitzungsspeicher — die Klartext-Ablage
+ * ist eine bewusste Dev-Entscheidung (siehe Kopfkommentar) und soll niemals
+ * in einen Release wandern.
+ */
+function localStorageAvailable(): boolean {
+  if (typeof __DEV__ !== 'undefined' && !__DEV__) return false;
+  try {
+    return typeof localStorage !== 'undefined' && localStorage !== null;
+  } catch {
+    return false;
+  }
+}
+
+function readLocalStorage(provider: Provider): string | null {
+  try {
+    return localStorage.getItem(KEY_NAMES[provider]);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalStorage(provider: Provider, value: string | null): void {
+  try {
+    if (value === null) localStorage.removeItem(KEY_NAMES[provider]);
+    else localStorage.setItem(KEY_NAMES[provider], value);
+  } catch {
+    // Speichern gescheitert (Privatmodus, Vollstand) — wie session-only behandeln.
+  }
+}
 
 export async function getKeyStorageMode(): Promise<KeyStorageMode> {
   if (cachedMode) return cachedMode;
@@ -79,13 +117,18 @@ export async function getKeyStorageMode(): Promise<KeyStorageMode> {
   } catch {
     available = false;
   }
-  cachedMode = available ? 'secure-store' : 'session-only';
+  if (available) cachedMode = 'secure-store';
+  else cachedMode = localStorageAvailable() ? 'local-dev' : 'session-only';
   return cachedMode;
 }
 
 export async function loadApiKey(provider: Provider): Promise<string | null> {
-  if ((await getKeyStorageMode()) === 'session-only') {
+  const mode = await getKeyStorageMode();
+  if (mode === 'session-only') {
     return sessionOnlyKeys[provider];
+  }
+  if (mode === 'local-dev') {
+    return readLocalStorage(provider);
   }
   try {
     return await SecureStore.getItemAsync(KEY_NAMES[provider]);
@@ -96,7 +139,8 @@ export async function loadApiKey(provider: Provider): Promise<string | null> {
 
 export async function saveApiKey(key: string, provider: Provider): Promise<void> {
   const trimmed = key.trim();
-  if ((await getKeyStorageMode()) === 'session-only') {
+  const mode = await getKeyStorageMode();
+  if (mode === 'session-only') {
     sessionOnlyKeys[provider] = trimmed || null;
     return;
   }
@@ -104,12 +148,21 @@ export async function saveApiKey(key: string, provider: Provider): Promise<void>
     await clearApiKey(provider);
     return;
   }
+  if (mode === 'local-dev') {
+    writeLocalStorage(provider, trimmed);
+    return;
+  }
   await SecureStore.setItemAsync(KEY_NAMES[provider], trimmed);
 }
 
 export async function clearApiKey(provider: Provider): Promise<void> {
   sessionOnlyKeys[provider] = null;
-  if ((await getKeyStorageMode()) === 'session-only') return;
+  const mode = await getKeyStorageMode();
+  if (mode === 'local-dev') {
+    writeLocalStorage(provider, null);
+    return;
+  }
+  if (mode === 'session-only') return;
   try {
     await SecureStore.deleteItemAsync(KEY_NAMES[provider]);
   } catch {
@@ -119,7 +172,10 @@ export async function clearApiKey(provider: Provider): Promise<void> {
 
 /** Nur für Tests. */
 export function resetKeyStorageForTests(): void {
-  for (const provider of PROVIDERS) sessionOnlyKeys[provider] = null;
+  for (const provider of PROVIDERS) {
+    sessionOnlyKeys[provider] = null;
+    if (localStorageAvailable()) writeLocalStorage(provider, null);
+  }
   cachedMode = null;
 }
 
