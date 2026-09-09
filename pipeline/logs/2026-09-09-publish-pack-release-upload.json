@@ -1,0 +1,14 @@
+{
+  "protocolVersion": 1,
+  "loggedAt": "2026-09-09T12:00:32.876Z",
+  "script": "publish-pack",
+  "action": "release-upload",
+  "items": 1,
+  "checks": {
+    "gh": "missing",
+    "sha256": "5c2790a702b4c160767f6ccfbc4a86eef75d7f63d422ae49b7be018fadf7f562",
+    "bytes": 12
+  },
+  "result": "blocked",
+  "notes": "gh fehlt; manuelle Schritte ausgegeben, kein Upload"
+}

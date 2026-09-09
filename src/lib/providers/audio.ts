@@ -159,6 +159,73 @@ export function createOpenAiAudioClient(apiKey: string, model: string, voice: st
 }
 
 // ---------------------------------------------------------------------------
+// ChatGPT über den lokalen Helper des Studios (Roadmap v2, Phase 2)
+// ---------------------------------------------------------------------------
+
+/** Basis des lokalen Inhaltsstudios — derselbe Ort wie `dev/content-client`. */
+export const HELPER_BASE = 'http://127.0.0.1:8082';
+
+/**
+ * Der TTS-Durchgang des Helpers (Vertrag in `scripts/content/studio.cjs`,
+ * dort mit node:test geprüft): POST mit JSON `{text, voice?, model?,
+ * purpose?}`, Antwort sind die **rohen MP3-Bytes**. Der Schlüssel kommt
+ * serverseitig aus der Umgebung (`OPENAI_API_KEY`) — hier wird keiner
+ * geschickt, und ein im Gerät gespeicherter wird nie angefasst.
+ */
+export const OPENAI_HELPER_TTS_ENDPOINT = `${HELPER_BASE}/api/openai/tts`;
+
+export function createOpenAiHelperAudioClient(model: string, voice: string): AudioClient {
+  return {
+    provider: 'chatgpt-helper',
+    model,
+    voice,
+    async synthesize(request: AudioRequest): Promise<AudioResponse> {
+      const { bytes, contentType } = await postForBytes({
+        url: OPENAI_HELPER_TTS_ENDPOINT,
+        headers: {},
+        // `purpose` ist beim Helper ein freier kurzer Text und landet im
+        // Lauf-Protokoll — die Sprache ist der Zweck, den wir kennen.
+        body: { text: request.text, voice, model, purpose: request.language },
+      });
+      if (contentType && !/audio\/mpeg|audio\/mp3|octet-stream/i.test(contentType)) {
+        throw new Error(`Unerwarteter Inhaltstyp "${contentType}" statt Audio.`);
+      }
+      if (bytes.byteLength < 100) {
+        throw new Error(`Antwort zu klein für eine Audiodatei (${bytes.byteLength} Byte).`);
+      }
+      return { base64: bytesToBase64(new Uint8Array(bytes)), format: 'mp3', model, voice };
+    },
+  };
+}
+
+/**
+ * Ist der Helper überhaupt da?
+ *
+ * Der Health-Check greift auf `GET /state` zurück — denselben billigen,
+ * schlüssellosen Endpunkt, den auch jeder Studio-Start aufruft. Kurzes
+ * Zeitlimit: Ein Helper, der in 1,5 s nicht antwortet, läuft nicht, und die
+ * Voreinstellung soll dann eben der Direktpfad bleiben.
+ */
+export async function helperAudioAvailable(timeoutMs = 1500): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(`${HELPER_BASE}/state`, {
+        method: 'GET',
+        credentials: 'omit',
+        signal: controller.signal,
+      });
+      return response.ok;
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
 
 export function createAudioClient(
   provider: ProviderId,
@@ -171,6 +238,10 @@ export function createAudioClient(
       return createGeminiAudioClient(apiKey, model, voice);
     case 'chatgpt':
       return createOpenAiAudioClient(apiKey, model, voice);
+    // Der Helper braucht den Schlüssel nicht — er bringt seinen eigenen
+    // serverseitig mit. Der Parameter bleibt ungenutzt.
+    case 'chatgpt-helper':
+      return createOpenAiHelperAudioClient(model, voice);
     default:
       throw unsupported(provider, 'audio');
   }

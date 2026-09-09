@@ -37,9 +37,18 @@ import { SpeechLanguage } from '../audio';
  * und ein Bildgenerator, dessen einzige verbliebene Anbieter beide erst noch
  * mit einem bezahlten Schlüssel zu belegen wären, wäre ein Rückschritt
  * gegenüber dem, was heute nachweislich läuft.
+ *
+ * `chatgpt-helper` ist kein Cloud-Anbieter, sondern der lokale Helper des
+ * Inhaltsstudios (Roadmap v2, Phase 2): Er reicht Sprachausgabe an OpenAI
+ * **serverseitig** durch — der Schlüssel steht in der Umgebung des Helpers
+ * (env `OPENAI_API_KEY`) und wird nie im Browser angetastet. Er spricht nur
+ * Sprachausgabe und taucht deshalb nur in der Hörclip-Gruppe auf.
  */
-export const PROVIDERS = ['claude', 'chatgpt', 'gemini', 'stability'] as const;
+export const PROVIDERS = ['claude', 'chatgpt', 'chatgpt-helper', 'gemini', 'stability'] as const;
 export type ProviderId = (typeof PROVIDERS)[number];
+
+/** Der Hörclip-Anbieter für den lokalen Helper des Studios. */
+export const HELPER_AUDIO_PROVIDER: ProviderId = 'chatgpt-helper';
 
 export function isProviderId(value: unknown): value is ProviderId {
   return typeof value === 'string' && (PROVIDERS as readonly string[]).includes(value);
@@ -76,6 +85,13 @@ export type ProviderInfo = {
    * Oberfläche — nativ gibt es kein CORS, dort gilt der Hinweis nicht.
    */
   webWarning: string | null;
+  /**
+   * Braucht dieser Anbieter einen Schlüssel im Gerät, um zu laufen?
+   * Nicht gesetzt heißt: ja. Beim Helper ist es `false` — sein Schlüssel
+   * kommt serverseitig aus der Umgebung; ein hier eingetragener wird
+   * ignoriert.
+   */
+  needsKey?: boolean;
 };
 
 export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
@@ -144,6 +160,35 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     },
     voicePlaceholder: 'Kore',
     webWarning: null,
+  },
+  'chatgpt-helper': {
+    id: 'chatgpt-helper',
+    // Ausdrücklich MIT Ortsangabe: Es ist ein Weg, nicht ein zweites Produkt —
+    // derselbe OpenAI-Dienst hinter dem Direktpfad, nur über den lokalen
+    // Helper des Studios geleitet.
+    label: 'ChatGPT (Helper, localhost:8082)',
+    vendor: 'OpenAI',
+    // Reiner Durchgang zu OpenAI-Sprachausgabe — Text und Bilder kann der
+    // Helper bewusst nicht (kein zweiter Text-/Bildweg neben dem Direktpfad).
+    can: { text: false, image: false, audio: true },
+    keyPlaceholder: '(entfällt — Schlüssel liefert der Helper)',
+    keySource: 'env OPENAI_API_KEY auf dem Helper — Feld hier wird ignoriert',
+    modelPlaceholder: {
+      text: '',
+      image: '',
+      // Derselbe Schnappschuss wie beim Direktpfad; der Helper setzt ihn als
+      // Default, wenn das Feld leer bleibt (scripts/content/studio.cjs).
+      audio: 'gpt-4o-mini-tts-2025-12-15',
+    },
+    voicePlaceholder: 'coral',
+    // Der Helper ist von Haus aus localhost — es gibt keine fremde Origin,
+    // deren CORS man messen müsste. Abhängig von einer Messung wäre der
+    // Direktpfad, nicht der Helper.
+    webWarning: null,
+    // Der Schlüssel steht serverseitig in der Umgebung des Helpers
+    // (OPENAI_API_KEY); ein im Browser eingetragener Schlüssel wird nie
+    // verschickt. Deshalb braucht dieser Weg keinen.
+    needsKey: false,
   },
   stability: {
     id: 'stability',

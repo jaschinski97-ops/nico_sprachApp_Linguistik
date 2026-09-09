@@ -50,6 +50,10 @@ export { PROVIDERS };
 const KEY_NAMES: Record<Provider, string> = {
   claude: 'anthropic-api-key',
   chatgpt: 'openai-api-key',
+  // Der Helper hält seinen Schlüssel serverseitig in der Umgebung — für ihn
+  // gibt es trotzdem einen eigenen Ablagenamen, damit die Struktur stimmt,
+  // auch wenn ihn niemand nützen sollte.
+  'chatgpt-helper': 'openai-helper-api-key',
   gemini: 'gemini-api-key',
   stability: 'stability-api-key',
 };
@@ -58,6 +62,7 @@ const KEY_NAMES: Record<Provider, string> = {
 const sessionOnlyKeys: Record<Provider, string | null> = {
   claude: null,
   chatgpt: null,
+  'chatgpt-helper': null,
   gemini: null,
   stability: null,
 };

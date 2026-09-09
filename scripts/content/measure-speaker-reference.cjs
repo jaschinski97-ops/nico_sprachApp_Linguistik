@@ -2,7 +2,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
-const report = JSON.parse(fs.readFileSync(path.join(root, 'content/tone-calibration.json')));
+// Quelle ist der Bericht der Gegenmessung aus pipeline/reports/ (seit der
+// pipeline/-Struktur; alte Kopie unter content/ ist veraltet).
+const report = JSON.parse(fs.readFileSync(path.join(root, 'pipeline/reports/tone-calibration.json')));
 const quantile = (values, p) => {
   const a = [...values].sort((a,b) => a-b); if (!a.length) return null;
   const at = (a.length - 1) * p, lo = Math.floor(at), hi = Math.ceil(at);
@@ -11,7 +13,7 @@ const quantile = (values, p) => {
 const summary = values => ({ n: values.length, medianHz: quantile(values, .5),
   q1Hz: quantile(values, .25), q3Hz: quantile(values, .75), minHz: quantile(values, 0), maxHz: quantile(values, 1) });
 const groups = [...new Set(report.entries.map(entry => entry.provider + ':' + entry.voice))];
-const result = { measuredAt: new Date().toISOString(), source: 'content/tone-calibration.json',
+const result = { measuredAt: new Date().toISOString(), source: 'pipeline/reports/tone-calibration.json',
   method: 'Median of accepted F0 frames per clip, then equal-weight clip summary. Frame counts are not independent repetitions.',
   sufficientForRegisterGate: false,
   conclusion: 'A mixed-tone median is descriptive, not a validated register reference. One token per Microsoft word/tone, no independent repetitions or held-out labelled recordings; Gemini sample not balanced across tones. No universal minimum clip count or spread threshold established by these data.',
@@ -25,5 +27,6 @@ const result = { measuredAt: new Date().toISOString(), source: 'content/tone-cal
     return { voice: key, clips: clips.length, distinctTexts: new Set(clips.map(clip => clip.text)).size,
       clipMedians: summary(clips.map(clip => clip.medianHz).filter(value => value !== null)), recordings: clips };
   }) };
-fs.writeFileSync(path.join(root, 'content/speaker-reference-audit.json'), JSON.stringify(result, null, 2) + '\n');
+fs.mkdirSync(path.join(root, 'pipeline/reports'), { recursive: true });
+fs.writeFileSync(path.join(root, 'pipeline/reports/speaker-reference-audit.json'), JSON.stringify(result, null, 2) + '\n');
 console.log(JSON.stringify(result.voices.map(({ recordings, ...voice }) => voice), null, 2));

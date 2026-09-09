@@ -54,6 +54,28 @@ unverändert. Das Studio exportiert keine Lernerdaten.
 
 ## Berichte und reproduzierbare Prüfungen
 
+**Seit der pipeline/-Struktur (09.09.2026) werden generierte Berichte nach
+`pipeline/reports/` geschrieben, und jedes KI-Lauf wird unter `pipeline/logs/`
+protokolliert** (`scripts/pipeline/protocol.cjs`: ein JSON je Lauf plus
+`index.ndjson`). Die hier liegenden JSON-Dateien sind **veraltete Kopien**;
+weitergeschrieben wird nur noch nach `pipeline/reports/`:
+
+- `automatic-checks.json` → `pipeline/reports/automatic-checks.json`
+- `size-report.json` → `pipeline/reports/size-report.json`
+- `tone-calibration.json` → `pipeline/reports/tone-calibration.json`
+- `speaker-reference-audit.json` → `pipeline/reports/speaker-reference-audit.json`
+- `asset-bundling-verification.json` → `pipeline/reports/asset-bundling-verification.json`
+- `completeness-report.json` und `production-verification.json` haben keinen
+  aktiven Schreiber mehr; künftige Fassungen gehören ebenfalls nach
+  `pipeline/reports/`.
+
+Der TTS-Proxy für das Web-Studio läuft im Helper (`npm run content:studio`,
+nur Loopback): `POST http://127.0.0.1:8082/api/openai/tts` mit
+`{ text, voice, model, purpose }` — Schlüssel ausschließlich aus
+`OPENAI_API_KEY` der Helper-Umgebung, max. 2000 Zeichen, max. 30 Aufrufe/Minute.
+Pakete für GitHub Releases: `node scripts/pipeline/publish-pack.cjs --lang th
+--version 1 --file dist/packs/pack-th-v1.zip`.
+
 - `automatic-checks.json`: Status, Grund, verifiziertes Tonziel, Konturwerte und
   vollständige F0-Spuren des letzten übernommenen/ausgeschlossenen Bestands.
 - `tone-calibration.json`: zehn Gemini-Clips vorher/nachher und zehn Microsoft-

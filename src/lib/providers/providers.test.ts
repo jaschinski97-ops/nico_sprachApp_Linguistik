@@ -125,8 +125,20 @@ function fakeImageClient() {
 // ---------------------------------------------------------------------------
 
 describe('Fähigkeiten der Anbieter', () => {
-  it('führt genau die drei geforderten Anbieter plus den Bestandsanbieter', () => {
-    expect([...PROVIDERS]).toEqual(['claude', 'chatgpt', 'gemini', 'stability']);
+  it('führt genau die drei geforderten Anbieter, den Bestandsanbieter und den Studio-Helper', () => {
+    // `chatgpt-helper` ist kein Cloud-Anbieter, sondern der lokale Durchgang
+    // des Inhaltsstudios (Roadmap v2, Phase 2) — nur für Sprachausgabe.
+    expect([...PROVIDERS]).toEqual(['claude', 'chatgpt', 'chatgpt-helper', 'gemini', 'stability']);
+  });
+
+  it('der Helper spricht, aber ohne eigenen Schlüsselbedarf im Gerät', () => {
+    expect(PROVIDER_INFO['chatgpt-helper'].can).toEqual({ text: false, image: false, audio: true });
+    expect(PROVIDER_INFO['chatgpt-helper'].needsKey).toBe(false);
+    // Nur der Helper braucht keinen Schlüssel im Gerät.
+    for (const id of PROVIDERS) {
+      if (id === 'chatgpt-helper') continue;
+      expect(PROVIDER_INFO[id].needsKey ?? true).toBe(true);
+    }
   });
 
   it('lässt Claude keine Bilder erzeugen', () => {

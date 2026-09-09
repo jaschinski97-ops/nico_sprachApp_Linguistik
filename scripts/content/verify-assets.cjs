@@ -48,7 +48,8 @@ function verifyContentAssets(root, exported) {
 if (require.main === module) {
   const root = path.resolve(__dirname, '../..');
   const report = verifyContentAssets(root, path.resolve(process.argv[2] ?? 'build-verification/production'));
-  fs.writeFileSync(path.join(root, 'content/asset-bundling-verification.json'), JSON.stringify(report, null, 2) + '\n');
+  fs.mkdirSync(path.join(root, 'pipeline/reports'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'pipeline/reports/asset-bundling-verification.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify({ media: report.media, byteComparisons: report.rows.length, platforms: ['ios', 'android', 'web'], allIdentical: true }, null, 2));
 }
 module.exports = { verifyContentAssets };

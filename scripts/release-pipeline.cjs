@@ -1,7 +1,9 @@
 // Release-Pipeline: führt die vorhandenen Prüfungen in fester Reihenfolge aus.
 // Jeder Schritt erbt die Konsole; der erste Fehler bricht die Pipeline ab.
+// Der gesamte Lauf wird in pipeline/logs/ protokolliert (scripts/pipeline/protocol.cjs).
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
+const { tryWriteProtocol } = require('./pipeline/protocol.cjs');
 const root = path.resolve(__dirname, '..');
 
 const steps = [
@@ -13,12 +15,28 @@ const steps = [
   ['Testreihe', 'npx jest --ci'],
 ];
 
+const checks = [];
+let failedLabel = null;
+let failedStatus = null;
 for (const [label, command] of steps) {
   console.log(`\n=== ${label}\n    $ ${command}`);
   const result = spawnSync(command, { shell: true, cwd: root, stdio: 'inherit' });
-  if (result.status !== 0) {
+  const passed = result.status === 0;
+  checks.push({ label, command, status: passed ? 'passed' : `failed (exit ${result.status ?? 'signal'})` });
+  if (!passed) {
+    failedLabel = label;
+    failedStatus = result.status ?? 1;
     console.error(`\nPipeline abgebrochen bei: ${label}`);
-    process.exit(result.status ?? 1);
+    break;
   }
 }
+tryWriteProtocol({
+  script: 'release-pipeline',
+  action: 'release',
+  items: checks.length,
+  checks: { steps: checks, remainingSteps: failedLabel ? steps.length - checks.length : 0 },
+  result: failedLabel ? 'failed' : 'ok',
+  notes: failedLabel ? `abgebrochen bei: ${failedLabel}` : 'alle Schritte bestanden — bereit für Build/Release',
+});
+if (failedLabel) process.exit(failedStatus);
 console.log('\nPipeline vollständig bestanden — bereit für Build/Release.');

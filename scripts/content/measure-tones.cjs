@@ -22,6 +22,7 @@ const { analyzeToneContour } = domain.load('src/lib/speaking/analysis');
 const { checkThaiTone, TONE_GATE_LIMITS } = domain.load('src/lib/content/tone-gate');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { clipIdFor } = domain.load('src/lib/clips/types');
+const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
 const root = path.resolve(__dirname, '../..');
 
 const inputs = [];
@@ -104,11 +105,21 @@ const report = { measuredAt: new Date().toISOString(), decoder: 'FFmpeg mono 24 
       before: summary(analyzeToneContour(pcm, 24000, undefined, false)),
       after: summary(analyzeToneContour(pcm, 24000)), check: checkThaiTone(document, pcm, 24000) };
   }) };
-fs.writeFileSync(path.join(root, 'content/tone-calibration.json'), JSON.stringify(report, null, 2) + '\n');
+const reportsDir = path.join(root, 'pipeline/reports');
+fs.mkdirSync(reportsDir, { recursive: true });
+fs.writeFileSync(path.join(reportsDir, 'tone-calibration.json'), JSON.stringify(report, null, 2) + '\n');
 
 const thai = report.entries.filter(entry => entry.check.status !== 'not-applicable');
 const counts = {};
 for (const entry of thai) counts[entry.check.status] = (counts[entry.check.status] ?? 0) + 1;
+tryWriteProtocol({
+  script: 'measure-tones',
+  action: 'measure',
+  items: report.entries.length,
+  checks: { sources, thaiCounts: counts },
+  result: 'ok',
+  notes: `Katalog ${sources.catalog}, Entwürfe ${sources.staged}, Manifest ${sources.manifest}, fehlende Dateien ${sources.missingFiles}`,
+});
 console.log(`Gegenmessung: ${report.entries.length} Audios gemessen (Katalog ${sources.catalog}, Entwuerfe ${sources.staged}, Manifest ${sources.manifest}, fehlende Dateien ${sources.missingFiles}), davon ${thai.length} Thai.`);
 console.log('Thai nach Gate-Status:', JSON.stringify(counts));
 console.log('Nicht bestanden / ungeprueft (Thai):');

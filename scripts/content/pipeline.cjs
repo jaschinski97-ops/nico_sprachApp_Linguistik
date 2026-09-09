@@ -13,6 +13,7 @@ const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { checkThaiTone, TONE_GATE_LIMITS } = domain.load('src/lib/content/tone-gate');
 const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
 const { decodeAudio, decodeImage } = require('./media.cjs');
+const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
 
 const KINDS = ['situations', 'images', 'audio', 'exam'];
 // TEST-BUDGET (08.09.2026): 256 MiB, damit der vollstaendige Audio-Bedarf
@@ -79,7 +80,9 @@ class ContentPipeline {
     this.work = path.join(root, '.content-studio');
     this.stageFile = path.join(this.work, 'stage.json');
     this.catalogFile = path.join(root, 'src/content/catalog.json');
-    this.reportFile = path.join(root, 'content/automatic-checks.json');
+    // Berichte leben seit der pipeline/-Struktur (ROADMAP v2, Phase 2) unter
+    // pipeline/reports/; alte Kopien in content/ sind veraltet (content/README.md).
+    this.reportFile = path.join(root, 'pipeline/reports/automatic-checks.json');
   }
   async catalog() { return readJson(this.catalogFile, { version: 2, entries: [] }); }
   async state() {
@@ -202,7 +205,15 @@ class ContentPipeline {
       budgetBytes: delivered.reduce((sum, entry) => sum + shippingBytes(entry), 0),
       audio: delivered.filter((entry) => entry.kind === 'audio').map((entry) => ({ id: entry.id, sourceBytes: entry.sourceBytes, compressedBytes: entry.byteSize })),
     };
-    await atomicJson(path.join(this.root, 'content/size-report.json'), report);
+    await atomicJson(path.join(this.root, 'pipeline/reports/size-report.json'), report);
+    tryWriteProtocol({
+      script: 'content-pipeline',
+      action: 'publish',
+      items: delivered.length,
+      checks: { unchecked: report.unchecked, uncheckedThaiDelivered: report.uncheckedThaiDelivered, failed: report.failed, budgetBytes: report.budgetBytes },
+      result: report.failed ? 'partial' : 'ok',
+      notes: `übernommen ${delivered.length}, aussortiert ${report.failed}, Budget ${Math.round(report.budgetBytes / 1024 / 1024)} MiB`,
+    }, { root: this.root });
     // Metro indiziert neue Dateien asynchron. Erscheint assets.ts im selben
     // Augenblick wie hunderte neue MP3s, baut Metro mit veraltetem Index und
     // meldet "Unable to resolve" fuer Dateien, die laengst da sind. Die kurze

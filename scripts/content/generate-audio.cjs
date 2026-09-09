@@ -21,6 +21,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const domain = require('./domain.cjs');
 const { decodeAudio } = require('./media.cjs');
+const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
 const { checkThaiTone } = domain.load('src/lib/content/tone-gate');
 const { planDeliveryAudio } = domain.load('src/lib/content/audio-plan');
 const { BUILTIN_EXAM_MODULES } = domain.load('src/data/exam-modules');
@@ -44,6 +45,9 @@ const workDir = path.join(root, '.content-studio');
 const inputFile = path.join(workDir, `generate-input-${process.pid}.wav`);
 const key = process.env.OPENAI_API_KEY;
 if (!key) { console.error('OPENAI_API_KEY fehlt in der Umgebung.'); process.exit(1); }
+// Lauf-Protokoll (pipeline/logs): Zähle den Lauf von Anfang an, damit auch
+// Abbrüche und der Nichts-zu-tun-Fall sichtbar bleiben.
+const run = { staged: 0, failed: 0, result: 'started', notes: '' };
 fs.mkdirSync(workDir, { recursive: true });
 
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/content/catalog.json'), 'utf8'));
@@ -64,7 +68,12 @@ const specs = planDeliveryAudio(situations, BUILTIN_EXAM_MODULES)
   .filter((spec) => !delivered.has(spec.id) && !stagedOk.has(spec.id))
   .slice(0, limit || undefined);
 
-if (specs.length === 0 && stagedOk.size === 0) { console.log('Nichts zu tun: alle Audios dieses Umfangs liegen im Katalog.'); process.exit(0); }
+if (specs.length === 0 && stagedOk.size === 0) {
+  console.log('Nichts zu tun: alle Audios dieses Umfangs liegen im Katalog.');
+  run.result = 'nothing-to-do';
+  tryWriteProtocol({ script: 'generate-audio', action: 'tts-batch', model: MODEL, voice: VOICE, items: 0, result: 'nothing-to-do', notes: 'alle Audios dieses Umfangs liegen im Katalog' });
+  process.exit(0);
+}
 const byKind = {};
 const byLanguage = {};
 for (const spec of specs) {
@@ -243,6 +252,11 @@ async function main() {
   }
 
   console.log(`\nStaging fertig: ${staged} gestagt, ${failed.length} ausgeschieden. Lauf ${(Math.round((Date.now() - started) / 60000))} min.`);
+  run.staged = staged;
+  run.failed = failed.length;
+  run.result = failed.length ? 'partial' : 'ok';
+  run.notes = `gestagt ${staged}, ausgeschieden ${failed.length}, Publish ${publish ? 'an' : 'aus'}`;
+  tryWriteProtocol({ script: 'generate-audio', action: 'tts-batch', model: MODEL, voice: VOICE, items: staged, checks: { failed: failed.length, reasons: failed.slice(0, 20) }, result: run.result, notes: run.notes });
   if (publish && sincePublish > 0) await publishBatch(staged);
   if (failed.length) {
     console.log('\nAusgeschieden (neu anlaufen lassen oder Stimme wechseln):');
@@ -252,5 +266,9 @@ async function main() {
 }
 
 main()
-  .catch((error) => { console.error(error); process.exitCode = 1; })
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+    tryWriteProtocol({ script: 'generate-audio', action: 'tts-batch', model: MODEL, voice: VOICE, items: run.staged, result: 'error', notes: String(error.message ?? error).slice(0, 300) });
+  })
   .finally(() => { fs.rmSync(inputFile, { force: true }); });

@@ -1,0 +1,22 @@
+{
+  "protocolVersion": 1,
+  "loggedAt": "2026-09-09T11:56:45.883Z",
+  "script": "measure-tones",
+  "action": "measure",
+  "items": 3301,
+  "checks": {
+    "sources": {
+      "catalog": 3296,
+      "staged": 5,
+      "manifest": 0,
+      "missingFiles": 0
+    },
+    "thaiCounts": {
+      "unchecked": 3085,
+      "passed": 17,
+      "failed": 5
+    }
+  },
+  "result": "ok",
+  "notes": "Katalog 3296, Entwürfe 5, Manifest 0, fehlende Dateien 0"
+}

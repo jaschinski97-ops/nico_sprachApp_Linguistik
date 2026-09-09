@@ -32,8 +32,10 @@ import { vocabularyFor } from '@/data/vocabulary';
 import { LanguageCode } from '@/lib/languages/types';
 import { languageOf } from '@/lib/languages/registry';
 import { loadProfile } from '@/lib/profile';
+import { HELPER_AUDIO_PROVIDER, ProviderId } from '@/lib/providers/types';
 import {
   defaultSettings,
+  GENERATOR_GROUP_INFO,
   GeneratorChoice,
   GeneratorGroupId,
   GeneratorSettings,
@@ -41,6 +43,7 @@ import {
   setGeneratorChoice,
   setGeneratorProvider,
 } from '@/lib/providers/settings';
+import { helperAudioAvailable } from '@/lib/providers/audio';
 import {
   clearAudioClips,
   clearGeneratedExamModules,
@@ -54,7 +57,6 @@ import {
   loadSituations,
   sumAudioClipBytes,
 } from '@/lib/repository';
-import { ProviderId } from '@/lib/providers/types';
 
 /**
  * Alle drei Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`),
@@ -200,6 +202,7 @@ export default function SettingsScreen() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     refreshSituations();
     refreshImages();
     refreshExams();
@@ -209,7 +212,28 @@ export default function SettingsScreen() {
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
     getImageBlobStore().then(() => setBlobBackend(getActiveBlobBackend()));
     loadProfile().then((profile) => setMediaLanguage(profile.language));
-    loadGeneratorSettings().then(setGenerators);
+    // Studio-Vorgabe (Roadmap v2, Phase 2): Hörclips laufen über den lokalen
+    // Helper, wenn er erreichbar ist — sein Schlüssel bleibt serverseitig.
+    // Aber nur solange die Gruppe noch ihre Werksvorgabe trägt: Eine bewusst
+    // gespeicherte Wahl (etwa Gemini direkt) wird nicht still umgebogen, und
+    // ohne Helper gilt der Direktpfad wie bisher.
+    (async () => {
+      const stored = await loadGeneratorSettings();
+      if (
+        stored.audio.provider === GENERATOR_GROUP_INFO.audio.defaultProvider &&
+        (await helperAudioAvailable())
+      ) {
+        const next = await setGeneratorProvider('audio', HELPER_AUDIO_PROVIDER);
+        if (!cancelled) setGenerators(next);
+        return;
+      }
+      if (!cancelled) setGenerators(stored);
+    })().catch(() => {
+      // Ohne Speicherstand bleibt die Werksvorgabe der Gruppe stehen.
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [refreshSituations, refreshImages, refreshExams, refreshClips]);
 
   /**
@@ -285,7 +309,9 @@ export default function SettingsScreen() {
         // 6500 ms. Mit aktivierter Abrechnung (AE-68) heben sich die Limits
         // deutlich; 1200 ms liegen mit ~50/min sicher darunter und halten
         // einen Auslieferungslauf von Stunden auf Minuten.
-        delayMs: provider === 'gemini' ? 1200 : 600,
+        // Der Helper begrenzt sich selbst auf 30 Aufrufe/Minute — 2200 ms
+        // bleiben mit Pause auch bei kurzzeitiger Frame-Verzögerung darunter.
+        delayMs: provider === 'gemini' ? 1200 : provider === 'chatgpt-helper' ? 2200 : 600,
       });
       await exportDrafts(setExportMessage);
       setReportRevision(value => value + 1);
@@ -372,7 +398,7 @@ export default function SettingsScreen() {
         group="audio"
         choice={generators.audio}
         onChoiceChange={(change) => changeGenerator('audio', change)}
-        statusLine={`Im Speicher: ${clips === null ? '…' : `${clips.count} Clips, ${formatBytes(clips.bytes)}`} · Ablage ${clipBackend ?? '…'}${generators.audio.provider === 'gemini' ? ' · Pause je Aufruf: 6,5 Sekunden (Gemini-Ratenlimit)' : ''}`}
+        statusLine={`Im Speicher: ${clips === null ? '…' : `${clips.count} Clips, ${formatBytes(clips.bytes)}`} · Ablage ${clipBackend ?? '…'}${generators.audio.provider === 'gemini' ? ' · Pause je Aufruf: 6,5 Sekunden (Gemini-Ratenlimit)' : ''}${generators.audio.provider === 'chatgpt-helper' ? ' · Pause je Aufruf: 2,2 Sekunden (Helper-Ratenlimit, 30/min) · Schlüssel serverseitig' : ''}`}
         runOptions={clipRunOptions(storedSituations, generators.audio.provider, mediaLanguage, storedExams).options}
         onStart={startClips}
         onDelete={clearAudioClips}
