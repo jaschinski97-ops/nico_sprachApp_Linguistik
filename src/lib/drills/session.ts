@@ -2,12 +2,15 @@ import { VocabEntry } from '@/data/vocab-types';
 
 import { retrievability } from '../fsrs/fsrs';
 import { FSRSCardState } from '../fsrs/types';
-import { LanguageCode } from '../languages/types';
+import { TargetLanguage } from '../languages/types';
 import { ensureCardStates } from '../review-session';
 import { DataStore, getStore } from './../storage';
 
 import {
+  buildAccentFrQuestion,
   buildArticleQuestion,
+  buildFrStressQuestion,
+  buildMuteEQuestion,
   buildSoundSpellingQuestion,
   buildSpellingQuestion,
   buildStressHearQuestion,
@@ -15,7 +18,10 @@ import {
   buildToneQuestion,
   buildToneRuleQuestion,
   buildVerbFormQuestion,
+  canBuildAccentFrQuestion,
   canBuildArticleQuestion,
+  canBuildFrStressQuestion,
+  canBuildMuteEQuestion,
   canBuildSoundSpellingQuestion,
   canBuildSpellingQuestion,
   canBuildStressHearQuestion,
@@ -58,8 +64,13 @@ export type DrillSessionOptions = {
    * gilt fuer jedes "X -> Deutsch" (Pflicht 6 aus Phase 15), und welches X
    * gemeint ist, kann diese Datei nicht wissen. Ein stiller Vorgabewert
    * 'th' wuerde spanische Sitzungen klammheimlich mit Thai-Karten fuellen.
+   *
+   * SEIT DEM PAARMATRIX-START VOM TYP `TargetLanguage`: Auch `'fr'` ist
+   * hier formal erlaubt. Der franzoesische Grundstoff ist noch nicht im
+   * App-Bestand, eine Sitzung liefert dann schlicht `available: 0` — ehrlich
+   * leer statt falsch gefuellt.
    */
-  language: LanguageCode;
+  language: TargetLanguage;
   store?: DataStore;
   now?: number;
   size?: number;
@@ -94,6 +105,12 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildStressHearQuestion(entry);
     case 'soundSpelling':
       return canBuildSoundSpellingQuestion(entry);
+    case 'stressFr':
+      return canBuildFrStressQuestion(entry);
+    case 'muteE':
+      return canBuildMuteEQuestion(entry);
+    case 'accentFr':
+      return canBuildAccentFrQuestion(entry);
   }
 }
 
@@ -120,6 +137,12 @@ function buildQuestion(
       return buildStressHearQuestion(entry);
     case 'soundSpelling':
       return buildSoundSpellingQuestion(entry);
+    case 'stressFr':
+      return buildFrStressQuestion(entry);
+    case 'muteE':
+      return buildMuteEQuestion(entry);
+    case 'accentFr':
+      return buildAccentFrQuestion(entry);
   }
 }
 

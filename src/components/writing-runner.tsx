@@ -7,7 +7,8 @@ import { ThemedView } from './themed-view';
 
 import { Colors, Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
-import { Direction, RATING_LABELS } from '@/lib/fsrs/types';
+import { useLocale, type TranslationKey } from '@/lib/i18n';
+import { Direction, type Rating } from '@/lib/fsrs/types';
 import {
   buildWritingSession,
   ratingExplanation,
@@ -34,13 +35,25 @@ import { WritingLanguage } from '@/lib/writing/compare';
  */
 
 /** Was in der Aufgabenzeile steht — je nachdem, welche Sprache getippt wird. */
-const AUFGABENTEXT: Record<WritingLanguage, string> = {
-  de: 'Wie heißt das auf Deutsch? Mit Artikel, falls es einen gibt.',
-  th: 'Wie schreibt man das auf Thai? Mit Tonzeichen.',
-  es: 'Wie schreibt man das auf Spanisch? Mit Akzentzeichen.',
-  en: 'Wie schreibt man das auf Englisch?',
+const AUFGABEN_KEYS: Record<WritingLanguage, TranslationKey> = {
+  de: 'writing.promptDe',
+  th: 'writing.promptTh',
+  es: 'writing.promptEs',
+  en: 'writing.promptEn',
 };
 
+/** FSRS-Bewertung → i18n-Key (die Labels selbst stehen in den Wörterbüchern). */
+const RATING_KEYS: Record<Rating, TranslationKey> = {
+  1: 'rating.again',
+  2: 'rating.hard',
+  3: 'rating.good',
+  4: 'rating.easy',
+};
+
+/**
+ * Platzhalter im Eingabefeld — bewusst in der ZIELsprache, nicht in der
+ * Oberflächensprache: Hier steht, was der Lerner zu tippen im Begriff ist.
+ */
 const PLATZHALTER: Record<WritingLanguage, string> = {
   de: 'deine Antwort',
   th: 'ภาษาไทย',
@@ -71,6 +84,7 @@ export function WritingRunner({
 }) {
   const theme = useTheme();
   const toneColor = useToneColor();
+  const { t } = useLocale();
 
   const [session, setSession] = useState<WritingSession | null>(null);
   const [round, setRound] = useState(0);
@@ -119,7 +133,7 @@ export function WritingRunner({
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="small" themeColor="textSecondary">
-          Runde wird zusammengestellt …
+          {t('writing.assembling')}
         </ThemedText>
       </ThemedView>
     );
@@ -129,9 +143,9 @@ export function WritingRunner({
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="small">
-          Für diese Richtung gibt es noch keine Vokabel mit tippbarer Zielform.
+          {t('writing.noneForDirection')}
         </ThemedText>
-        <ExitButton onExit={onExit} />
+        <ExitButton onExit={onExit} label={t('drill.exit')} />
       </ThemedView>
     );
   }
@@ -141,18 +155,17 @@ export function WritingRunner({
     const missed = results.filter((entry) => !entry.verdict.correct);
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Runde beendet</ThemedText>
+        <ThemedText type="smallBold">{t('drill.roundDone')}</ThemedText>
         <ThemedText type="small">
-          {score.correct} von {score.total} richtig, davon {score.exact} ohne Tippfehler.
+          {t('writing.summary', { correct: score.correct, total: score.total, exact: score.exact })}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Diese Runde zählt als Wiederholung: Anders als die Auswahlübungen schreibt das
-          freie Schreiben den Kartenzustand fort (AE-40).
+          {t('writing.countsAsReview')}
         </ThemedText>
         {missed.length > 0 ? (
           <>
             <ThemedText type="small" themeColor="textSecondary">
-              Das saß noch nicht:
+              {t('drill.mistakesTitle')}
             </ThemedText>
             {missed.map((entry) => (
               <ThemedText key={entry.prompt.id} type="small">
@@ -165,13 +178,13 @@ export function WritingRunner({
           <Pressable
             onPress={() => setRound((current) => current + 1)}
             accessibilityRole="button"
-            accessibilityLabel="Neue Runde"
+            accessibilityLabel={t('drill.newRound')}
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView type="backgroundSelected" style={styles.wide}>
-              <ThemedText type="smallBold">Neue Runde</ThemedText>
+              <ThemedText type="smallBold">{t('drill.newRound')}</ThemedText>
             </ThemedView>
           </Pressable>
-          <ExitButton onExit={onExit} label="Zurück" />
+          <ExitButton onExit={onExit} label={t('common.back')} />
         </View>
       </ThemedView>
     );
@@ -185,14 +198,14 @@ export function WritingRunner({
     <>
       <View style={styles.header}>
         <ThemedText type="small" themeColor="textSecondary">
-          Aufgabe {index + 1} von {session.prompts.length}
+          {t('writing.taskOf', { index: index + 1, total: session.prompts.length })}
         </ThemedText>
-        <ExitButton onExit={onExit} label="Übung verlassen" compact />
+        <ExitButton onExit={onExit} label={t('drill.exit')} compact />
       </View>
 
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">
-          {AUFGABENTEXT[prompt.language]}
+          {t(AUFGABEN_KEYS[prompt.language])}
         </ThemedText>
 
         <View style={styles.promptBlock}>
@@ -216,7 +229,7 @@ export function WritingRunner({
           // Rechtschreibhilfe aus: Sie wuerde genau die Fehler wegkorrigieren,
           // um die es hier geht.
           spellCheck={false}
-          accessibilityLabel="Antwort eingeben"
+          accessibilityLabel={t('writing.inputA11y')}
           style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
 
@@ -235,11 +248,11 @@ export function WritingRunner({
               onPress={submit}
               disabled={busy}
               accessibilityRole="button"
-              accessibilityLabel="Antwort prüfen"
+              accessibilityLabel={t('writing.checkA11y')}
               accessibilityState={{ disabled: busy }}
               style={({ pressed }) => [pressed && styles.pressed, busy && styles.disabled]}>
               <ThemedView type="backgroundSelected" style={styles.wide}>
-                <ThemedText type="smallBold">Prüfen</ThemedText>
+                <ThemedText type="smallBold">{t('writing.check')}</ThemedText>
               </ThemedView>
             </Pressable>
           </View>
@@ -252,10 +265,10 @@ export function WritingRunner({
         <Pressable
           onPress={next}
           accessibilityRole="button"
-          accessibilityLabel="Weiter"
+          accessibilityLabel={t('common.next')}
           style={({ pressed }) => pressed && styles.pressed}>
           <ThemedView type="backgroundSelected" style={styles.wide}>
-            <ThemedText type="smallBold">Weiter</ThemedText>
+            <ThemedText type="smallBold">{t('common.next')}</ThemedText>
           </ThemedView>
         </Pressable>
       ) : null}
@@ -270,6 +283,7 @@ function Feedback({
   result: WritingResult;
   toneColor: (tone: 'mid' | 'falling' | 'low') => string;
 }) {
+  const { t } = useLocale();
   const { verdict, rating, prompt } = result;
   const border = verdict.correct ? toneColor('mid') : toneColor('falling');
 
@@ -278,7 +292,7 @@ function Feedback({
       type="backgroundSelected"
       style={[styles.feedback, { borderColor: border, borderWidth: 2 }]}>
       <ThemedText type="smallBold">
-        {verdict.exact ? '✓ Genau richtig' : verdict.correct ? '✓ Richtig' : '✗ Nicht ganz'}
+        {verdict.exact ? t('drill.exact') : verdict.correct ? t('drill.correct') : t('drill.wrong')}
       </ThemedText>
 
       {verdict.message ? (
@@ -297,7 +311,7 @@ function Feedback({
       {/* Sichtbar machen, was die Antwort mit der Wiederholung macht - sonst
           bliebe unerklaerlich, warum eine Vokabel frueher wiederkommt. */}
       <ThemedText type="small" themeColor="textSecondary">
-        Bewertet als „{RATING_LABELS[rating]}". {ratingExplanation(rating)}
+        {t('rating.ratedAs', { rating: t(RATING_KEYS[rating]), explanation: ratingExplanation(rating) })}
       </ThemedText>
     </ThemedView>
   );
@@ -305,11 +319,11 @@ function Feedback({
 
 function ExitButton({
   onExit,
-  label = 'Übung verlassen',
+  label,
   compact = false,
 }: {
   onExit: () => void;
-  label?: string;
+  label: string;
   compact?: boolean;
 }) {
   return (

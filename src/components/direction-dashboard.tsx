@@ -6,6 +6,7 @@ import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
+import { useLocale } from '@/lib/i18n';
 import { LanguageCode } from '@/lib/languages/types';
 import { directionLabel, DirectionSummary, summarizeAllDirections } from '@/lib/review-session';
 
@@ -17,6 +18,7 @@ import { directionLabel, DirectionSummary, summarizeAllDirections } from '@/lib/
  * verschleiern, dass eine Richtung schon lange liegen geblieben ist.
  */
 export function DirectionDashboard({ language }: { language: LanguageCode }) {
+  const { t } = useLocale();
   const [summaries, setSummaries] = useState<DirectionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,9 +40,9 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
   if (error) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Fällige Karten</ThemedText>
+        <ThemedText type="smallBold">{t('dashboard.title')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht geladen werden: {error}
+          {t('common.loadFailed', { message: error })}
         </ThemedText>
       </ThemedView>
     );
@@ -49,9 +51,9 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
   if (!summaries) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Fällige Karten</ThemedText>
+        <ThemedText type="smallBold">{t('dashboard.title')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Lade Kartenstand …
+          {t('dashboard.loading')}
         </ThemedText>
       </ThemedView>
     );
@@ -71,7 +73,10 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
             asChild>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={`${directionLabel(summary.direction)} lernen, ${summary.due} Karten fällig`}
+              accessibilityLabel={t('dashboard.learnA11y', {
+                direction: directionLabel(summary.direction),
+                count: summary.due,
+              })}
               style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
               <ThemedView type="backgroundElement" style={styles.card}>
                 <ThemedText type="smallBold">
@@ -89,17 +94,20 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
                     {summary.due}
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
-                    {summary.due === 1 ? 'Karte fällig' : 'Karten fällig'}
+                    {summary.due === 1 ? t('dashboard.dueOne') : t('dashboard.dueMany')}
                   </ThemedText>
                 </View>
 
                 <ThemedText type="small" themeColor="textSecondary">
-                  {summary.total} Karten gesamt · {summary.fresh} neu ·{' '}
-                  {summary.mastered} gemeistert
+                  {t('dashboard.totals', {
+                    total: summary.total,
+                    fresh: summary.fresh,
+                    mastered: summary.mastered,
+                  })}
                 </ThemedText>
 
                 <ThemedView type="backgroundSelected" style={styles.cta}>
-                  <ThemedText type="small">Diese Richtung üben →</ThemedText>
+                  <ThemedText type="small">{t('dashboard.cta')}</ThemedText>
                 </ThemedView>
               </ThemedView>
             </Pressable>

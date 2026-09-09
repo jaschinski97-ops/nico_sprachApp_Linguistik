@@ -5,8 +5,26 @@ import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
+import { TranslationKey, useLocale } from '@/lib/i18n';
 import { hasContent, LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
+
+/**
+ * Das Sprachmerkmal als Übersetzungsschlüssel (Registry bleibt unangetastet).
+ * Bewusst als lockere Tabelle mit Vorgabe: Der Sprachkanon wächst gerade
+ * (Roadmap v2), und ein Code ohne Eintrag fällt zur Aussprache-Merkhilfe zurück.
+ */
+const FEATURE_KEYS: Record<string, TranslationKey> = {
+  th: 'feature.tones',
+  es: 'feature.stress',
+  en: 'feature.pronunciation',
+  fr: 'feature.pronunciation',
+  de: 'feature.pronunciation',
+};
+
+function featureKey(code: LanguageCode): TranslationKey {
+  return FEATURE_KEYS[code] ?? 'feature.pronunciation';
+}
 
 /**
  * Welche Sprache gelernt wird (Phase 15).
@@ -32,15 +50,16 @@ export function LanguagePicker({
 }) {
   const toneColor = useToneColor();
   const theme = useTheme();
+  const { t, languageName } = useLocale();
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Sprache</ThemedText>
+      <ThemedText type="smallBold">{t('common.languageLabel')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Deutsch ist immer die eine Seite — gelernt wird in beide Richtungen.
+        {t('picker.hubNote')}
       </ThemedText>
 
-      <View role="radiogroup" accessibilityLabel="Sprache wählen" style={styles.row}>
+      <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')} style={styles.row}>
         {LANGUAGE_ORDER.map((code) => {
           const language = languageOf(code);
           const usable = hasContent(code);
@@ -54,8 +73,14 @@ export function LanguagePicker({
               accessibilityRole="radio"
               accessibilityLabel={
                 usable
-                  ? `${language.label} — ${language.challenge}`
-                  : `${language.label} — noch keine Inhalte. Merkmal ist entschieden: ${language.feature.label}.`
+                  ? `${languageName(code)} — ${language.challenge}`
+                  : `${languageName(code)} — ${t('picker.empty')} ${t('picker.emptyFeature', {
+                      feature: t(featureKey(code)),
+                      kindNote:
+                        language.feature.kind === 'derivable'
+                          ? t('picker.kindDerivable')
+                          : t('picker.kindPerWord'),
+                    })}`
               }
               aria-checked={active}
               accessibilityState={{ disabled: !usable }}
@@ -72,7 +97,7 @@ export function LanguagePicker({
                   !usable && { ...styles.empty, borderColor: theme.borderSubtle },
                 ]}>
                 <View style={styles.head}>
-                  <ThemedText type="smallBold">{language.label}</ThemedText>
+                  <ThemedText type="smallBold">{languageName(code)}</ThemedText>
                   <ThemedText type="small" themeColor="textSecondary">
                     {language.endonym}
                   </ThemedText>
@@ -84,18 +109,23 @@ export function LanguagePicker({
                       {language.challenge}
                     </ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {language.entryCount} Vokabeln · Merkmal: {language.feature.label}
+                      {t('picker.vocabAndFeature', {
+                        count: language.entryCount,
+                        feature: t(featureKey(code)),
+                      })}
                     </ThemedText>
                   </>
                 ) : (
                   <>
-                    <ThemedText type="small">Noch keine Inhalte.</ThemedText>
+                    <ThemedText type="small">{t('picker.empty')}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      Merkmal entschieden: {language.feature.label}
-                      {language.feature.kind === 'derivable'
-                        ? ' — aus der Schreibung ableitbar'
-                        : ' — muss je Wort hinterlegt werden'}
-                      .
+                      {t('picker.emptyFeature', {
+                        feature: t(featureKey(code)),
+                        kindNote:
+                          language.feature.kind === 'derivable'
+                            ? t('picker.kindDerivable')
+                            : t('picker.kindPerWord'),
+                      })}
                     </ThemedText>
                   </>
                 )}

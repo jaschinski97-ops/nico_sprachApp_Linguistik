@@ -6,6 +6,7 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { FeatureLegend } from '@/components/feature-legend';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
+import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
 import { languageOf } from '@/lib/languages/registry';
 import { migrateStore } from '@/lib/storage/migration';
@@ -31,6 +32,7 @@ import { migrateStore } from '@/lib/storage/migration';
  */
 export default function DashboardScreen() {
   const { language, chooseLanguage } = useLearnerLanguage();
+  const { t, systemLanguage, languageName } = useLocale();
   const definition = languageOf(language);
 
   useEffect(() => {
@@ -40,10 +42,10 @@ export default function DashboardScreen() {
   }, []);
 
   return (
-    <ScreenScaffold title="Übersicht" subtitle="Welche Sprache lernst du heute?">
+    <ScreenScaffold title={t('tabs.overview')} subtitle={t('home.subtitle')}>
       <LanguagePicker selected={language} onSelect={chooseLanguage} />
 
-      <ThemedText type="subtitle">{definition.label} lernen</ThemedText>
+      <ThemedText type="subtitle">{t('common.learnGoal', { language: languageName(language) })}</ThemedText>
       <DirectionDashboard language={language} />
 
       {/* Seit Phase 18 hat jede Sprache ihre eigene Merkhilfe: Tonfarben bei
@@ -54,6 +56,13 @@ export default function DashboardScreen() {
 
       <ThemedText type="small" themeColor="textSecondary">
         {definition.feature.description}
+      </ThemedText>
+
+      {/* Dezent, ganz unten: welche Sprache das Gerät meldet. Sie ist die
+          Brückensprache der App — wer abweichend davon lernt, sieht hier,
+          worauf die Voreinstellung beruht. */}
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('home.systemLanguage', { language: languageName(systemLanguage) })}
       </ThemedText>
     </ScreenScaffold>
   );

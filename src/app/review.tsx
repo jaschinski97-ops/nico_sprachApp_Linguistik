@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { DrillRunner } from '@/components/drill-runner';
+import { DictationRunner } from '@/components/dictation-runner';
 import { Flashcard } from '@/components/flashcard';
 import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
@@ -16,8 +17,9 @@ import { FeatureLegend } from '@/components/feature-legend';
 import { WritingRunner } from '@/components/writing-runner';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { DRILL_META, DrillId, drillsForDirection, SKILL_LABELS } from '@/lib/drills/types';
-import { Direction, Rating, RATING_LABELS } from '@/lib/fsrs/types';
+import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
+import { Direction, Rating } from '@/lib/fsrs/types';
+import { TranslationKey, useLocale } from '@/lib/i18n';
 import { languageOf } from '@/lib/languages/registry';
 import { directionsFor, isLanguageCode, languageOfDirection } from '@/lib/languages/types';
 import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
@@ -27,13 +29,36 @@ import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-sessi
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
+/** Bewertungsstufen als Übersetzungsschlüssel statt als deutsche Konstante. */
+const RATING_KEYS: Record<Rating, TranslationKey> = {
+  1: 'rating.again',
+  2: 'rating.hard',
+  3: 'rating.good',
+  4: 'rating.easy',
+};
+
+/** Die Wort-Sprechübung und die Auswahlübungen als Übersetzungsschlüssel. */
+const DRILL_KEYS: Record<DrillId, TranslationKey> = {
+  tone: 'drill.tone',
+  toneRule: 'drill.toneRule',
+  article: 'drill.article',
+  verbForms: 'drill.verbForms',
+  stressRule: 'drill.stressRule',
+  spelling: 'drill.spelling',
+  stressHear: 'drill.stressHear',
+  soundSpelling: 'drill.soundSpelling',
+  stressFr: 'drill.stressFr',
+  muteE: 'drill.muteE',
+  accentFr: 'drill.accentFr',
+};
+
 /** Fehlertext eines gescheiterten Ladevorgangs — wie im Fortschritts-Reiter. */
 function messageOf(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
 /** Karteikarten oder eine der richtungseigenen Übungen. */
-type Mode = 'cards' | DrillId | 'speaking' | 'writing' | SentenceMode;
+type Mode = 'cards' | DrillId | 'speaking' | 'writing' | 'dictation' | SentenceMode;
 
 /**
  * Ist das eine Richtung, die es wirklich gibt?
@@ -75,20 +100,30 @@ function modesForDirection(direction: Direction): Mode[] {
     // `data/sentence-tasks.ts`; eine Sprache ohne geprüfte Sätze zeigt einen
     // ehrlichen Hinweis statt erfundenem Stoff.
     ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
+    // Das Diktat (Roadmap v2, Phase 1) gehört zu jeder Richtung: Der Runner
+    // holt sich Stoff, Bewertung und Karte selbst und zeigt für Sprachen
+    // ohne Diktatstoff einen ehrlichen Leerzustand.
+    'dictation',
     // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
     // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
     'writing',
   ];
 }
 
-function modeLabel(mode: Mode): string {
-  if (mode === 'cards') return 'Karteikarten';
-  if (mode === 'speaking') return 'Sprechen';
-  if (mode === 'writing') return 'Schreiben';
-  if (mode === 'shadowing') return 'Shadowing';
-  if (mode === 'sentenceRepeat') return 'Satz wiederholen';
-  if (mode === 'sentenceListening') return 'Satz verstehen';
-  return DRILL_META[mode].label;
+function modeKey(mode: Mode): TranslationKey {
+  if (mode === 'cards') return 'mode.cards';
+  if (mode === 'speaking') return 'mode.speaking';
+  if (mode === 'writing') return 'mode.writing';
+  if (mode === 'shadowing') return 'mode.shadowing';
+  if (mode === 'sentenceRepeat') return 'mode.sentenceRepeat';
+  if (mode === 'sentenceListening') return 'mode.sentenceListening';
+  if (mode === 'dictation') return 'mode.dictation';
+  return DRILL_KEYS[mode];
+}
+
+/** Beschriftung eines Übungsmodus in der aktuellen UI-Sprache. */
+function modeLabel(mode: Mode, t: (key: TranslationKey) => string): string {
+  return t(modeKey(mode));
 }
 
 /**
@@ -102,7 +137,7 @@ function modeLabel(mode: Mode): string {
  * Die Reihenfolge ist fest und für alle Sprachen dieselbe: Wer von Thai auf
  * Spanisch wechselt, sucht „Hören" nicht an einer neuen Stelle.
  */
-type Group = { label: string; modes: Mode[] };
+type Group = { label: TranslationKey; modes: Mode[] };
 
 function groupsForDirection(direction: Direction): Group[] {
   const modes = modesForDirection(direction);
@@ -110,25 +145,26 @@ function groupsForDirection(direction: Direction): Group[] {
   const bySkill = (skill: 'hoeren' | 'lesen' | 'grammatik') =>
     drills.filter((drill) => DRILL_META[drill].skill === skill);
 
-  const groups: Group[] = [{ label: 'Wortschatz', modes: ['cards'] }];
+  const groups: Group[] = [{ label: 'skill.wortschatz', modes: ['cards'] }];
   const hoeren: Mode[] = bySkill('hoeren');
-  hoeren.push('sentenceListening');
-  groups.push({ label: SKILL_LABELS.hoeren, modes: hoeren });
+  hoeren.push('sentenceListening', 'dictation');
+  groups.push({ label: 'skill.hoeren', modes: hoeren });
   const lesen = bySkill('lesen');
-  if (lesen.length > 0) groups.push({ label: SKILL_LABELS.lesen, modes: lesen });
+  if (lesen.length > 0) groups.push({ label: 'skill.lesen', modes: lesen });
   // „Sprechen" enthält die Wort-Übung nur bei Thai (AE-48); die Satzübungen
   // gehören seit AE-66 zu jeder Sprache — mit oder ohne Wort-Übung davor.
   const sprechen: Mode[] = [];
   if (modes.includes('speaking')) sprechen.push('speaking');
   sprechen.push('shadowing', 'sentenceRepeat');
-  groups.push({ label: 'Sprechen', modes: sprechen });
-  if (modes.includes('writing')) groups.push({ label: 'Schreiben', modes: ['writing'] });
+  groups.push({ label: 'skill.sprechen', modes: sprechen });
+  if (modes.includes('writing')) groups.push({ label: 'skill.schreiben', modes: ['writing'] });
   const grammatik = bySkill('grammatik');
-  if (grammatik.length > 0) groups.push({ label: SKILL_LABELS.grammatik, modes: grammatik });
+  if (grammatik.length > 0) groups.push({ label: 'skill.grammatik', modes: grammatik });
   return groups;
 }
 
 export default function ReviewScreen() {
+  const { t } = useLocale();
   const params = useLocalSearchParams<{ direction?: string; mode?: string; waehlen?: string }>();
   const router = useRouter();
 
@@ -184,9 +220,9 @@ export default function ReviewScreen() {
 
   if (profileError) {
     return (
-      <ScreenScaffold title="Lernen" subtitle="Lernrichtung">
+      <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.subtitle')}>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht geladen werden: {profileError}
+          {t('common.loadFailed', { message: profileError })}
         </ThemedText>
       </ScreenScaffold>
     );
@@ -194,9 +230,9 @@ export default function ReviewScreen() {
 
   if (!profile) {
     return (
-      <ScreenScaffold title="Lernen" subtitle="Lernrichtung">
+      <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.subtitle')}>
         <ThemedText type="small" themeColor="textSecondary">
-          Lade Lernprofil …
+          {t('review.loadingProfile')}
         </ThemedText>
       </ScreenScaffold>
     );
@@ -270,6 +306,7 @@ function ReviewBody({
   onRemember: (direction: Direction | null, mode?: Mode) => void;
   onExit: () => void;
 }) {
+  const { t, uiLanguage } = useLocale();
   useEffect(() => {
     onRemember(direction, mode);
     // `onRemember` ist bewusst nicht in der Liste: Es schreibt das Profil und
@@ -278,7 +315,7 @@ function ReviewBody({
   }, [direction, mode]);
 
   return (
-    <ScreenScaffold title="Lernen" subtitle={directionLabel(direction)}>
+    <ScreenScaffold title={t('tabs.learn')} subtitle={directionLabel(direction, uiLanguage)}>
       <ModeBar direction={direction} mode={mode} onPick={(picked) => onOpen(direction, picked)} />
 
       <DirectionBar onSwitch={onSwitch} />
@@ -289,6 +326,12 @@ function ReviewBody({
         <WritingRunner
           key={`${direction}:writing`}
           direction={direction}
+          onExit={onExit}
+        />
+      ) : mode === 'dictation' ? (
+        <DictationRunner
+          key={`${direction}:dictation`}
+          language={languageOfDirection(direction)}
           onExit={onExit}
         />
       ) : mode === 'shadowing' || mode === 'sentenceRepeat' || mode === 'sentenceListening' ? (
@@ -332,10 +375,11 @@ function DirectionPicker({
   onPick: (direction: Direction) => void;
   onLanguage: (language: LanguageCode) => void;
 }) {
+  const { t, languageName, uiLanguage } = useLocale();
   return (
     <ScreenScaffold
-      title="Lernen"
-      subtitle={`${languageOf(profile.language).label} — welche Richtung möchtest du üben?`}>
+      title={t('tabs.learn')}
+      subtitle={t('review.pickSubtitle', { language: languageName(profile.language) })}>
       <LanguageSwitch selected={profile.language} onSelect={onLanguage} />
       {directionsFor(profile.language).map((direction) => (
         <Pressable
@@ -344,18 +388,19 @@ function DirectionPicker({
           accessibilityRole="button"
           style={({ pressed }) => pressed && styles.pressed}>
           <ThemedView type="backgroundElement" style={styles.pickerCard}>
-            <ThemedText type="smallBold">{directionLabel(direction)}</ThemedText>
+            <ThemedText type="smallBold">{directionLabel(direction, uiLanguage)}</ThemedText>
             {/* Statt eines generischen Satzes („Deutsch lesen, das Wort auf
                 Thai abrufen") steht hier, was diese Richtung an Fertigkeiten
                 anbietet - das ist die Angabe, nach der man auswaehlt. */}
             {groupsForDirection(direction).map((group) => {
-              const modes = group.modes.map(modeLabel).join(' · ');
+              const caption = t(group.label);
+              const modes = group.modes.map((mode) => modeLabel(mode, t)).join(' · ');
               return (
                 <ThemedText key={group.label} type="small" themeColor="textSecondary">
                   {/* „Sprechen: Sprechen" waere doppelt gemoppelt - bei einer
                       Gruppe, die genauso heisst wie ihre einzige Uebung,
                       steht nur der Name. */}
-                  {modes === group.label ? modes : `${group.label}: ${modes}`}
+                  {modes === caption ? modes : `${caption}: ${modes}`}
                 </ThemedText>
               );
             })}
@@ -378,16 +423,18 @@ function ModeBar({
   onPick: (mode: Mode) => void;
 }) {
   const toneColor = useToneColor();
+  const { t } = useLocale();
 
   return (
     <View style={styles.modeBar}>
       {groupsForDirection(direction).map((group) => {
         // Eine Gruppe, die genauso heisst wie ihre einzige Uebung, braucht
         // keine Beschriftung - „Sprechen Sprechen" waere doppelt.
+        const groupLabel = t(group.label);
         const caption =
-          group.modes.length === 1 && modeLabel(group.modes[0]) === group.label
+          group.modes.length === 1 && modeLabel(group.modes[0], t) === groupLabel
             ? null
-            : group.label;
+            : groupLabel;
         return (
           <View key={group.label} style={styles.modeGroup}>
             {caption ? (
@@ -396,14 +443,14 @@ function ModeBar({
               </ThemedText>
             ) : null}
             {group.modes.map((candidate) => {
-              const label = modeLabel(candidate);
+              const label = modeLabel(candidate, t);
               const selected = candidate === mode;
               return (
                 <Pressable
                   key={candidate}
                   onPress={() => onPick(candidate)}
                   accessibilityRole="button"
-                  accessibilityLabel={`${group.label}: ${label}`}
+                  accessibilityLabel={`${groupLabel}: ${label}`}
                   accessibilityState={{ selected }}
                   // `flexShrink` am Pressable (dem Flex-Kind der Gruppe) UND
                   // an der Fläche: nur so gibt „Satz wiederholen“ auf schmalen
@@ -436,15 +483,16 @@ function ModeBar({
  * Weg zurück, damit der gemerkte Stand keine Einbahnstraße wird.
  */
 function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
+  const { t } = useLocale();
   return (
     <View style={styles.directionBar}>
       <Pressable
         onPress={onSwitch}
         accessibilityRole="button"
-        accessibilityLabel="Sprache oder Lernrichtung wechseln"
+        accessibilityLabel={t('review.switchA11y')}
         style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
         <ThemedText type="small" themeColor="textSecondary">
-          ← Sprache oder Richtung wechseln
+          {t('review.switch')}
         </ThemedText>
       </Pressable>
     </View>
@@ -452,6 +500,7 @@ function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
 }
 
 function CardSession({ direction }: { direction: Direction }) {
+  const { t } = useLocale();
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
@@ -505,12 +554,12 @@ function CardSession({ direction }: { direction: Direction }) {
   if (queueError) {
     return (
       <ThemedView type="backgroundElement" style={styles.summary}>
-        <ThemedText type="smallBold">Sitzung konnte nicht geladen werden</ThemedText>
+        <ThemedText type="smallBold">{t('cards.loadFailedTitle')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht zusammengestellt werden: {queueError}
+          {t('cards.assembleFailed', { message: queueError })}
         </ThemedText>
         <View style={styles.actions}>
-          <ThemedButton label="Erneut versuchen" onPress={restart} />
+          <ThemedButton label={t('common.retry')} onPress={restart} />
         </View>
       </ThemedView>
     );
@@ -519,7 +568,7 @@ function CardSession({ direction }: { direction: Direction }) {
   if (!queue) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
-        Sitzung wird zusammengestellt …
+        {t('cards.assembling')}
       </ThemedText>
     );
   }
@@ -529,14 +578,14 @@ function CardSession({ direction }: { direction: Direction }) {
   if (!item) {
     return (
       <ThemedView type="backgroundElement" style={styles.summary}>
-        <ThemedText type="smallBold">{rated > 0 ? 'Sitzung beendet' : 'Nichts fällig'}</ThemedText>
+        <ThemedText type="smallBold">{rated > 0 ? t('cards.done') : t('cards.nothingDue')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {rated > 0
-            ? `${rated} Karten bewertet, davon ${again}× „Nochmal".`
-            : 'In dieser Richtung ist gerade keine Karte fällig. Die Übungen oben gehen trotzdem — sie brauchen keine Fälligkeit.'}
+            ? t('cards.summaryRated', { rated, again })
+            : t('cards.summaryIdle')}
         </ThemedText>
         <View style={styles.actions}>
-          <ThemedButton label="Erneut prüfen" onPress={restart} />
+          <ThemedButton label={t('common.recheck')} onPress={restart} />
         </View>
       </ThemedView>
     );
@@ -545,7 +594,7 @@ function CardSession({ direction }: { direction: Direction }) {
   return (
     <>
       <ThemedText type="small" themeColor="textSecondary">
-        Karte {index + 1} von {queue.length}
+        {t('cards.progress', { index: index + 1, total: queue.length })}
       </ThemedText>
 
       <Flashcard entry={item.entry} direction={direction} revealed={revealed} />
@@ -558,18 +607,18 @@ function CardSession({ direction }: { direction: Direction }) {
               onPress={() => rate(rating)}
               disabled={busy}
               accessibilityRole="button"
-              accessibilityLabel={`Bewertung ${RATING_LABELS[rating]}`}
+              accessibilityLabel={t('rating.a11y', { label: t(RATING_KEYS[rating]) })}
               style={({ pressed }) => [styles.ratingWrap, pressed && styles.pressed]}>
               <ThemedView type="backgroundSelected" style={styles.ratingButton}>
-                <ThemedText type="small">{RATING_LABELS[rating]}</ThemedText>
+                <ThemedText type="small">{t(RATING_KEYS[rating])}</ThemedText>
               </ThemedView>
             </Pressable>
           ))}
         </View>
       ) : (
         <ThemedButton
-          label="Aufdecken"
-          accessibilityLabel="Antwort aufdecken"
+          label={t('card.reveal')}
+          accessibilityLabel={t('card.revealA11y')}
           onPress={() => setRevealed(true)}
           variant="primary"
         />

@@ -27,10 +27,11 @@ import {
 const NEUE = [...VOCABULARY_EN, ...VOCABULARY_ES];
 
 describe('Umfang und Quellenlage', () => {
-  it('führt für beide Sprachen mindestens 40 Einträge', () => {
-    // Die Untergrenze aus Pflicht 1: lieber 40 belegte als 90 halbgeratene.
-    expect(VOCABULARY_EN.length).toBeGreaterThanOrEqual(40);
-    expect(VOCABULARY_ES.length).toBeGreaterThanOrEqual(40);
+  it('führt für beide Sprachen 160 Einträge (Runde 2)', () => {
+    // Runde 1/2: lieber 40 belegte als 90 halbgeratene - und seit Runde 2
+    // je 160 belegte, jede mit abschnittsgenauem Quellenanker.
+    expect(VOCABULARY_EN.length).toBe(160);
+    expect(VOCABULARY_ES.length).toBe(160);
   });
 
   it('nennt zu jedem Eintrag eine abschnittsgenaue Quelle', () => {
@@ -165,15 +166,66 @@ describe('Beispiele: da, wo sie belegt sind — sonst gar nicht', () => {
     expect(libro.exampleGerman).toBe('das Buch');
   });
 
-  it('erfindet für alles andere keinen Satz', () => {
-    // Pflicht 1: lieber kein Beispiel als ein ausgedachtes. Wo eines steht,
-    // ist es die Wortgruppe mit dem quellengeprueften Genus.
-    for (const entry of NEUE) {
+  it('hält jedes spanische Beispiel bei der Wortgruppe aus Artikel und Wort', () => {
+    // Pflicht 1: lieber keine Wortgruppe als ein ausgedachter Satz. Das Genus
+    // ist quellengeprüft, der ganze Satz wäre es nicht.
+    for (const entry of VOCABULARY_ES) {
       if (!entry.exampleTerm) continue;
       expect(entry.spanishNoun).toBeTruthy();
       expect(entry.exampleTerm).toBe(`${entry.spanishNoun!.article} ${entry.term}`);
+      expect(entry.exampleGerman).toBe(entry.german);
     }
-    for (const entry of VOCABULARY_EN) expect(entry.exampleTerm).toBeUndefined();
+  });
+
+  it('gibt den Runde-2-Ergänzungen des Englischen kurze volle Sätze', () => {
+    // Runde 2: wie beim französischen Grundstoff Mustersätze (Subjekt-Verb-
+    // Objekt, Kopula + Eigenschaft), NICHT einzeln quellengeprüft - deshalb
+    // die Form-Schranke statt einer Scheinprüfung. Jeder neue Eintrag trägt
+    // genau ein Beispiel.
+    const mitBeispiel = VOCABULARY_EN.filter((entry) => entry.exampleTerm);
+    expect(mitBeispiel.length).toBeGreaterThanOrEqual(75);
+    for (const entry of mitBeispiel) {
+      expect(entry.exampleTerm).toMatch(/^[A-Z][^.!?]*[.!?]$/);
+      expect(entry.exampleTerm).toContain(' ');
+      expect(entry.exampleGerman).toBeTruthy();
+    }
+  });
+
+  it('lässt den Phase-16-Bestand des Englischen weiter ohne Beispiele', () => {
+    // Die 85 Einträge aus Phase 16 bleiben, wie sie waren - erfundene Sätze
+    // gibt es dort nach wie vor nicht.
+    for (const id of ['en_hello', 'en_book', 'en_enough', 'en_thought']) {
+      expect(VOCABULARY_EN.find((entry) => entry.id === id)!.exampleTerm).toBeUndefined();
+    }
+  });
+});
+
+describe('Schema-Stichproben über die Sprachgrenzen (Runde 2)', () => {
+  it('fügt die spanischen Silben exakt zur Umschrift zusammen, genau eine Betonung', () => {
+    for (const entry of VOCABULARY_ES) {
+      expect(entry.syllables.map((syllable) => syllable.roman).join('-')).toBe(
+        entry.romanization
+      );
+      expect(entry.syllables.filter((syllable) => syllable.stressed)).toHaveLength(1);
+    }
+  });
+
+  it('lässt die englische Silbenliste leer — das Merkmal hängt am Wort (AE-44)', () => {
+    for (const entry of VOCABULARY_EN) expect(entry.syllables).toEqual([]);
+  });
+
+  it('trägt Brückentexte ohne Deutsch — und Thai nur am geprüften Gegenstück', () => {
+    // `de` steht nie im Feld (die deutsche Seite ist `german`), und Thai nur
+    // dort, wo es das Thai-Gegenstück über `concept` wirklich gibt - wörtlich
+    // dessen geprüfte Schreibung.
+    for (const entry of NEUE) {
+      const keys = Object.keys(entry.translations ?? {});
+      expect(keys).not.toContain('de');
+      if (keys.includes('th')) {
+        expect(entry.concept).toBeTruthy();
+        expect(entry.translations!.th).toBe(findVocab(entry.concept!)!.term);
+      }
+    }
   });
 });
 

@@ -3,6 +3,7 @@ import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 
 import { Colors } from '@/constants/theme';
+import { useLocale } from '@/lib/i18n';
 
 /**
  * Native navigation (iOS/Android): a standard bottom tab bar.
@@ -10,9 +11,13 @@ import { Colors } from '@/constants/theme';
  * The web build uses `app-tabs.web.tsx` instead, which renders a top nav bar —
  * a phone-style bottom bar reads badly in a wide desktop window (Phase 0
  * responsive requirement in PROGRESS.md).
+ *
+ * Die Reiternamen stehen in der App-Sprache (Roadmap v2): sie kommen aus dem
+ * i18n-Wörterbuch, nicht mehr als deutsche Literale.
  */
 export default function AppTabs() {
   const scheme = useColorScheme();
+  const { t } = useLocale();
   const colors = Colors[scheme === 'dark' ? 'dark' : 'light'];
 
   return (
@@ -26,21 +31,21 @@ export default function AppTabs() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Übersicht',
+          title: t('tabs.overview'),
           tabBarIcon: ({ color, size }) => <Ionicons name="home" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="review"
         options={{
-          title: 'Lernen',
+          title: t('tabs.learn'),
           tabBarIcon: ({ color, size }) => <Ionicons name="layers" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="conversation"
         options={{
-          title: 'Gespräch',
+          title: t('tabs.conversation'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="chatbubbles" color={color} size={size} />
           ),
@@ -49,7 +54,7 @@ export default function AppTabs() {
       <Tabs.Screen
         name="exam"
         options={{
-          title: 'Prüfung',
+          title: t('tabs.exam'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="ribbon" color={color} size={size} />
           ),
@@ -58,14 +63,14 @@ export default function AppTabs() {
       <Tabs.Screen
         name="progress"
         options={{
-          title: 'Fortschritt',
+          title: t('tabs.progress'),
           tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart" color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Einstellungen',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />

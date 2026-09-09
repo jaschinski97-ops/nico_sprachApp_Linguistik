@@ -14,9 +14,10 @@ import {
   certificateFor,
   ExamLevel,
   ExamModule,
+  ExamSkill,
   EXAM_LEVELS,
-  SKILL_LABELS,
 } from '@/lib/exam/types';
+import { TranslationKey, useLocale } from '@/lib/i18n';
 
 /**
  * Prüfungsmodul.
@@ -26,6 +27,14 @@ import {
  * wissen, worauf. Und die App muss erkennbar machen, was belegt ist und was
  * sie selbst beisteuert (die Aufgaben).
  */
+
+/** Prüfungsfertigkeiten als Übersetzungsschlüssel statt als deutsche Konstante. */
+const EXAM_SKILL_KEYS: Record<ExamSkill, TranslationKey> = {
+  lesen: 'skill.lesen',
+  hoeren: 'skill.hoeren',
+  schreiben: 'skill.schreiben',
+  sprechen: 'skill.sprechen',
+};
 
 function isLevel(value: unknown): value is ExamLevel {
   return EXAM_LEVELS.includes(value as ExamLevel);
@@ -37,6 +46,7 @@ function messageOf(e: unknown): string {
 }
 
 export default function ExamScreen() {
+  const { t } = useLocale();
   const params = useLocalSearchParams<{ level?: string; module?: string }>();
   const router = useRouter();
 
@@ -84,11 +94,11 @@ export default function ExamScreen() {
 
   if (params.module && moduleError) {
     return (
-      <ScreenScaffold title="Prüfung" subtitle="Modul">
+      <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitleModule')}>
         <ThemedView type="backgroundElement" style={styles.card}>
-          <ThemedText type="smallBold">Modul konnte nicht geladen werden</ThemedText>
+          <ThemedText type="smallBold">{t('exam.moduleLoadFailed')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Konnte nicht geladen werden: {moduleError}
+            {t('common.loadFailed', { message: moduleError })}
           </ThemedText>
         </ThemedView>
       </ScreenScaffold>
@@ -97,7 +107,7 @@ export default function ExamScreen() {
 
   if (params.module && module) {
     return (
-      <ScreenScaffold title="Prüfung" subtitle={module.title}>
+      <ScreenScaffold title={t('tabs.exam')} subtitle={module.title}>
         <ExamRunner
           module={module}
           key={module.id}
@@ -110,7 +120,7 @@ export default function ExamScreen() {
   const certificate = certificateFor(level);
 
   return (
-    <ScreenScaffold title="Prüfung" subtitle="Vorbereitung auf die Goethe-Zertifikate">
+    <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitle')}>
       <View style={styles.levelBar}>
         {EXAM_LEVELS.map((candidate) => (
           <Pressable
@@ -136,24 +146,25 @@ export default function ExamScreen() {
         <ThemedText type="smallBold">{certificate.name}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {certificate.partsAreModules
-            ? 'Vier Module, die einzeln oder in Kombination abgelegt werden können.'
-            : 'Vier Prüfungsteile, die zusammen abgelegt werden.'}{' '}
-          Empfohlen ab {certificate.recommendedAge} Jahren; bis zu dieser Stufe rechnet
-          das Goethe-Institut mit {certificate.teachingUnits[0]}–{certificate.teachingUnits[1]}{' '}
-          Unterrichtseinheiten à 45 Minuten.
+            ? t('exam.partsAsModules')
+            : t('exam.partsTogether')}{' '}
+          {t('exam.recommendation', {
+            age: certificate.recommendedAge,
+            units: `${certificate.teachingUnits[0]}–${certificate.teachingUnits[1]}`,
+          })}
         </ThemedText>
 
         {certificate.parts.map((part) => (
           <View key={part.skill} style={styles.part}>
             <View style={styles.partHead}>
-              <ThemedText type="smallBold">{SKILL_LABELS[part.skill]}</ThemedText>
+              <ThemedText type="smallBold">{t(EXAM_SKILL_KEYS[part.skill])}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
-                {part.approximate ? 'etwa ' : ''}
-                {part.minutes} Minuten
+                {part.approximate ? t('exam.approxPrefix') : ''}
+                {t('exam.minutes', { minutes: part.minutes })}
                 {part.format === 'gruppe'
-                  ? ' · Gruppenprüfung'
+                  ? t('exam.formatGroup')
                   : part.format === 'paar'
-                    ? ' · Paarprüfung'
+                    ? t('exam.formatPair')
                     : ''}
               </ThemedText>
             </View>
@@ -169,28 +180,27 @@ export default function ExamScreen() {
           verlaesst, muss nachsehen koennen, wie alt die Angabe ist.
         */}
         <ThemedText type="small" themeColor="textSecondary">
-          Struktur abgerufen am {certificate.retrieved} von{' '}
-          <ExternalLink href={certificate.source}>{certificate.source}</ExternalLink>. Bitte
-          vor der Anmeldung dort noch einmal nachsehen — Prüfungsformate ändern sich.
+          {t('exam.retrievedPrefix', { date: certificate.retrieved })}
+          <ExternalLink href={certificate.source}>{certificate.source}</ExternalLink>
+          {t('exam.retrievedSuffix')}
         </ThemedText>
       </ThemedView>
 
       {overviewError ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht geladen werden: {overviewError}
+          {t('common.loadFailed', { message: overviewError })}
         </ThemedText>
       ) : overview === null ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Aufgaben werden geladen …
+          {t('exam.loading')}
         </ThemedText>
       ) : (
         overview.map((group) => (
           <ThemedView key={group.skill} type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">{SKILL_LABELS[group.skill]}</ThemedText>
+            <ThemedText type="smallBold">{t(EXAM_SKILL_KEYS[group.skill])}</ThemedText>
             {group.modules.length === 0 ? (
               <ThemedText type="small" themeColor="textSecondary">
-                Für {level} liegt hier noch keine Aufgabe. Weitere Aufgaben kommen
-                mit App-Updates dazu.
+                {t('exam.noModules', { level })}
               </ThemedText>
             ) : (
               group.modules.map((entry) => (
@@ -203,7 +213,7 @@ export default function ExamScreen() {
                   <ThemedView type="backgroundSelected" style={styles.moduleRow}>
                     <ThemedText type="small">{entry.title}</ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
-                      etwa {entry.minutes} Min
+                      {t('exam.moduleMinutes', { minutes: entry.minutes })}
                     </ThemedText>
                   </ThemedView>
                 </Pressable>
@@ -214,18 +224,12 @@ export default function ExamScreen() {
       )}
 
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Was das hier ist — und was nicht</ThemedText>
+        <ThemedText type="smallBold">{t('exam.aboutTitle')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Die Struktur oben stammt vom Goethe-Institut. Die Aufgaben sind
-          dagegen selbst geschrieben und sind keine Originalaufgaben und keine
-          Modellsätze des Goethe-Instituts. Echte Modellsätze und Übungsmaterialien gibt es beim
-          Goethe-Institut selbst.
+          {t('exam.aboutBody')}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Das Goethe-Institut zertifiziert Deutsch. Dieses Modul richtet sich
-          deshalb an alle, die Deutsch lernen — gleich, ob ihre Sprache Thai,
-          Englisch oder Spanisch ist. Für die Gegenrichtung ist hier bewusst
-          nichts hinterlegt — der Grund steht im Projektprotokoll (AE-19).
+          {t('exam.aboutGermanOnly')}
         </ThemedText>
       </ThemedView>
     </ScreenScaffold>

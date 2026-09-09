@@ -4,6 +4,13 @@ import { TextInput } from 'react-native';
 import SettingsScreen from '../app/settings';
 import { DeveloperContent } from './developer-content';
 import { isContentDeveloper } from '../lib/content/developer';
+// Der Screen textet über i18n; ohne Provider gilt die Referenzsprache Deutsch.
+// Die Assertion liest den erwarteten Satz aus dem de-Wörterbuch, damit sie an
+// der Semantik hängt statt an einer in den Test kopierten Zeichenkette.
+import { dictionaries } from '../lib/i18n';
+
+/** Der Material-Hinweis, den die Produktions-Einstellungen zeigen müssen. */
+const MATERIAL_BODY = dictionaries.de['settings.materialBody']!;
 
 jest.mock('../lib/content/developer', () => ({ isContentDeveloper: jest.fn(() => true) }));
 // Throwing when loaded proves the release path never even imports the studio.
@@ -19,7 +26,7 @@ test('production settings render no input, key field, provider choice, start but
     expect(screen!.root.findAllByType(TextInput)).toHaveLength(0);
     expect(JSON.stringify(screen!.toJSON())).not.toMatch(/Schlüssel|API|Generator|Fortschrittsbalken|Starten|Claude|Gemini|Stability/i);
     expect(screen!.root.findAll((node) => node.props.accessibilityRole === 'progressbar')).toHaveLength(0);
-    expect(JSON.stringify(screen!.toJSON())).toContain('App-Updates');
+    expect(JSON.stringify(screen!.toJSON())).toContain(MATERIAL_BODY);
     expect(isContentDeveloper).not.toHaveBeenCalled();
   } finally {
     await act(async () => screen?.unmount());

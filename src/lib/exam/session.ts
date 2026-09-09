@@ -9,6 +9,7 @@ import {
   EXAM_SKILLS,
   isGradable,
 } from './types';
+import { TargetDirection } from '../languages/types';
 
 /**
  * Auswahl und Auswertung einzelner Prüfungsaufgaben.
@@ -25,11 +26,24 @@ export type ExamOverview = {
   modules: ExamModule[];
 };
 
+/**
+ * Übersicht der Aufgaben einer Stufe.
+ *
+ * SEIT ROADMAP v2 (Phase 4) optional nach Lernrichtung filterbar: Mit
+ * `direction` kommen nur Module dieser Richtung zurück — nötig, seit A1
+ * neben th→de auch en→de und de→th-Aufgaben enthält. OHNE `direction`
+ * bleibt das Verhalten unverändert (alle Richtungen der Stufe), damit der
+ * Prüfungs-Screen unangetastet weiterläuft; er kennt bisher keine Richtung.
+ */
 export async function loadExamOverview(
   level: ExamLevel,
-  store?: DataStore
+  store?: DataStore,
+  direction?: TargetDirection
 ): Promise<ExamOverview[]> {
-  const modules = (await loadExamModules(store)).filter((module) => module.level === level);
+  const modules = (await loadExamModules(store)).filter(
+    (module) =>
+      module.level === level && (direction === undefined || module.direction === direction)
+  );
   return EXAM_SKILLS.map((skill) => ({
     level,
     skill,

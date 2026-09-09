@@ -11,9 +11,40 @@ import { useTheme } from '@/hooks/use-theme';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
+import { useLocale, type TranslationKey } from '@/lib/i18n';
 import { LanguageCode } from '@/lib/languages/types';
 import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
+
+/** Übungs-Namen und -Fragen als Übersetzungsschlüssel statt als deutsche Konstante. */
+const DRILL_LABEL_KEYS: Record<DrillId, TranslationKey> = {
+  tone: 'drill.tone',
+  toneRule: 'drill.toneRule',
+  article: 'drill.article',
+  verbForms: 'drill.verbForms',
+  stressRule: 'drill.stressRule',
+  spelling: 'drill.spelling',
+  stressHear: 'drill.stressHear',
+  soundSpelling: 'drill.soundSpelling',
+  stressFr: 'drill.stressFr',
+  muteE: 'drill.muteE',
+  accentFr: 'drill.accentFr',
+};
+
+const DRILL_PROMPT_KEYS: Record<DrillId, TranslationKey> = {
+  tone: 'drill.prompt.tone',
+  toneRule: 'drill.prompt.toneRule',
+  article: 'drill.prompt.article',
+  verbForms: 'drill.prompt.verbForms',
+  stressRule: 'drill.prompt.stressRule',
+  spelling: 'drill.prompt.spelling',
+  stressHear: 'drill.prompt.stressHear',
+  soundSpelling: 'drill.prompt.soundSpelling',
+  // Dieselbe Frage wie bei stressRule — ein Schlüssel, zwei Übungen.
+  stressFr: 'drill.prompt.stressRule',
+  muteE: 'drill.prompt.muteE',
+  accentFr: 'drill.prompt.accentFr',
+};
 
 /**
  * Eine Übungsrunde.
@@ -40,6 +71,7 @@ export function DrillRunner({
 }) {
   const meta = DRILL_META[drill];
   const theme = useTheme();
+  const { t } = useLocale();
 
   const [session, setSession] = useState<DrillSession | null>(null);
   const [buildFailed, setBuildFailed] = useState<string | null>(null);
@@ -113,13 +145,13 @@ export function DrillRunner({
   if (buildFailed) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Übung konnte nicht geladen werden</ThemedText>
+        <ThemedText type="smallBold">{t('drill.loadFailedTitle')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht zusammengestellt werden: {buildFailed}
+          {t('cards.assembleFailed', { message: buildFailed })}
         </ThemedText>
         <Row>
-          <ThemedButton label="Erneut versuchen" onPress={() => setRound((value) => value + 1)} />
-          <ThemedButton label="Zurück" onPress={onExit} />
+          <ThemedButton label={t('common.retry')} onPress={() => setRound((value) => value + 1)} />
+          <ThemedButton label={t('common.back')} onPress={onExit} />
         </Row>
       </ThemedView>
     );
@@ -128,7 +160,7 @@ export function DrillRunner({
   if (!session) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
-        Übung wird zusammengestellt …
+        {t('drill.assembling')}
       </ThemedText>
     );
   }
@@ -136,12 +168,14 @@ export function DrillRunner({
   if (session.questions.length === 0) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Keine passenden Vokabeln</ThemedText>
+        <ThemedText type="smallBold">{t('drill.noVocab')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {drill === 'tone' ? 'Für die Tonerkennung stehen gerade keine passenden Clips mit bestandener Tonprüfung zur Verfügung. Ungeprüfte Clips und Systemstimmen werden hier nicht verwendet.' : `Für „${meta.label}" gibt es im Grundstock gerade keine geeigneten Einträge.`}
+          {drill === 'tone'
+            ? t('drill.toneEmpty')
+            : t('drill.noneFor', { drill: t(DRILL_LABEL_KEYS[drill]) })}
         </ThemedText>
         <Row>
-          <ThemedButton label="Zurück" onPress={onExit} />
+          <ThemedButton label={t('common.back')} onPress={onExit} />
         </Row>
       </ThemedView>
     );
@@ -151,13 +185,13 @@ export function DrillRunner({
     const score = scoreAnswers(answers);
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Runde beendet</ThemedText>
+        <ThemedText type="smallBold">{t('drill.roundDone')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {score.correct} von {score.total} richtig.
+          {t('drill.roundScore', { correct: score.correct, total: score.total })}
         </ThemedText>
         {answers.some((entry) => !entry.correct) ? (
           <View style={styles.mistakes}>
-            <ThemedText type="small">Das saß noch nicht:</ThemedText>
+            <ThemedText type="small">{t('drill.mistakesTitle')}</ThemedText>
             {answers
               .filter((entry) => !entry.correct)
               .map((entry) => (
@@ -171,8 +205,8 @@ export function DrillRunner({
           </View>
         ) : null}
         <Row>
-          <ThemedButton label="Neue Runde" onPress={() => setRound((value) => value + 1)} />
-          <ThemedButton label="Zurück" onPress={onExit} />
+          <ThemedButton label={t('drill.newRound')} onPress={() => setRound((value) => value + 1)} />
+          <ThemedButton label={t('common.back')} onPress={onExit} />
         </Row>
       </ThemedView>
     );
@@ -182,21 +216,21 @@ export function DrillRunner({
     <>
       <View style={styles.headerRow}>
         <ThemedText type="small" themeColor="textSecondary">
-          Aufgabe {index + 1} von {session.questions.length}
+          {t('drill.questionProgress', { index: index + 1, total: session.questions.length })}
         </ThemedText>
         <Pressable
           onPress={onExit}
           accessibilityRole="button"
-          accessibilityLabel="Übung verlassen"
+          accessibilityLabel={t('drill.exit')}
           style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
           <ThemedText type="small" themeColor="textSecondary">
-            Übung verlassen
+            {t('drill.exit')}
           </ThemedText>
         </Pressable>
       </View>
 
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">{meta.prompt}</ThemedText>
+        <ThemedText type="smallBold">{t(DRILL_PROMPT_KEYS[drill])}</ThemedText>
 
         {question.speak ? (
           <PlayBlock
@@ -282,7 +316,9 @@ export function DrillRunner({
             <ThemedText
               type="smallBold"
               themeColor={chosen === question.correctIndex ? 'success' : 'error'}>
-              {chosen === question.correctIndex ? '✓ Richtig' : '✗ Nicht ganz'}
+              {chosen === question.correctIndex
+                ? t('drill.correct')
+                : t('drill.wrong')}
             </ThemedText>
             <ThemedText type="small">{question.solution}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
@@ -296,7 +332,7 @@ export function DrillRunner({
       </ThemedView>
 
       {chosen !== null ? (
-        <ThemedButton label="Weiter" onPress={next} variant="primary" />
+        <ThemedButton label={t('common.next')} onPress={next} variant="primary" />
       ) : null}
     </>
   );
@@ -318,6 +354,7 @@ function PlayBlock({
   onPlayed: (id: string) => void;
 }) {
   const speak = question.speak!;
+  const { t } = useLocale();
   const [hasClip, setHasClip] = useState(false);
   const [label, setLabel] = useState('');
   const purpose = question.drill === 'tone' ? 'tone' as const : 'general' as const;
@@ -349,16 +386,16 @@ function PlayBlock({
       <Pressable
         onPress={play}
         accessibilityRole="button"
-        accessibilityLabel="Wort noch einmal anhören"
+        accessibilityLabel={t('drill.playAgainA11y')}
         style={({ pressed }) => pressed && styles.pressed}>
         <ThemedView type="backgroundSelected" style={styles.playButton}>
-          <ThemedText type="smallBold">🔊 Noch einmal anhören</ThemedText>
+          <ThemedText type="smallBold">{t('drill.playAgain')}</ThemedText>
         </ThemedView>
       </Pressable>
       {label ? <ThemedText type="small">{label}</ThemedText> : null}
       {voiceMissing && !hasClip ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
-          Dieses Hörbeispiel ist nicht verfügbar. Du kannst unter „Lesen“ weiterüben.
+          {t('drill.voiceMissing', { skill: t('skill.lesen') })}
         </ThemedText>
       ) : null}
     </View>
@@ -387,8 +424,9 @@ function DerivationBlock({
   steps: DerivationStep[];
   uncertain?: string | null;
 }) {
+  const { t } = useLocale();
   return (
-    <View role="list" accessibilityLabel="Herleitung des Tons" style={styles.derivation}>
+    <View role="list" accessibilityLabel={t('drill.derivationA11y')} style={styles.derivation}>
       {steps.map((step) => (
         <View key={step.label} role="listitem" style={styles.derivationStep}>
           <ThemedText type="small" themeColor="textSecondary" style={styles.derivationLabel}>

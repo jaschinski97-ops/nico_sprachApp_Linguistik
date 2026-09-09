@@ -4,7 +4,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { TermWord } from './term-word';
 
 import { SpeechLanguage } from '@/lib/audio';
-import { languageOf } from '@/lib/languages/registry';
 import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 import { VerificationBadge } from './verification-badge';
@@ -14,6 +13,7 @@ import { Spacing } from '@/constants/theme';
 import { VocabEntry } from '@/data/vocabulary';
 import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
 import { Direction } from '@/lib/fsrs/types';
+import { useLocale } from '@/lib/i18n';
 
 /**
  * Karteikarte.
@@ -47,9 +47,9 @@ export function Flashcard({ entry, direction, revealed }: Props) {
   // SEIT PHASE 16 AUS DER RICHTUNG STATT AUS EINEM LITERAL: Vorher stand hier
   // `direction === 'th_to_de'`, und eine spanische Karte waere in beiden
   // Richtungen gleich gelaufen.
+  const { t, languageName } = useLocale();
   const targetFirst = direction.endsWith('_to_de');
-  const sprache = languageOf(entry.language);
-  const anhoeren = `${sprache.label} anhören`;
+  const anhoeren = t('flashcard.listenA11y', { language: languageName(entry.language) });
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -98,7 +98,11 @@ export function Flashcard({ entry, direction, revealed }: Props) {
               />
             </>
           ) : (
-            <SpeakButton label="Deutsch anhören" text={entry.german} language="de" />
+            <SpeakButton
+              label={t('flashcard.listenGermanA11y')}
+              text={entry.german}
+              language="de"
+            />
           )}
         </>
       )}
@@ -110,9 +114,10 @@ export function Flashcard({ entry, direction, revealed }: Props) {
 }
 
 function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?: boolean }) {
+  const { t } = useLocale();
   const chips: string[] = [];
   if (entry.germanNoun) {
-    chips.push(`Plural: ${entry.germanNoun.plural}`);
+    chips.push(t('flashcard.plural', { plural: entry.germanNoun.plural }));
   }
   if (entry.germanVerb) {
     chips.push(
@@ -157,6 +162,7 @@ function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?
  * dort stattdessen nichts, statt eine leere Zeile mit Lautsprechersymbol.
  */
 function ExampleBlock({ entry }: { entry: VocabEntry }) {
+  const { t } = useLocale();
   if (!entry.exampleTerm) return null;
   return (
     <ThemedView type="backgroundSelected" style={styles.example}>
@@ -172,7 +178,7 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
         </View>
         <SpeakButton
           label="▶"
-          spokenLabel="Beispielsatz anhören"
+          spokenLabel={t('flashcard.listenExampleA11y')}
           text={entry.exampleTerm}
           language={entry.language}
           compact

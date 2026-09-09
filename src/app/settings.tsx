@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, StyleSheet } from 'react-native';
+import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { DeveloperContent } from '@/components/developer-content';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { isContentDeveloper } from '@/lib/content/developer';
+import {
+  SYSTEM_LANGUAGE_SETTING,
+  UI_LANGUAGES,
+  LANGUAGE_DISPLAY_NAMES,
+  localeTagFor,
+  useLocale,
+  type LanguageSetting,
+  type TranslationKey,
+} from '@/lib/i18n';
 import { Spacing } from '@/constants/theme';
 import { VOCABULARY } from '@/data/vocabulary';
 import {
@@ -15,23 +24,28 @@ import {
   restoreBackup,
 } from '@/lib/backup';
 import { isStorageDegraded } from '@/lib/storage';
+import { useToneColor } from '@/hooks/use-theme';
 
 type StatusMessage = { kind: 'success' | 'error'; text: string };
 
-function messageOf(error: unknown): string {
-  return error instanceof Error ? error.message : 'Unbekannter Fehler.';
+type Translate = (key: TranslationKey, params?: Record<string, string | number>) => string;
+
+function messageOf(error: unknown, unknownLabel: string): string {
+  return error instanceof Error ? error.message : unknownLabel;
 }
 
-function formatSummary(summary: BackupImportSummary): string {
+function formatSummary(summary: BackupImportSummary, t: Translate, localeTag: string): string {
   const parts = [
-    `${summary.cards} Karten`,
-    `${summary.logEntries} Tage Lernprotokoll`,
+    t('backup.partsCards', { cards: summary.cards }),
+    t('backup.partsLog', { days: summary.logEntries }),
   ];
-  if (summary.profileApplied) parts.push('Lernprofil');
+  if (summary.profileApplied) parts.push(t('backup.partsProfile'));
   const when = summary.exportedAt
-    ? new Date(summary.exportedAt).toLocaleDateString('de-DE')
+    ? new Date(summary.exportedAt).toLocaleDateString(localeTag)
     : null;
-  return `Übernommen: ${parts.join(', ')}.${when ? ` (Sicherung vom ${when}.)` : ''}`;
+  return `${t('backup.applied', { parts: parts.join(', ') })}${
+    when ? t('backup.fromDate', { date: when }) : ''
+  }`;
 }
 
 /**
@@ -39,9 +53,8 @@ function formatSummary(summary: BackupImportSummary): string {
  * No-Op — dort fällt der Dialog auf `window.confirm` zurück, damit auf beiden
  * Plattformen dieselbe bewusste Entscheidung nötig ist.
  */
-function confirmReplace(): Promise<boolean> {
-  const question =
-    'Die Sicherung ersetzt deine komplette Lernhistorie auf diesem Gerät. Diesen Schritt gehen?';
+function confirmReplace(t: Translate): Promise<boolean> {
+  const question = t('backup.confirmQuestion');
   if (Platform.OS === 'web') {
     return Promise.resolve(
       typeof window !== 'undefined' && typeof window.confirm === 'function'
@@ -50,9 +63,13 @@ function confirmReplace(): Promise<boolean> {
     );
   }
   return new Promise((resolve) => {
-    Alert.alert('Lernhistorie ersetzen?', question, [
-      { text: 'Abbrechen', style: 'cancel', onPress: () => resolve(false) },
-      { text: 'Ersetzen', style: 'destructive', onPress: () => resolve(true) },
+    Alert.alert(t('backup.confirmTitle'), question, [
+      { text: t('backup.confirmCancel'), style: 'cancel', onPress: () => resolve(false) },
+      {
+        text: t('backup.confirmReplace'),
+        style: 'destructive',
+        onPress: () => resolve(true),
+      },
     ]);
   });
 }
@@ -64,6 +81,7 @@ function confirmReplace(): Promise<boolean> {
  * Sicherung direkt darunter.
  */
 function PersistenceWarning() {
+  const { t } = useLocale();
   const [degraded, setDegraded] = useState(false);
 
   useEffect(() => {
@@ -86,19 +104,68 @@ function PersistenceWarning() {
   if (!degraded) return null;
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">
-        Lernfortschritt wird nur bis zum Schließen der App gespeichert
-      </ThemedText>
+      <ThemedText type="smallBold">{t('settings.warningTitle')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Der dauerhafte Speicher auf diesem Gerät konnte nicht geöffnet werden.
-        Alles, was du jetzt lernst, ist nach dem Schließen der App verloren.
-        Sichere deinen Fortschritt unten als Datei, solange er noch da ist.
+        {t('settings.warningBody')}
       </ThemedText>
     </ThemedView>
   );
 }
 
+/**
+ * App-Sprache (Roadmap v2, Phase 1): Vorgabe ist die Systemsprache des
+ * Geräts — sie ist zugleich die künftige Brückensprache. Wer will, schaltet
+ * hier fest um; die Wahl wird wie das Lernprofil im `meta`-Speicher bewahrt.
+ *
+ * Die Sprachen stehen unter ihren ENDONYMEN („español“, „ไทย“): Eine Sprache
+ * muss sich auch dann finden lassen, wenn die Oberfläche gerade in einer
+ * Sprache erscheint, die man nicht liest.
+ */
+function AppLanguageSection() {
+  const { t, setting, setSetting } = useLocale();
+  const toneColor = useToneColor();
+
+  const options: { value: LanguageSetting; label: string }[] = [
+    { value: SYSTEM_LANGUAGE_SETTING, label: t('appLanguage.system') },
+    ...UI_LANGUAGES.map((language) => ({
+      value: language as LanguageSetting,
+      label: LANGUAGE_DISPLAY_NAMES[language][language],
+    })),
+  ];
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedText type="smallBold">{t('appLanguage.title')}</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('appLanguage.body')}
+      </ThemedText>
+      <View style={styles.languageRow}>
+        {options.map((option) => {
+          const active = setting === option.value;
+          return (
+            <Pressable
+              key={option.value}
+              onPress={() => setSetting(option.value)}
+              accessibilityRole="radio"
+              accessibilityLabel={option.label}
+              aria-checked={active}
+              accessibilityState={{ selected: active }}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView
+                type={active ? 'backgroundSelected' : 'backgroundElement'}
+                style={[styles.languageChip, active && { borderColor: toneColor('mid') }]}>
+                <ThemedText type="small">{option.label}</ThemedText>
+              </ThemedView>
+            </Pressable>
+          );
+        })}
+      </View>
+    </ThemedView>
+  );
+}
+
 function BackupSection() {
+  const { t, uiLanguage } = useLocale();
   const [busy, setBusy] = useState<null | 'export' | 'import'>(null);
   const [status, setStatus] = useState<StatusMessage | null>(null);
 
@@ -108,13 +175,13 @@ function BackupSection() {
     setStatus(null);
     try {
       const fileName = await exportBackup();
-      setStatus({ kind: 'success', text: `Sicherung erstellt: ${fileName}` });
+      setStatus({ kind: 'success', text: t('backup.created', { fileName }) });
     } catch (error) {
-      setStatus({ kind: 'error', text: messageOf(error) });
+      setStatus({ kind: 'error', text: messageOf(error, t('common.unknownError')) });
     } finally {
       setBusy(null);
     }
-  }, [busy]);
+  }, [busy, t]);
 
   const onImport = useCallback(async () => {
     if (busy) return;
@@ -124,51 +191,54 @@ function BackupSection() {
       const asset = await chooseBackupFile();
       // Abbrechen in der Dateiauswahl ist kein Fehler und verdient keine Meldung.
       if (!asset) return;
-      if (!(await confirmReplace())) return;
+      if (!(await confirmReplace(t))) return;
       const summary = await restoreBackup(asset);
-      setStatus({ kind: 'success', text: formatSummary(summary) });
+      setStatus({
+        kind: 'success',
+        text: formatSummary(summary, t, localeTagFor(uiLanguage)),
+      });
     } catch (error) {
-      setStatus({ kind: 'error', text: messageOf(error) });
+      setStatus({ kind: 'error', text: messageOf(error, t('common.unknownError')) });
     } finally {
       setBusy(null);
     }
-  }, [busy]);
+  }, [busy, t, uiLanguage]);
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Sicherung &amp; Wiederherstellen</ThemedText>
+      <ThemedText type="smallBold">{t('backup.title')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Sichere deinen Lernfortschritt als Datei — etwa vor einem Gerätewechsel
-        oder einer Neuinstallation. Eine solche Sicherung kannst du hier
-        wiederherstellen; sie ersetzt dann die Lernhistorie auf diesem Gerät.
+        {t('backup.body')}
       </ThemedText>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Lernhistorie als Datei sichern"
+        accessibilityLabel={t('backup.exportA11y')}
         disabled={busy !== null}
         onPress={onExport}
         style={({ pressed }) => [pressed && styles.pressed]}>
         <ThemedView type="backgroundSelected" style={styles.actionButton}>
           <ThemedText type="smallBold">
-            {busy === 'export' ? 'Sicherung läuft …' : 'Lernhistorie sichern'}
+            {busy === 'export' ? t('backup.exporting') : t('backup.exportButton')}
           </ThemedText>
         </ThemedView>
       </Pressable>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Sicherung einlesen und Lernhistorie ersetzen"
+        accessibilityLabel={t('backup.importA11y')}
         disabled={busy !== null}
         onPress={onImport}
         style={({ pressed }) => [pressed && styles.pressed]}>
         <ThemedView type="backgroundSelected" style={styles.actionButton}>
           <ThemedText type="smallBold">
-            {busy === 'import' ? 'Wird eingelesen …' : 'Sicherung wiederherstellen'}
+            {busy === 'import' ? t('backup.importing') : t('backup.importButton')}
           </ThemedText>
         </ThemedView>
       </Pressable>
       {status ? (
         status.kind === 'error' ? (
-          <ThemedText type="smallBold">Das ist schiefgegangen: {status.text}</ThemedText>
+          <ThemedText type="smallBold">
+            {t('backup.failed', { message: status.text })}
+          </ThemedText>
         ) : (
           <ThemedText type="small" themeColor="textSecondary">
             {status.text}
@@ -194,17 +264,20 @@ function DeveloperApiKeys() {
 }
 
 export default function SettingsScreen() {
+  const { t } = useLocale();
   return (
-    <ScreenScaffold title="Einstellungen" subtitle="Dein Lernbegleiter">
+    <ScreenScaffold title={t('tabs.settings')} subtitle={t('settings.subtitle')}>
       <PersistenceWarning />
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Dein Lernmaterial</ThemedText>
-        <ThemedText>{VOCABULARY.length} Wörter · Thai, Englisch und Spanisch</ThemedText>
+        <ThemedText type="smallBold">{t('settings.materialTitle')}</ThemedText>
+        <ThemedText>
+          {t('settings.materialCount', { count: VOCABULARY.length })}
+        </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Lernmaterial gehört zur App. Neue Wörter, Dialoge und Übungen kommen mit App-Updates.
-          Dein Lernfortschritt bleibt auf diesem Gerät.
+          {t('settings.materialBody')}
         </ThemedText>
       </ThemedView>
+      <AppLanguageSection />
       <BackupSection />
       {/* Drei Schlüsselfelder für den Debug-Ablauf; in Release rendert sie nichts. */}
       <DeveloperApiKeys />
@@ -224,6 +297,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.two,
     alignItems: 'center',
+  },
+  languageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  languageChip: {
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    borderRadius: Spacing.three,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   pressed: {
     opacity: 0.7,

@@ -8,6 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_LIMITS } from '@/data/sentence-tasks';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
+import { useLocale } from '@/lib/i18n';
 import { LanguageCode } from '@/lib/languages/types';
 import { languageOf } from '@/lib/languages/registry';
 import type { CapturedPcm } from '@/lib/speaking';
@@ -27,6 +28,7 @@ export function SentenceAction({ label, onPress, disabled = false }: {
 }
 
 export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode; language: LanguageCode; onExit: () => void }) {
+  const { t } = useLocale();
   // Die Aussaat ist ein eigener Zustand: „Neue Runde“ würfelt sie neu, damit
   // nicht dieselbe Satzfolge und Antwortmischung wie in der Runde davor
   // herauskommt.
@@ -73,12 +75,13 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
       captureRef.current.cancel(); void stopPronunciation();
       setBusy(false); setStage('prepare'); setResult(null); setHeard(false);
       setPreparedAt(Date.now()); setNow(Date.now());
-      setNotice('Unterbrochen. Die Aufnahme wurde verworfen; bereite den Satz erneut vor.');
+      setNotice(t('sentence.interrupted'));
     });
     return () => {
       sub.remove(); generation.current++; active.current = false;
       captureRef.current.cancel(); void stopPronunciation();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function play(concurrentRecording = false): Promise<boolean> {
@@ -86,7 +89,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     const label = languageOf(language).label;
     const request = { text: task.text, language, purpose: 'sentence' as const };
     if (!await hasPronunciationClip(request) && await isLanguageAvailable(language) === false) {
-      if (turn === generation.current) setNotice(`Kein Satzclip und keine ${label}-Systemstimme verfügbar. Installiere eine ${label}-Stimme oder nutze ein Gerät mit ${label}-Sprachausgabe. Ohne hörbaren Satz wird keine Antwort bewertet.`);
+      if (turn === generation.current) setNotice(t('sentence.noVoice', { language: label }));
       return false;
     }
     if (turn !== generation.current) return false;
@@ -101,7 +104,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     locked.current = true; setBusy(true);
     const turn = generation.current;
     try { if (await play() && turn === generation.current) setHeard(true); }
-    catch { if (turn === generation.current) setNotice('Die Satzwiedergabe ist fehlgeschlagen. Versuche es erneut.'); }
+    catch { if (turn === generation.current) setNotice(t('sentence.playFailed')); }
     finally { if (turn === generation.current) { locked.current = false; setBusy(false); } }
   }
 
@@ -115,7 +118,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     try {
       if (turn !== generation.current) return;
       setResult(measureSentence(recording)); setStage('result');
-    } catch { if (turn === generation.current) { setNotice('Die Aufnahme konnte nicht ausgewertet werden.'); setStage('prepare'); } }
+    } catch { if (turn === generation.current) { setNotice(t('sentence.measureFailed')); setStage('prepare'); } }
     finally {
       if (turn === generation.current) { captureRef.current.clear(); setBusy(false); locked.current = false; }
     }
@@ -143,7 +146,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
       }
     } catch {
       active.current = false; captureRef.current.cancel(); setStage('prepare');
-      setNotice('Das Vorbild konnte nicht starten. Die Aufnahme wurde verworfen.');
+      setNotice(t('sentence.modelFailed'));
     } finally { if (turn === generation.current) { setBusy(false); locked.current = false; } }
   }
   async function stop() {
@@ -163,36 +166,38 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
   // kein Mikrofon, keine Wiedergabe — nur der ehrliche Hinweis, was fehlt
   // (AE-66). Sobald die Registry Satzstoff führt, läuft alles wie bei Thai.
   if (tasks.length === 0) return <ThemedView style={styles.card}>
-    <ThemedText type="subtitle">Noch kein Satzmaterial für {languageOf(language).label}</ThemedText>
+    <ThemedText type="subtitle">{t('sentence.noneFor', { language: languageOf(language).label })}</ThemedText>
     <ThemedText type="small">{SENTENCE_FOOTNOTE_BY_LANGUAGE[language]}</ThemedText>
-    <SentenceAction label="Zurück" onPress={onExit} />
+    <SentenceAction label={t('common.back')} onPress={onExit} />
   </ThemedView>;
 
   if (!task) return <ThemedView style={styles.card}>
-    <ThemedText type="subtitle">Runde abgeschlossen</ThemedText>
-    <ThemedText>{mode === 'sentenceListening' ? `${correct} von ${tasks.length} Satzbedeutungen richtig gewählt.` : `${tasks.length} Sätze bearbeitet. Keine Aussprachebewertung und keine Änderung am Wiederholungsplan.`}</ThemedText>
+    <ThemedText type="subtitle">{t('drill.roundDone')}</ThemedText>
+    <ThemedText>{listening
+      ? t('sentence.listeningSummary', { correct, total: tasks.length })
+      : t('sentence.spokenSummary', { total: tasks.length })}</ThemedText>
     <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
-    <SentenceAction label="Neue Runde" onPress={() => { setCorrect(0); setSeed(Date.now()); reset(0); }} />
-    <SentenceAction label="Zurück" onPress={onExit} />
+    <SentenceAction label={t('drill.newRound')} onPress={() => { setCorrect(0); setSeed(Date.now()); reset(0); }} />
+    <SentenceAction label={t('common.back')} onPress={onExit} />
   </ThemedView>;
 
   return <ThemedView style={styles.card} type="backgroundElement">
-    <View style={styles.row}><ThemedText type="small">Satz {index + 1} von {tasks.length}</ThemedText>
-      <SentenceAction label="Satzübung verlassen" onPress={onExit} /></View>
-    <ThemedText type="subtitle">{listening ? 'Satz verstehen' : mode === 'shadowing' ? 'Mit dem Satz mitsprechen' : 'Denselben Satz wiederholen'}</ThemedText>
-    {mode === 'sentenceRepeat' && <ThemedText type="small">Runde {round + 1} von 3 · 12 / 9 / 6 Sekunden.</ThemedText>}
+    <View style={styles.row}><ThemedText type="small">{t('sentence.progress', { index: index + 1, total: tasks.length })}</ThemedText>
+      <SentenceAction label={t('sentence.exit')} onPress={onExit} /></View>
+    <ThemedText type="subtitle">{listening ? t('mode.sentenceListening') : mode === 'shadowing' ? t('sentence.titleShadowing') : t('sentence.titleRepeat')}</ThemedText>
+    {mode === 'sentenceRepeat' && <ThemedText type="small">{t('sentence.roundHint', { round: round + 1 })}</ThemedText>}
     {/* Die mehrsätzigen Methodik-Hinweise stehen bewusst NICHT mehr bei jedem
         Satz im Lernfluss: Sie wiederholen sich, der Lernende will den Satz. */}
     <Pressable accessibilityRole="button" accessibilityState={{ expanded: hintOpen }}
-      accessibilityLabel="Hintergrund zur Übungsform" onPress={() => setHintOpen(value => !value)}
+      accessibilityLabel={t('sentence.hintA11y')} onPress={() => setHintOpen(value => !value)}
       style={styles.toggle}>
-      <ThemedText type="small" themeColor="textSecondary">{hintOpen ? '▲ Hintergrund ausblenden' : '▼ Hintergrund anzeigen'}</ThemedText>
+      <ThemedText type="small" themeColor="textSecondary">{hintOpen ? t('sentence.hintHide') : t('sentence.hintShow')}</ThemedText>
     </Pressable>
     {hintOpen && <>
       <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
       {!listening && <ThemedText type="small">{mode === 'sentenceRepeat'
-        ? 'Anpassung des 4:3:2-Verhältnisses an kurze Sätze, kein 4/3/2-Minuten-Vortrag. Der Effekt wechselnder Zuhörer und echter Mitteilungsabsicht wird hier nicht abgedeckt.'
-        : 'Höre den Satz zuerst. Sprich danach während des Vorbilds mit. Nutze Kopfhörer: Über Lautsprecher kann das Vorbild in deiner Mikrofonmessung landen.'}</ThemedText>}
+        ? t('sentence.hintRepeat')
+        : t('sentence.hintShadowing')}</ThemedText>}
     </>}
     {!listening && <>
       <ThemedText type="smallBold">{task.german}</ThemedText>
@@ -200,38 +205,38 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
           schneiden Zeilenhöhe und Tonzeichen einander (UI-Review 2026-09-07). */}
       {(stage !== 'record' || mode === 'shadowing') && <><ThemedText type="subtitle" maxFontSizeMultiplier={2} style={{ lineHeight: displayLineHeight(32, 2) }}>{task.text}</ThemedText><ThemedText>{task.roman}</ThemedText></>}
       {stage === 'prepare' && <>
-        <ThemedText type="smallBold">Verpflichtende Vorbereitung · noch {Math.ceil(remaining / 1000)} Sekunden</ThemedText>
-        <ThemedText type="small">Kläre die Bedeutung und plane den ganzen Satz. {task.focus} Die 15 Sekunden sind eine Übungsentscheidung, kein wissenschaftlich ermitteltes Optimum.</ThemedText>
+        <ThemedText type="smallBold">{t('sentence.prepare', { seconds: Math.ceil(remaining / 1000) })}</ThemedText>
+        <ThemedText type="small">{t('sentence.prepareBody', { focus: task.focus })}</ThemedText>
       </>}
     </>}
-    {(listening || stage === 'prepare') && <SentenceAction label={heard ? 'Satz erneut hören' : 'Satz hören'} onPress={() => void listen()} disabled={busy} />}
-    <ThemedText type="small">Das Hörbeispiel ist kein Bewertungsmaßstab für deine Aufnahme.</ThemedText>
+    {(listening || stage === 'prepare') && <SentenceAction label={heard ? t('sentence.listenAgain') : t('sentence.listen')} onPress={() => void listen()} disabled={busy} />}
+    <ThemedText type="small">{t('sentence.exampleNote')}</ThemedText>
     <ThemedText accessibilityLiveRegion="polite" type="small">{capture.error?.message || notice}</ThemedText>
     {!listening && stage === 'prepare' && <>
-      {mode === 'shadowing' && <SentenceAction label={headphones ? 'Kopfhörer bestätigt' : 'Ich verwende Kopfhörer'} onPress={() => setHeadphones(value => !value)} />}
-      <ThemedText type="small">Mikrofon erst nach „Aufnahme starten“. Nur flüchtiger Gerätespeicher, kein Upload. Höchstens {windowMs / 1000} Sekunden; danach wird die Aufnahme ausgewertet und verworfen.</ThemedText>
-      <SentenceAction label="Aufnahme starten" onPress={() => void start()} disabled={busy || remaining > 0 || !heard || (mode === 'shadowing' && !headphones)} />
+      {mode === 'shadowing' && <SentenceAction label={headphones ? t('sentence.headphonesOk') : t('sentence.headphones')} onPress={() => setHeadphones(value => !value)} />}
+      <ThemedText type="small">{t('sentence.micNote', { action: t('sentence.start'), seconds: windowMs / 1000 })}</ThemedText>
+      <SentenceAction label={t('sentence.start')} onPress={() => void start()} disabled={busy || remaining > 0 || !heard || (mode === 'shadowing' && !headphones)} />
     </>}
     {!listening && stage === 'record' && <>
-      <ThemedText accessibilityLiveRegion="polite">Noch {Math.max(0, Math.ceil((windowMs - capture.elapsedMs) / 1000))} Sekunden</ThemedText>
-      <SentenceAction label="Aufnahme beenden" onPress={() => void stop()} disabled={busy} />
+      <ThemedText accessibilityLiveRegion="polite">{t('sentence.remaining', { seconds: Math.max(0, Math.ceil((windowMs - capture.elapsedMs) / 1000)) })}</ThemedText>
+      <SentenceAction label={t('sentence.stop')} onPress={() => void stop()} disabled={busy} />
     </>}
     {result && <>
-      <ThemedText type="smallBold">Lokale Messung · {(result.durationMs / 1000).toFixed(1)} Sekunden Aufnahme</ThemedText>
-      <ThemedText type="small">{result.voicedFramePercent} % der Analysefenster haben messbare Periodizität. Das ist keine Sprechzeit-, Tempo- oder Flüssigkeitsnote. {result.reachedLimit ? 'Das Zeitfenster ist abgelaufen; ob der Satz vollständig war, wird nicht erkannt.' : ''}</ThemedText>
-      {result.contour.status === 'measured' ? <><MeasuredToneContour points={result.contour.summary.pts} /><ThemedText type="small">Nur längster zusammenhängender F0-Abschnitt, {result.contour.summary.durMs} ms. Kein Sollvergleich für den Satz; Worttöne, Konsonanten, Vokallänge, Aspiration und Vollständigkeit sind nicht bewertet.</ThemedText></> : <ThemedText type="small">Keine ausreichende stimmhafte Strecke messbar. Das bedeutet nicht, dass dein Satz falsch war.</ThemedText>}
-      <SentenceAction label="Noch einmal vorbereiten" onPress={() => reset(index, round)} />
-      <SentenceAction label={mode === 'sentenceRepeat' && round < 2 ? 'Nächstes Zeitfenster vorbereiten' : 'Nächster Satz'} onPress={() => mode === 'sentenceRepeat' && round < 2 ? reset(index, round + 1) : reset(index + 1)} />
+      <ThemedText type="smallBold">{t('sentence.measurement', { seconds: (result.durationMs / 1000).toFixed(1) })}</ThemedText>
+      <ThemedText type="small">{t('sentence.voicedNote', { percent: result.voicedFramePercent })}{result.reachedLimit ? ` ${t('sentence.limitReached')}` : ''}</ThemedText>
+      {result.contour.status === 'measured' ? <><MeasuredToneContour points={result.contour.summary.pts} /><ThemedText type="small">{t('sentence.contourNote', { duration: result.contour.summary.durMs })}</ThemedText></> : <ThemedText type="small">{t('sentence.noVoiced')}</ThemedText>}
+      <SentenceAction label={t('sentence.reprepare')} onPress={() => reset(index, round)} />
+      <SentenceAction label={mode === 'sentenceRepeat' && round < 2 ? t('sentence.nextWindow') : t('sentence.nextSentence')} onPress={() => mode === 'sentenceRepeat' && round < 2 ? reset(index, round + 1) : reset(index + 1)} />
     </>}
     {listening && <>
-      <ThemedText type="smallBold">Welche ganze Aussage oder Frage hast du gehört?</ThemedText>
+      <ThemedText type="smallBold">{t('sentence.questionPrompt')}</ThemedText>
       {sentenceAnswers(task, seed + index).map(option => <SentenceAction key={option} label={option} disabled={!heard || answer !== null || busy}
         onPress={() => { if (!heard || answer !== null) return; setAnswer(option); if (option === task.german) setCorrect(value => value + 1); void stopPronunciation(); }} />)}
       {answer !== null && <>
-        <ThemedText accessibilityLiveRegion="polite">{answer === task.german ? 'Richtig.' : `Gemeint ist: ${task.german}`}</ThemedText>
+        <ThemedText accessibilityLiveRegion="polite">{answer === task.german ? t('sentence.correct') : t('sentence.meant', { answer: task.german })}</ThemedText>
         <ThemedText>{task.text}</ThemedText><ThemedText>{task.roman}</ThemedText>
         <ThemedText type="small">{task.focus}</ThemedText>
-        <SentenceAction label="Nächster Satz" onPress={() => reset(index + 1)} />
+        <SentenceAction label={t('sentence.nextSentence')} onPress={() => reset(index + 1)} />
       </>}
     </>}
     <ThemedText type="small">{SENTENCE_FOOTNOTE_BY_LANGUAGE[language]}</ThemedText>

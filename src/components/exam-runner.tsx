@@ -9,7 +9,29 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { playPronunciation } from '@/lib/audio';
 import { scoreExamModule } from '@/lib/exam/session';
-import { ExamModule, isGradable, SKILL_LABELS, TASK_TYPE_LABELS } from '@/lib/exam/types';
+import {
+  ExamModule,
+  ExamSkill,
+  ExamTaskType,
+  isGradable,
+} from '@/lib/exam/types';
+import { useLocale, type TranslationKey } from '@/lib/i18n';
+
+/** Fertigkeit und Aufgabentyp als Übersetzungsschlüssel statt als deutsche Konstante. */
+const SKILL_KEYS: Record<ExamSkill, TranslationKey> = {
+  lesen: 'skill.lesen',
+  hoeren: 'skill.hoeren',
+  schreiben: 'skill.schreiben',
+  sprechen: 'skill.sprechen',
+};
+
+const TASK_TYPE_KEYS: Record<ExamTaskType, TranslationKey> = {
+  multipleChoice: 'exam.taskMultipleChoice',
+  trueFalse: 'exam.taskTrueFalse',
+  matching: 'exam.taskMatching',
+  gapFill: 'exam.taskGapFill',
+  production: 'exam.taskProduction',
+};
 
 /**
  * Eine Prüfungsaufgabe bearbeiten.
@@ -31,6 +53,7 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
   );
   const [checked, setChecked] = useState(false);
   const theme = useTheme();
+  const { t } = useLocale();
   const [showModel, setShowModel] = useState(false);
 
   const score = useMemo(
@@ -61,16 +84,16 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
     <>
       <View style={styles.headerRow}>
         <ThemedText type="small" themeColor="textSecondary">
-          {SKILL_LABELS[module.skill]} · {module.level} · {TASK_TYPE_LABELS[module.taskType]} ·
-          etwa {module.minutes} Min
+          {t(SKILL_KEYS[module.skill])} · {module.level} · {t(TASK_TYPE_KEYS[module.taskType])} ·{' '}
+          {t('exam.moduleMinutes', { minutes: module.minutes })}
         </ThemedText>
         <Pressable
           onPress={onExit}
           accessibilityRole="button"
-          accessibilityLabel="Zurück zur Aufgabenübersicht"
+          accessibilityLabel={t('exam.backA11y')}
           style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
           <ThemedText type="small" themeColor="textSecondary">
-            Zurück zur Übersicht
+            {t('exam.back')}
           </ThemedText>
         </Pressable>
       </View>
@@ -155,7 +178,7 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
         checked ? (
           <ThemedView type="backgroundElement" style={styles.card}>
             <ThemedText type="smallBold">
-              {score!.correct} von {score!.total} richtig
+              {t('exam.score', { correct: score!.correct, total: score!.total })}
             </ThemedText>
             {/*
               Bewusst keine Bestehensgrenze: Wie viele Punkte zum Bestehen
@@ -164,18 +187,16 @@ export function ExamRunner({ module, onExit }: { module: ExamModule; onExit: () 
               von Erfindung, die dieses Modul vermeiden soll.
             */}
             <ThemedText type="small" themeColor="textSecondary">
-              Das ist eine Übungsaufgabe, keine Prüfung — eine Bestehensgrenze
-              steht hier bewusst nicht, weil sie nicht aus der Quelle erhoben
-              wurde.
+              {t('exam.noPassMark')}
             </ThemedText>
             <View style={styles.row}>
-              <ThemedButton label="Zurück zur Übersicht" onPress={onExit} />
+              <ThemedButton label={t('exam.back')} onPress={onExit} />
             </View>
           </ThemedView>
         ) : (
           <ThemedButton
-            label={allAnswered ? 'Auswerten' : 'Bitte alle Aufgaben beantworten'}
-            accessibilityLabel="Auswerten"
+            label={allAnswered ? t('exam.check') : t('exam.checkDisabled')}
+            accessibilityLabel={t('exam.check')}
             onPress={() => setChecked(true)}
             disabled={!allAnswered}
             variant="primary"
@@ -196,6 +217,7 @@ function Stimulus({
   onSpeak: () => void;
 }) {
   const stimulus = module.stimulus!;
+  const { t } = useLocale();
 
   if (stimulus.kind === 'audio') {
     return (
@@ -203,10 +225,10 @@ function Stimulus({
         <Pressable
           onPress={onSpeak}
           accessibilityRole="button"
-          accessibilityLabel="Text anhören"
+          accessibilityLabel={t('exam.listen')}
           style={({ pressed }) => pressed && styles.pressed}>
           <ThemedView type="backgroundElement" style={styles.playButton}>
-            <ThemedText type="smallBold">🔊 Text anhören</ThemedText>
+            <ThemedText type="smallBold">🔊 {t('exam.listen')}</ThemedText>
           </ThemedView>
         </Pressable>
         {revealed ? (
@@ -215,8 +237,7 @@ function Stimulus({
           </ThemedText>
         ) : (
           <ThemedText type="small" themeColor="textSecondary">
-            Der Text wird vorgelesen. Sie können ihn beliebig oft anhören; zu
-            lesen ist er erst nach dem Auswerten.
+            {t('exam.audioNote')}
           </ThemedText>
         )}
       </ThemedView>
@@ -254,6 +275,7 @@ function ProductionTask({
   onShowModel: () => void;
 }) {
   const production = module.production;
+  const { t } = useLocale();
 
   return (
     <>
@@ -267,16 +289,13 @@ function ProductionTask({
       </ThemedView>
 
       <ThemedText type="small" themeColor="textSecondary">
-        Diese Aufgabe wird nicht automatisch bewertet — freie Texte und
-        gesprochene Antworten kann die App nicht zuverlässig beurteilen.
-        Schreiben oder sprechen Sie erst selbst, vergleichen Sie dann mit der
-        Musterlösung.
+        {t('exam.productionNote')}
       </ThemedText>
 
       {showModel ? (
         <>
           <ThemedView type="backgroundSelected" style={styles.stimulus}>
-            <ThemedText type="smallBold">Musterlösung</ThemedText>
+            <ThemedText type="smallBold">{t('exam.modelAnswerTitle')}</ThemedText>
             <ThemedText type="small">{production.modelAnswer}</ThemedText>
             {production.speakModelAnswer ? (
               <Pressable
@@ -286,16 +305,16 @@ function ProductionTask({
                   );
                 }}
                 accessibilityRole="button"
-                accessibilityLabel="Musterlösung anhören"
+                accessibilityLabel={t('exam.listenModel')}
                 style={({ pressed }) => pressed && styles.pressed}>
                 <ThemedView type="backgroundElement" style={styles.playButton}>
-                  <ThemedText type="small">🔊 Musterlösung anhören</ThemedText>
+                  <ThemedText type="small">🔊 {t('exam.listenModel')}</ThemedText>
                 </ThemedView>
               </Pressable>
             ) : null}
           </ThemedView>
           <View style={styles.item}>
-            <ThemedText type="smallBold">Selbstkontrolle</ThemedText>
+            <ThemedText type="smallBold">{t('exam.selfCheck')}</ThemedText>
             {production.checklist.map((point) => (
               <ThemedText key={point} type="small" themeColor="textSecondary">
                 ☐ {point}
@@ -305,7 +324,7 @@ function ProductionTask({
         </>
       ) : (
         <View style={styles.row}>
-          <ThemedButton label="Musterlösung zeigen" onPress={onShowModel} />
+          <ThemedButton label={t('exam.showModel')} onPress={onShowModel} />
         </View>
       )}
     </>

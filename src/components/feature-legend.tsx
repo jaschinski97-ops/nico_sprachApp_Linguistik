@@ -7,6 +7,7 @@ import { ToneLegend } from './tone-legend';
 
 import { Spacing } from '@/constants/theme';
 import { VOCABULARY_ES } from '@/data/vocabulary';
+import { useLocale } from '@/lib/i18n';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { LanguageCode } from '@/lib/languages/types';
 import { graphemeGroups } from '@/lib/spelling/graphemes';
@@ -57,37 +58,29 @@ type StressRow = {
   stressedIndex: number;
 };
 
-const STRESS_ROWS: { rule: StressRow['rule']; label: string; detail: string }[] = [
-  {
-    rule: 'penultimate',
-    label: 'Endet auf Vokal, „n" oder „s"',
-    detail: 'vorletzte Silbe',
-  },
-  {
-    rule: 'final',
-    label: 'Endet auf einen anderen Konsonanten',
-    detail: 'letzte Silbe',
-  },
-  {
-    rule: 'acute',
-    label: 'Ein Akut steht geschrieben',
-    detail: 'genau dort — die Regel ist außer Kraft',
-  },
-];
+/** Die drei Betonungsregeln als Übersetzungsschlüssel. */
+const STRESS_RULE_KEYS = {
+  penultimate: { label: 'legend.stressRulePenultimate', detail: 'legend.stressDetailPenultimate' },
+  final: { label: 'legend.stressRuleFinal', detail: 'legend.stressDetailFinal' },
+  acute: { label: 'legend.stressRuleAcute', detail: 'legend.stressDetailAcute' },
+} as const;
 
 function StressLegend({ compact }: { compact: boolean }) {
+  const { t } = useLocale();
 
   // Beispiele aus dem Grundstock statt aus dem Kopf: das erste mehrsilbige
   // Wort, auf das die jeweilige Regel greift.
   const rows = useMemo<StressRow[]>(() => {
     const out: StressRow[] = [];
-    for (const row of STRESS_ROWS) {
+    for (const rule of ['penultimate', 'final', 'acute'] as const) {
       for (const entry of VOCABULARY_ES) {
         const analysis = analyzeStress(entry.term);
-        if (!analysis.ok || analysis.rule !== row.rule) continue;
+        if (!analysis.ok || analysis.rule !== rule) continue;
         if (analysis.syllables.length < 2) continue;
         out.push({
-          ...row,
+          rule,
+          label: t(STRESS_RULE_KEYS[rule].label),
+          detail: t(STRESS_RULE_KEYS[rule].detail),
           word: entry.term,
           syllables: analysis.syllables,
           stressedIndex: analysis.stressedIndex,
@@ -96,16 +89,15 @@ function StressLegend({ compact }: { compact: boolean }) {
       }
     }
     return out;
-  }, []);
+    // Die Regeln stehen in der UI-Sprache — ein Sprachwechsel baut sie neu.
+  }, [t]);
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Betonung</ThemedText>
+      <ThemedText type="smallBold">{t('legend.stressTitle')}</ThemedText>
       {!compact ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Welche Silbe betont wird, steht in der Schreibung — zwei Regeln und
-          eine Ausnahme. Wer sie kennt, muss die Betonung bei keinem neuen Wort
-          nachschlagen.
+          {t('legend.stressBody')}
         </ThemedText>
       ) : null}
 
@@ -141,8 +133,7 @@ function StressLegend({ compact }: { compact: boolean }) {
 
       {!compact ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Ein Akut auf „i" oder „u" tut noch etwas anderes: Er trennt zwei
-          Vokale, die sonst eine Silbe wären — „día" hat deshalb zwei.
+          {t('legend.stressAcuteNote')}
         </ThemedText>
       ) : null}
     </ThemedView>
@@ -180,15 +171,14 @@ function SyllablePattern({ count, stressed }: { count: number; stressed: number 
 
 function SpellingLegend({ compact }: { compact: boolean }) {
   const groups = useMemo(() => graphemeGroups(), []);
+  const { t } = useLocale();
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Aussprache</ThemedText>
+      <ThemedText type="smallBold">{t('legend.spellingTitle')}</ThemedText>
       {!compact ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Anders als bei Thai und Spanisch gibt es hier keine Regel: Dieselbe
-          Buchstabenfolge klingt von Wort zu Wort anders. Das ist kein Mangel
-          dieser App, sondern der Befund — man muss sie Wort für Wort kennen.
+          {t('legend.spellingBody')}
         </ThemedText>
       ) : null}
 

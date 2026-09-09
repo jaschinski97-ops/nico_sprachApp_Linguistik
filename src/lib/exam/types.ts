@@ -1,4 +1,4 @@
-import { Direction } from '../fsrs/types';
+import { TargetDirection } from '../languages/types';
 
 /**
  * Prüfungsmodul (Phase 7).
@@ -19,7 +19,11 @@ import { Direction } from '../fsrs/types';
  *    „etwa 30", B1 Lesen 65.
  */
 
-export const EXAM_LEVELS = ['A1', 'A2', 'B1'] as const;
+/**
+ * A1–B2 (Roadmap v2, Phase 4). B1 war recherchiert, aber leermäßig
+ * hinterlegt; B2 kommt als Gerüst dazu — siehe `basis` am Zertifikat.
+ */
+export const EXAM_LEVELS = ['A1', 'A2', 'B1', 'B2'] as const;
 export type ExamLevel = (typeof EXAM_LEVELS)[number];
 
 /** Die vier Fertigkeiten, die jedes der drei Zertifikate prüft. */
@@ -44,6 +48,30 @@ export type ExamPart = {
   format?: 'gruppe' | 'paar';
 };
 
+/**
+ * Woher die Strukturangaben eines Zertifikats stammen — die Ehrlichkeits-
+ * marke dieses Gerüsts:
+ *
+ *  - `'recherchiert'`: von der verlinkten Goethe-Seite abgerufen; Zeiten und
+ *    Beschreibungen sind wörtlich übernommen (Abrufdatum unten).
+ *  - `'am-format-orientiert'`: die Goethe-Seite für diese Stufe war zum
+ *    Zeitpunkt der Aufnahme NICHT abrufbar (Abrufversuch am 2026-09-09:
+ *    HTTP 403). Zeiten und Beschreibungen sind deshalb als **Orientierung**
+ *    nach dem bekannten Format aufgebaut — AM FORMAT ORIENTIERT, KEINE
+ *    OFFIZIELLEN VORGABEN. Der Link zeigt auf das Format, nicht auf
+ *    übernommene Angaben; vor einer echten Anmeldung zählt, was dort steht.
+ */
+export type CertificateBasis = 'recherchiert' | 'am-format-orientiert';
+
+/**
+ * Kennzeichnung, die diese Aufgaben überall dort tragen müssen, wo sie
+ * sichtbar werden: Struktur 1:1 nach dem Goethe-Format, Inhalte selbst
+ * geschrieben, keine offizielle Zertifizierung (Roadmap v2, „Goethe 1:1
+ * übersetzt oder nicht?").
+ */
+export const EXAM_SIMULATION_LABEL =
+  'Prüfungssimulation nach dem Format des Goethe-Zertifikats — keine offizielle Zertifizierung.';
+
 export type ExamCertificate = {
   id: string;
   name: string;
@@ -55,6 +83,10 @@ export type ExamCertificate = {
    */
   partsAreModules: boolean;
   parts: ExamPart[];
+  /** Siehe `CertificateBasis` — die Ehrlichkeitsmarke dieses Eintrags. */
+  basis: CertificateBasis;
+  /** `EXAM_SIMULATION_LABEL` — an jeder Stufe fest verdrahtet, nicht optional. */
+  simulationLabel: string;
   /** „Für … wird ein Alter ab N Jahren empfohlen." */
   recommendedAge: number;
   /** Unterrichtseinheiten à 45 Minuten bis zu dieser Stufe, von der Seite. */
@@ -65,6 +97,13 @@ export type ExamCertificate = {
    * https-Adresse stehen kann.
    */
   source: `https://${string}`;
+  /**
+   * Abrufdatum der Quelle im Format JJJJ-MM-TT. Bei `basis:
+   * 'am-format-orientiert'` steht hier stattdessen ein ausdrücklicher
+   * Hinweis — es gibt dann KEIN Abrufdatum, weil nichts übernommen wurde.
+   * Der Prüfungs-Screen setzt den Wert direkt in seinen Satz ein; deshalb
+   * bleibt es ein Text, der im Satz lesbar bleibt, statt eines leeren Felds.
+   */
   retrieved: string;
 };
 
@@ -79,6 +118,8 @@ export const CERTIFICATES: ExamCertificate[] = [
     name: 'Goethe-Zertifikat A1: Start Deutsch 1',
     level: 'A1',
     partsAreModules: false,
+    basis: 'recherchiert',
+    simulationLabel: EXAM_SIMULATION_LABEL,
     parts: [
       {
         skill: 'lesen',
@@ -120,6 +161,8 @@ export const CERTIFICATES: ExamCertificate[] = [
     name: 'Goethe-Zertifikat A2',
     level: 'A2',
     partsAreModules: false,
+    basis: 'recherchiert',
+    simulationLabel: EXAM_SIMULATION_LABEL,
     parts: [
       {
         skill: 'lesen',
@@ -160,6 +203,8 @@ export const CERTIFICATES: ExamCertificate[] = [
     name: 'Goethe-Zertifikat B1',
     level: 'B1',
     partsAreModules: true,
+    basis: 'recherchiert',
+    simulationLabel: EXAM_SIMULATION_LABEL,
     parts: [
       {
         skill: 'lesen',
@@ -196,7 +241,111 @@ export const CERTIFICATES: ExamCertificate[] = [
     source: 'https://www.goethe.de/ins/th/de/spr/prf/gzb1/inf.html',
     retrieved: '2026-08-31',
   },
+  {
+    /**
+     * GERÜST, NICHT ABSCHRIFT: Die Seite für B2 war beim Aufbau nicht
+     * abrufbar (HTTP 403 am 2026-09-09), deshalb `basis:
+     * 'am-format-orientiert'` und KEIN Abrufdatum. Alle Zeiten unten sind
+     * als Orientierung nach dem Goethe-Skelett gesetzt — kompakter als B1 —
+     * und ausdrücklich als „etwa" markiert. Beschreibungen sind eigene
+     * Formulierungen über das Format, keine Zitate. Es gibt hier bewusst
+     * **keine B2-Aufgaben**: erst recherchieren, dann Inhalte.
+     */
+    id: 'gzb2',
+    name: 'Goethe-Zertifikat B2',
+    level: 'B2',
+    partsAreModules: false,
+    basis: 'am-format-orientiert',
+    simulationLabel: EXAM_SIMULATION_LABEL,
+    parts: [
+      {
+        skill: 'lesen',
+        description:
+          'Orientierung am Format: Sie lesen längere Artikel, Kommentare und Gebrauchstexte und erfassen Hauptaussagen, Einzelheiten und Haltungen.',
+        minutes: 50,
+        approximate: true,
+      },
+      {
+        skill: 'hoeren',
+        description:
+          'Orientierung am Format: Sie hören Interviews, Gespräche und Vorträge und erfassen Hauptaussagen, Einzelheiten und Redeabsichten.',
+        minutes: 30,
+        approximate: true,
+      },
+      {
+        skill: 'schreiben',
+        description:
+          'Orientierung am Format: Sie schreiben einen Sachtext und äußern schriftlich und begründet Ihre Meinung zu einem Thema.',
+        minutes: 50,
+        approximate: true,
+      },
+      {
+        skill: 'sprechen',
+        description:
+          'Orientierung am Format: Sie diskutieren mit einer zweiten Person über ein Thema des gesellschaftlichen Lebens und halten einen Vortrag mit Rückfragen.',
+        minutes: 15,
+        approximate: true,
+        format: 'paar',
+      },
+    ],
+    // Richtwert nach der üblichen Goethe-Stufentabelle — Orientierung, nicht
+    // abgeschrieben (dazu wäre die Seite nötig, die hier 403 lieferte).
+    recommendedAge: 16,
+    teachingUnits: [600, 800],
+    source: 'https://www.goethe.de/ins/th/de/spr/prf/gzb2/inf.html',
+    retrieved: 'kein Abruf — Angaben am Format orientiert',
+  },
 ];
+
+/**
+ * Zeit- und Teil-Skelett je Stufe und Fertigkeit.
+ *
+ * AM FORMAT ORIENTIERT, KEINE OFFIZIELLEN VORGABEN: Die Minuten kommen für
+ * `basis: 'recherchiert'` aus dem Zertifikat (dort belegt), für B2 aus der
+ * Orientierung. Die **Teilzahl** ist grob aus dem Format abgeleitet — sie
+ * ist ein Bauplan für künftige Aufgaben, keine Angabe des Goethe-Instituts.
+ * Das **Punktschema ist bewusst `null`**: eine ausgedachte Punktezahl wäre
+ * genau die Art plausibel klingender Erfindung, die dieses Modul vermeidet
+ * (denselben Grund wie `scoreExamModule` ohne Bestehensgrenze). Wer Punkte
+ * braucht, findet sie vor der Prüfung beim Goethe-Institut.
+ */
+export type ExamSkillSkeleton = {
+  /** Grobe Zahl der Prüfungsteile innerhalb der Fertigkeit (Orientierung). */
+  teile: number;
+  /** Minuten — beim Recherchierten die belegte Dauer, sonst Orientierung. */
+  minutes: number;
+  /** Bewusst `null` — siehe Kommentar oben. */
+  punkte: null;
+};
+
+export type ExamLevelSkeleton = Record<ExamSkill, ExamSkillSkeleton>;
+
+export const EXAM_FORMAT_SKELETONS: Record<ExamLevel, ExamLevelSkeleton> = {
+  A1: {
+    lesen: { teile: 3, minutes: 25, punkte: null },
+    hoeren: { teile: 3, minutes: 20, punkte: null },
+    schreiben: { teile: 2, minutes: 20, punkte: null },
+    sprechen: { teile: 3, minutes: 15, punkte: null },
+  },
+  A2: {
+    lesen: { teile: 3, minutes: 30, punkte: null },
+    hoeren: { teile: 3, minutes: 30, punkte: null },
+    schreiben: { teile: 2, minutes: 30, punkte: null },
+    sprechen: { teile: 3, minutes: 15, punkte: null },
+  },
+  B1: {
+    lesen: { teile: 3, minutes: 65, punkte: null },
+    hoeren: { teile: 3, minutes: 40, punkte: null },
+    schreiben: { teile: 2, minutes: 60, punkte: null },
+    sprechen: { teile: 3, minutes: 15, punkte: null },
+  },
+  B2: {
+    lesen: { teile: 3, minutes: 50, punkte: null },
+    hoeren: { teile: 2, minutes: 30, punkte: null },
+    schreiben: { teile: 2, minutes: 50, punkte: null },
+    sprechen: { teile: 2, minutes: 15, punkte: null },
+  },
+};
 
 export function certificateFor(level: ExamLevel): ExamCertificate {
   const certificate = CERTIFICATES.find((candidate) => candidate.level === level);
@@ -280,12 +429,30 @@ type ExamModuleBase = {
    * das Goethe-Institut zertifiziert Deutsch (AE-19). Das Feld steht
    * trotzdem im Schema, damit ein recherchiertes Thai-Zertifikat später ohne
    * Umbau danebenpasst.
+   *
+   * SEIT DEM PAARMATRIX-START VOM TYP `TargetDirection`: Damit sind
+   * französische A1-Module (`de_to_fr` für Deutschsprecher, `fr_to_de` für
+   * Französischsprecher im Deutschen) formal **erlaubt**. Inhalte dafür
+   * kommen in einer späteren Runde (Roadmap v2, Phase 3/4); das Typsystem
+   * stellt hier bereits die Tür offen. Bestehende Module (`th_to_de`) sind
+   * von der Erweiterung unberührt.
    */
-  direction: Direction;
+  direction: TargetDirection;
   title: string;
   /** Arbeitsanweisung im Ton der echten Prüfung. */
   instruction: string;
   stimulus: ExamStimulus | null;
+  /**
+   * Ehrlicher Anker ins bestehende Hörmaterial — NUR bei de→th-Modulen
+   * gesetzt: die Clip-Quelle aus dem Katalog (z.B. `sentence-yaak` für die
+   * Satzaufgabe, `greeting-A1-de_to_th-003#3` für einen Gesprächs-Turn) oder
+   * der ausdrückliche Vermerk, dass kein Clip existiert. Grund für das Feld:
+   * Der Abspielknopf des Prüfungs-Screens spricht Stimuli über die
+   * **deutsche** Sprachausgabe (`exam-runner`, language:'de') — der echte
+   * Thai-Clip liegt in „Sätze üben" bzw. den Gesprächen. Wo hier nichts
+   * steht, gibt es kein Hörmaterial, und das Modul sagt das im Text.
+   */
+  clipAnchor?: string;
   /** Richtwert aus der Zertifikatsstruktur, auf diese eine Aufgabe skaliert. */
   minutes: number;
   source: 'builtin' | 'generated';

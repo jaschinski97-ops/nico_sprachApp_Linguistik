@@ -5,7 +5,8 @@ import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
-import { LANGUAGE_ORDER, languageOf, languagesWithContent } from '@/lib/languages/registry';
+import { useLocale } from '@/lib/i18n';
+import { LANGUAGE_ORDER, languagesWithContent } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
 
 /**
@@ -29,20 +30,21 @@ import { LanguageCode } from '@/lib/languages/types';
 export function LanguageSwitch({
   selected,
   onSelect,
-  label = 'Sprache',
+  label,
 }: {
   selected: LanguageCode;
   onSelect: (language: LanguageCode) => void;
-  /** Sichtbare Beschriftung der Zeile. */
+  /** Sichtbare Beschriftung der Zeile. Ohne Angabe: „Sprache“ in der App-Sprache. */
   label?: string;
 }) {
   const toneColor = useToneColor();
+  const { t, languageName } = useLocale();
   const usable = new Set(languagesWithContent().map((language) => language.code));
 
   return (
-    <View style={styles.row} role="radiogroup" accessibilityLabel="Sprache wechseln">
+    <View style={styles.row} role="radiogroup" accessibilityLabel={t('common.switchLanguageA11y')}>
       <ThemedText type="small" themeColor="textSecondary">
-        {label}
+        {label ?? t('common.languageLabel')}
       </ThemedText>
       {LANGUAGE_ORDER.filter((code) => usable.has(code)).map((code) => {
         const active = code === selected;
@@ -51,14 +53,14 @@ export function LanguageSwitch({
             key={code}
             onPress={() => onSelect(code)}
             accessibilityRole="radio"
-            accessibilityLabel={`${languageOf(code).label} lernen`}
+            accessibilityLabel={t('common.learnGoal', { language: languageName(code) })}
             aria-checked={active}
             style={({ pressed }) => [pressed && styles.pressed]}>
             <ThemedView
               type={active ? 'backgroundSelected' : 'backgroundElement'}
               style={[styles.chip, active ? { borderColor: toneColor('mid') } : null]}>
               <ThemedText type="small" themeColor={active ? 'text' : 'textSecondary'}>
-                {languageOf(code).label}
+                {languageName(code)}
               </ThemedText>
             </ThemedView>
           </Pressable>

@@ -3,7 +3,7 @@ import { Tone } from '@/constants/tones';
 import { SpeechLanguage } from '../audio';
 import { Direction } from '../fsrs/types';
 import { drillsForDirectionViaFeature } from '../languages/feature';
-import { HUB_LANGUAGE, LanguageCode } from '../languages/types';
+import { HUB_LANGUAGE, TargetDirection, TargetLanguage } from '../languages/types';
 import { DerivationStep } from '../reading/syllable';
 
 /**
@@ -40,6 +40,15 @@ export const DRILLS = [
   'stressHear',
   /** Phase 18: Wort hoeren und die richtige Schreibung waehlen (Englisch). */
   'soundSpelling',
+  /**
+   * Paarmatrix-Start (Roadmap v2): das franzoesische Merkmal — drei
+   * Lese-Uebungen an der Betonungsregel. Sie laufen erst, wenn der
+   * franzoesische Grundstoff ausgeliefert ist (`delivered`), sind aber
+   * registriert und gegen `VOCABULARY_FR` getestet.
+   */
+  'stressFr',
+  'muteE',
+  'accentFr',
 ] as const;
 export type DrillId = (typeof DRILLS)[number];
 
@@ -69,8 +78,12 @@ export type DrillMeta = {
   /**
    * Zu welchem Sprachmerkmal die Übung gehört, oder `null` für die deutschen
    * Module, die zu jedem Paar gehören.
+   *
+   * SEIT DEM PAARMATRIX-START VOM TYP `TargetLanguage`: Französische Übungen
+   * tragen `'fr'`, obwohl der Grundstoff noch nicht ausgeliefert ist — die
+   * Registrierung ist die Vorbereitung, nicht die Auslieferung.
    */
-  feature: LanguageCode | null;
+  feature: TargetLanguage | null;
   label: string;
   /** Ein Satz, der sagt, was geübt wird und warum. */
   description: string;
@@ -78,8 +91,17 @@ export type DrillMeta = {
   prompt: string;
 };
 
-/** Die Richtung, in der diese Übung für diese Sprache läuft. */
-export function directionForDrill(drill: DrillId, language: LanguageCode): Direction {
+/**
+ * Die Richtung, in der diese Übung für diese Sprache läuft.
+ *
+ * SEIT DEM PAARMATRIX-START TYP `TargetLanguage` AUF DER SPRACHE UND
+ * `TargetDirection` AUF `drillsForDirection`: Auch die französischen Übungen
+ * bauen hier ihre Richtung; `DrillQuestion.direction` selbst bleibt beim
+ * Bestandstyp `Direction` — der französische Grundstoff ist nicht
+ * ausgeliefert, und solange niemand eine französische Aufgabe in den
+ * Bestand schreibt, verlässt kein französischer Richtungswert diese Datei.
+ */
+export function directionForDrill(drill: DrillId, language: TargetLanguage): Direction {
   return DRILL_META[drill].side === 'toHub'
     ? (`${language}_to_${HUB_LANGUAGE}` as Direction)
     : (`${HUB_LANGUAGE}_to_${language}` as Direction);
@@ -170,6 +192,42 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
       'though, through, thought und enough klingen verschieden, obwohl sie gleich aussehen.',
     prompt: 'Welches Wort hörst du?',
   },
+  stressFr: {
+    id: 'stressFr',
+    side: 'toTarget',
+    feature: 'fr',
+    skill: 'lesen',
+    label: 'Betonung bestimmen',
+    description:
+      'Im Französischen liegt die Betonung fast immer auf der letzten vollen Silbe — sie ist ' +
+      'Regel und kein Gedächtnisstoff. Geübt wird das Ablesen: Welche Silbe bleibt übrig, ' +
+      'wenn das stumme e wegfällt?',
+    prompt: 'Welche Silbe wird betont?',
+  },
+  muteE: {
+    id: 'muteE',
+    side: 'toTarget',
+    feature: 'fr',
+    skill: 'lesen',
+    label: 'Stummes e',
+    description:
+      'Ein unbetontes ⟨e⟩ am Wortende hat in der Regel keinen Laut (e muet). Aus der ' +
+      'geschriebenen Silbenzahl wird so eine kleinere gesprochene — und genau daran ' +
+      'scheitert das laute Lesen.',
+    prompt: 'Wie viele Silben hörst du?',
+  },
+  accentFr: {
+    id: 'accentFr',
+    side: 'toTarget',
+    feature: 'fr',
+    skill: 'lesen',
+    label: 'Akzentzeichen lesen',
+    description:
+      'é klingt geschlossen (/e/), è und ê offen (/ɛ/), ç wie ein s — die Akzentzeichen ' +
+      'sagen, wie der Buchstabe klingt. Sie verschieben die Betonung NICHT (anders als im ' +
+      'Spanischen steht hier keine Betonungsangabe), sie steuern den Vokalklang.',
+    prompt: 'Wie klingt das hervorgehobene Zeichen?',
+  },
 };
 
 /** Die vier Fertigkeiten, in der Reihenfolge, in der sie angezeigt werden. */
@@ -188,7 +246,7 @@ export const SKILL_LABELS: Record<DrillMeta['skill'], string> = {
  * sie dort ohne weiteres Zutun verfügbar. Die Ton-Übungen dagegen sind das
  * Thai-**Merkmal** und hängen an der Sprache (AE-44).
  */
-export function drillsForDirection(direction: Direction): DrillId[] {
+export function drillsForDirection(direction: TargetDirection): DrillId[] {
   return drillsForDirectionViaFeature(direction);
 }
 

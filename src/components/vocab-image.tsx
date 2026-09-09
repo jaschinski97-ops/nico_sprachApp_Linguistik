@@ -28,7 +28,9 @@ export function VocabImageView({ entry }: { entry: VocabEntry }) {
     setUri(null);
     // Abstrakte Einträge haben nie ein Bild - gar nicht erst nachsehen.
     if (!entry.isConcrete) return;
-    loadVocabImageUri(entry.id)
+    // Sprache mitgeben: Ein installiertes Sprachpaket gewinnt gegen das
+    // eingebettete Asset (Pack-Bild-Naht, Roadmap v2).
+    loadVocabImageUri(entry.id, undefined, undefined, entry.language)
       .then((found) => {
         if (active) setUri(found);
       })
@@ -38,7 +40,7 @@ export function VocabImageView({ entry }: { entry: VocabEntry }) {
     return () => {
       active = false;
     };
-  }, [entry.id, entry.isConcrete]);
+  }, [entry.id, entry.isConcrete, entry.language]);
 
   if (!uri) return null;
 

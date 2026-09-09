@@ -127,6 +127,12 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
     id: `writing:${direction}:${entry.id}`,
     vocabId: entry.id,
     direction,
+    // `languageOfDirection` bleibt auf dem Bestandstyp `Direction` und
+    // liefert deshalb nur die drei ausgelieferten Sprachen — der Wert passt
+    // ohne Cast in die Schreib-Schicht. Ein französisches Schreibziel ist
+    // heute unerreichbar: es gibt keinen ausgelieferten französischen
+    // Grundstoff (delivered: false), damit keine Kandidaten und keine
+    // Prompts.
     language: languageOfDirection(direction),
     shown: typeableGerman(entry.german.split(',')[0]),
     shownHint: entry.german.includes(',') ? entry.german : null,

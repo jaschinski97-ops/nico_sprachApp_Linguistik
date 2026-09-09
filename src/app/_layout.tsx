@@ -6,6 +6,7 @@ import { useColorScheme } from 'react-native';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import AppTabs from '@/components/app-tabs';
 import { installClipLookup } from '@/lib/clips/lookup';
+import { I18nProvider } from '@/lib/i18n';
 
 // Lehnt ab, wenn der Splash schon versteckt oder bereits jemand anders an
 // der Steuerung ist — der Start darf daran nicht als unhandled rejection
@@ -24,7 +25,11 @@ export default function TabLayout() {
           Statusbar-Icons weiss und waren im Hellmodus unlesbar. */}
       <StatusBar style="auto" />
       <AnimatedSplashOverlay />
-      <AppTabs />
+      {/* App-Sprache (Roadmap v2): Systemsprache erkennen, Einstellung aus
+          dem Speicher lesen — für alle Screens und Komponenten darunter. */}
+      <I18nProvider>
+        <AppTabs />
+      </I18nProvider>
     </ThemeProvider>
   );
 }

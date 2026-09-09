@@ -8,16 +8,25 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
 import { PlaybackKind, playPronunciation } from '@/lib/audio';
-import { ConversationSituation, TOPIC_LABELS } from '@/lib/conversation/types';
+import { ConversationSituation } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
 import { loadSituations } from '@/lib/repository';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { setConversationDirection } from '@/lib/profile';
-import { languageOf } from '@/lib/languages/registry';
+import { TranslationKey, useLocale } from '@/lib/i18n';
 import { directionsFor } from '@/lib/languages/types';
 import { directionLabel } from '@/lib/review-session';
 
+/** Gesprächsthemen als Übersetzungsschlüssel statt als deutsche Konstante. */
+const TOPIC_KEYS: Record<ConversationSituation['topic'], TranslationKey> = {
+  greeting: 'topic.greeting',
+  market: 'topic.market',
+  restaurant: 'topic.restaurant',
+  travel: 'topic.travel',
+};
+
 export default function ConversationScreen() {
+  const { t, languageName } = useLocale();
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Die Richtung haengt an der Sprache (Phase 17): gewaehlt wird eine der
@@ -61,16 +70,16 @@ export default function ConversationScreen() {
     for (const situation of visible) {
       const count = (counts.get(situation.title) ?? 0) + 1;
       counts.set(situation.title, count);
-      suffix.set(situation.id, count === 1 ? '' : ` · Variante ${count}`);
+      suffix.set(situation.id, count === 1 ? '' : t('conversation.variant', { count }));
     }
     return suffix;
-  }, [visible]);
+  }, [visible, t]);
 
   if (error) {
     return (
-      <ScreenScaffold title="Gespräch" subtitle="Vorproduzierte Sprachsituationen">
+      <ScreenScaffold title={t('tabs.conversation')} subtitle={t('conversation.subtitle')}>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht geladen werden: {error}
+          {t('common.loadFailed', { message: error })}
         </ThemedText>
       </ScreenScaffold>
     );
@@ -78,9 +87,9 @@ export default function ConversationScreen() {
 
   if (!situations) {
     return (
-      <ScreenScaffold title="Gespräch" subtitle="Vorproduzierte Sprachsituationen">
+      <ScreenScaffold title={t('tabs.conversation')} subtitle={t('conversation.subtitle')}>
         <ThemedText type="small" themeColor="textSecondary">
-          Lade Situationen …
+          {t('conversation.loading')}
         </ThemedText>
       </ScreenScaffold>
     );
@@ -91,16 +100,17 @@ export default function ConversationScreen() {
   if (mine.length === 0) {
     return (
       <ScreenScaffold
-        title="Gespräch"
-        subtitle={`Vorproduzierte Sprachsituationen · ${languageOf(language).label}`}>
+        title={t('tabs.conversation')}
+        subtitle={t('conversation.subtitleLanguage', {
+          language: languageName(language),
+        })}>
         <LanguageSwitch selected={language} onSelect={chooseLanguage} />
         <ThemedView type="backgroundElement" style={styles.card}>
           <ThemedText type="smallBold">
-            Noch keine Situationen für {languageOf(language).label}
+            {t('conversation.noneFor', { language: languageName(language) })}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Diese App-Version enthält noch keine Dialoge für {languageOf(language).label}.
-            Karteikarten und Übungen findest du unter „Lernen“. Weitere Inhalte kommen mit App-Updates.
+            {t('conversation.noneForBody', { language: languageName(language) })}
           </ThemedText>
         </ThemedView>
       </ScreenScaffold>
@@ -109,8 +119,8 @@ export default function ConversationScreen() {
 
   return (
     <ScreenScaffold
-      title="Gespräch"
-      subtitle={`${mine.length} Situationen — offline nutzbar`}>
+      title={t('tabs.conversation')}
+      subtitle={t('conversation.subtitleCount', { count: mine.length })}>
       <LanguageSwitch selected={language} onSelect={chooseLanguage} />
       <View style={styles.row}>
         {directions.map((d) => (
@@ -136,7 +146,7 @@ export default function ConversationScreen() {
 
       {visible.length === 0 ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Diese App-Version enthält noch keine Dialoge für diese Richtung.
+          {t('conversation.noneForDirection')}
         </ThemedText>
       ) : (
         visible.map((situation) => (
@@ -165,6 +175,7 @@ function SituationCard({
   onToggle: () => void;
 }) {
   const toneColor = useToneColor();
+  const { t } = useLocale();
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -177,7 +188,7 @@ function SituationCard({
           <View style={styles.headerText}>
             <ThemedText type="smallBold">{situation.title}</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              {TOPIC_LABELS[situation.topic]} · {situation.level}
+              {t(TOPIC_KEYS[situation.topic])} · {situation.level}
               {variantSuffix}
             </ThemedText>
           </View>
@@ -202,7 +213,7 @@ function SituationCard({
               ]}>
               <View style={styles.turnHeader}>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {turn.speaker === 'learner' ? 'Du' : 'Gegenüber'}
+                  {turn.speaker === 'learner' ? t('conversation.you') : t('conversation.partner')}
                 </ThemedText>
                 <TurnSpeakButton text={turn.thai} />
               </View>
@@ -215,7 +226,7 @@ function SituationCard({
           ))}
 
           <ThemedView type="backgroundSelected" style={styles.corrections}>
-            <ThemedText type="smallBold">Typische Fehler</ThemedText>
+            <ThemedText type="smallBold">{t('conversation.mistakesTitle')}</ThemedText>
             {situation.corrections.map((hint, index) => (
               <View key={index}>
                 <ThemedText type="small">{hint.issue}</ThemedText>
@@ -240,11 +251,12 @@ function SituationCard({
  */
 function TurnSpeakButton({ text }: { text: string }) {
   const [played, setPlayed] = useState<PlaybackKind | null>(null);
+  const { t } = useLocale();
   return (
     <View style={styles.turnSpeak}>
       {played === 'asset' ? (
         <ThemedText type="small" themeColor="textSecondary">
-          KI-Stimme
+          {t('conversation.aiVoice')}
         </ThemedText>
       ) : null}
       <Pressable
@@ -258,8 +270,8 @@ function TurnSpeakButton({ text }: { text: string }) {
             .catch(() => {});
         }}
         accessibilityRole="button"
-        accessibilityLabel={`Anhören: ${text}${
-          played === 'asset' ? ' (synthetische Stimme, keine Muttersprachler-Aufnahme)' : ''
+        accessibilityLabel={`${t('conversation.listenA11y', { text })}${
+          played === 'asset' ? t('conversation.syntheticNote') : ''
         }`}
         style={({ pressed }) => pressed && styles.pressed}
         hitSlop={12}>

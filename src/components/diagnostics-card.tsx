@@ -12,6 +12,7 @@ import { LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
 import { LanguageCode } from '@/lib/languages/types';
 import { loadVocabulary } from '@/lib/repository';
 import { getActiveBackend, getStore } from '@/lib/storage';
+import { useLocale } from '@/lib/i18n';
 
 type Row = { language: LanguageCode; stored: number; shipped: number; verified: number };
 
@@ -30,6 +31,7 @@ type Row = { language: LanguageCode; stored: number; shipped: number; verified: 
  * ab, ist der Grundstock im Speicher älter als die App.
  */
 export function DiagnosticsCard() {
+  const { t } = useLocale();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [backends, setBackends] = useState<{ data: string; images: string; clips: string } | null>(
     null
@@ -72,37 +74,42 @@ export function DiagnosticsCard() {
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Diagnose</ThemedText>
+      <ThemedText type="smallBold">{t('diagnostics.title')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
-        Was im Speicher liegt und worauf es liegt. Für das Lernen ohne
-        Bedeutung — nützlich, wenn etwas nicht so aussieht wie erwartet.
+        {t('diagnostics.body')}
       </ThemedText>
 
       {error ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht geladen werden: {error}
+          {t('common.loadFailed', { message: error })}
         </ThemedText>
       ) : rows && backends ? (
         <>
-          <View style={styles.table} role="table" accessibilityLabel="Vokabeln je Sprache">
+          <View style={styles.table} role="table" accessibilityLabel={t('diagnostics.tableA11y')}>
             {rows.map((row) => (
               <View key={row.language} style={styles.row}>
                 <ThemedText type="small">{languageOf(row.language).label}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {row.stored} im Speicher · {row.shipped} ausgeliefert · {row.verified}{' '}
-                  quellengeprüft
+                  {t('diagnostics.row', {
+                    stored: row.stored,
+                    shipped: row.shipped,
+                    verified: row.verified,
+                  })}
                 </ThemedText>
               </View>
             ))}
           </View>
           <ThemedText type="small" themeColor="textSecondary">
-            Datenspeicher: {backends.data} · Bildablage: {backends.images} · Clipablage:{' '}
-            {backends.clips}
+            {t('diagnostics.backends', {
+              data: backends.data,
+              images: backends.images,
+              clips: backends.clips,
+            })}
           </ThemedText>
         </>
       ) : (
         <ThemedText type="small" themeColor="textSecondary">
-          Lade …
+          {t('diagnostics.loading')}
         </ThemedText>
       )}
     </ThemedView>

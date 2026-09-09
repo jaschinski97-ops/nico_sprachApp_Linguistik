@@ -1,30 +1,38 @@
-import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_FR, VOCABULARY_TH } from '@/data/vocabulary';
+import { LANGUAGE_DISPLAY_NAMES, type UiLanguage } from '@/lib/i18n';
 
 import {
   Direction,
   directionsFor,
   HUB_LANGUAGE,
+  Lang,
   LANGUAGE_CODES,
   LanguageCode,
   LanguageDefinition,
   languageOfDirection,
+  languageOfTargetDirection,
+  Pair,
+  TARGET_LANGUAGES,
+  TargetDirection,
+  TargetLanguage,
 } from './types';
 
 /**
  * Welche Sprachen es gibt, was sie besonders macht und ob sie Inhalte haben.
  *
- * EINE STELLE, DIE ALLES WEISS. Wer eine vierte Sprache ergänzen will, trägt
+ * EINE STELLE, DIE ALLES WEISS. Wer eine weitere Sprache ergänzen will, trägt
  * sie hier ein und liefert ihren Grundstock — die Oberfläche, die Auswahl und
  * die Zählung ziehen von hier.
  *
- * SEIT PHASE 16 HABEN ALLE DREI SPRACHEN INHALT. Die Zahlen stehen nicht als
- * Literal da, sondern kommen aus den Grundstöcken selbst — eine gepflegte Zahl
- * wäre irgendwann eine falsche. `entryCount: 0` bleibt der Weg, eine geplante
- * Sprache ehrlich als leer zu kennzeichnen (Pflicht 5 aus Phase 15); es gibt
- * derzeit nur keine solche mehr.
+ * SEIT DEM PAARMATRIX-MODELL (Roadmap v2) TRENNT DIE REGISTRY ZWEI FRAGEN:
+ * „Was hat geprüften Stoff?“ (`entryCount`) und „Was ist auf jedem Gerät?“
+ * (`delivered`). Französisch hat einen 150 Einträge umfassenden A1-Grundstoff, aber keinen
+ * App-Bestand — die Auswahl zeigt es ehrlich als „noch nicht lernbar“, und
+ * `hasContent` hält es aus dem Sprachwechsel heraus, bis sein Paket
+ * ausgeliefert ist.
  */
 
-export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
+export const LANGUAGES: Record<(typeof TARGET_LANGUAGES)[number], LanguageDefinition> = {
   th: {
     code: 'th',
     label: 'Thai',
@@ -33,6 +41,7 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
     challenge: 'Fünf Töne, die Bedeutung tragen — und eine eigene Schrift.',
     entryCount: VOCABULARY_TH.length,
     hasGermanModules: true,
+    delivered: true,
     feature: {
       label: 'Töne',
       description:
@@ -59,6 +68,7 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
     challenge: 'Die Betonung ist regelhaft — wer die Regel kennt, braucht sie nicht zu merken.',
     entryCount: VOCABULARY_ES.length,
     hasGermanModules: true,
+    delivered: true,
     feature: {
       label: 'Betonung',
       description:
@@ -85,6 +95,7 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
     challenge: 'Schreibung und Aussprache klaffen auseinander — Wort für Wort.',
     entryCount: VOCABULARY_EN.length,
     hasGermanModules: true,
+    delivered: true,
     feature: {
       label: 'Aussprache',
       description:
@@ -100,6 +111,41 @@ export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = {
         retrieved: '2026-09-03',
         quote:
           'in unfamiliar words and proper nouns, the pronunciation of some sequences, ⟨ough⟩ being the prime example, is unpredictable even for educated native speakers.',
+      },
+    },
+  },
+
+  fr: {
+    code: 'fr',
+    label: 'Französisch',
+    endonym: 'français',
+    speechLocale: 'fr-FR',
+    challenge:
+      'Die Betonung liegt fast immer auf der letzten vollen Silbe — aber viele Endungen verstummen.',
+    entryCount: VOCABULARY_FR.length,
+    hasGermanModules: true,
+    // NOCH NICHT IM APP-BESTAND: Der Grundstoff liegt in
+    // `data/vocabulary-fr.ts`, aber `VOCABULARY` (und damit Seeding, Audio und
+    // Sprachauswahl) traegt ihn noch nicht. `hasContent` haelt die Sprache
+    // deshalb aus dem Sprachwechsel; der Grundstock-Uebersicht reicht das
+    // Kennzeichen „noch nicht lernbar“ (Pflicht 5 aus Phase 15).
+    delivered: false,
+    feature: {
+      label: 'Betonung',
+      description:
+        'Die Betonung steht fast immer auf der letzten vollen Silbe — sie muss man nicht auswendig lernen, sondern nur wissen, welche Silben überhaupt gesprochen werden. Das stumme Schluss-e (e muet) und die Akzentzeichen entscheiden mit; beides ist Schrift, und beide Übungen zeigen den Weg dorthin.',
+      kind: 'derivable',
+      // Seit dem Paarmatrix-Start gebaut: drei Regeluebungen (Betonung,
+      // stummes e, Akzentzeichen). Eine HOER-Uebung fehlt bewusst — die
+      // Audio-Naht (`SpeechLanguage` in lib/audio.ts) kennt bislang kein
+      // Franzoesisch, und eine Hoeruebung ohne Ton waere Schein.
+      implemented: true,
+      source: {
+        title: 'French phonology',
+        url: 'https://en.wikipedia.org/wiki/French_phonology',
+        retrieved: '2026-09-09',
+        quote:
+          'French having lexical stress falling on the final full syllable (syllable with a vowel other than schwa) of a word … word stress is not distinctive in French, so two words cannot be distinguished based on stress placement alone.',
       },
     },
   },
@@ -129,13 +175,20 @@ export const LANGUAGE_ORDER: LanguageCode[] = [...LANGUAGE_CODES].sort((a, b) =>
   return byContent !== 0 ? byContent : LANGUAGES[a].label.localeCompare(LANGUAGES[b].label);
 });
 
-export function languageOf(code: LanguageCode): LanguageDefinition {
+export function languageOf(code: TargetLanguage): LanguageDefinition {
   return LANGUAGES[code];
 }
 
-/** Ist diese Sprache überhaupt lernbar, oder steht sie nur in der Liste? */
-export function hasContent(code: LanguageCode): boolean {
-  return LANGUAGES[code].entryCount > 0;
+/**
+ * Ist diese Sprache überhaupt lernbar, oder steht sie nur in der Liste?
+ *
+ * SEIT DEM PAARMATRIX-MODELL EINE ZWEI TEILIGE FRAGE: `entryCount > 0`
+ * heißt „geprüfter Stoff liegt vor“, `delivered` heißt „er ist auf jedem
+ * Gerät“. Erst beides zusammen macht eine Sprache wählbar — ein Grundstoff
+ * ohne Auslieferung wäre eine leere Versprechung.
+ */
+export function hasContent(code: TargetLanguage): boolean {
+  return LANGUAGES[code].entryCount > 0 && LANGUAGES[code].delivered;
 }
 
 export function languagesWithContent(): LanguageDefinition[] {
@@ -145,19 +198,34 @@ export function languagesWithContent(): LanguageDefinition[] {
 /** Die Standardsprache — die Vorgabe, solange sie Inhalte hat. */
 export function defaultLanguage(): LanguageCode {
   if (hasContent(DEFAULT_LANGUAGE)) return DEFAULT_LANGUAGE;
-  return languagesWithContent()[0]?.code ?? DEFAULT_LANGUAGE;
+  // Die Liste kommt aus LANGUAGE_ORDER und damit aus LANGUAGE_CODES — der
+  // erste Code ist deshalb immer einer aus dem Bestand, nie das (noch nicht
+  // ausgelieferte) Französisch.
+  return (languagesWithContent()[0]?.code ?? DEFAULT_LANGUAGE) as LanguageCode;
 }
 
 /**
  * Beschriftung einer Richtung, aus dem Verzeichnis gebaut statt als Tabelle
  * gepflegt — sonst müsste jede neue Sprache an zwei Stellen nachgetragen
  * werden, und eine davon würde vergessen.
+ *
+ * SEIT DEM PAARMATRIX-START FÜR ALLE deutsch-geankerten Richtungen offen
+ * (`TargetDirection`): Auch „Deutsch → Französisch” wird hier aus dem
+ * Verzeichnis beschriftet, statt eine zweite Tabelle zu pflegen.
+ *
+ * SEIT DEM i18N-GERÜST MEHRSPRACHIG: Die Namen kommen aus
+ * `LANGUAGE_DISPLAY_NAMES`, also in der Sprache der OBERFLÄCHE — ein
+ * Thailänder sieht „ไทย → ภาษาเยอรมัน”. Ohne Angabe gilt Deutsch (die
+ * Referenzsprache): Der providerlose Fall — Tests und Aufrufer ohne
+ * UI-Kontext — bleibt damit exakt so, wie er war. Wer die aktive
+ * UI-Sprache kennt (`useLocale().uiLanguage`), reicht sie durch.
  */
-export function directionLabel(direction: Direction): string {
-  const language = languageOf(languageOfDirection(direction));
+export function directionLabel(direction: TargetDirection, ui: UiLanguage = 'de'): string {
+  const ziel = LANGUAGE_DISPLAY_NAMES[languageOfTargetDirection(direction)][ui];
+  const deutsch = LANGUAGE_DISPLAY_NAMES.de[ui];
   return direction.startsWith(`${HUB_LANGUAGE}_to_`)
-    ? `Deutsch → ${language.label}`
-    : `${language.label} → Deutsch`;
+    ? `${deutsch} → ${ziel}`
+    : `${ziel} → ${deutsch}`;
 }
 
 // `directionPrompt` gab es bis Phase 18: ein Satz wie „Deutsch lesen, das Wort
@@ -167,3 +235,27 @@ export function directionLabel(direction: Direction): string {
 // wirklich auswaehlt.
 
 export { directionsFor, languageOfDirection };
+
+/**
+ * Beschriftung aller fünf Kanon-Sprachen — Deutsch inklusive.
+ *
+ * DER GRUND FÜR DIE KLEINE TABELLE: Deutsch ist keine Ziel-Sprache mit
+ * Grundstoff (`LANGUAGE_CODES`), taucht aber auf jeder Seite eines Paars auf.
+ * Ein `Record<Lang, string>` hält die Beschriftung an **einer** Stelle, und
+ * `pairLabel` liest sie, statt Deutsch zu hartkodieren.
+ */
+export const LANGUAGE_LABELS: Record<Lang, string> = {
+  de: 'Deutsch',
+  en: LANGUAGES.en.label,
+  es: LANGUAGES.es.label,
+  fr: LANGUAGES.fr.label,
+  th: LANGUAGES.th.label,
+};
+
+/** Beschriftung eines Paars — „Englisch → Französisch“ statt `en_to_fr`. */
+export function pairLabel(pair: Pair): string {
+  return `${LANGUAGE_LABELS[pair.source]} → ${LANGUAGE_LABELS[pair.target]}`;
+}
+
+/** Alle 20 Paare des Kanons — aus `types.ts` hier nur weitergereicht. */
+export { PAIRS as ALL_PAIRS } from './types';

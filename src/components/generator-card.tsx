@@ -183,8 +183,10 @@ export function GeneratorCard({
     if (startingRef.current) return;
     startingRef.current = true;
     setNotice(null);
-    const apiKey = key.trim() || (await loadApiKey(provider));
-    if (!apiKey) {
+    const apiKey = key.trim() || (await loadApiKey(provider)) || '';
+    // Der Helper (needsKey: false) zieht seinen Schlüssel serverseitig aus
+    // der Umgebung — ihm fehlt einer hier nicht.
+    if (!apiKey && providerInfo.needsKey !== false) {
       setNotice('Erst einen API-Schlüssel eintragen.');
       startingRef.current = false;
       return;
@@ -386,7 +388,11 @@ export function GeneratorCard({
       ) : null}
 
       <View style={styles.field}>
-        <ThemedText type="small">API-Schlüssel für {providerInfo.vendor}</ThemedText>
+        <ThemedText type="small">
+          {providerInfo.needsKey === false
+            ? `Schlüssel für ${providerInfo.label}`
+            : `API-Schlüssel für ${providerInfo.vendor}`}
+        </ThemedText>
         <TextInput
           value={key}
           onChangeText={setKey}
@@ -403,11 +409,15 @@ export function GeneratorCard({
           ]}
         />
         <ThemedText type="small" themeColor="textSecondary">
-          {mode === 'secure-store'
-            ? `Wird verschlüsselt auf dem Gerät abgelegt (Keychain/Keystore) und übersteht Neustarts. Jeder Anbieter hat seinen eigenen Platz — der Wechsel hierüber löscht keinen anderen Schlüssel.`
-            : mode === 'session-only'
-              ? 'Im Browser gibt es keine sichere Ablage — der Schlüssel bleibt nur für diese Sitzung im Arbeitsspeicher und ist nach dem Neuladen weg. Das ist Absicht (AE-10).'
-              : '…'}
+          {providerInfo.needsKey === false ? (
+            `${providerInfo.keySource}. Ein hier eingetragener Schlüssel wird nicht verschickt — das Feld kann leer bleiben.`
+          ) : mode === 'secure-store' ? (
+            `Wird verschlüsselt auf dem Gerät abgelegt (Keychain/Keystore) und übersteht Neustarts. Jeder Anbieter hat seinen eigenen Platz — der Wechsel hierüber löscht keinen anderen Schlüssel.`
+          ) : mode === 'session-only' ? (
+            'Im Browser gibt es keine sichere Ablage — der Schlüssel bleibt nur für diese Sitzung im Arbeitsspeicher und ist nach dem Neuladen weg. Das ist Absicht (AE-10).'
+          ) : (
+            '…'
+          )}
         </ThemedText>
         <View style={styles.buttonRow}>
           <Button label="Schlüssel übernehmen" onPress={onSaveKey} disabled={running} />

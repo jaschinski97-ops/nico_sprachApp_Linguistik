@@ -10,8 +10,8 @@ import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
-import { languageOf } from '@/lib/languages/registry';
-import { CARD_STATE_LABELS, CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
+import { TranslationKey, MONTH_NAMES, useLocale } from '@/lib/i18n';
+import { CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
 /**
  * Kartenzustaende auf Toene abgebildet - die Farbe selbst kommt zur Laufzeit
@@ -24,30 +24,26 @@ const STATE_TONES: Record<string, Tone> = {
   mastered: 'mid',
 };
 
-/** Monatsnamen für die Screenreader-Beschriftung der Chartspalten. */
-const MONATE = [
-  'Januar',
-  'Februar',
-  'März',
-  'April',
-  'Mai',
-  'Juni',
-  'Juli',
-  'August',
-  'September',
-  'Oktober',
-  'November',
-  'Dezember',
-];
+/** Kartenzustände als Übersetzungsschlüssel statt als deutsche Konstante. */
+const STATE_KEYS: Record<string, TranslationKey> = {
+  new: 'state.new',
+  learning: 'state.learning',
+  review: 'state.review',
+  mastered: 'state.mastered',
+};
 
-/** „2026-05-12" → „12. Mai" — dieselbe Information wie die Spaltenbeschriftung, nur als ganze Ansage. */
-function tagLabel(date: string): string {
+/**
+ * „2026-05-12" → „12. Mai" — dieselbe Information wie die Spaltenbeschriftung,
+ * nur als ganze Ansage. Die Monatsnamen kommen aus der UI-Sprache.
+ */
+function tagLabel(date: string, months: readonly string[]): string {
   const tag = Number(date.slice(8, 10));
-  const monat = MONATE[Number(date.slice(5, 7)) - 1];
+  const monat = months[Number(date.slice(5, 7)) - 1];
   return monat ? `${tag}. ${monat}` : date;
 }
 
 export default function ProgressScreen() {
+  const { t, languageName, uiLanguage } = useLocale();
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -71,9 +67,9 @@ export default function ProgressScreen() {
 
   if (error) {
     return (
-      <ScreenScaffold title="Fortschritt" subtitle="Lernverlauf">
+      <ScreenScaffold title={t('tabs.progress')} subtitle={t('progress.subtitle')}>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht geladen werden: {error}
+          {t('common.loadFailed', { message: error })}
         </ThemedText>
       </ScreenScaffold>
     );
@@ -81,34 +77,36 @@ export default function ProgressScreen() {
 
   if (!stats) {
     return (
-      <ScreenScaffold title="Fortschritt" subtitle="Lernverlauf">
+      <ScreenScaffold title={t('tabs.progress')} subtitle={t('progress.subtitle')}>
         <ThemedText type="small" themeColor="textSecondary">
-          Lade Lernstand …
+          {t('progress.loading')}
         </ThemedText>
       </ScreenScaffold>
     );
   }
 
   return (
-    <ScreenScaffold title="Fortschritt" subtitle={`Lernverlauf · ${languageOf(language).label}`}>
+    <ScreenScaffold
+      title={t('tabs.progress')}
+      subtitle={t('progress.subtitleLanguage', { language: languageName(language) })}>
       <LanguageSwitch selected={language} onSelect={chooseLanguage} />
 
       <View style={styles.grid}>
-        <Tile label="Heute wiederholt" value={String(stats.reviewsToday)} />
-        <Tile label="Heute geübt" value={String(stats.drillsToday)} hint="Aufgaben" />
+        <Tile label={t('tile.reviewsToday')} value={String(stats.reviewsToday)} />
+        <Tile label={t('tile.drillsToday')} value={String(stats.drillsToday)} hint={t('tile.drillsHint')} />
         <Tile
-          label="Tage in Folge"
+          label={t('tile.streak')}
           value={String(stats.streak)}
-          hint={stats.streak === 1 ? 'Tag' : 'Tage'}
+          hint={stats.streak === 1 ? t('tile.dayOne') : t('tile.dayMany')}
         />
         {/* SEIT PHASE 18 KEIN BESTAND MEHR, sondern Erarbeitetes: „168 Karten
             gesamt" ist die Groesse des Stapels und sagt ueber den Fortschritt
             nichts. Begonnen heisst: mindestens einmal bewertet. */}
-        <Tile label="Begonnen" value={String(stats.totalCards - stats.cardStates.new)} />
-        <Tile label="Gemeistert" value={String(stats.cardStates.mastered)} />
+        <Tile label={t('tile.started')} value={String(stats.totalCards - stats.cardStates.new)} />
+        <Tile label={t('tile.mastered')} value={String(stats.cardStates.mastered)} />
       </View>
 
-      <ReviewChart stats={stats} />
+      <ReviewChart stats={stats} months={MONTH_NAMES[uiLanguage]} />
       <CardStates stats={stats} />
 
     </ScreenScaffold>
@@ -140,20 +138,21 @@ function Tile({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
-function ReviewChart({ stats }: { stats: LearningStats }) {
+function ReviewChart({ stats, months }: { stats: LearningStats; months: readonly string[] }) {
   // Wiederholungen und Uebungen werden gestapelt, nicht summiert dargestellt:
   // beides ist Lernzeit, aber nur die Wiederholungen laufen durch FSRS
   // (AE-16). Eine gemeinsame Saeule ohne Trennung wuerde die Beschriftung
   // "Wiederholungen" zur Unwahrheit machen.
   const toneColor = useToneColor();
+  const { t } = useLocale();
   const max = Math.max(1, ...stats.days.map((day) => day.total + drillCount(day)));
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Pro Tag</ThemedText>
+      <ThemedText type="smallBold">{t('chart.perDay')}</ThemedText>
       <View style={styles.legend}>
-        <LegendDot color={toneColor('mid')} label="Wiederholungen" />
-        <LegendDot color={toneColor('high')} label="Übungen" />
+        <LegendDot color={toneColor('mid')} label={t('chart.legendReviews')} />
+        <LegendDot color={toneColor('high')} label={t('chart.legendDrills')} />
       </View>
 
       <View style={styles.chart}>
@@ -166,7 +165,11 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
             key={day.date}
             style={styles.barColumn}
             accessible
-            accessibilityLabel={`${tagLabel(day.date)}: ${day.total} Wiederholungen, ${drillCount(day)} Übungen`}>
+            accessibilityLabel={t('chart.columnA11y', {
+              date: tagLabel(day.date, months),
+              reviews: day.total,
+              drills: drillCount(day),
+            })}>
             <ThemedText
               type="small"
               themeColor="textSecondary"
@@ -219,12 +222,18 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
       */}
       <ThemedText type="small" themeColor="textSecondary">
         {stats.loggedSince
-          ? `Protokolliert seit ${stats.loggedSince} · insgesamt ${stats.totalReviews} Wiederholungen${
-              stats.totalDrills > 0
-                ? ` und ${stats.totalDrills} Übungsaufgaben, davon ${stats.totalDrillsCorrect} richtig`
-                : ''
-            }. Frühere Sitzungen sind nicht enthalten — das Tagesprotokoll wurde erst mit dieser Version eingeführt.`
-          : 'Noch keine Wiederholungen protokolliert. Die Historie beginnt mit der ersten bewerteten Karte; frühere Sitzungen sind nicht enthalten.'}
+          ? stats.totalDrills > 0
+            ? t('chart.loggedSinceWithDrills', {
+                since: stats.loggedSince,
+                reviews: stats.totalReviews,
+                drills: stats.totalDrills,
+                correct: stats.totalDrillsCorrect,
+              })
+            : t('chart.loggedSince', {
+                since: stats.loggedSince,
+                reviews: stats.totalReviews,
+              })
+          : t('chart.empty')}
       </ThemedText>
     </ThemedView>
   );
@@ -256,18 +265,18 @@ function LegendDot({ color, label }: { color: string; label: string }) {
  */
 function CardStates({ stats }: { stats: LearningStats }) {
   const toneColor = useToneColor();
+  const { t } = useLocale();
   const zustaende = CARD_STATE_ORDER.filter((state) => state !== 'new');
   const begonnen = zustaende.reduce((sum, state) => sum + stats.cardStates[state], 0);
   const offen = stats.cardStates.new;
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Kartenzustände</ThemedText>
+      <ThemedText type="smallBold">{t('states.title')}</ThemedText>
 
       {begonnen === 0 ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Noch keine Karte bewertet. Sobald du die erste im Reiter „Lernen"
-          bewertest, steht hier, wie sie sich verteilen.
+          {t('states.empty')}
         </ThemedText>
       ) : (
         <>
@@ -277,10 +286,12 @@ function CardStates({ stats }: { stats: LearningStats }) {
           <View
             style={styles.stackedBar}
             accessible
-            accessibilityLabel={`Verteilung der begonnenen Karten: ${zustaende
-              .filter((state) => stats.cardStates[state] > 0)
-              .map((state) => `${CARD_STATE_LABELS[state]} ${stats.cardStates[state]}`)
-              .join(', ')}`}>
+            accessibilityLabel={t('states.distributionA11y', {
+              parts: zustaende
+                .filter((state) => stats.cardStates[state] > 0)
+                .map((state) => `${t(STATE_KEYS[state])} ${stats.cardStates[state]}`)
+                .join(', '),
+            })}>
             {zustaende.map((state) => {
               const count = stats.cardStates[state];
               if (count === 0) return null;
@@ -307,7 +318,7 @@ function CardStates({ stats }: { stats: LearningStats }) {
                   accessibilityElementsHidden
                   importantForAccessibility="no-hide-descendants"
                 />
-                <ThemedText type="small">{CARD_STATE_LABELS[state]}</ThemedText>
+                <ThemedText type="small">{t(STATE_KEYS[state])}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {stats.cardStates[state]} ({Math.round((stats.cardStates[state] / begonnen) * 100)}{' '}
                   %)
@@ -317,15 +328,15 @@ function CardStates({ stats }: { stats: LearningStats }) {
           </View>
 
           <ThemedText type="small" themeColor="textSecondary">
-            „Gemeistert" heißt: die berechnete Stabilität liegt über 21 Tagen.
+            {t('states.masteredNote')}
           </ThemedText>
         </>
       )}
 
       <ThemedText type="small" themeColor="textSecondary">
         {offen === 0
-          ? 'Alle Karten dieser Sprache sind begonnen.'
-          : `Noch nicht begonnen: ${offen} von ${stats.totalCards} Karten.`}
+          ? t('states.allStarted')
+          : t('states.notStarted', { count: offen, total: stats.totalCards })}
       </ThemedText>
     </ThemedView>
   );

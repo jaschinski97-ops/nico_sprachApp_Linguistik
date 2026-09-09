@@ -31,11 +31,12 @@ import { allowsThaiPlayback, clipToneLabel, type AudioPurpose, type ToneStatus }
 /**
  * Welche Sprachen gesprochen werden können.
  *
- * SEIT PHASE 16 ALLE DREI ZIELSPRACHEN plus Deutsch. Die Kennungen sind
+ * SEIT PHASE 16 ALLE DREI ZIELSPRACHEN plus Deutsch, seit dem
+ * Paarmatrix-Start (Roadmap v2) auch Französisch — die Kennungen sind
  * dieselben wie in `lib/languages` — eine zweite Sprachliste wäre eine
  * Stelle, an der man das Nachtragen vergisst.
  */
-export type SpeechLanguage = 'th' | 'de' | 'en' | 'es';
+export type SpeechLanguage = 'th' | 'de' | 'en' | 'es' | 'fr';
 
 const LOCALE: Record<SpeechLanguage, string> = {
   th: 'th-TH',
@@ -43,6 +44,7 @@ const LOCALE: Record<SpeechLanguage, string> = {
   // Britisches Englisch, passend zur RP-Lautschrift im Grundstock (Phase 16).
   en: 'en-GB',
   es: 'es-ES',
+  fr: 'fr-FR',
 };
 
 /** Thai etwas langsamer, die Töne sind sonst kaum herauszuhören. */
@@ -51,6 +53,7 @@ const RATE: Record<SpeechLanguage, number> = {
   de: 0.95,
   en: 0.95,
   es: 0.95,
+  fr: 0.95,
 };
 
 export type PronunciationRequest = {

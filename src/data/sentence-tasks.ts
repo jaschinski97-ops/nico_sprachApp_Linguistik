@@ -1,4 +1,4 @@
-import { LanguageCode } from '@/lib/languages/types';
+import { LanguageCode, TargetLanguage } from '@/lib/languages/types';
 
 import { VOCABULARY_TH } from './vocabulary';
 
@@ -92,14 +92,20 @@ export const SENTENCE_AUDIO_NOTICE = 'KI-Stimme, keine Muttersprachler-Aufnahme.
  *
  * Englisch: keine Beispiele (Phase 16: erfundene Sätze gibt es nicht).
  *
+ * Französisch: Runde-3-Stoff, ehrlich leer — der Runner zeigt denselben
+ * ehrlichen Hinweis wie bei Spanisch und Englisch, bis geprüfte Sätze
+ * vorliegen.
+ *
  * Eine Sprache ohne geprüfte Sätze bleibt ehrlich leer; die Übungen zeigen
  * einen Hinweis statt Stoff. Sobald vollständige, geprüfte Sätze vorliegen,
  * füllt sich die Übung, ohne dass die Oberfläche geändert werden muss.
  */
-export const SENTENCE_TASKS_BY_LANGUAGE: Record<LanguageCode, SentenceTask[]> = {
+export const SENTENCE_TASKS_BY_LANGUAGE: Record<TargetLanguage, SentenceTask[]> = {
   th: SENTENCE_TASKS,
   es: [],
   en: [],
+  // Runde-3-Stoff, ehrlich leer
+  fr: [],
 };
 
 /** Der ehrliche Fußtext je Sprache — Thai zählt den Bestand, die anderen sagen, was fehlt. */

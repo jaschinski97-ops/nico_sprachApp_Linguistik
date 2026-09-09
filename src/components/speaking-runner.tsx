@@ -12,6 +12,7 @@ import { TONES } from '@/constants/tones';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { useToneColor } from '@/hooks/use-theme';
 import { playPronunciation, stopPronunciation } from '@/lib/audio';
+import { useLocale, type TranslationKey } from '@/lib/i18n';
 import {
   analyzeToneContour,
   CapturedPcm,
@@ -26,6 +27,23 @@ import { buildSpeakingSession, SpeakingSession } from '@/lib/speaking/session';
 
 /** Einsilbige Wörter brauchen selten mehr; die Grenze hält Rechenzeit und Speicher klein. */
 const MAX_ATTEMPT_MS = 4_000;
+
+/** Tonname → i18n-Key (constants/tones bleibt unverändert). */
+const TONE_NAME_KEYS: Record<keyof typeof TONES, TranslationKey> = {
+  mid: 'tone.mid',
+  low: 'tone.low',
+  falling: 'tone.falling',
+  high: 'tone.high',
+  rising: 'tone.rising',
+};
+
+/** Auswertungs-Urteil → i18n-Key (die Beschriftungen stehen in den Wörterbüchern). */
+const VERDICT_KEYS: Record<ToneContourFeedback['verdict'], TranslationKey> = {
+  compatible: 'speaking.verdictCompatible',
+  'needs-work': 'speaking.verdictNeedsWork',
+  'register-uncalibrated': 'speaking.verdictRegister',
+  unmeasurable: 'speaking.verdictUnreliable',
+};
 
 type AttemptResult = {
   capture: Pick<CapturedPcm, 'durationMs' | 'reachedLimit'>;
@@ -42,6 +60,7 @@ type AttemptResult = {
  * bezeichnete Hörbeispiel und wird nie an die Auswertung übergeben (AE-32).
  */
 export function SpeakingRunner({ onExit }: { onExit: () => void }) {
+  const { t } = useLocale();
   const [session, setSession] = useState<SpeakingSession | null>(null);
   const [buildFailed, setBuildFailed] = useState<string | null>(null);
   const [round, setRound] = useState(0);
@@ -154,15 +173,15 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
       const kind = await playPronunciation({ text: prompt.thai, language: 'th' });
       setExampleNotice(
         kind === 'asset'
-          ? 'KI-Clip abgespielt — nur Hörbeispiel, nie Bewertungsmaßstab.'
+          ? t('speaking.noticeClip')
           : kind === 'tts'
-            ? 'Gerätestimme abgespielt — nur Hörbeispiel, nie Bewertungsmaßstab.'
-            : 'Auf diesem Gerät ist kein Hörbeispiel verfügbar.'
+            ? t('speaking.noticeTts')
+            : t('speaking.noticeNone')
       );
     } catch {
-      setExampleNotice('Das Hörbeispiel konnte nicht abgespielt werden. Die Aufnahme funktioniert davon unabhängig.');
+      setExampleNotice(t('speaking.noticeError'));
     }
-  }, [capture.status, processing, prompt]);
+  }, [capture.status, processing, prompt, t]);
 
   const next = useCallback(() => {
     capture.cancel();
@@ -175,13 +194,13 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   if (buildFailed) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Sprechübung konnte nicht geladen werden</ThemedText>
+        <ThemedText type="smallBold">{t('speaking.loadFailedTitle')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Konnte nicht zusammengestellt werden: {buildFailed}
+          {t('cards.assembleFailed', { message: buildFailed })}
         </ThemedText>
         <View style={styles.buttonRow}>
-          <ActionButton label="Erneut versuchen" onPress={() => setRound((value) => value + 1)} />
-          <ActionButton label="Zurück" onPress={onExit} />
+          <ActionButton label={t('common.retry')} onPress={() => setRound((value) => value + 1)} />
+          <ActionButton label={t('common.back')} onPress={onExit} />
         </View>
       </ThemedView>
     );
@@ -190,7 +209,7 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   if (!session) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
-        Sprechübung wird zusammengestellt …
+        {t('speaking.assembling')}
       </ThemedText>
     );
   }
@@ -198,12 +217,11 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   if (session.prompts.length === 0) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Keine passende Sollkontur</ThemedText>
+        <ThemedText type="smallBold">{t('speaking.noTarget')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          Die Übung nimmt nur vollständig quellengeprüfte, einsilbige Thai-Wörter. So wird
-          keine Silbengrenze geraten.
+          {t('speaking.noTargetBody')}
         </ThemedText>
-        <ActionButton label="Zurück" onPress={onExit} />
+        <ActionButton label={t('common.back')} onPress={onExit} />
       </ThemedView>
     );
   }
@@ -211,14 +229,16 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   if (!prompt) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Runde beendet</ThemedText>
+        <ThemedText type="smallBold">{t('drill.roundDone')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {attempts} Tonkontur{attempts === 1 ? '' : 'en'} lokal ausgewertet. Es gibt bewusst
-          keine Punktzahl: Gemessen wurde nicht die vollständige Aussprache.
+          {t(
+            attempts === 1 ? 'speaking.roundSummaryOne' : 'speaking.roundSummaryMany',
+            { count: attempts }
+          )}
         </ThemedText>
         <View style={styles.buttonRow}>
-          <ActionButton label="Neue Runde" onPress={() => setRound((value) => value + 1)} />
-          <ActionButton label="Zurück" onPress={onExit} />
+          <ActionButton label={t('drill.newRound')} onPress={() => setRound((value) => value + 1)} />
+          <ActionButton label={t('common.back')} onPress={onExit} />
         </View>
       </ThemedView>
     );
@@ -228,21 +248,21 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
     <>
       <View style={styles.headerRow}>
         <ThemedText type="small" themeColor="textSecondary">
-          Wort {index + 1} von {session.prompts.length}
+          {t('speaking.progress', { index: index + 1, total: session.prompts.length })}
         </ThemedText>
         <Pressable
           onPress={onExit}
           accessibilityRole="button"
-          accessibilityLabel="Sprechübung verlassen"
+          accessibilityLabel={t('speaking.exitA11y')}
           style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
           <ThemedText type="small" themeColor="textSecondary">
-            Übung verlassen
+            {t('drill.exit')}
           </ThemedText>
         </Pressable>
       </View>
 
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">Sprich dieses Wort</ThemedText>
+        <ThemedText type="smallBold">{t('speaking.sayThisWord')}</ThemedText>
         <ThemedText type="subtitle" style={styles.thaiWord}>
           {prompt.thai}
         </ThemedText>
@@ -255,13 +275,12 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
 
         <View style={styles.field}>
           <ActionButton
-            label="Synthetisches Hörbeispiel"
+            label={t('speaking.playExample')}
             onPress={playExample}
             disabled={capture.status !== 'idle' || processing}
           />
           <ThemedText type="small" themeColor="textSecondary">
-            Der Clip hilft nur beim Anhören. Die Bewertung vergleicht deine Aufnahme nicht mit
-            dieser Stimme.
+            {t('speaking.clipNote')}
           </ThemedText>
           {exampleNotice ? (
             <ThemedText type="small" themeColor="textSecondary">
@@ -271,15 +290,13 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
         </View>
 
         <ThemedView type="backgroundSelected" style={styles.notice}>
-          <ThemedText type="smallBold">Mikrofon und Datenschutz</ThemedText>
+          <ThemedText type="smallBold">{t('speaking.privacyTitle')}</ThemedText>
           <ThemedText type="small">{SPEAKING_PRIVACY_NOTICE}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Bewertet wird nur die Tonhöhenkontur — nicht Konsonanten, Vokallänge,
-            Aspiration oder die vollständige Aussprache; deshalb gibt es keine Punktzahl.
+            {t('speaking.scopedNote')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Falls die Freigabe noch fehlt, erscheint die Systemabfrage erst, wenn du „Aufnahme
-            starten“ wählst. Nach spätestens vier Sekunden stoppt die Aufnahme automatisch.
+            {t('speaking.permissionNote', { action: t('speaking.start') })}
           </ThemedText>
         </ThemedView>
 
@@ -288,15 +305,15 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
               tragen deshalb die Akzentfläche (UI-Review 2026-09-07). Die
               übrigen Aktionsflächen bleiben beim grauen Chip. */}
           {capture.isRecording ? (
-            <ThemedButton label="Stoppen und lokal auswerten" onPress={stop} variant="primary" />
+            <ThemedButton label={t('speaking.stop')} onPress={stop} variant="primary" />
           ) : (
             <ThemedButton
               label={
                 capture.status === 'requesting-permission'
-                  ? 'Mikrofonfreigabe wird angefragt …'
+                  ? t('speaking.requestingPermission')
                   : capture.status === 'stopping' || processing
-                    ? 'Wird lokal ausgewertet …'
-                    : 'Aufnahme starten'
+                    ? t('speaking.evaluating')
+                    : t('speaking.start')
               }
               onPress={start}
               disabled={capture.status !== 'idle' || processing}
@@ -304,13 +321,13 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
             />
           )}
           {capture.isRecording ? (
-            <ActionButton label="Verwerfen" onPress={capture.cancel} secondary />
+            <ActionButton label={t('speaking.discard')} onPress={capture.cancel} secondary />
           ) : null}
         </View>
 
         {capture.isRecording ? (
           <ThemedText type="small" accessibilityLiveRegion="polite">
-            ● Aufnahme läuft · {(capture.elapsedMs / 1_000).toFixed(1)} s
+            {t('speaking.recording', { seconds: (capture.elapsedMs / 1_000).toFixed(1) })}
           </ThemedText>
         ) : null}
 
@@ -324,13 +341,13 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
 
         {result ? (
           <View style={styles.buttonRow}>
-            <ActionButton label="Noch einmal aufnehmen" onPress={start} />
-            <ActionButton label="Nächstes Wort" onPress={next} secondary />
+            <ActionButton label={t('speaking.retry')} onPress={start} />
+            <ActionButton label={t('speaking.nextWord')} onPress={next} secondary />
           </View>
         ) : null}
 
         <ThemedText type="small" themeColor="textSecondary">
-          Diese Teilmessung verändert deinen FSRS-Karteikasten nicht.
+          {t('speaking.noFsrs')}
         </ThemedText>
       </ThemedView>
     </>
@@ -338,6 +355,7 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
 }
 
 function TargetBlock({ prompt }: { prompt: SpeakingPrompt }) {
+  const { t } = useLocale();
   const toneColor = useToneColor();
   const color = toneColor(prompt.targetTone);
   return (
@@ -345,28 +363,20 @@ function TargetBlock({ prompt }: { prompt: SpeakingPrompt }) {
       <View style={styles.targetRow}>
         <ToneContour tone={prompt.targetTone} height={22} color={color} />
         <ThemedText type="smallBold" style={{ color }}>
-          Sollform: {TONES[prompt.targetTone].label}
+          {t('speaking.targetForm', { tone: t(TONE_NAME_KEYS[prompt.targetTone]) })}
         </ThemedText>
       </View>
       <ThemedText type="small" themeColor="textSecondary">
-        Quelle: quellengeprüfter Silbenton aus Wiktionary-IPA
-        {prompt.source ? ' · Quellenlink im Vokabeleintrag' : ''}. Nicht aus TTS oder einem
-        Hörclip.
+        {t('speaking.source', { link: prompt.source ? t('speaking.sourceLink') : '' })}
       </ThemedText>
     </View>
   );
 }
 
 function FeedbackBlock({ result }: { result: AttemptResult }) {
+  const { t } = useLocale();
   const { feedback, measurement, capture } = result;
-  const heading =
-    feedback.verdict === 'compatible'
-      ? 'Kontur vereinbar'
-      : feedback.verdict === 'needs-work'
-        ? 'Kontur noch nicht vereinbar'
-        : feedback.verdict === 'register-uncalibrated'
-          ? 'Kontur gemessen – Register offen'
-        : 'Nicht zuverlässig messbar';
+  const heading = t(VERDICT_KEYS[feedback.verdict]);
 
   return (
     <ThemedView type="backgroundSelected" style={styles.feedback} accessibilityLiveRegion="polite">
@@ -375,19 +385,21 @@ function FeedbackBlock({ result }: { result: AttemptResult }) {
       {measurement.status === 'measured' ? (
         <View style={styles.field}>
           <ThemedText type="small" themeColor="textSecondary">
-            Messkurve: relative Halbtöne; die gestrichelte Linie ist der Median dieser Aufnahme.
+            {t('speaking.curveNote')}
           </ThemedText>
           <MeasuredToneContour points={measurement.summary.pts} />
           <ThemedText type="small" themeColor="textSecondary">
-            Bewertete stimmhafte Strecke: {measurement.summary.durMs} ms · Aufnahme:{' '}
-            {(capture.durationMs / 1_000).toFixed(1)} s
-            {capture.reachedLimit ? ' · automatisch gestoppt' : ''}
+            {t('speaking.measuredLine', {
+              duration: measurement.summary.durMs,
+              seconds: (capture.durationMs / 1_000).toFixed(1),
+              limit: capture.reachedLimit ? t('speaking.autoStopped') : '',
+            })}
           </ThemedText>
         </View>
       ) : null}
 
       <View style={styles.limitations}>
-        <ThemedText type="smallBold">Was diese Rückmeldung nicht bewertet</ThemedText>
+        <ThemedText type="smallBold">{t('speaking.limitationsTitle')}</ThemedText>
         {SPEAKING_LIMITATIONS.map((limitation) => (
           <ThemedText key={limitation} type="small" themeColor="textSecondary">
             • {limitation}

@@ -242,7 +242,12 @@ describe('Uebungen je Richtung', () => {
 describe('buildDrillSession', () => {
   it('stellt eine Runde aus geeigneten Vokabeln zusammen', async () => {
     const store = await freshStore();
-    for (const drill of DRILLS) {
+    // SEIT DEM PAARMATRIX-START OHNE FRANZÖSISCH: Die französischen Übungen
+    // sind registriert, aber ihr Grundstoff ist nicht ausgeliefert
+    // (`delivered: false`) — im Speicher liegen keine französischen Karten,
+    // eine Sitzung wäre leer. Ihr Stoff wird in french.test.ts gegen den
+    // Grundstoff in der Datei geprüft.
+    for (const drill of DRILLS.filter((candidate) => DRILL_META[candidate].feature !== 'fr')) {
       const session = await buildDrillSession({ drill, language: DRILL_META[drill].feature ?? 'th', store, now: T0, seed: 1 });
       expect(session.questions).toHaveLength(DRILL_SESSION_SIZE);
       expect(session.available).toBeGreaterThanOrEqual(DRILL_SESSION_SIZE);

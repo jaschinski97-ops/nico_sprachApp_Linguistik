@@ -41,6 +41,7 @@ import {
 
 import { VOCABULARY_EN } from './vocabulary-en';
 import { VOCABULARY_ES } from './vocabulary-es';
+import { VOCABULARY_FR } from './vocabulary-fr';
 
 import { LanguageCode } from '@/lib/languages/types';
 
@@ -1596,7 +1597,20 @@ export const VOCABULARY_TH: VocabEntry[] = [
  */
 export const VOCABULARY: VocabEntry[] = [...VOCABULARY_TH, ...VOCABULARY_EN, ...VOCABULARY_ES];
 
-export { VOCABULARY_EN, VOCABULARY_ES };
+export { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_FR };
+
+/**
+ * Der französische Grundstoff — geprüft, aber **nicht ausgeliefert**.
+ *
+ * WARUM ER NICHT IN `VOCABULARY` LIEGT: `VOCABULARY` ist der Bestand, der auf
+ * jedes Gerät eingespielt und vom Speicher-Seeding gelesen wird. Französisch
+ * hat Runde 1 keinen App-Bestand — seine Audio- und UI-Naht (`SpeechLanguage`
+ * in `lib/audio.ts`, Sprachauswahl) steht noch aus (Roadmap v2, Phase 3).
+ * Die Registry führt die Sprache deshalb mit `entryCount:
+ * VOCABULARY_FR.length` und `delivered: false`; die Auswahl zeigt sie ehrlich
+ * als „noch nicht lernbar“. Mit der Auslieferung wandert der Grundstoff in
+ * die Vereinigung oben — daran hängt sonst nichts.
+ */
 
 /** Der Grundstock einer Sprache. */
 export function vocabularyFor(language: LanguageCode): VocabEntry[] {

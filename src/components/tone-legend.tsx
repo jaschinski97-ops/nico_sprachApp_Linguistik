@@ -7,6 +7,16 @@ import { ToneContour } from './tone-contour';
 import { Spacing } from '@/constants/theme';
 import { TONE_KEYS, TONES } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
+import { TranslationKey, useLocale } from '@/lib/i18n';
+
+/** Die fünf Tonnamen als Übersetzungsschlüssel (constants/tones bleibt unverändert). */
+const TONE_NAME_KEYS: Record<string, TranslationKey> = {
+  mid: 'tone.mid',
+  low: 'tone.low',
+  falling: 'tone.falling',
+  high: 'tone.high',
+  rising: 'tone.rising',
+};
 
 /**
  * Die fünf Grundtöne mit Kontur, Farbe und Tonzeichen.
@@ -16,15 +26,14 @@ import { useToneColor } from '@/hooks/use-theme';
  */
 export function ToneLegend({ compact = false }: { compact?: boolean }) {
   const toneColor = useToneColor();
+  const { t } = useLocale();
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">Tonfarben</ThemedText>
+      <ThemedText type="smallBold">{t('legend.toneTitle')}</ThemedText>
       {!compact ? (
         <ThemedText type="small" themeColor="textSecondary">
-          Die fünf thailändischen Töne. Bei mehrsilbigen Wörtern hat jede Silbe
-          ihren eigenen Ton — die Farben stehen deshalb an der Umschrift, Silbe
-          für Silbe.
+          {t('legend.toneBody')}
         </ThemedText>
       ) : null}
       <View style={styles.row}>
@@ -33,7 +42,7 @@ export function ToneLegend({ compact = false }: { compact?: boolean }) {
             <ToneContour tone={tone} height={13} />
             <View>
               <ThemedText type="small" style={{ color: toneColor(tone) }}>
-                {TONES[tone].label}
+                {t(TONE_NAME_KEYS[tone])}
               </ThemedText>
               {!compact ? (
                 <ThemedText type="small" themeColor="textSecondary">

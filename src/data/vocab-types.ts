@@ -1,6 +1,6 @@
 import { Tone } from '@/constants/tones';
 
-import { LanguageCode, SyllableAnnotation } from '@/lib/languages/types';
+import { Lang, LanguageCode, SyllableAnnotation, TargetLanguage } from '@/lib/languages/types';
 
 /**
  * Die Form eines Vokabeleintrags.
@@ -98,6 +98,20 @@ export type VocabEntry = {
    */
   ipaSyllables?: string;
   german: string;
+  /**
+   * Brückentexte: das Wort in den Sprachen, in denen **erklärt** wird
+   * (Roadmap v2 — die Brückensprache ist künftig die Systemsprache, nicht
+   * immer Deutsch).
+   *
+   * WAS HIER HINGEHÖRT UND WAS NICHT: `de` steht bewusst nie im Feld — die
+   * deutsche Seite ist und bleibt `german`, und eine Abschrift davon wäre ein
+   * zweiter Ort für dieselbe Wahrheit. Die Auflösung läuft über
+   * `bridgeText(entry, bridge)` (lib/languages/bridge.ts):
+   * `translations[bridge]` → `german` → `translations.en` → `term`, und sie
+   * sagt über `usedFallback` ehrlich, wenn gefallen worden ist. Ein
+   * fehlender Brückentext ist damit kein Fehler, sondern ein Kennzeichen.
+   */
+  translations?: Partial<Record<Lang, string>>;
   /** Pflicht bei deutschen Substantiven: Genus und Plural. */
   germanNoun?: { article: 'der' | 'die' | 'das'; plural: string };
   /** Stammformen — für Thai-Muttersprachler die eigentliche Hürde. */
@@ -148,3 +162,21 @@ export type VocabEntry = {
   /** Lernhinweis zur Grammatik (Genus, Stammformen, Steigerung, Homonyme). */
   note?: string;
 };
+
+/**
+ * Ein Eintrag eines **beliebigen** Ziel-Grundstuffs — die oberste Schranke
+ * für Code, der Einträge mehrerer Grundstöcke liest.
+ *
+ * WARUM EIN EIGENER TYP: `VocabEntry.language` ist bewusst auf die
+ * **ausgelieferten** Sprachen beschränkt (`LANGUAGE_CODES`) — dadurch bleibt
+ * die Audio-Naht (`SpeechLanguage` in lib/audio) und die gesamte
+ * Bestands-Oberfläche schmal und zwingt niemanden, heute schon Französisch zu
+ * sprechen. `FrenchVocabEntry` und spätere Grundstöcke sind dennoch
+ * zuweisungskompatibel zu `TargetVocabEntry`, weil `'fr'` in
+ * `TargetLanguage` liegt. Ein Builder kann also `TargetVocabEntry` nehmen,
+ * per `entry.language === 'fr'` eingrenzen und beide Welten bedienen.
+ */
+export type TargetVocabEntry = Omit<VocabEntry, 'language'> & { language: TargetLanguage };
+
+/** Ein Eintrag des französischen Grundstuffs (`vocabulary-fr.ts`). */
+export type FrenchVocabEntry = Omit<TargetVocabEntry, 'language'> & { language: 'fr' };

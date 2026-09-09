@@ -74,6 +74,16 @@ describe('Deutsch als Drehscheibe (AE-42)', () => {
     expect(directionLabel('de_to_es')).toBe('Deutsch → Spanisch');
     expect(directionLabel('en_to_de')).toBe('Englisch → Deutsch');
   });
+
+  it('beschriftet Richtungen in der gegebenen UI-Sprache, ohne Angabe auf Deutsch', () => {
+    // Seit dem i18n-Gerüst kommen die Namen aus LANGUAGE_DISPLAY_NAMES —
+    // ein Thai sieht seine Richtung in thailändischer Schrift, und der
+    // providerlose Aufruf (Tests, Rest-Bestand) bleibt beim deutschen Stand.
+    expect(directionLabel('de_to_th', 'en')).toBe('German → Thai');
+    expect(directionLabel('th_to_de', 'th')).toBe('ภาษาไทย → ภาษาเยอรมัน');
+    expect(directionLabel('de_to_fr', 'fr')).toBe('allemand → français');
+    expect(directionLabel('de_to_es')).toBe('Deutsch → Spanisch');
+  });
 });
 
 describe('Das Verzeichnis', () => {

@@ -3,6 +3,19 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { DrillRunner } from './drill-runner';
 import { SentenceAction, SentenceRunner } from './sentence-runner';
 import ReviewScreen from '@/app/review';
+// Die Screens schreiben Fehlerzustände über i18n (`t('common.retry')`). Ohne
+// Provider gilt dabei ausdrücklich die Referenzsprache Deutsch (siehe
+// useLocale in lib/i18n) — die Assertion liest den Beschriftungstrotzdem aus
+// dem de-Wörterbuch, damit sie die Semantik prüft und nicht einen zufällig
+// gleichlautenden Textwitz der Oberfläche.
+import { dictionaries, type TranslationKey } from '@/lib/i18n';
+
+/** Die Wiederholen-Beschriftung des Fehlerzustands, wie sie die App zeigt. */
+const ERNEUT_VERSUCHEN = dictionaries.de['common.retry']!;
+/** Beschriftung eines Keys in der Referenzsprache Deutsch. */
+const d = (key: TranslationKey) => dictionaries.de[key]!;
+/** Der Teil des Runden-Hinweises nach dem interpolierten Rundenzähler. */
+const ROUND_HINT_TAIL = d('sentence.roundHint').split('{{round}}')[1]!;
 import type { MicrophoneCaptureController } from '@/lib/speaking/microphone-capture';
 import { sentenceAnswers, sentenceSession } from '@/lib/speaking/sentence-session';
 
@@ -70,69 +83,69 @@ afterEach(async () => { await act(async () => tree?.unmount()); jest.useRealTime
 test('shadowing enforces preparation, hearing and headphones before mic; plays only after mic succeeds', async () => {
   await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
   expect(mockStart).not.toHaveBeenCalled();
-  await press('Aufnahme starten'); expect(mockStart).not.toHaveBeenCalled();
-  await press('Satz hören'); await press('Ich verwende Kopfhörer');
-  await press('Aufnahme starten'); expect(mockStart).not.toHaveBeenCalled();
+  await press(d('sentence.start')); expect(mockStart).not.toHaveBeenCalled();
+  await press(d('sentence.listen')); await press(d('sentence.headphones'));
+  await press(d('sentence.start')); expect(mockStart).not.toHaveBeenCalled();
   await act(async () => jest.advanceTimersByTime(15000));
   mockPlay.mockClear();
-  await press('Aufnahme starten');
+  await press(d('sentence.start'));
   expect(mockStart).toHaveBeenCalledTimes(1); expect(mockPlay).toHaveBeenCalledTimes(1);
   expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton nicht geprüft');
   expect(mockOptions.allowPlayback).toBe(true);
   expect(mockPlay).toHaveBeenCalledWith(expect.objectContaining({ concurrentRecording: true }));
   expect(mockStart.mock.invocationCallOrder[0]).toBeLessThan(mockPlay.mock.invocationCallOrder[0]);
-  await press('Aufnahme beenden'); await act(async () => jest.advanceTimersByTime(1));
+  await press(d('sentence.stop')); await act(async () => jest.advanceTimersByTime(1));
   expect(mockClear).toHaveBeenCalled();
-  expect(JSON.stringify(tree.toJSON())).toContain('Keine ausreichende stimmhafte Strecke');
-  await press('Nächster Satz');
-  expect(button('Aufnahme starten').props.disabled).toBe(true);
+  expect(JSON.stringify(tree.toJSON())).toContain(d('sentence.noVoiced'));
+  await press(d('sentence.nextSentence'));
+  expect(button(d('sentence.start')).props.disabled).toBe(true);
 });
 test('sentence repetition runs 12/9/6 seconds with new mandatory preparation between rounds', async () => {
   await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceRepeat" onExit={() => {}} />); });
   for (const [index, duration] of [12000, 9000, 6000].entries()) {
     expect(mockOptions.maxDurationMs).toBe(duration);
     expect(mockOptions.allowPlayback).toBe(false);
-    await press('Satz hören'); await act(async () => jest.advanceTimersByTime(15000));
-    await press('Aufnahme starten');
-    await press('Aufnahme beenden'); await act(async () => jest.advanceTimersByTime(1));
-    if (index < 2) { await press('Nächstes Zeitfenster vorbereiten'); expect(button('Aufnahme starten').props.disabled).toBe(true); }
+    await press(d('sentence.listen')); await act(async () => jest.advanceTimersByTime(15000));
+    await press(d('sentence.start'));
+    await press(d('sentence.stop')); await act(async () => jest.advanceTimersByTime(1));
+    if (index < 2) { await press(d('sentence.nextWindow')); expect(button(d('sentence.start')).props.disabled).toBe(true); }
   }
-  expect(button('Nächster Satz')).toBeDefined();
+  expect(button(d('sentence.nextSentence'))).toBeDefined();
 });
 test('hearing presents no transcript before answer, handles missing voice and evaluates sentence meaning once', async () => {
   await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceListening" onExit={() => {}} />); });
   const task = sentenceSession('th', 100000)[0];
   expect(JSON.stringify(tree.toJSON())).not.toContain(task.text);
   expect(button(task.german).props.disabled).toBe(true);
-  mockAvailable.mockResolvedValue(false); await press('Satz hören');
+  mockAvailable.mockResolvedValue(false); await press(d('sentence.listen'));
   expect(mockPlay).not.toHaveBeenCalled(); expect(button(task.german).props.disabled).toBe(true);
-  mockAvailable.mockResolvedValue(true); await press('Satz hören');
+  mockAvailable.mockResolvedValue(true); await press(d('sentence.listen'));
   expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton nicht geprüft');
   mockPlay.mockResolvedValueOnce({ kind: 'asset', label: 'KI-Stimme, Ton automatisch geprüft', toneStatus: 'passed' });
-  await press('Satz erneut hören');
+  await press(d('sentence.listenAgain'));
   expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton automatisch geprüft');
   expect(JSON.stringify(tree.toJSON())).not.toContain('KI-Stimme, Ton nicht geprüft');
   await press(task.german);
-  expect(JSON.stringify(tree.toJSON())).toContain('Richtig.');
+  expect(JSON.stringify(tree.toJSON())).toContain(d('sentence.correct'));
   expect(JSON.stringify(tree.toJSON())).toContain(task.text);
   expect(button(task.german).props.disabled).toBe(true);
   expect(mockStart).not.toHaveBeenCalled();
 });
 test('permission failure never plays the shadowing model into a nonexistent recording', async () => {
   await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
-  await press('Satz hören'); await press('Ich verwende Kopfhörer');
+  await press(d('sentence.listen')); await press(d('sentence.headphones'));
   await act(async () => jest.advanceTimersByTime(15000));
-  mockStart.mockResolvedValue(false); mockPlay.mockClear(); await press('Aufnahme starten');
-  expect(mockPlay).not.toHaveBeenCalled(); expect(button('Aufnahme starten')).toBeDefined();
+  mockStart.mockResolvedValue(false); mockPlay.mockClear(); await press(d('sentence.start'));
+  expect(mockPlay).not.toHaveBeenCalled(); expect(button(d('sentence.start'))).toBeDefined();
 });
 
 test('leaving during permission request cancels capture and prevents late model playback', async () => {
   let release!: (value: boolean) => void;
   await act(async () => { tree = create(<SentenceRunner language="th" mode="shadowing" onExit={() => {}} />); });
-  await press('Satz hören'); await press('Ich verwende Kopfhörer');
+  await press(d('sentence.listen')); await press(d('sentence.headphones'));
   await act(async () => jest.advanceTimersByTime(15000));
   mockStart.mockImplementationOnce(() => new Promise(resolve => { release = resolve; }));
-  mockPlay.mockClear(); await press('Aufnahme starten');
+  mockPlay.mockClear(); await press(d('sentence.start'));
   await act(async () => tree.unmount());
   await act(async () => release(true));
   expect(mockPlay).not.toHaveBeenCalled(); expect(mockCancel).toHaveBeenCalled();
@@ -141,16 +154,16 @@ test('leaving during permission request cancels capture and prevents late model 
 test('a language without audited sentences shows an honest notice and never touches the microphone (AE-66)', async () => {
   await act(async () => { tree = create(<SentenceRunner language="es" mode="shadowing" onExit={() => {}} />); });
   const json = JSON.stringify(tree.toJSON());
-  // RN rendert Titel und Sprachname als getrennte Text-Segmente.
-  expect(json).toContain('Noch kein Satzmaterial für ');
-  expect(json).toContain('Spanisch');
+  // Der Sprachname kommt aus `languageOf` (lib-Inhalt, bleibt Deutsch) und ist
+  // inzwischen Teil desselben interpolierten Text-Segments.
+  expect(json).toContain(d('sentence.noneFor').replace('{{language}}', 'Spanisch'));
   expect(json).toContain('Wortgruppen');
   // Kein Aufnahme-/Wiedergabeknopf, keine Vorbereitungsuhr — nur der Hinweis.
-  expect(json).not.toContain('Aufnahme starten');
-  expect(json).not.toContain('Satz hören');
+  expect(json).not.toContain(d('sentence.start'));
+  expect(json).not.toContain(d('sentence.listen'));
   expect(mockStart).not.toHaveBeenCalled();
   expect(mockPlay).not.toHaveBeenCalled();
-  expect(button('Zurück')).toBeDefined();
+  expect(button(d('common.back'))).toBeDefined();
 });
 
 test('„Neue Runde“ würfelt die Aussaat neu: Satzfolge und Antwortmischung ändern sich', async () => {
@@ -164,17 +177,17 @@ test('„Neue Runde“ würfelt die Aussaat neu: Satzfolge und Antwortmischung �
   const firstLabels = optionLabels(firstRound[0]);
   expect(firstLabels).toEqual(sentenceAnswers(firstRound[0], 100000));
   for (const task of firstRound) {
-    await press('Satz hören');
+    await press(d('sentence.listen'));
     await press(task.german);
-    await press('Nächster Satz');
+    await press(d('sentence.nextSentence'));
   }
-  expect(button('Neue Runde')).toBeDefined();
+  expect(button(d('drill.newRound'))).toBeDefined();
   // Eine Aussaat suchen, die nachweislich einen anderen ersten Satz liefert —
   // die Sitzung ist deterministisch, im Test gibt es keinen Zufall.
   let nextSeed = 100001;
   while (sentenceSession('th', nextSeed)[0].text === firstRound[0].text) nextSeed++;
   jest.setSystemTime(nextSeed);
-  await press('Neue Runde');
+  await press(d('drill.newRound'));
   const secondRound = sentenceSession('th', nextSeed);
   const secondLabels = optionLabels(secondRound[0]);
   expect(secondLabels).toEqual(sentenceAnswers(secondRound[0], nextSeed));
@@ -196,10 +209,10 @@ test('der 200-ms-Timer läuft nur, solange der Vorbereitungs-Countdown sichtbar 
   expect(countdownCalls()).toHaveLength(1);
   const handleIndex = startSpy.mock.calls.findIndex(call => call[1] === 200);
   const handle = startSpy.mock.results[handleIndex].value;
-  await press('Satz hören');
-  await press('Ich verwende Kopfhörer');
+  await press(d('sentence.listen'));
+  await press(d('sentence.headphones'));
   await act(async () => jest.advanceTimersByTime(15000));
-  await press('Aufnahme starten');
+  await press(d('sentence.start'));
   expect(clearSpy).toHaveBeenCalledWith(handle);
   await act(async () => tree.unmount());
 });
@@ -207,19 +220,20 @@ test('der 200-ms-Timer läuft nur, solange der Vorbereitungs-Countdown sichtbar 
 test('der Methodik-Hintergrund ist eingeklappt und lässt sich auf- und zuklappen', async () => {
   await act(async () => { tree = create(<SentenceRunner language="th" mode="sentenceRepeat" onExit={() => {}} />); });
   const json = () => JSON.stringify(tree.toJSON());
-  const toggle = () => tree.root.findByProps({ accessibilityLabel: 'Hintergrund zur Übungsform' });
+  const toggle = () => tree.root.findByProps({ accessibilityLabel: d('sentence.hintA11y') });
   // Der kurze Runden-Hinweis bleibt sichtbar, die mehrsätzigen Hinweise nicht.
-  // („Runde", Zähler und Rest rendert RN als getrennte Text-Segmente.)
-  expect(json()).toContain('12 / 9 / 6 Sekunden');
-  expect(json()).not.toContain('4:3:2-Verhältnisses');
+  expect(json()).toContain(ROUND_HINT_TAIL);
+  expect(json()).not.toContain(d('sentence.hintRepeat'));
+  // „unvorhersehbares Gegenüber“ steht in SENTENCE_LIMITS (lib-Inhalt, bleibt
+  // laut Architektur-Entscheidung Deutsch).
   expect(json()).not.toContain('unvorhersehbares Gegenüber');
   expect(toggle().props.accessibilityState.expanded).toBe(false);
   await act(async () => toggle().props.onPress());
-  expect(json()).toContain('4:3:2-Verhältnisses');
+  expect(json()).toContain(d('sentence.hintRepeat'));
   expect(json()).toContain('unvorhersehbares Gegenüber');
   expect(toggle().props.accessibilityState.expanded).toBe(true);
   await act(async () => toggle().props.onPress());
-  expect(json()).not.toContain('4:3:2-Verhältnisses');
+  expect(json()).not.toContain(d('sentence.hintRepeat'));
   expect(json()).not.toContain('unvorhersehbares Gegenüber');
 });
 
@@ -228,7 +242,7 @@ test('drill-runner zeigt einen Fehlerzustand statt eines endlosen Spinners, wenn
   await act(async () => { tree = create(<DrillRunner drill="tone" language="th" onExit={() => {}} />); });
   const json = () => JSON.stringify(tree.toJSON());
   expect(json()).toContain('Speicher defekt');
-  expect(json()).toContain('Erneut versuchen');
+  expect(json()).toContain(ERNEUT_VERSUCHEN);
   // „Erneut versuchen“ baut die Sitzung wirklich neu auf.
   await act(async () => {
     tree.root.findAll(node => node.props.accessibilityRole === 'button')[0].props.onPress();
@@ -244,5 +258,5 @@ test('CardSession des Lernen-Reiters zeigt einen Fehlerzustand, wenn die Wartesc
   await act(async () => { tree = create(<ReviewScreen />); });
   const json = JSON.stringify(tree.toJSON());
   expect(json).toContain('Karteikasten defekt');
-  expect(json).toContain('Erneut versuchen');
+  expect(json).toContain(ERNEUT_VERSUCHEN);
 });
