@@ -16,10 +16,11 @@ const { decodeAudio, decodeImage } = require('./media.cjs');
 
 const KINDS = ['situations', 'images', 'audio', 'exam'];
 // TEST-BUDGET (08.09.2026): 256 MiB, damit der vollstaendige Audio-Bedarf
-// (~185 MiB Inhalt) fuer Testbuilds ausgeliefert werden kann. Das Store-Ziel
-// bleibt 150 MiB — der Hebel dafuer sind die 78 PNG-Vokabelbilder (~77 MB,
-// angezeigt mit 200 dp): als WebP 512 px waeren es ~4 MB. Erst dann den Wert
-// wieder auf 150 * 1024 * 1024 setzen.
+// (~185 MiB Inhalt) fuer Testbuilds ausgeliefert werden kann. Seit der
+// Paket-Architektur (docs/ROADMAP-v2-sprachplattform.md) gibt es das alte
+// 150-MiB-Store-Ziel nicht mehr: Die App wird klein, Audio+Bilder wandern
+// pro Sprache in Download-Pakete (GitHub Releases) — der Hebel bleibt
+// dennoch WebP fuer die 78 PNG-Vokabelbilder (~77 MB → ~4 MB im Paket).
 const BUDGET = 256 * 1024 * 1024;
 const sha = (data) => crypto.createHash('sha256').update(data).digest('hex');
 function canonical(value) {
@@ -156,7 +157,7 @@ class ContentPipeline {
     for (const entry of state.stage.entries) merged.set(keyOf(entry), entry);
     const entries = [...merged.values()].sort((a,b) => keyOf(a).localeCompare(keyOf(b)));
     const budgetBytes = entries.reduce((sum, entry) => sum + shippingBytes(entry), 0);
-    if (budgetBytes > BUDGET) throw Error('Inhalt überschreitet das Budget von 150 MiB. Kein Teil wurde übernommen; Umfang ausdrücklich neu entscheiden.');
+    if (budgetBytes > BUDGET) throw Error(`Inhalt überschreitet das Budget von ${Math.round(BUDGET / 1024 / 1024)} MiB. Kein Teil wurde übernommen; Umfang ausdrücklich neu entscheiden.`);
     // Validate the entire set before changing any versioned files.
     const prepared = [];
     for (const entry of entries) {

@@ -1,20 +1,19 @@
 {
-  "checkedAt": "2026-09-05T10:23:43.109Z",
-  "integrityOnly": false,
-  "entries": 15,
-  "contentBytes": 2038225,
-  "audioSourceBytes": 632120,
-  "audioCompressedBytes": 112194,
-  "missing": {
-    "audio": 452,
-    "images": 73,
-    "situations": 512
-  },
-  "errors": [
-    "452/462 benötigte Hörclips fehlen (auch Deutsch und Prüfungen). System-TTS ist kein garantierter Offline-Ersatz.",
-    "73 konkrete Vokabeln ohne freigegebenes Bild.",
-    "512 Situationen des vollständigen Thai-Plans fehlen. Keine Teilmenge als Vollmenge ausgeben.",
-    "Gespräche für en fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich).",
-    "Gespräche für es fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich)."
-  ]
+ "checkedAt": "2026-09-08T19:21:36.287Z",
+ "integrityOnly": false,
+ "entries": 3923,
+ "contentBytes": 210561015,
+ "audioSourceBytes": 258012706,
+ "audioCompressedBytes": 126607968,
+ "missing": {
+  "audio": 140,
+  "images": 0,
+  "situations": 27
+ },
+ "errors": [
+  "140/3436 benötigte Hörclips fehlen (auch Deutsch und Prüfungen). System-TTS ist kein garantierter Offline-Ersatz.",
+  "27 Situationen des vollständigen Thai-Plans fehlen. Keine Teilmenge als Vollmenge ausgeben.",
+  "Gespräche für en fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich).",
+  "Gespräche für es fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich)."
+ ]
 }

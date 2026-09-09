@@ -63,7 +63,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
   const assetKeys = [...assetMap.matchAll(/"([a-f0-9]{64}\.(?:mp3|png|jpeg|webp))": require\('/g)].map((match) => match[1]);
   const orphanKeys = assetKeys.filter((key) => !referencedAssets.has(key));
   if (orphanKeys.length) errors.push(`${orphanKeys.length} Schlüssel in src/content/assets.ts ohne Katalogreferenz (${orphanKeys.slice(0, 3).join(', ')}${orphanKeys.length > 3 ? ' …' : ''}); die require-Map wird aus dem Katalog generiert und darf keine eigenen Einträge haben.`);
-  if (contentBytes > BUDGET) errors.push('Inhaltsbudget von 150 MiB überschritten. Keine automatische Kürzung zulässig.');
+  if (contentBytes > BUDGET) errors.push(`Inhaltsbudget von ${Math.round(BUDGET / (1024 * 1024))} MiB überschritten. Keine automatische Kürzung zulässig.`);
   const situations = catalog.entries.filter((entry) => entry.kind === 'situations').map((entry) => entry.document);
   const exams = [...BUILTIN_EXAM_MODULES, ...catalog.entries.filter((entry) => entry.kind === 'exam').map((entry) => entry.document)];
   const neededAudio = planDeliveryAudio(situations, exams);

@@ -40,7 +40,10 @@ export async function exportDrafts(onProgress: (message: string) => void): Promi
         }
         id = document.id;
         if (kind === 'exam' && 'source' in document && document.source === 'builtin') continue;
-        onProgress(`${exported} exportiert · Prüfung läuft · ${kind}: ${id}`);
+        // Nur alle 20 Dokumente melden: bei 3.000 Clips wäre jede Einzel­meldung
+        // ein Re-Render der ganzen Einstellungsseite. Das Endergebnis unten
+        // erscheint immer.
+        if (exported % 20 === 0) onProgress(`${exported} exportiert · Prüfung läuft · ${kind}: ${id}`);
         let base64: string | undefined;
         if (kind === 'audio' || kind === 'images') {
           const blobs = kind === 'audio' ? await getAudioBlobStore() : await getImageBlobStore();

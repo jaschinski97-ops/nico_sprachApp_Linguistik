@@ -118,7 +118,9 @@ export default function ConversationScreen() {
             key={d}
             onPress={() => {
               setChosen(d);
-              setConversationDirection(d);
+              // Feuer-und-vergessen ist hier gewollt, aber ein Speicherfehler
+              // darf keine unbehandelte Promise-Rejection werden.
+              void setConversationDirection(d).catch(() => {});
             }}
             accessibilityRole="button"
             accessibilityState={{ selected: direction === d }}
@@ -247,7 +249,11 @@ function TurnSpeakButton({ text }: { text: string }) {
       ) : null}
       <Pressable
         onPress={() => {
-          playPronunciation({ text, language: 'th' })
+          // purpose 'sentence': Gesprächszüge sind Satzmaterial — die
+          // Auslieferungs-Politik gestattet ungeprüfte Thai-Clips für Vokabel-
+          // und Satzzwecke (audio-policy). Ohne Purpose liefe hier fast jeder
+          // Zug auf System-TTS statt auf den erzeugten Clip.
+          playPronunciation({ text, language: 'th', purpose: 'sentence' })
             .then(setPlayed)
             .catch(() => {});
         }}

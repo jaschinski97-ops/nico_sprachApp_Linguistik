@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet } from 'react-native';
 
-import { ApiKeysCard } from '@/components/api-keys-card';
 import { DeveloperContent } from '@/components/developer-content';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { isContentDeveloper } from '@/lib/content/developer';
 import { Spacing } from '@/constants/theme';
 import { VOCABULARY } from '@/data/vocabulary';
 import {
@@ -179,6 +179,20 @@ function BackupSection() {
   );
 }
 
+/**
+ * Die drei Schlüsselfelder nur im Debug-Betrieb. Der `require` liegt bewusst
+ * IM Zweig (wie in developer-content.tsx): Ein statischer Import zöge
+ * `lib/api-key` und die Anbieter-Clients in den Produktionsgraphen — genau
+ * das meldet scripts/content/verify-production.cjs als Fehler.
+ */
+function DeveloperApiKeys() {
+  if (__DEV__ && isContentDeveloper()) {
+    const { ApiKeysCard } = require('@/components/api-keys-card');
+    return <ApiKeysCard />;
+  }
+  return null;
+}
+
 export default function SettingsScreen() {
   return (
     <ScreenScaffold title="Einstellungen" subtitle="Dein Lernbegleiter">
@@ -193,7 +207,7 @@ export default function SettingsScreen() {
       </ThemedView>
       <BackupSection />
       {/* Drei Schlüsselfelder für den Debug-Ablauf; in Release rendert sie nichts. */}
-      <ApiKeysCard />
+      <DeveloperApiKeys />
       <DeveloperContent />
     </ScreenScaffold>
   );
