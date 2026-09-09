@@ -1,9 +1,9 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
-import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
+import { TONE_KEYS } from '@/constants/tones';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { TranslationKey, useLocale } from '@/lib/i18n';
 import { hasContent, LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
@@ -27,19 +27,15 @@ function featureKey(code: LanguageCode): TranslationKey {
 }
 
 /**
- * Welche Sprache gelernt wird (Phase 15).
+ * Welche Sprache gelernt wird (Phase 15) — als Haarlinien-Zeilen statt als
+ * Kartenstapel (UI-Review 2026-09-09): Die aktive Sprache ist eine abgerundete
+ * Fläche, die übrigen sind offene Zeilen mit Trennlinie dazwischen.
  *
- * EHRLICH ÜBER DAS, WAS ES NOCH NICHT GIBT (Pflicht 5): Englisch und Spanisch
- * stehen in der Liste, weil sie geplant sind — aber sie tragen sichtbar
- * „noch keine Inhalte", sind nicht auswählbar und melden das auch dem
- * Screenreader über `accessibilityState.disabled`. Sie so darzustellen, als
- * ließe sich damit lernen, wäre dieselbe Art von Unwahrheit wie ein Bild zu
- * einem abstrakten Wort oder eine erfundene Bestehensgrenze.
- *
- * Zu jeder Sprache steht, was sie schwer macht — und bei den leeren
- * zusätzlich, welches Merkmal für sie **entschieden** ist (AE-44). Das ist
- * keine Werbung, sondern die Auskunft, dass die Entscheidung schon getroffen
- * und belegt ist.
+ * EHRLICH ÜBER DAS, WAS ES NOCH NICHT GIBT (Pflicht 5): Sprachen ohne Inhalte
+ * bleiben in der Liste, sind aber abgeblendet, nicht auswählbar und melden das
+ * dem Screenreader über `accessibilityState.disabled`. Was dafür aus der
+ * Zeile gewichen ist (Vokabelzahl, Merkmal), trägt das a11y-Label weiter —
+ * die Information verschwindet, sie wechselt nur den Kanal.
  */
 export function LanguagePicker({
   selected,
@@ -53,129 +49,108 @@ export function LanguagePicker({
   const { t, languageName } = useLocale();
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">{t('common.languageLabel')}</ThemedText>
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('picker.hubNote')}
-      </ThemedText>
+    <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')}>
+      {LANGUAGE_ORDER.map((code, index) => {
+        const language = languageOf(code);
+        const usable = hasContent(code);
+        const active = usable && selected === code;
+        // Haarlinien nur zwischen offenen Zeilen: Die aktive Zeile ist eine
+        // Fläche, und an ihren Kanten wäre die Trennlinie doppelt.
+        const previous = index > 0 ? LANGUAGE_ORDER[index - 1] : null;
+        const previousActive = previous !== null && hasContent(previous) && selected === previous;
+        const showHairline = index > 0 && !active && !previousActive;
 
-      <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')} style={styles.row}>
-        {LANGUAGE_ORDER.map((code) => {
-          const language = languageOf(code);
-          const usable = hasContent(code);
-          const active = usable && selected === code;
+        return (
+          <Pressable
+            key={code}
+            onPress={() => usable && onSelect(code)}
+            disabled={!usable}
+            accessibilityRole="radio"
+            accessibilityLabel={
+              usable
+                ? `${languageName(code)} — ${language.challenge} · ${t('home.vocabCount', {
+                    count: language.entryCount,
+                  })} · ${t(featureKey(code))}`
+                : `${languageName(code)} — ${t('picker.empty')} ${t('picker.emptyFeature', {
+                    feature: t(featureKey(code)),
+                    kindNote:
+                      language.feature.kind === 'derivable'
+                        ? t('picker.kindDerivable')
+                        : t('picker.kindPerWord'),
+                  })}`
+            }
+            aria-checked={active}
+            accessibilityState={{ disabled: !usable }}
+            style={({ pressed }) => [
+              styles.row,
+              active && { backgroundColor: theme.backgroundElement },
+              showHairline && { borderTopWidth: 1, borderColor: theme.decorGrey },
+              !usable && styles.empty,
+              pressed && usable && styles.pressed,
+            ]}>
+            <ThemedText type="default" style={[styles.name, styles.shrink]}>
+              {languageName(code)}
+            </ThemedText>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
+              {language.endonym}
+            </ThemedText>
 
-          return (
-            <Pressable
-              key={code}
-              onPress={() => usable && onSelect(code)}
-              disabled={!usable}
-              accessibilityRole="radio"
-              accessibilityLabel={
-                usable
-                  ? `${languageName(code)} — ${language.challenge}`
-                  : `${languageName(code)} — ${t('picker.empty')} ${t('picker.emptyFeature', {
-                      feature: t(featureKey(code)),
-                      kindNote:
-                        language.feature.kind === 'derivable'
-                          ? t('picker.kindDerivable')
-                          : t('picker.kindPerWord'),
-                    })}`
-              }
-              aria-checked={active}
-              accessibilityState={{ disabled: !usable }}
-              // Die Flex-Masse haengen am Pressable, nicht am inneren View:
-              // Das Pressable ist eine Spalte, und dort haette `flexBasis: 220`
-              // die HOEHE gemeint - genau so lief die Karte auf 375 px ueber
-              // den Rand und wurde 220 Punkte hoch (Befund Phase 17).
-              style={({ pressed }) => [styles.cell, pressed && usable && styles.pressed]}>
-              <ThemedView
-                type={active ? 'backgroundSelected' : 'background'}
-                style={[
-                  styles.option,
-                  active ? { borderColor: toneColor('mid'), borderWidth: 2 } : styles.plain,
-                  !usable && { ...styles.empty, borderColor: theme.borderSubtle },
-                ]}>
-                <View style={styles.head}>
-                  <ThemedText type="smallBold">{languageName(code)}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {language.endonym}
-                  </ThemedText>
-                </View>
+            {code === 'th' ? (
+              // Die fünf Töne in fester Reihenfolge — ein Dekor, das die
+              // Zeile unterscheidet, aber nichts sagt, was das Label nicht
+              // schon sagt.
+              <View
+                style={styles.dots}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                pointerEvents="none">
+                {TONE_KEYS.map((tone) => (
+                  <View key={tone} style={[styles.dot, { backgroundColor: toneColor(tone) }]} />
+                ))}
+              </View>
+            ) : null}
 
-                {usable ? (
-                  <>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {language.challenge}
-                    </ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('picker.vocabAndFeature', {
-                        count: language.entryCount,
-                        feature: t(featureKey(code)),
-                      })}
-                    </ThemedText>
-                  </>
-                ) : (
-                  <>
-                    <ThemedText type="small">{t('picker.empty')}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('picker.emptyFeature', {
-                        feature: t(featureKey(code)),
-                        kindNote:
-                          language.feature.kind === 'derivable'
-                            ? t('picker.kindDerivable')
-                            : t('picker.kindPerWord'),
-                      })}
-                    </ThemedText>
-                  </>
-                )}
-              </ThemedView>
-            </Pressable>
-          );
-        })}
-      </View>
-    </ThemedView>
+            <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
+              {usable ? t('home.vocabCount', { count: language.entryCount }) : t('picker.empty')}
+            </ThemedText>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
   row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
     gap: Spacing.two,
-  },
-  cell: {
-    flexGrow: 1,
-    flexShrink: 1,
-    flexBasis: 220,
-    minWidth: 0,
-  },
-  option: {
-    borderRadius: Spacing.two,
-    padding: Spacing.three,
-    gap: Spacing.one,
     minHeight: 44,
-    width: '100%',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 14,
   },
-  plain: {
-    borderWidth: 1,
-    borderColor: 'transparent',
+  shrink: {
+    flexShrink: 1,
+  },
+  name: {
+    fontWeight: '700',
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: Spacing.one,
+  },
+  dot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+  },
+  meta: {
+    marginLeft: 'auto',
   },
   /** Leere Sprachen bleiben lesbar - abgeblendet, aber nicht unter AA. */
   empty: {
     opacity: 0.75,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-  },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: Spacing.two,
   },
   pressed: {
     opacity: 0.7,

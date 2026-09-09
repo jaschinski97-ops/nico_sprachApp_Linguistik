@@ -27,6 +27,12 @@ const th: Partial<Record<TranslationKey, string>> = {
 
   'home.subtitle': 'วันนี้จะเรียนภาษาอะไร?',
   'home.systemLanguage': 'ภาษาของระบบ: {{language}}',
+  'home.heroCta': 'เรียนต่อ',
+  'home.dueBadge': 'ค้าง {{count}} ใบ',
+  'home.nothingDue': 'วันนี้ไม่มีใบค้าง',
+  'home.sectionLanguages': 'ภาษา',
+  'home.sectionDirections': 'ทิศทาง · {{language}}',
+  'home.vocabCount': 'คำศัพท์ {{count}} คำ',
 
   'picker.hubNote': 'เยอรมันเป็นภาษาคงที่ฝั่งหนึ่ง — เรียนได้สองทาง',
   'picker.chooseA11y': 'เลือกภาษา',
@@ -42,7 +48,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'dashboard.dueOne': 'ใบถึงเวลาทบทวน',
   'dashboard.dueMany': 'ใบถึงเวลาทบทวน',
   'dashboard.totals': 'ทั้งหมด {{total}} ใบ · ใหม่ {{fresh}} · เชี่ยวชาญ {{mastered}}',
-  'dashboard.cta': 'ฝึกทางนี้ →',
+  'dashboard.cta': 'ฝึก{{direction}}',
 
   'legend.toneTitle': 'สีของวรรณยุกต์',
   'legend.toneBody':
@@ -150,8 +156,8 @@ const th: Partial<Record<TranslationKey, string>> = {
   'exam.minutes': '{{minutes}} นาที',
   'exam.formatGroup': ' · สอบกลุ่ม',
   'exam.formatPair': ' · สอบคู่',
-  'exam.retrievedPrefix': 'โครงสร้างดึงเมื่อ {{date}} จาก ',
-  'exam.retrievedSuffix': ' ก่อนสมัครโปรดตรวจอีกครั้ง — รูปแบบการสอบเปลี่ยนได้',
+  'exam.retrievedPrefix': 'โครงสร้างการสอบอย่างเป็นทางการ ดึงเมื่อ {{date}} — ที่มา: ',
+  'exam.retrievedSuffix': '',
   'exam.loading': 'กำลังโหลดโจทย์ …',
   'exam.noModules': 'ระดับ {{level}} ยังไม่มีโจทย์ โจทย์เพิ่มมาพร้อมอัปเดต',
   'exam.moduleMinutes': 'ประมาณ {{minutes}} นาที',
@@ -177,9 +183,9 @@ const th: Partial<Record<TranslationKey, string>> = {
   'chart.legendDrills': 'แบบฝึก',
   'chart.columnA11y': '{{date}}: ทบทวน {{reviews}} แบบฝึก {{drills}}',
   'chart.loggedSinceWithDrills':
-    'บันทึกตั้งแต่ {{since}} · ทบทวนทั้งหมด {{reviews}} และแบบฝึก {{drills}} ถูกต้อง {{correct}} ช่วงก่อนหน้าไม่รวม — บันทึกรายวันเริ่มในเวอร์ชันนี้',
+    'บันทึกตั้งแต่ {{since}} — ทบทวน: {{reviews}} · แบบฝึก: {{drills}} (ถูกต้อง {{correct}}) ช่วงก่อนหน้าไม่รวม เพราะบันทึกรายวันเริ่มในเวอร์ชันนี้',
   'chart.loggedSince':
-    'บันทึกตั้งแต่ {{since}} · ทบทวนทั้งหมด {{reviews}} ช่วงก่อนหน้าไม่รวม — บันทึกรายวันเริ่มในเวอร์ชันนี้',
+    'บันทึกตั้งแต่ {{since}} — ทบทวน: {{reviews}} ช่วงก่อนหน้าไม่รวม เพราะบันทึกรายวันเริ่มในเวอร์ชันนี้',
   'chart.empty':
     'ยังไม่มีการทบทวนบันทึกไว้ ประวัติเริ่มที่การ์ดใบแรกที่ให้คะแนน ช่วงก่อนหน้าไม่รวม',
   'state.new': 'ใหม่',
@@ -236,7 +242,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'drill.assembling': 'กำลังเตรียมแบบฝึก …',
   'drill.noVocab': 'ไม่มีคำศัพท์ที่เหมาะสม',
   'drill.toneEmpty':
-    'ยังไม่มีคลิปที่ผ่านการตรวจวรรณยุกต์สำหรับแบบฝึกฟังวรรณยุกต์ คลิปที่ยังไม่ตรวจและเสียงของระบบจะไม่ถูกใช้ที่นี่',
+    'แบบฝึกฟังนี้ยังไม่มีไฟล์เสียงออกเสียงที่ผ่านการตรวจสอบ คลิปที่ยังไม่ตรวจและเสียงสังเคราะห์จากคอมพิวเตอร์จะไม่ถูกใช้โดยเจตนา — ฝึกกับแบบฝึกอื่นแทนจะดีกว่า',
   'drill.noneFor': 'ยังไม่มีรายการที่เหมาะสมสำหรับ „{{drill}}“ ในชุดพื้นฐาน',
   'drill.roundDone': 'จบรอบแล้ว',
   'drill.roundScore': 'ถูก {{correct}} จาก {{total}} ข้อ',

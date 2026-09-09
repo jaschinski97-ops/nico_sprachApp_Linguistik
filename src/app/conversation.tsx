@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -6,9 +7,9 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { PlaybackKind, playPronunciation } from '@/lib/audio';
-import { ConversationSituation } from '@/lib/conversation/types';
+import { ConversationSituation, TopicId } from '@/lib/conversation/types';
 import { Direction } from '@/lib/fsrs/types';
 import { loadSituations } from '@/lib/repository';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
@@ -74,6 +75,20 @@ export default function ConversationScreen() {
     }
     return suffix;
   }, [visible, t]);
+
+  // WHY: Das Thema steht einmal am Abschnittslabel, nicht zehnmal in der
+  // Liste. Zusammenziehen ohne Umsortieren — die Themen erscheinen in der
+  // Reihenfolge ihres ersten Auftretens, innerhalb eines Themas bleibt die
+  // Anzeige-Reihenfolge des Arrays unverändert.
+  const groups = useMemo(() => {
+    const nachThema = new Map<TopicId, ConversationSituation[]>();
+    for (const situation of visible) {
+      const liste = nachThema.get(situation.topic);
+      if (liste) liste.push(situation);
+      else nachThema.set(situation.topic, [situation]);
+    }
+    return [...nachThema.entries()];
+  }, [visible]);
 
   if (error) {
     return (
@@ -149,14 +164,21 @@ export default function ConversationScreen() {
           {t('conversation.noneForDirection')}
         </ThemedText>
       ) : (
-        visible.map((situation) => (
-          <SituationCard
-            key={situation.id}
-            situation={situation}
-            variantSuffix={variantSuffix.get(situation.id) ?? ''}
-            open={openId === situation.id}
-            onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
-          />
+        groups.map(([topic, gruppe]) => (
+          <View key={topic} style={styles.topicGroup}>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t(TOPIC_KEYS[topic])}
+            </ThemedText>
+            {gruppe.map((situation) => (
+              <SituationCard
+                key={situation.id}
+                situation={situation}
+                variantSuffix={variantSuffix.get(situation.id) ?? ''}
+                open={openId === situation.id}
+                onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
+              />
+            ))}
+          </View>
         ))
       )}
     </ScreenScaffold>
@@ -187,8 +209,10 @@ function SituationCard({
         <View style={styles.header}>
           <View style={styles.headerText}>
             <ThemedText type="smallBold">{situation.title}</ThemedText>
+            {/* WHY: Das Thema steht einmal am Abschnittslabel — die Karte
+                trägt nur noch Stufe und Varianten-Anhang. */}
             <ThemedText type="small" themeColor="textSecondary">
-              {t(TOPIC_KEYS[situation.topic])} · {situation.level}
+              {situation.level}
               {variantSuffix}
             </ThemedText>
           </View>
@@ -252,6 +276,9 @@ function SituationCard({
 function TurnSpeakButton({ text }: { text: string }) {
   const [played, setPlayed] = useState<PlaybackKind | null>(null);
   const { t } = useLocale();
+  // WHY Icon statt Emoji: Das 🔊-Schriftzeichen sieht je Plattform anders aus
+  // und ließ sich nicht über das Theme tönen; das Icon folgt textSecondary.
+  const theme = useTheme();
   return (
     <View style={styles.turnSpeak}>
       {played === 'asset' ? (
@@ -275,9 +302,11 @@ function TurnSpeakButton({ text }: { text: string }) {
         }`}
         style={({ pressed }) => pressed && styles.pressed}
         hitSlop={12}>
-        <ThemedText type="small" themeColor="textSecondary">
-          🔊
-        </ThemedText>
+        <Ionicons
+          name="volume-medium-outline"
+          size={17}
+          color={theme.textSecondary}
+        />
       </Pressable>
     </View>
   );
@@ -297,6 +326,11 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: Spacing.two,
+  },
+  topicGroup: {
+    // Label sitzt nah an seiner Gruppe; der Abstand nach oben liefert der
+    // Spalten-Gap des Scaffolds — wie das Abschnittslabel im Mockup.
     gap: Spacing.two,
   },
   chip: {

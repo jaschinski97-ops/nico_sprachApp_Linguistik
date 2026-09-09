@@ -1,30 +1,34 @@
+import { Link } from 'expo-router';
 import { useEffect } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { DirectionDashboard } from '@/components/direction-dashboard';
+import { DirectionDashboard, useDirectionSummaries } from '@/components/direction-dashboard';
+import { FeatureLegend } from '@/components/feature-legend';
 import { LanguagePicker } from '@/components/language-picker';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
-import { FeatureLegend } from '@/components/feature-legend';
+import { ToneHero } from '@/components/tone-hero';
+
+import { Spacing } from '@/constants/theme';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
+import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
 import { languageOf } from '@/lib/languages/registry';
 import { migrateStore } from '@/lib/storage/migration';
 
 /**
- * Übersicht — die Sprachauswahl steht an erster Stelle, und darunter der Weg
- * in den Lernen-Bereich (Phase 17, Ziel 1).
+ * Übersicht — Handlung zuerst (UI-Review 2026-09-09): Das Markenwort in seinen
+ * Tönen, der Weg in die Sitzung, und erst dann die Auswahl als Abschnitte
+ * darunter.
  *
- * Die Reihenfolge ist die Entscheidung: erst die Sprache, dann die Richtung.
- * Wer hier eine Sprache wählt, sieht sofort deren zwei Richtungen mit ihren
- * fälligen Karten, und jede dieser Karten führt in den Lernen-Bereich mit
- * genau dieser Sprache aktiv — das Profil trägt sie mit.
- *
- * WAS SEIT PHASE 17 NICHT MEHR HIER STEHT: die Kennzahlen des Grundstocks
- * (Einträge, Quellenquote, Wortarten). Sie waren der Nachweis aus Phase 2,
- * dass der Speicher wirklich beschrieben wird — für die Entwicklung wertvoll,
- * für Lernende ein Zahlenblock ohne Handlung. Sie stehen jetzt in den
- * Einstellungen unter „Diagnose".
+ * Der CTA trägt die fälligen Karten als ehrliche Zahl — nur solange sie
+ * geladen ist, nie als Deko: Während des Ladens bleibt der Knopf schlicht, bei
+ * null steht „nichts fällig“. Der Zahlenstand wird EINMAL gehoben
+ * (`useDirectionSummaries`) und an das Dashboard durchgereicht. Das frühere
+ * „{{language}} lernen“ ist dafür entfallen — das Abschnittslabel „Richtungen
+ * · Thai“ sagt dasselbe, und Dopplung bleibt Dopplung, auch wenn sie höflich
+ * klingt.
  *
  * Der Migrationslauf (AE-43) wird hier einmal angestoßen: Er ist idempotent,
  * lässt Kartenzustände unangetastet und tut auf einem aktuellen Speicher
@@ -33,7 +37,10 @@ import { migrateStore } from '@/lib/storage/migration';
 export default function DashboardScreen() {
   const { language, chooseLanguage } = useLearnerLanguage();
   const { t, systemLanguage, languageName } = useLocale();
+  const theme = useTheme();
   const definition = languageOf(language);
+  const due = useDirectionSummaries(language);
+  const totalDue = due.summaries?.reduce((sum, item) => sum + item.due, 0) ?? null;
 
   useEffect(() => {
     migrateStore().catch((error) => {
@@ -43,10 +50,51 @@ export default function DashboardScreen() {
 
   return (
     <ScreenScaffold title={t('tabs.overview')} subtitle={t('home.subtitle')}>
-      <LanguagePicker selected={language} onSelect={chooseLanguage} />
+      <ToneHero />
 
-      <ThemedText type="subtitle">{t('common.learnGoal', { language: languageName(language) })}</ThemedText>
-      <DirectionDashboard language={language} />
+      <Link href="/review" asChild>
+        {/* accessible: Knopf und Badge sind eine Handlung — der Screenreader
+            soll sie als eine Ansage bringen, nicht als zwei Elemente.
+            Die Fläche steht bewusst auf dem inneren View, NICHT auf dem
+            Pressable: expo-routers asChild-Klon ersetzt den Style des Kindes,
+            ein Style am Pressable selbst landet nie im DOM (UI-Review
+            2026-09-09, im Web-Build gemessen). */}
+        <Pressable
+          accessible
+          accessibilityRole="button"
+          style={({ pressed }) => pressed && styles.pressed}>
+          <View style={[styles.cta, { backgroundColor: theme.accent }]}>
+            <ThemedText type="default" style={[styles.ctaLabel, { color: theme.accentText }]}>
+              {t('home.heroCta')}
+            </ThemedText>
+            {totalDue === null ? null : totalDue > 0 ? (
+              <View style={[styles.ctaBadge, { borderColor: theme.accentText }]}>
+                <ThemedText type="smallBold" style={{ color: theme.accentText }}>
+                  {t('home.dueBadge', { count: totalDue })}
+                </ThemedText>
+              </View>
+            ) : (
+              <ThemedText type="small" style={{ color: theme.accentText }}>
+                {t('home.nothingDue')}
+              </ThemedText>
+            )}
+          </View>
+        </Pressable>
+      </Link>
+
+      <View style={styles.section}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          {t('home.sectionLanguages')}
+        </ThemedText>
+        <LanguagePicker selected={language} onSelect={chooseLanguage} />
+      </View>
+
+      <View style={styles.section}>
+        <ThemedText type="smallBold" themeColor="textSecondary">
+          {t('home.sectionDirections', { language: languageName(language) })}
+        </ThemedText>
+        <DirectionDashboard language={language} loaded={due} />
+      </View>
 
       {/* Seit Phase 18 hat jede Sprache ihre eigene Merkhilfe: Tonfarben bei
           Thai, die Betonungsregel bei Spanisch, die Schriftstueck-Gruppen bei
@@ -67,3 +115,31 @@ export default function DashboardScreen() {
     </ScreenScaffold>
   );
 }
+
+const styles = StyleSheet.create({
+  section: {
+    gap: Spacing.two,
+  },
+  cta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    minHeight: 44,
+    borderRadius: 14,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+  },
+  ctaLabel: {
+    fontWeight: '700',
+  },
+  ctaBadge: {
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
+});

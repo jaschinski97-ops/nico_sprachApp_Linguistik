@@ -25,6 +25,12 @@ const en: Partial<Record<TranslationKey, string>> = {
 
   'home.subtitle': 'Which language are you learning today?',
   'home.systemLanguage': 'System language: {{language}}',
+  'home.heroCta': 'Continue learning',
+  'home.dueBadge': '{{count}} due',
+  'home.nothingDue': 'Nothing due today',
+  'home.sectionLanguages': 'Languages',
+  'home.sectionDirections': 'Directions · {{language}}',
+  'home.vocabCount': '{{count}} words',
 
   'picker.hubNote':
     'German is always one side — learning runs in both directions.',
@@ -41,7 +47,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'dashboard.dueOne': 'card due',
   'dashboard.dueMany': 'cards due',
   'dashboard.totals': '{{total}} cards total · {{fresh}} new · {{mastered}} mastered',
-  'dashboard.cta': 'Practise this direction →',
+  'dashboard.cta': 'Practise {{direction}}',
 
   'legend.toneTitle': 'Tone colours',
   'legend.toneBody':
@@ -150,8 +156,8 @@ const en: Partial<Record<TranslationKey, string>> = {
   'exam.minutes': '{{minutes}} minutes',
   'exam.formatGroup': ' · Group exam',
   'exam.formatPair': ' · Pair exam',
-  'exam.retrievedPrefix': 'Structure retrieved on {{date}} from ',
-  'exam.retrievedSuffix': '. Please check there again before registering — exam formats change.',
+  'exam.retrievedPrefix': 'Official exam structure, retrieved on {{date}} — source: ',
+  'exam.retrievedSuffix': '',
   'exam.loading': 'Loading tasks …',
   'exam.noModules':
     'No task available yet for {{level}}. More tasks arrive with app updates.',
@@ -178,9 +184,9 @@ const en: Partial<Record<TranslationKey, string>> = {
   'chart.legendDrills': 'Exercises',
   'chart.columnA11y': '{{date}}: {{reviews}} reviews, {{drills}} exercises',
   'chart.loggedSinceWithDrills':
-    'Logged since {{since}} · {{reviews}} reviews in total and {{drills}} exercises, {{correct}} of them correct. Earlier sessions are not included — the daily log was only introduced with this version.',
+    'Recorded since {{since}} — reviews: {{reviews}} · exercises: {{drills}} ({{correct}} correct). Earlier sessions are missing: the daily log only exists since this version.',
   'chart.loggedSince':
-    'Logged since {{since}} · {{reviews}} reviews in total. Earlier sessions are not included — the daily log was only introduced with this version.',
+    'Recorded since {{since}} — reviews: {{reviews}}. Earlier sessions are missing: the daily log only exists since this version.',
   'chart.empty':
     'No reviews logged yet. The history begins with the first rated card; earlier sessions are not included.',
   'state.new': 'New',
@@ -241,7 +247,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'drill.assembling': 'Preparing the exercise …',
   'drill.noVocab': 'No matching vocabulary',
   'drill.toneEmpty':
-    'No clips with a passed tone check are currently available for tone recognition. Unchecked clips and system voices are not used here.',
+    'This listening quiz has no verified pronunciation recordings yet. Unverified clips and computer voices are deliberately not used — better practise with one of the other exercises.',
   'drill.noneFor': 'There are currently no suitable entries for “{{drill}}” in the base set.',
   'drill.roundDone': 'Round finished',
   'drill.roundScore': '{{correct}} of {{total}} correct.',

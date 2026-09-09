@@ -2,10 +2,11 @@ import { Link } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { ThemedText, displayLineHeight } from './themed-text';
+import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { LanguageCode } from '@/lib/languages/types';
 import { directionLabel, DirectionSummary, summarizeAllDirections } from '@/lib/review-session';
@@ -13,18 +14,29 @@ import { directionLabel, DirectionSummary, summarizeAllDirections } from '@/lib/
 /**
  * Fällige Karten je Lernrichtung — bewusst getrennt, nicht als eine Zahl.
  *
- * „Deutsch für Thailänder" und „Thai für Deutsche" sind unterschiedliche
+ * „Deutsch für Thailänder“ und „Thai für Deutsche“ sind unterschiedliche
  * Lernprobleme mit eigenem Kartenbestand. Eine gemeinsame Summe würde
  * verschleiern, dass eine Richtung schon lange liegen geblieben ist.
  */
-export function DirectionDashboard({ language }: { language: LanguageCode }) {
-  const { t } = useLocale();
+export type DirectionSummaries = {
+  summaries: DirectionSummary[] | null;
+  error: string | null;
+};
+
+/**
+ * Lädt die Richtungs-Zahlen einer Sprache. Mit `enabled = false` bleibt der
+ * Lauf aus: Die Übersicht hebt diesen Zustand einmal hierher, zeigt daraus
+ * ihr CTA-Badge und reicht ihn durch — EIN Lesevorgang versorgt beide.
+ */
+export function useDirectionSummaries(language: LanguageCode, enabled = true): DirectionSummaries {
   const [summaries, setSummaries] = useState<DirectionSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!enabled) return;
     let cancelled = false;
     setSummaries(null);
+    setError(null);
     summarizeAllDirections(language)
       .then((result) => {
         if (!cancelled) setSummaries(result);
@@ -35,20 +47,36 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
     return () => {
       cancelled = true;
     };
-  }, [language]);
+  }, [language, enabled]);
 
-  if (error) {
+  return { summaries, error };
+}
+
+export function DirectionDashboard({
+  language,
+  loaded,
+}: {
+  language: LanguageCode;
+  /** Von der Übersicht durchgereichter Ladezustand — fehlt er, lädt die Komponente selbst. */
+  loaded?: DirectionSummaries;
+}) {
+  const internal = useDirectionSummaries(language, loaded === undefined);
+  const state = loaded ?? internal;
+  const theme = useTheme();
+  const { t } = useLocale();
+
+  if (state.error) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">{t('dashboard.title')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {t('common.loadFailed', { message: error })}
+          {t('common.loadFailed', { message: state.error })}
         </ThemedText>
       </ThemedView>
     );
   }
 
-  if (!summaries) {
+  if (!state.summaries) {
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">{t('dashboard.title')}</ThemedText>
@@ -60,100 +88,86 @@ export function DirectionDashboard({ language }: { language: LanguageCode }) {
   }
 
   return (
-    <View style={styles.grid}>
-      {summaries.map((summary) => (
-        // Die Flex-Größe hängt bewusst an diesem View und nicht am Pressable:
-        // `Link asChild` macht aus dem Pressable ein <a>, und das wuchs im
-        // Web-Build nicht auf die Spaltenbreite, sondern blieb bei seiner
-        // Inhaltsbreite stehen — beide Karten waren dadurch unterschiedlich
-        // breit. Ein neutrales View als Flex-Kind verhält sich verlässlich.
-        <View key={summary.direction} style={styles.cell}>
-          <Link
-            href={{ pathname: '/review', params: { direction: summary.direction } }}
-            asChild>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('dashboard.learnA11y', {
-                direction: directionLabel(summary.direction),
-                count: summary.due,
-              })}
-              style={({ pressed }) => [styles.pressable, pressed && styles.pressed]}>
-              <ThemedView type="backgroundElement" style={styles.card}>
-                <ThemedText type="smallBold">
-                  {directionLabel(summary.direction)}
-                </ThemedText>
+    <View>
+      {state.summaries.map((summary, index) => {
+        const label = directionLabel(summary.direction);
+        return (
+          <View key={summary.direction}>
+            {/* Die ganze Zeile ist der Tippziebel; die Fällig-Zahl steckt im
+                Ansagetext, damit der Screenreader beide Infos auf einmal hat.
+                Die Zeilenfläche liegt auf dem inneren View, denn der
+                asChild-Klon des Links ersetzt den Pressable-Style (im
+                Web-Build gemessen) — dort wäre die Zeile unformatiert. */}
+            <Link
+              href={{ pathname: '/review', params: { direction: summary.direction } }}
+              asChild>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={`${t('dashboard.cta', { direction: label })} — ${t(
+                  'home.dueBadge',
+                  { count: summary.due }
+                )}`}
+                style={({ pressed }) => pressed && styles.pressed}>
+                <View
+                  style={[
+                    styles.row,
+                    // Haarlinien nur zwischen den Zeilen — an der ersten fehlt
+                    // der Partner, den sie trennen könnte.
+                    index > 0 && { borderTopWidth: 1, borderColor: theme.decorGrey },
+                  ]}>
+                  <ThemedText type="default" style={styles.name}>
+                    {label}
+                  </ThemedText>
 
-                <View style={styles.numbers}>
-                  {/* Gleiche Kennzahl-Stufe wie die Kacheln im Fortschritts
-                      Reiter (`stat`) — dieselbe Aussage, dieselbe Schrift
-                      (UI-Review 2026-09-07). */}
-                  <ThemedText
-                    type="stat"
-                    maxFontSizeMultiplier={2}
-                    style={{ lineHeight: displayLineHeight(34, 2, 1.17) }}>
-                    {summary.due}
-                  </ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {summary.due === 1 ? t('dashboard.dueOne') : t('dashboard.dueMany')}
-                  </ThemedText>
+                  <ThemedView type="accent" style={styles.badge}>
+                    <ThemedText type="smallBold" themeColor="accentText">
+                      {t('home.dueBadge', { count: summary.due })}
+                    </ThemedText>
+                  </ThemedView>
                 </View>
+              </Pressable>
+            </Link>
 
-                <ThemedText type="small" themeColor="textSecondary">
-                  {t('dashboard.totals', {
-                    total: summary.total,
-                    fresh: summary.fresh,
-                    mastered: summary.mastered,
-                  })}
-                </ThemedText>
-
-                <ThemedView type="backgroundSelected" style={styles.cta}>
-                  <ThemedText type="small">{t('dashboard.cta')}</ThemedText>
-                </ThemedView>
-              </ThemedView>
-            </Pressable>
-          </Link>
-        </View>
-      ))}
+            <ThemedText type="small" themeColor="textSecondary" style={styles.totals}>
+              {t('dashboard.totals', {
+                total: summary.total,
+                fresh: summary.fresh,
+                mastered: summary.mastered,
+              })}
+            </ThemedText>
+          </View>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: {
+  row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.three,
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 44,
+    paddingVertical: Spacing.two,
   },
-  cell: {
-    // Zwei Spalten im breiten Fenster, eine auf dem Handy: die Zelle darf
-    // schrumpfen, bricht aber unter ~260px auf eine eigene Zeile um.
-    flexGrow: 1,
+  name: {
+    fontWeight: '600',
     flexShrink: 1,
-    flexBasis: 260,
-    minWidth: 0,
   },
-  pressable: {
-    width: '100%',
-    height: '100%',
+  badge: {
+    borderRadius: 999,
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    marginLeft: 'auto',
+  },
+  totals: {
+    marginTop: Spacing.half,
+    marginBottom: Spacing.two,
   },
   card: {
     borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.two,
-    height: '100%',
-  },
-  numbers: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: Spacing.two,
-    marginTop: Spacing.one,
-  },
-  cta: {
-    marginTop: 'auto',
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.two,
-    alignSelf: 'flex-start',
   },
   pressed: {
     opacity: 0.7,

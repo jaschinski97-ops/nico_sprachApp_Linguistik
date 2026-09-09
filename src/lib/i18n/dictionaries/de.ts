@@ -32,6 +32,12 @@ const de = {
   /* ---------- Übersicht (index.tsx) ---------- */
   'home.subtitle': 'Welche Sprache lernst du heute?',
   'home.systemLanguage': 'Systemsprache: {{language}}',
+  'home.heroCta': 'Weiter lernen',
+  'home.dueBadge': '{{count}} fällig',
+  'home.nothingDue': 'Heute nichts fällig',
+  'home.sectionLanguages': 'Sprachen',
+  'home.sectionDirections': 'Richtungen · {{language}}',
+  'home.vocabCount': '{{count}} Wörter',
 
   /* ---------- Sprachauswahl (language-picker) ---------- */
   'picker.hubNote': 'Deutsch ist immer die eine Seite — gelernt wird in beide Richtungen.',
@@ -49,7 +55,7 @@ const de = {
   'dashboard.dueOne': 'Karte fällig',
   'dashboard.dueMany': 'Karten fällig',
   'dashboard.totals': '{{total}} Karten gesamt · {{fresh}} neu · {{mastered}} gemeistert',
-  'dashboard.cta': 'Diese Richtung üben →',
+  'dashboard.cta': '{{direction}} üben',
 
   /* ---------- Sprachwechsel (language-switch) ---------- */
 
@@ -165,8 +171,8 @@ const de = {
   'exam.minutes': '{{minutes}} Minuten',
   'exam.formatGroup': ' · Gruppenprüfung',
   'exam.formatPair': ' · Paarprüfung',
-  'exam.retrievedPrefix': 'Struktur abgerufen am {{date}} von ',
-  'exam.retrievedSuffix': '. Bitte vor der Anmeldung dort noch einmal nachsehen — Prüfungsformate ändern sich.',
+  'exam.retrievedPrefix': 'Offizielle Prüfungsstruktur, abgerufen am {{date}} — Quelle: ',
+  'exam.retrievedSuffix': '',
   'exam.loading': 'Aufgaben werden geladen …',
   'exam.noModules':
     'Für {{level}} liegt hier noch keine Aufgabe. Weitere Aufgaben kommen mit App-Updates dazu.',
@@ -194,9 +200,9 @@ const de = {
   'chart.legendDrills': 'Übungen',
   'chart.columnA11y': '{{date}}: {{reviews}} Wiederholungen, {{drills}} Übungen',
   'chart.loggedSinceWithDrills':
-    'Protokolliert seit {{since}} · insgesamt {{reviews}} Wiederholungen und {{drills}} Übungsaufgaben, davon {{correct}} richtig. Frühere Sitzungen sind nicht enthalten — das Tagesprotokoll wurde erst mit dieser Version eingeführt.',
+    'Aufgezeichnet seit dem {{since}} — Wiederholungen: {{reviews}} · Übungen: {{drills}} ({{correct}} richtig). Ältere Sitzungen fehlen: das Tagesprotokoll gibt es erst seit dieser Version.',
   'chart.loggedSince':
-    'Protokolliert seit {{since}} · insgesamt {{reviews}} Wiederholungen. Frühere Sitzungen sind nicht enthalten — das Tagesprotokoll wurde erst mit dieser Version eingeführt.',
+    'Aufgezeichnet seit dem {{since}} — Wiederholungen: {{reviews}}. Ältere Sitzungen fehlen: das Tagesprotokoll gibt es erst seit dieser Version.',
   'chart.empty':
     'Noch keine Wiederholungen protokolliert. Die Historie beginnt mit der ersten bewerteten Karte; frühere Sitzungen sind nicht enthalten.',
   'state.new': 'Neu',
@@ -257,7 +263,7 @@ const de = {
   'drill.assembling': 'Übung wird zusammengestellt …',
   'drill.noVocab': 'Keine passenden Vokabeln',
   'drill.toneEmpty':
-    'Für die Tonerkennung stehen gerade keine passenden Clips mit bestandener Tonprüfung zur Verfügung. Ungeprüfte Clips und Systemstimmen werden hier nicht verwendet.',
+    'Für dieses Hörquiz liegen noch keine geprüften Aussprache-Aufnahmen vor. Ungeprüfte Clips und Computerstimmen werden bewusst nicht benutzt — lieber übst du mit einer der anderen Übungen.',
   'drill.noneFor': 'Für „{{drill}}" gibt es im Grundstock gerade keine geeigneten Einträge.',
   'drill.roundDone': 'Runde beendet',
   'drill.roundScore': '{{correct}} von {{total}} richtig.',

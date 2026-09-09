@@ -24,6 +24,12 @@ const es: Partial<Record<TranslationKey, string>> = {
 
   'home.subtitle': '¿Qué idioma aprendes hoy?',
   'home.systemLanguage': 'Idioma del sistema: {{language}}',
+  'home.heroCta': 'Seguir aprendiendo',
+  'home.dueBadge': '{{count}} pendientes',
+  'home.nothingDue': 'Nada pendiente hoy',
+  'home.sectionLanguages': 'Idiomas',
+  'home.sectionDirections': 'Direcciones · {{language}}',
+  'home.vocabCount': '{{count}} vocablos',
 
   'picker.hubNote': 'El alemán siempre es un lado — se aprende en ambas direcciones.',
   'picker.chooseA11y': 'Elegir idioma',
@@ -39,7 +45,7 @@ const es: Partial<Record<TranslationKey, string>> = {
   'dashboard.dueOne': 'tarjeta pendiente',
   'dashboard.dueMany': 'tarjetas pendientes',
   'dashboard.totals': '{{total}} tarjetas en total · {{fresh}} nuevas · {{mastered}} dominadas',
-  'dashboard.cta': 'Practicar esta dirección →',
+  'dashboard.cta': 'Practicar {{direction}}',
 
   'legend.toneTitle': 'Colores tonales',
   'legend.toneBody':
@@ -148,8 +154,8 @@ const es: Partial<Record<TranslationKey, string>> = {
   'exam.minutes': '{{minutes}} minutos',
   'exam.formatGroup': ' · Examen en grupo',
   'exam.formatPair': ' · Examen en pareja',
-  'exam.retrievedPrefix': 'Estructura consultada el {{date}} en ',
-  'exam.retrievedSuffix': '. Compruébalo allí antes de inscribirte — los formatos de examen cambian.',
+  'exam.retrievedPrefix': 'Estructura oficial del examen, consultada el {{date}} — fuente: ',
+  'exam.retrievedSuffix': '',
   'exam.loading': 'Cargando tareas …',
   'exam.noModules':
     'Para {{level}} aún no hay tareas. Más tareas llegan con las actualizaciones de la app.',
@@ -176,9 +182,9 @@ const es: Partial<Record<TranslationKey, string>> = {
   'chart.legendDrills': 'Ejercicios',
   'chart.columnA11y': '{{date}}: {{reviews}} repasos, {{drills}} ejercicios',
   'chart.loggedSinceWithDrills':
-    'Registrado desde {{since}} · {{reviews}} repasos en total y {{drills}} ejercicios, {{correct}} correctos. Las sesiones anteriores no constan — el registro diario se introdujo con esta versión.',
+    'Registrado desde el {{since}} — repasos: {{reviews}} · ejercicios: {{drills}} ({{correct}} correctos). Faltan las sesiones anteriores: el registro diario existe solo desde esta versión.',
   'chart.loggedSince':
-    'Registrado desde {{since}} · {{reviews}} repasos en total. Las sesiones anteriores no constan — el registro diario se introdujo con esta versión.',
+    'Registrado desde el {{since}} — repasos: {{reviews}}. Faltan las sesiones anteriores: el registro diario existe solo desde esta versión.',
   'chart.empty':
     'Aún no hay repasos registrados. El historial empieza con la primera tarjeta valorada; las sesiones anteriores no constan.',
   'state.new': 'Nueva',
@@ -238,7 +244,7 @@ const es: Partial<Record<TranslationKey, string>> = {
   'drill.assembling': 'Se está preparando el ejercicio …',
   'drill.noVocab': 'No hay vocabulario adecuado',
   'drill.toneEmpty':
-    'Para el reconocimiento tonal no hay ahora clips adecuados con tono verificado. Aquí no se usan clips sin verificar ni voces del sistema.',
+    'Para este quiz de escucha aún no hay grabaciones de pronunciación verificadas. Los clips sin verificar y las voces de ordenador no se usan a propósito — mejor practica con uno de los otros ejercicios.',
   'drill.noneFor': 'Para „{{drill}}“ no hay ahora entradas adecuadas en el fondo básico.',
   'drill.roundDone': 'Ronda terminada',
   'drill.roundScore': '{{correct}} de {{total}} correctas.',

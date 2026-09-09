@@ -35,6 +35,22 @@ export const Colors = {
     borderSubtle: '#7a7e85',
     /** Rein dekorative Flächen (Punktmuster, Fortschritts-Schiene) — kein AA-Maß. */
     decorGrey: '#a6a7ab',
+    /**
+     * Bewertungsknöpfe (Nochmal/Schwer/Gut/Leicht) als Farbpaar je Stufe:
+     * getönte Fläche + kräftige Schrift. Vorher waren alle vier Knöpfe dieselbe
+     * Graufläche — die häufigste Handlung der App verlangte beim Lesen mehr
+     * Zeit, als sie durfte. Die Werte sind als Paar gerechnet: jede Schrift
+     * erreicht auf ihrer eigenen Fläche 4,5:1 (Nachweis in
+     * `rating-colors.test.ts`), einzeln eingesetzt gelten sie nicht.
+     */
+    rateAgainBg: '#F7E7EA',
+    rateAgainText: '#9c1c3a',
+    rateHardBg: '#F5EDDC',
+    rateHardText: '#6b4e0d',
+    rateGoodBg: '#E6EFE7',
+    rateGoodText: '#14602f',
+    rateEasyBg: '#E7EDF6',
+    rateEasyText: '#1a4f9e',
   },
   dark: {
     text: '#ffffff',
@@ -50,6 +66,18 @@ export const Colors = {
     badge: '#d8ba7c',
     borderSubtle: '#94979e',
     decorGrey: '#55585e',
+    /**
+     * Bewertungsknöpfe im Dunkelmodus (Paare mit den hellen Werten; siehe den
+     * Kommentar dort): tiefe Töne der Fläche, helle Schrift daraus.
+     */
+    rateAgainBg: '#3A1A24',
+    rateAgainText: '#f2a8b6',
+    rateHardBg: '#332A14',
+    rateHardText: '#d8ba7c',
+    rateGoodBg: '#14291A',
+    rateGoodText: '#86c998',
+    rateEasyBg: '#14263F',
+    rateEasyText: '#8ab5f5',
   },
 } as const;
 

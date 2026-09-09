@@ -44,7 +44,9 @@ test('tone recognition does not offer or play an unchecked clip even when a syst
   mockHasClip.mockResolvedValue(false);
   await act(async () => { tree = create(<DrillRunner drill="tone" language="th" onExit={() => {}} />); });
   expect(mockHasClip).toHaveBeenCalledWith(expect.objectContaining({ purpose: 'tone' }));
-  expect(JSON.stringify(tree.toJSON())).toContain('keine passenden Clips mit bestandener Tonprüfung');
+  // Der Leerzustand sagt in Lernersprache, dass ungeprüfte Stoffe bewusst
+  // außen vor bleiben — genau diese Ehrlichkeit ist hier die Assertion.
+  expect(JSON.stringify(tree.toJSON())).toContain('Ungeprüfte Clips und Computerstimmen werden bewusst nicht benutzt');
   expect(mockPlayback).not.toHaveBeenCalled(); expect(mockRecord).not.toHaveBeenCalled();
 });
 

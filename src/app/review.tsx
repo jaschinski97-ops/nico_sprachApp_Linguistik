@@ -15,8 +15,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { FeatureLegend } from '@/components/feature-legend';
 import { WritingRunner } from '@/components/writing-runner';
-import { Spacing } from '@/constants/theme';
-import { useToneColor } from '@/hooks/use-theme';
+import { Spacing, ThemeColor } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import { Direction, Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
@@ -35,6 +35,23 @@ const RATING_KEYS: Record<Rating, TranslationKey> = {
   2: 'rating.hard',
   3: 'rating.good',
   4: 'rating.easy',
+};
+
+/**
+ * Fläche und Schriftfarbe je Bewertungsstufe als Theme-Token-Paar.
+ *
+ * WARUML ALS PAAR AUS DEM THEME: Die vier Farben sind als Paar auf AA
+ * gerechnet (`rating-colors.test.ts`) — Fläche und Schrift allein eingesetzt
+ * gelten die Kontraste nicht. Und WARUM ÜBERHAUPT FARBE: Alle vier Knöpfe in
+ * einem Grau machten die häufigste Handlung der App unlesbar langsam zu
+ * erfassen (UI-Review 2026-09-07); die Stufenfarbe ist die zweite, neben dem
+ * Wort, Lesespur.
+ */
+const RATING_COLORS: Record<Rating, { bg: ThemeColor; text: ThemeColor }> = {
+  1: { bg: 'rateAgainBg', text: 'rateAgainText' },
+  2: { bg: 'rateHardBg', text: 'rateHardText' },
+  3: { bg: 'rateGoodBg', text: 'rateGoodText' },
+  4: { bg: 'rateEasyBg', text: 'rateEasyText' },
 };
 
 /** Die Wort-Sprechübung und die Auswahlübungen als Übersetzungsschlüssel. */
@@ -419,7 +436,6 @@ function ModeBar({
   mode: Mode;
   onPick: (mode: Mode) => void;
 }) {
-  const toneColor = useToneColor();
   const { t } = useLocale();
 
   return (
@@ -456,10 +472,19 @@ function ModeBar({
                     styles.modeWrap,
                     pressed && styles.pressed,
                   ]}>
+                  {/* Gewaehlt = gefuellt mit Akzentfarbe, nicht grau mit
+                      Tonfarben-Rahmen: Die Tonfarben sind Lerninhalt (die fünf
+                      Thai-Toene); sie zusaetzlich als Auswahlzustand zu
+                      verwenden haette zwei Bedeutungen in ein Farbalphabet
+                      gelegt (gleiche Entscheidung wie in drill-runner). */}
                   <ThemedView
-                    type={selected ? 'backgroundSelected' : 'backgroundElement'}
-                    style={[styles.modeButton, selected && { borderColor: toneColor('mid') }]}>
-                    <ThemedText type="small">{label}</ThemedText>
+                    type={selected ? 'accent' : 'backgroundElement'}
+                    style={styles.modeButton}>
+                    <ThemedText
+                      type="small"
+                      themeColor={selected ? 'accentText' : 'text'}>
+                      {label}
+                    </ThemedText>
                   </ThemedView>
                 </Pressable>
               );
@@ -498,6 +523,7 @@ function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
 
 function CardSession({ direction }: { direction: Direction }) {
   const { t } = useLocale();
+  const colors = useTheme();
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
   const [queueError, setQueueError] = useState<string | null>(null);
   const [index, setIndex] = useState(0);
@@ -590,9 +616,21 @@ function CardSession({ direction }: { direction: Direction }) {
 
   return (
     <>
-      <ThemedText type="small" themeColor="textSecondary">
-        {t('cards.progress', { index: index + 1, total: queue.length })}
-      </ThemedText>
+      <View style={styles.progressBlock}>
+        {/* Schiene vor Text (UI-Review 2026-09-07): Fortschritt ist eine
+            Fläche, die man im Augenblick erfasst, kein Satz, den man liest.
+            Füllstand VOR der Bewertung — `index` Karten sind geschafft, die
+            aktuelle zählt erst, wenn sie bewertet ist. */}
+        <ThemedView type="backgroundSelected" style={styles.progressTrack}>
+          <ThemedView
+            type="accent"
+            style={[styles.progressFill, { width: `${(index / queue.length) * 100}%` }]}
+          />
+        </ThemedView>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('cards.progress', { index: index + 1, total: queue.length })}
+        </ThemedText>
+      </View>
 
       <Flashcard entry={item.entry} direction={direction} revealed={revealed} />
 
@@ -606,9 +644,17 @@ function CardSession({ direction }: { direction: Direction }) {
               accessibilityRole="button"
               accessibilityLabel={t('rating.a11y', { label: t(RATING_KEYS[rating]) })}
               style={({ pressed }) => [styles.ratingWrap, pressed && styles.pressed]}>
-              <ThemedView type="backgroundSelected" style={styles.ratingButton}>
-                <ThemedText type="small">{t(RATING_KEYS[rating])}</ThemedText>
-              </ThemedView>
+              {/* Fläche und Schrift als Token-PAAR aus dem Theme — die
+                  Kontraste gelten nur als Paar (siehe RATING_COLORS). */}
+              <View
+                style={[
+                  styles.ratingButton,
+                  { backgroundColor: colors[RATING_COLORS[rating].bg] },
+                ]}>
+                <ThemedText type="small" style={{ color: colors[RATING_COLORS[rating].text] }}>
+                  {t(RATING_KEYS[rating])}
+                </ThemedText>
+              </View>
             </Pressable>
           ))}
         </View>
@@ -653,8 +699,22 @@ const styles = StyleSheet.create({
    * weil kein Knopf seinen Platz abgab. Eine Beschriftung kann dadurch einmal
    * allein am Zeilenende stehen - das kleinere Übel gegenüber einem
    * unerreichbaren Modus.
+   *
+   * SEIT DEM UI-REVIEW 2026-09-09 UMBRICHT SIE AUCH WIRKLICH: RN-Web-Erben
+   * haben `flexShrink: 0` und messen max-content — die Gruppe war also immer
+   * so breit wie alle ihre Chips zusammen, ihr eigenes `flexWrap` hatte nie
+   * eine enge Zeile und sprang daher nie an; „Satz wiederholen“ lief rechts
+   * aus dem 390-px-Screen hinaus und war unerreichbar. `flexShrink: 1` plus
+   * `minWidth: 0` erlauben erst das Schrumpfen unter die Inhaltsbreite, und
+   * NUR dadurch bekommt das innere Umbrechen seine Grenze. `alignSelf:
+   * 'stretch'` ist in dieser Reihe zwar schon der Default, steht aber
+   * ausdruecklich hier, damit eine spaetere Zentrierung der Leiste die
+   * Vollbreite der Gruppe nicht wieder aufhebt.
    */
   modeGroup: {
+    alignSelf: 'stretch',
+    flexShrink: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     flexWrap: 'wrap',
@@ -684,6 +744,28 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  /**
+   * Schiene und Kartezaehler eng beieinander (8 statt der Spaltenluecke von
+   * 24): Sie sind zusammen die Fortschrittszeile des Mockups — erst die
+   * Fläche, darunter die kleine Zahl.
+   */
+  progressBlock: {
+    gap: Spacing.two,
+  },
+  /**
+   * Hauchduenne Schiene mit pillfoermiger Fuellung (Mockup „Lernen /
+   * Karteikarten“): `overflow` + Radius schneiden die Fuellung an den
+   * Rundungen sauber ab, auch bei fuellendem oder leerem Stand.
+   */
+  progressTrack: {
+    height: 5,
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 5,
+    borderRadius: 999,
   },
   ratings: {
     flexDirection: 'row',

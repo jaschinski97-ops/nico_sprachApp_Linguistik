@@ -8,7 +8,7 @@ import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
 import { ExamOverview, loadExamModule, loadExamOverview } from '@/lib/exam/session';
 import {
   certificateFor,
@@ -51,7 +51,7 @@ export default function ExamScreen() {
   const router = useRouter();
 
   const level: ExamLevel = isLevel(params.level) ? params.level : 'A1';
-  const toneColor = useToneColor();
+  const theme = useTheme();
 
   const [overview, setOverview] = useState<ExamOverview[] | null>(null);
   const [overviewError, setOverviewError] = useState<string | null>(null);
@@ -130,13 +130,17 @@ export default function ExamScreen() {
             accessibilityLabel={candidate}
             accessibilityState={{ selected: candidate === level }}
             style={({ pressed }) => pressed && styles.pressed}>
+            {/* WHY Akzentfläche statt grau + Tonfarben-Rahmen: Der Rahmen
+                suggerierte eine Ton-Bedeutung, die eine Prüfstufe nicht hat;
+                die Wahl ist jetzt die wichtigste Fläche des Screens. */}
             <ThemedView
-              type={candidate === level ? 'backgroundSelected' : 'backgroundElement'}
-              style={[
-                styles.levelButton,
-                candidate === level && { borderColor: toneColor('mid') },
-              ]}>
-              <ThemedText type="small">{candidate}</ThemedText>
+              type={candidate === level ? 'accent' : 'backgroundElement'}
+              style={styles.levelButton}>
+              <ThemedText
+                type="small"
+                themeColor={candidate === level ? 'accentText' : undefined}>
+                {candidate}
+              </ThemedText>
             </ThemedView>
           </Pressable>
         ))}
@@ -177,9 +181,13 @@ export default function ExamScreen() {
         {/*
           Quelle und Abrufdatum gehoeren sichtbar in die App, nicht nur ins
           Protokoll: Pruefungsformate aendern sich, und wer sich darauf
-          verlaesst, muss nachsehen koennen, wie alt die Angabe ist.
+          verlaesst, muss nachsehen koennen, wie alt die Angabe ist. Als
+          Fussnote (klein, Haarlinie darueber): Beleg, keine Handlungszeile.
         */}
-        <ThemedText type="small" themeColor="textSecondary">
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={[styles.footnote, { borderTopColor: theme.decorGrey }]}>
           {t('exam.retrievedPrefix', { date: certificate.retrieved })}
           <ExternalLink href={certificate.source}>{certificate.source}</ExternalLink>
           {t('exam.retrievedSuffix')}
@@ -197,7 +205,15 @@ export default function ExamScreen() {
       ) : (
         overview.map((group) => (
           <ThemedView key={group.skill} type="backgroundElement" style={styles.card}>
-            <ThemedText type="smallBold">{t(EXAM_SKILL_KEYS[group.skill])}</ThemedText>
+            <View style={styles.groupHead}>
+              <ThemedText type="smallBold">{t(EXAM_SKILL_KEYS[group.skill])}</ThemedText>
+              {/* Nur die Zahl: Die Menge gehoert zur Ueberschrift, nicht in
+                  jeden Eintrag — ein weiteres Wort wuerde nur Wiederholung
+                  erzeugen. */}
+              <ThemedText type="small" themeColor="textSecondary">
+                ({group.modules.length})
+              </ThemedText>
+            </View>
             {group.modules.length === 0 ? (
               <ThemedText type="small" themeColor="textSecondary">
                 {t('exam.noModules', { level })}
@@ -210,12 +226,19 @@ export default function ExamScreen() {
                   accessibilityRole="button"
                   accessibilityLabel={entry.title}
                   style={({ pressed }) => pressed && styles.pressed}>
-                  <ThemedView type="backgroundSelected" style={styles.moduleRow}>
-                    <ThemedText type="small">{entry.title}</ThemedText>
-                    <ThemedText type="small" themeColor="textSecondary">
-                      {t('exam.moduleMinutes', { minutes: entry.minutes })}
-                    </ThemedText>
-                  </ThemedView>
+                  {({ pressed }) => (
+                    // WHY Haarlinie statt eigene Box je Zeile: Zwanzig
+                    // abgerundete Flaechen wirken wie zwanzig Knöpfe — die
+                    // Liste ist eine Liste, gedrückt wird nur eine Zeile.
+                    <ThemedView
+                      type={pressed ? 'backgroundSelected' : 'backgroundElement'}
+                      style={[styles.moduleRow, { borderTopColor: theme.decorGrey }]}>
+                      <ThemedText type="small">{entry.title}</ThemedText>
+                      <ThemedText type="small" themeColor="textSecondary">
+                        {t('exam.moduleMinutes', { minutes: entry.minutes })}
+                      </ThemedText>
+                    </ThemedView>
+                  )}
                 </Pressable>
               ))
             )}
@@ -246,8 +269,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.four,
     borderRadius: Spacing.two,
-    borderWidth: 1,
-    borderColor: 'transparent',
   },
   levelButtonSelected: {},
   card: {
@@ -265,15 +286,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: Spacing.two,
   },
+  groupHead: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.one,
+  },
+  footnote: {
+    // Fussnote: Haarlinie trennt den Beleg vom Angebot der App; den kleineren
+    // Text liefert bereits `type="small"` (opacity wäre doppelt leise).
+    borderTopWidth: 1,
+    paddingTop: Spacing.two,
+  },
   moduleRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.two,
+    // 44 Punkte Trefferflaeche bleiben — nur die abgerundete Box entfaellt.
+    minHeight: 44,
     paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.two,
+    borderTopWidth: 1,
   },
   pressed: {
     opacity: 0.7,

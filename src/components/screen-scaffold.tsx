@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from './themed-text';
 
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
   title: string;
@@ -16,10 +17,15 @@ type Props = {
  * Shared page frame. Centres content and caps its width so the same screens
  * read well on a phone and in a wide desktop browser window (see PROGRESS.md,
  * Phase 0 responsive requirement) instead of stretching edge to edge.
+ *
+ * Der Hintergrund wird hier bewusst gemalt (UI-Review 2026-09-09): Im
+ * Web-Build ist sonst die Fläche unter dem Inhalt transparent, und im
+ * Dunkelmodus stand die helle Überschrift auf dem weißen Browser-Canvas.
  */
 export function ScreenScaffold({ title, subtitle, children }: Props) {
+  const theme = useTheme();
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>

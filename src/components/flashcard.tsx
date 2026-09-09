@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
+import Ionicons from '@expo/vector-icons/Ionicons';
+
 import { TermWord } from './term-word';
 
 import { SpeechLanguage } from '@/lib/audio';
@@ -14,6 +16,7 @@ import { VocabEntry } from '@/data/vocabulary';
 import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
 import { Direction } from '@/lib/fsrs/types';
 import { useLocale } from '@/lib/i18n';
+import { useTheme } from '@/hooks/use-theme';
 
 /**
  * Karteikarte.
@@ -191,11 +194,16 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
 /**
  * Aussprache-Knopf.
  *
- * `spokenLabel` gibt es, weil die kompakte Fassung nur ein „▶" zeigt. Ohne
- * eigene Beschriftung läse ein Screenreader genau dieses Zeichen vor — die
- * Ansage „schwarzes rechtsweisendes Dreieck" sagt niemandem, was der Knopf tut
- * (Phase 9). Die Vorlesetaste ist ausserdem mindestens 44 Punkte gross, damit
- * sie auch mit dem Daumen zu treffen ist.
+ * `spokenLabel` gibt es, weil die kompakte Fassung nur ein Lautsprecher-Symbol
+ * zeigt. Ohne eigene Beschriftung läse ein Screenreader entweder gar nichts
+ * oder — als Textzeichen — „schwarzes rechtsweisendes Dreieck“; beides sagt
+ * niemandem, was der Knopf tut (Phase 9). Die Vorlesetaste ist ausserdem
+ * mindestens 44 Punkte gross, damit sie auch mit dem Daumen zu treffen ist.
+ *
+ * Das Symbol ist ein Icon aus @expo/vector-icons statt des früheren 🔊-Emoji:
+ * Emojis kommen aus der Systememencharge und sehen je Plattform (und je
+ * fehlender Emoji-Font) unterschiedlich bis gar nicht aus; der Icon-Glyph ist
+ * überall derselbe und folgt der Textfarbe des Themas.
  */
 function SpeakButton({
   label,
@@ -215,6 +223,7 @@ function SpeakButton({
 }) {
   const [played, setPlayed] = useState<{ text: string; result: PlaybackResult } | null>(null);
   const playback = played?.text === text ? played.result : null;
+  const colors = useTheme();
 
   return (
     <View style={compact ? undefined : styles.speakColumn}>
@@ -235,9 +244,24 @@ function SpeakButton({
         <ThemedView
           type="backgroundSelected"
           style={compact ? styles.speakCompact : styles.speakButton}>
-          <ThemedText type="small" themeColor="textSecondary">
-            {compact ? label : `🔊 ${label}`}
-          </ThemedText>
+          {compact ? (
+            <Ionicons
+              name="volume-medium-outline"
+              size={17}
+              color={colors.textSecondary}
+            />
+          ) : (
+            <View style={styles.speakLabel}>
+              <Ionicons
+                name="volume-medium-outline"
+                size={17}
+                color={colors.textSecondary}
+              />
+              <ThemedText type="small" themeColor="textSecondary">
+                {label}
+              </ThemedText>
+            </View>
+          )}
         </ThemedView>
       </Pressable>
       {/* Pflicht 4 (Phase 11): Ein Clip ist eine KI-Stimme. Das steht genau
@@ -308,6 +332,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.one,
     paddingHorizontal: Spacing.three,
     borderRadius: Spacing.three,
+  },
+  /** Icon und Beschriftung als Zeile, wie im Mockup die Audio-Pille. */
+  speakLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
   },
   speakCompact: {
     // Mindestens 44 Punkte in beide Richtungen - unter diesem Mass ist ein
