@@ -15,6 +15,7 @@ import { loadSituations } from '@/lib/repository';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { setConversationDirection } from '@/lib/profile';
 import { TranslationKey, useLocale } from '@/lib/i18n';
+import { goalLanguage, zielFuerDirection } from '@/lib/languages/goals';
 import { directionsFor } from '@/lib/languages/types';
 import { directionLabel } from '@/lib/review-session';
 
@@ -150,25 +151,33 @@ export default function ConversationScreen() {
       subtitle={t('conversation.subtitleCount', { count: mine.length })}>
       <LanguageSwitch selected={language} onSelect={chooseLanguage} />
       <View style={styles.row}>
-        {directions.map((d) => (
-          <Pressable
-            key={d}
-            onPress={() => {
-              setChosen(d);
-              // Feuer-und-vergessen ist hier gewollt, aber ein Speicherfehler
-              // darf keine unbehandelte Promise-Rejection werden.
-              void setConversationDirection(d).catch(() => {});
-            }}
-            accessibilityRole="button"
-            accessibilityState={{ selected: direction === d }}
-            style={({ pressed }) => pressed && styles.pressed}>
-            <ThemedView
-              type={direction === d ? 'backgroundSelected' : 'backgroundElement'}
-              style={styles.chip}>
-              <ThemedText type="small">{directionLabel(d)}</ThemedText>
-            </ThemedView>
-          </Pressable>
-        ))}
+        {directions.map((d) => {
+          // Zielname statt „Deutsch → Thai“ (Nutzerentscheidung 2026-09-10).
+          // Situationen gibt es nur für das Thai-Paar (lib/conversation/types
+          // lässt genau de_to_th/th_to_de zu), beide tragen ein Lernziel; der
+          // Rückfall auf das Richtungslabel ist reine Absicherung.
+          const ziel = zielFuerDirection(d);
+          const label = ziel ? languageName(goalLanguage(ziel)) : directionLabel(d);
+          return (
+            <Pressable
+              key={d}
+              onPress={() => {
+                setChosen(d);
+                // Feuer-und-vergessen ist hier gewollt, aber ein Speicherfehler
+                // darf keine unbehandelte Promise-Rejection werden.
+                void setConversationDirection(d).catch(() => {});
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: direction === d }}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView
+                type={direction === d ? 'backgroundSelected' : 'backgroundElement'}
+                style={styles.chip}>
+                <ThemedText type="small">{label}</ThemedText>
+              </ThemedView>
+            </Pressable>
+          );
+        })}
       </View>
 
       {visible.length === 0 ? (

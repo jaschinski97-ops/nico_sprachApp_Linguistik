@@ -11,7 +11,7 @@ import { Spacing } from '@/constants/theme';
 import { TONES } from '@/constants/tones';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { useToneColor } from '@/hooks/use-theme';
-import { playPronunciation, stopPronunciation } from '@/lib/audio';
+import { isLanguageAvailable, playPronunciation, stopPronunciation } from '@/lib/audio';
 import { useLocale, type TranslationKey } from '@/lib/i18n';
 import {
   analyzeToneContour,
@@ -170,13 +170,23 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
   const playExample = useCallback(async () => {
     if (!prompt || capture.status !== 'idle' || processing) return;
     try {
-      const kind = await playPronunciation({ text: prompt.thai, language: 'th' });
+      // purpose 'vocabulary': Das Beispiel ist Vokabelmaterial. Ohne Purpose
+      // verlangt das Ton-Gate geprüfte Clips, und alles Übrige fiel in die
+      // Thai-Systemstimme — die es auf vielen Geräten nicht gibt (Web: stumm,
+      // Nutzermeldung 10.09.). Das Beispiel bleibt trotzdem nur Hörbeispiel,
+      // nie Bewertungsmaßstab (AE-32).
+      const kind = await playPronunciation({ text: prompt.thai, language: 'th', purpose: 'vocabulary' });
+      if (kind === 'tts') {
+        // Eine Behauptung „abgespielt“ bei fehlender Stimme wäre gelogen —
+        // eindeutig fehlende Thai-Stimme melden wie fehlendes Beispiel.
+        const stimme = await isLanguageAvailable('th');
+        setExampleNotice(stimme === false ? t('speaking.noticeNone') : t('speaking.noticeTts'));
+        return;
+      }
       setExampleNotice(
         kind === 'asset'
           ? t('speaking.noticeClip')
-          : kind === 'tts'
-            ? t('speaking.noticeTts')
-            : t('speaking.noticeNone')
+          : t('speaking.noticeNone')
       );
     } catch {
       setExampleNotice(t('speaking.noticeError'));

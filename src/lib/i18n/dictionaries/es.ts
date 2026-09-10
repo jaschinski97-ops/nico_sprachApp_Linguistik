@@ -28,23 +28,11 @@ const es: Partial<Record<TranslationKey, string>> = {
   'home.dueBadge': '{{count}} pendientes',
   'home.nothingDue': 'Nada pendiente hoy',
   'home.sectionLanguages': 'Idiomas',
-  'home.sectionDirections': 'Direcciones · {{language}}',
   'home.vocabCount': '{{count}} vocablos',
 
-  'picker.hubNote': 'El alemán siempre es un lado — se aprende en ambas direcciones.',
   'picker.chooseA11y': 'Elegir idioma',
-  'picker.vocabAndFeature': '{{count}} vocablos · Rasgo: {{feature}}',
-  'picker.empty': 'Aún sin contenido.',
-  'picker.emptyFeature': 'Rasgo decidido: {{feature}}{{kindNote}}.',
-  'picker.kindDerivable': ' — se deduce de la escritura',
-  'picker.kindPerWord': ' — hay que guardarlo palabra por palabra',
+  'picker.goalDeutschDetail': '{{count}} vocablos de tailandés a alemán',
 
-  'dashboard.title': 'Tarjetas pendientes',
-  'dashboard.loading': 'Cargando estado de tarjetas …',
-  'dashboard.learnA11y': 'Aprender {{direction}}, {{count}} tarjetas pendientes',
-  'dashboard.dueOne': 'tarjeta pendiente',
-  'dashboard.dueMany': 'tarjetas pendientes',
-  'dashboard.totals': '{{total}} tarjetas en total · {{fresh}} nuevas · {{mastered}} dominadas',
   'dashboard.cta': 'Practicar {{direction}}',
 
   'legend.toneTitle': 'Colores tonales',
@@ -81,7 +69,7 @@ const es: Partial<Record<TranslationKey, string>> = {
 
   'review.subtitle': 'Dirección de aprendizaje',
   'review.loadingProfile': 'Cargando perfil de aprendizaje …',
-  'review.pickSubtitle': '{{language}} — ¿qué dirección quieres practicar?',
+  'review.pickSubtitle': '¿Qué idioma quieres practicar?',
   'review.switch': '← Cambiar idioma o dirección',
   'review.switchA11y': 'Cambiar idioma o dirección de aprendizaje',
   'mode.cards': 'Tarjetas',

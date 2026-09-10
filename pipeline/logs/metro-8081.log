@@ -15,3 +15,13 @@ Web Bundled 20859ms node_modules\expo-router\entry.js (1628 modules)
 λ Bundled 20936ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1677 modules)
 λ Bundled 58ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
 Web Bundled 421ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 10709ms node_modules\expo-router\entry.js (1629 modules)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web Bundled 55ms src\lib\blobs\backend.web.ts (1 module)
+Web  WARN  props.pointerEvents is deprecated. Use style.pointerEvents
+Web  WARN  expo-file-system is not supported on web
+Web  WARN  expo-file-system is not supported on web

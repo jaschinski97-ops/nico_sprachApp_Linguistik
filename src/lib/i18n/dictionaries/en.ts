@@ -29,24 +29,11 @@ const en: Partial<Record<TranslationKey, string>> = {
   'home.dueBadge': '{{count}} due',
   'home.nothingDue': 'Nothing due today',
   'home.sectionLanguages': 'Languages',
-  'home.sectionDirections': 'Directions · {{language}}',
   'home.vocabCount': '{{count}} words',
 
-  'picker.hubNote':
-    'German is always one side — learning runs in both directions.',
   'picker.chooseA11y': 'Choose language',
-  'picker.vocabAndFeature': '{{count}} vocabulary · Feature: {{feature}}',
-  'picker.empty': 'No content yet.',
-  'picker.emptyFeature': 'Feature decided: {{feature}}{{kindNote}}.',
-  'picker.kindDerivable': ' — derivable from the spelling',
-  'picker.kindPerWord': ' — must be stored per word',
+  'picker.goalDeutschDetail': '{{count}} words, from Thai into German',
 
-  'dashboard.title': 'Cards due',
-  'dashboard.loading': 'Loading card status …',
-  'dashboard.learnA11y': 'Learn {{direction}}, {{count}} cards due',
-  'dashboard.dueOne': 'card due',
-  'dashboard.dueMany': 'cards due',
-  'dashboard.totals': '{{total}} cards total · {{fresh}} new · {{mastered}} mastered',
   'dashboard.cta': 'Practise {{direction}}',
 
   'legend.toneTitle': 'Tone colours',
@@ -83,7 +70,7 @@ const en: Partial<Record<TranslationKey, string>> = {
 
   'review.subtitle': 'Learning direction',
   'review.loadingProfile': 'Loading learning profile …',
-  'review.pickSubtitle': '{{language}} — which direction would you like to practise?',
+  'review.pickSubtitle': 'Which language would you like to practise?',
   'review.switch': '← Switch language or direction',
   'review.switchA11y': 'Switch language or learning direction',
   'mode.cards': 'Flashcards',

@@ -36,25 +36,13 @@ const de = {
   'home.dueBadge': '{{count}} fällig',
   'home.nothingDue': 'Heute nichts fällig',
   'home.sectionLanguages': 'Sprachen',
-  'home.sectionDirections': 'Richtungen · {{language}}',
   'home.vocabCount': '{{count}} Wörter',
 
   /* ---------- Sprachauswahl (language-picker) ---------- */
-  'picker.hubNote': 'Deutsch ist immer die eine Seite — gelernt wird in beide Richtungen.',
   'picker.chooseA11y': 'Sprache wählen',
-  'picker.vocabAndFeature': '{{count}} Vokabeln · Merkmal: {{feature}}',
-  'picker.empty': 'Noch keine Inhalte.',
-  'picker.emptyFeature': 'Merkmal entschieden: {{feature}}{{kindNote}}.',
-  'picker.kindDerivable': ' — aus der Schreibung ableitbar',
-  'picker.kindPerWord': ' — muss je Wort hinterlegt werden',
+  'picker.goalDeutschDetail': '{{count}} Wörter von Thai auf Deutsch',
 
-  /* ---------- Richtungs-Dashboard (direction-dashboard) ---------- */
-  'dashboard.title': 'Fällige Karten',
-  'dashboard.loading': 'Lade Kartenstand …',
-  'dashboard.learnA11y': '{{direction}} lernen, {{count}} Karten fällig',
-  'dashboard.dueOne': 'Karte fällig',
-  'dashboard.dueMany': 'Karten fällig',
-  'dashboard.totals': '{{total}} Karten gesamt · {{fresh}} neu · {{mastered}} gemeistert',
+  /* ---------- Fällig-Badges der Lernziel-Zeilen (language-picker) ---------- */
   'dashboard.cta': '{{direction}} üben',
 
   /* ---------- Sprachwechsel (language-switch) ---------- */
@@ -96,7 +84,7 @@ const de = {
   /* ---------- Lernen (review.tsx) ---------- */
   'review.subtitle': 'Lernrichtung',
   'review.loadingProfile': 'Lade Lernprofil …',
-  'review.pickSubtitle': '{{language}} — welche Richtung möchtest du üben?',
+  'review.pickSubtitle': 'Welche Sprache möchtest du üben?',
   'review.switch': '← Sprache oder Richtung wechseln',
   'review.switchA11y': 'Sprache oder Lernrichtung wechseln',
   'mode.cards': 'Karteikarten',

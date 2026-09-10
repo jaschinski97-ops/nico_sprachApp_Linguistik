@@ -5,7 +5,6 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { DrillRunner } from '@/components/drill-runner';
 import { DictationRunner } from '@/components/dictation-runner';
 import { Flashcard } from '@/components/flashcard';
-import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { SpeakingRunner } from '@/components/speaking-runner';
 import { SentenceRunner } from '@/components/sentence-runner';
@@ -20,10 +19,9 @@ import { useTheme } from '@/hooks/use-theme';
 import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import { Direction, Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { languageOf } from '@/lib/languages/registry';
-import { directionsFor, isLanguageCode, languageOfDirection } from '@/lib/languages/types';
+import { goalEndonym, goalLanguage, LERNZIELE, zielFuerDirection } from '@/lib/languages/goals';
+import { isLanguageCode, languageOfDirection } from '@/lib/languages/types';
 import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
-import { LanguageCode } from '@/lib/languages/types';
 import { rateCard } from '@/lib/repository';
 import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
 
@@ -204,22 +202,11 @@ export default function ReviewScreen() {
    *
    * Nicht als „Standard", den man setzt und wieder aufhebt, sondern als
    * Lesezeichen: Beim nächsten Öffnen steht man wieder dort. Zurückgesetzt
-   * wird es nur durch eine Sprachwahl auf der Übersicht — die Geste „von vorn".
+   * wird es nur durch eine Zielwahl — die Geste „von vorn".
    */
   const remember = useCallback(async (direction: Direction | null, mode?: Mode) => {
     setProfile(await setReviewSpot(direction ? { direction, mode: mode ?? 'cards' } : null));
   }, []);
-
-  // Sprachwechsel mitten im Lernen-Bereich (Phase 17, Ziel 4). Die Richtung
-  // gehoerte zur alten Sprache und faellt weg; die Auswahl zeigt dann die
-  // zwei Richtungen der neuen.
-  const chooseLanguage = useCallback(
-    async (language: LanguageCode) => {
-      setProfile(await setLanguage(language));
-      router.setParams({ direction: undefined, mode: undefined, waehlen: undefined });
-    },
-    [router]
-  );
 
   const open = useCallback(
     (direction: Direction, mode: Mode) => {
@@ -263,8 +250,16 @@ export default function ReviewScreen() {
     return (
       <DirectionPicker
         profile={profile}
-        onPick={(picked) => router.setParams({ direction: picked, waehlen: undefined })}
-        onLanguage={chooseLanguage}
+        onPick={(picked) => {
+          // Lernziel gewählt: Die Sprache gehört zum Ziel — `setLanguage`
+          // wirft den alten gemerkten Stand weg, und der ReviewBody-Effekt
+          // schreibt die neue Richtung sofort als Lesezeichen zurück. Ein
+          // Speicherfehler ändert nichts an der Adresse, die schon stimmt.
+          void setLanguage(languageOfDirection(picked))
+            .then(setProfile)
+            .catch(() => {});
+          router.setParams({ direction: picked, waehlen: undefined, mode: undefined });
+        }}
       />
     );
   }
@@ -300,7 +295,8 @@ export default function ReviewScreen() {
  * Stand in einem Effekt geschrieben werden kann.
  *
  * WARUM EIN EFFEKT UND NICHT DER KNOPFDRUCK: Man kommt auf drei Wegen hierher
- * — über die Übungsleiste, über eine Richtungskarte auf der Übersicht und über
+ * — über die Übungsleiste, über eine Zielwahl in der Auswahl (auch die
+ * Übersicht setzt nur Sprache und Richtung, navigiert tut der CTA) und über
  * eine Adresse mit `?direction=`. Am Knopf zu merken hätte nur den ersten Weg
  * erwischt; im Web-Build fiel genau das auf. Der Effekt hängt an dem, was
  * wirklich offen ist, und trifft damit alle drei.
@@ -320,7 +316,7 @@ function ReviewBody({
   onRemember: (direction: Direction | null, mode?: Mode) => void;
   onExit: () => void;
 }) {
-  const { t, uiLanguage } = useLocale();
+  const { t, languageName, uiLanguage } = useLocale();
   useEffect(() => {
     onRemember(direction, mode);
     // `onRemember` ist bewusst nicht in der Liste: Es schreibt das Profil und
@@ -328,8 +324,17 @@ function ReviewBody({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [direction, mode]);
 
+  // Zielname statt Richtungslabel (Nutzerentscheidung 2026-09-10). Für
+  // Richtungen ohne Lernziel — en_to_de/es_to_de aus gemerkten Profilen oder
+  // alten Adressen — fällt der ehrliche Richtungstext zurück.
+  const ziel = zielFuerDirection(direction);
+
   return (
-    <ScreenScaffold title={t('tabs.learn')} subtitle={directionLabel(direction, uiLanguage)}>
+    <ScreenScaffold
+      title={t('tabs.learn')}
+      subtitle={
+        ziel ? languageName(goalLanguage(ziel)) : directionLabel(direction, uiLanguage)
+      }>
       <ModeBar direction={direction} mode={mode} onPick={(picked) => onOpen(direction, picked)} />
 
       <DirectionBar onSwitch={onSwitch} />
@@ -377,50 +382,56 @@ function ReviewBody({
 }
 
 /**
- * Ohne gewählte Richtung wird nicht gelernt. Die beiden Richtungen sind
- * unterschiedliche Aufgaben und werden nie in einer Sitzung vermischt.
+ * Ohne gewähltes Ziel wird nicht gelernt. Die VIER Lernziele (Nutzer-
+ * entscheidung 2026-09-10) ersetzen die alte Richtungsliste „Deutsch → Thai“ /
+ * „Thai → Deutsch“: Deutsch steht als eigene Wahl darunter, und jede Wahl
+ * setzt Sprache UND Richtung in einem (`lib/languages/goals`). Die internen
+ * Abläufe bleiben richtungsbasiert — nur die Beschriftung zeigt das Ziel.
  */
 function DirectionPicker({
   profile,
   onPick,
-  onLanguage,
 }: {
   profile: LearnerProfile;
   onPick: (direction: Direction) => void;
-  onLanguage: (language: LanguageCode) => void;
 }) {
-  const { t, languageName, uiLanguage } = useLocale();
+  const { t, languageName } = useLocale();
+  // Hervorheben, wo man gerade war — der gemerkte Stand, nicht der (hier
+  // leere) Adressparameter. Gehört die gemerkte Richtung zu keinem Ziel
+  // (en_to_de/es_to_de), bleibt keine Zeile hervorgehoben.
+  const aktuell = profile.review?.direction ?? null;
   return (
-    <ScreenScaffold
-      title={t('tabs.learn')}
-      subtitle={t('review.pickSubtitle', { language: languageName(profile.language) })}>
-      <LanguageSwitch selected={profile.language} onSelect={onLanguage} />
-      {directionsFor(profile.language).map((direction) => (
-        <Pressable
-          key={direction}
-          onPress={() => onPick(direction)}
-          accessibilityRole="button"
-          style={({ pressed }) => pressed && styles.pressed}>
-          <ThemedView type="backgroundElement" style={styles.pickerCard}>
-            <ThemedText type="smallBold">{directionLabel(direction, uiLanguage)}</ThemedText>
-            {/* Statt eines generischen Satzes („Deutsch lesen, das Wort auf
-                Thai abrufen") steht hier, was diese Richtung an Fertigkeiten
-                anbietet - das ist die Angabe, nach der man auswaehlt. */}
-            {groupsForDirection(direction).map((group) => {
-              const caption = t(group.label);
-              const modes = group.modes.map((mode) => modeLabel(mode, t)).join(' · ');
-              return (
-                <ThemedText key={group.label} type="small" themeColor="textSecondary">
-                  {/* „Sprechen: Sprechen" waere doppelt gemoppelt - bei einer
-                      Gruppe, die genauso heisst wie ihre einzige Uebung,
-                      steht nur der Name. */}
-                  {modes === caption ? modes : `${caption}: ${modes}`}
+    <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.pickSubtitle')}>
+      <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')}>
+        {LERNZIELE.map((ziel) => {
+          const name = languageName(goalLanguage(ziel));
+          const endonym = goalEndonym(ziel);
+          const active = ziel.direction === aktuell;
+          return (
+            <Pressable
+              key={ziel.direction}
+              onPress={() => onPick(ziel.direction)}
+              accessibilityRole="radio"
+              accessibilityLabel={t('dashboard.cta', { direction: name })}
+              aria-checked={active}
+              style={({ pressed }) => pressed && styles.pressed}>
+              <ThemedView
+                type={active ? 'backgroundSelected' : 'backgroundElement'}
+                style={styles.goalRow}>
+                <ThemedText type="default" style={styles.goalName}>
+                  {name}
                 </ThemedText>
-              );
-            })}
-          </ThemedView>
-        </Pressable>
-      ))}
+                {/* Bei Deutsch fallen Name und Endonym zusammen. */}
+                {endonym !== name ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {endonym}
+                  </ThemedText>
+                ) : null}
+              </ThemedView>
+            </Pressable>
+          );
+        })}
+      </View>
       <FeatureLegend language={profile.language} />
     </ScreenScaffold>
   );
@@ -681,10 +692,18 @@ const styles = StyleSheet.create({
     minHeight: 44,
     justifyContent: 'center',
   },
-  pickerCard: {
+  goalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 44,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
     borderRadius: Spacing.three,
-    padding: Spacing.three,
-    gap: Spacing.one,
+  },
+  goalName: {
+    fontWeight: '700',
+    flexShrink: 1,
   },
   /**
    * Die Fertigkeit steht VOR ihren Knoepfen, nicht darueber.

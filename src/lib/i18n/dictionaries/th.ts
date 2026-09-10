@@ -31,23 +31,11 @@ const th: Partial<Record<TranslationKey, string>> = {
   'home.dueBadge': 'ค้าง {{count}} ใบ',
   'home.nothingDue': 'วันนี้ไม่มีใบค้าง',
   'home.sectionLanguages': 'ภาษา',
-  'home.sectionDirections': 'ทิศทาง · {{language}}',
   'home.vocabCount': 'คำศัพท์ {{count}} คำ',
 
-  'picker.hubNote': 'เยอรมันเป็นภาษาคงที่ฝั่งหนึ่ง — เรียนได้สองทาง',
   'picker.chooseA11y': 'เลือกภาษา',
-  'picker.vocabAndFeature': 'คำศัพท์ {{count}} คำ · จุดเด่น: {{feature}}',
-  'picker.empty': 'ยังไม่มีเนื้อหา',
-  'picker.emptyFeature': 'จุดเด่นที่เลือกไว้: {{feature}}{{kindNote}}',
-  'picker.kindDerivable': ' — อ่านออกจากตัวสะกดได้',
-  'picker.kindPerWord': ' — ต้องจำเป็นคำ ๆ ไป',
+  'picker.goalDeutschDetail': 'คำศัพท์ {{count}} คำ (ไทย→เยอรมัน)',
 
-  'dashboard.title': 'การ์ดที่ถึงเวลาทบทวน',
-  'dashboard.loading': 'กำลังโหลดสถานะการ์ด …',
-  'dashboard.learnA11y': 'เรียน{{direction}} มีการ์ดถึงเวลา {{count}} ใบ',
-  'dashboard.dueOne': 'ใบถึงเวลาทบทวน',
-  'dashboard.dueMany': 'ใบถึงเวลาทบทวน',
-  'dashboard.totals': 'ทั้งหมด {{total}} ใบ · ใหม่ {{fresh}} · เชี่ยวชาญ {{mastered}}',
   'dashboard.cta': 'ฝึก{{direction}}',
 
   'legend.toneTitle': 'สีของวรรณยุกต์',
@@ -84,7 +72,7 @@ const th: Partial<Record<TranslationKey, string>> = {
 
   'review.subtitle': 'ทางการเรียน',
   'review.loadingProfile': 'กำลังโหลดโปรไฟล์ …',
-  'review.pickSubtitle': '{{language}} — จะฝึกทางไหน?',
+  'review.pickSubtitle': 'อยากฝึกภาษาไหน?',
   'review.switch': '← เปลี่ยนภาษาหรือทางเรียน',
   'review.switchA11y': 'เปลี่ยนภาษาหรือทางการเรียน',
   'mode.cards': 'บัตรคำ',
