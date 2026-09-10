@@ -25,10 +25,24 @@ let tree: ReactTestRenderer;
 beforeEach(() => { jest.clearAllMocks(); });
 afterEach(async () => { await act(async () => tree?.unmount()); });
 
+test('X_to_de-Karte: Brückenseite stumm; aufgedeckt liest die Gerätestimme das deutsche Wort', async () => {
+  await act(async () => { tree = create(<Flashcard entry={word} direction="th_to_de" revealed={false} />); });
+  // Nutzerentscheidung 10.09.: Die Brückensprache (hier Thai) bleibt stumm —
+  // auf der unverdeckten Karte gibt es keinen Audio-Knopf.
+  const knoepfe = () => tree.root.findAll(node => typeof node.props.onPress === 'function' && node.props.accessibilityRole === 'button');
+  expect(knoepfe().filter(node => String(node.props.accessibilityLabel ?? '').includes('anhören'))).toHaveLength(0);
+  await act(async () => { tree.update(<Flashcard entry={word} direction="th_to_de" revealed={true} />); });
+  mockPlayback.mockResolvedValueOnce({ kind: 'tts', label: 'Gerätestimme' });
+  // Der Deutsch-Knopf trägt das listenGermanA11y-Label (a11y-Label = Label + Text).
+  const deutschKnopf = () => tree.root.findAll(node => typeof node.props.onPress === 'function' && String(node.props.accessibilityLabel ?? '').startsWith('Deutsch anhören'))[0];
+  await act(async () => deutschKnopf().props.onPress());
+  expect(mockPlayback).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'de', text: word.german }));
+});
+
 test('vocabulary playback displays this clip status and clears the previous clip label when the word changes', async () => {
   mockPlayback.mockResolvedValueOnce({ kind: 'asset', toneStatus: 'unchecked', label: 'KI-Stimme, Ton nicht geprüft' })
     .mockResolvedValueOnce({ kind: 'asset', toneStatus: 'passed', label: 'KI-Stimme, Ton automatisch geprüft' });
-  await act(async () => { tree = create(<Flashcard entry={word} direction="th_to_de" revealed={false} />); });
+  await act(async () => { tree = create(<Flashcard entry={word} direction="de_to_th" revealed={true} />); });
   const press = async () => act(async () => tree.root.findAll(node => typeof node.props.onPress === 'function' && node.props.accessibilityRole === 'button')[0].props.onPress());
   await press();
   expect(mockPlayback).toHaveBeenLastCalledWith(expect.objectContaining({ purpose: 'vocabulary', text: word.term }));
@@ -36,7 +50,7 @@ test('vocabulary playback displays this clip status and clears the previous clip
   await press();
   expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton automatisch geprüft');
   expect(JSON.stringify(tree.toJSON())).not.toContain('KI-Stimme, Ton nicht geprüft');
-  await act(async () => { tree.update(<Flashcard entry={VOCABULARY_TH[0]} direction="th_to_de" revealed={false} />); });
+  await act(async () => { tree.update(<Flashcard entry={VOCABULARY_TH[0]} direction="de_to_th" revealed={true} />); });
   expect(JSON.stringify(tree.toJSON())).not.toContain('KI-Stimme, Ton automatisch geprüft');
 });
 

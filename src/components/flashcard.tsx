@@ -73,16 +73,20 @@ export function Flashcard({ entry, direction, revealed }: Props) {
               </ThemedText>
             </View>
           )}
-          <SpeakButton
-            label={anhoeren}
-            text={entry.term}
-            language={entry.language}
-            assetId={entry.audioAssetId}
-          />
+          {/* Audio nur in der Sprache, die man LERNT (Nutzerentscheidung
+              10.09.): Die Vorderseite einer X_to_de-Karte steht in der
+              Brückensprache — die bleibt stumm, auch nach dem Aufdecken.
+              Deutsch wird nach dem Aufdecken über die Gerätestimme vorgelesen
+              (keine Clips, denn der Clip-Bestand ist zielsprachlich). */}
           {revealed ? (
             <>
               <VocabImageView entry={entry} />
               <GermanBlock entry={entry} />
+              <SpeakButton
+                label={t('flashcard.listenGermanA11y')}
+                text={entry.german}
+                language="de"
+              />
             </>
           ) : null}
         </>
@@ -90,6 +94,8 @@ export function Flashcard({ entry, direction, revealed }: Props) {
         <>
           <VocabImageView entry={entry} />
           <GermanBlock entry={entry} headline />
+          {/* Kein Deutsch-Button auf der Vorderseite: Gehört wird nur die
+              Lerntsprache (Nutzerentscheidung 10.09.). */}
           {revealed ? (
             <>
               <TermWord entry={entry} />
@@ -100,13 +106,7 @@ export function Flashcard({ entry, direction, revealed }: Props) {
                 assetId={entry.audioAssetId}
               />
             </>
-          ) : (
-            <SpeakButton
-              label={t('flashcard.listenGermanA11y')}
-              text={entry.german}
-              language="de"
-            />
-          )}
+          ) : null}
         </>
       )}
 

@@ -218,6 +218,7 @@ export default function ConversationScreen() {
                       key={situation.id}
                       situation={situation}
                       variantSuffix={variantSuffix.get(situation.id) ?? ''}
+                      lerntDeutsch={direction.endsWith('_to_de')}
                       open={openId === situation.id}
                       onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
                     />
@@ -234,11 +235,15 @@ export default function ConversationScreen() {
 function SituationCard({
   situation,
   variantSuffix,
+  lerntDeutsch,
   open,
   onToggle,
 }: {
   situation: ConversationSituation;
   variantSuffix: string;
+  /** Deutsch ist die geübte Sprache (Ziel Deutsch) — dann klingt die
+      deutsche Zeile, nicht die Thai-Zeile (Nutzerentscheidung 10.09.). */
+  lerntDeutsch: boolean;
   open: boolean;
   onToggle: () => void;
 }) {
@@ -285,7 +290,7 @@ function SituationCard({
                 <ThemedText type="small" themeColor="textSecondary">
                   {turn.speaker === 'learner' ? t('conversation.you') : t('conversation.partner')}
                 </ThemedText>
-                <TurnSpeakButton text={turn.thai} />
+                <TurnSpeakButton text={lerntDeutsch ? turn.german : turn.thai} lerntDeutsch={lerntDeutsch} />
               </View>
               <ThemedText>{turn.thai}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -319,7 +324,7 @@ function SituationCard({
  * einer, steht „KI-Stimme" daneben: eine synthetische Aufnahme, keine
  * Muttersprachler-Aufnahme (Pflicht 4).
  */
-function TurnSpeakButton({ text }: { text: string }) {
+function TurnSpeakButton({ text, lerntDeutsch }: { text: string; lerntDeutsch: boolean }) {
   const [played, setPlayed] = useState<PlaybackKind | null>(null);
   const { t } = useLocale();
   // WHY Icon statt Emoji: Das 🔊-Schriftzeichen sieht je Plattform anders aus
@@ -337,8 +342,10 @@ function TurnSpeakButton({ text }: { text: string }) {
           // purpose 'sentence': Gesprächszüge sind Satzmaterial — die
           // Auslieferungs-Politik gestattet ungeprüfte Thai-Clips für Vokabel-
           // und Satzzwecke (audio-policy). Ohne Purpose liefe hier fast jeder
-          // Zug auf System-TTS statt auf den erzeugten Clip.
-          playPronunciation({ text, language: 'th', purpose: 'sentence' })
+          // Zug auf System-TTS statt auf den erzeugten Clip. Die Sprache
+          // folgt dem Lernziel: Beim Ziel Deutsch klingt die deutsche Zeile
+          // (Gerätestimme), sonst die Thai-Zeile mit Clip.
+          playPronunciation({ text, language: lerntDeutsch ? 'de' : 'th', purpose: 'sentence' })
             .then(setPlayed)
             .catch(() => {});
         }}
