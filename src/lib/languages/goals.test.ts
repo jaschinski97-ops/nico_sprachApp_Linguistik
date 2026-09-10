@@ -1,3 +1,4 @@
+import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 import { VOCABULARY_ES, VOCABULARY_TH, vocabularyFor } from '@/data/vocabulary';
 
 import { goalEndonym, goalLanguage, LERNZIELE, zielFuerDirection, zieleFuerBruecke, wortschatzFuerZiel } from './goals';
@@ -131,6 +132,54 @@ describe('Lernziele je Brücke (Stufe 1)', () => {
   });
 });
 
+describe('Lernziele der ar-Brücke (Pilot Heimatsprachen, 10.09.)', () => {
+  it('zeigt die vier Ziele Deutsch, Englisch, Spanisch, Thai — de zuerst, dann en/es/th', () => {
+    expect(zieleFuerBruecke('ar').map((ziel) => ziel.direction)).toEqual([
+      'ar_to_de',
+      'ar_to_en',
+      'ar_to_es',
+      'ar_to_th',
+    ]);
+    // Kein Brücken-Lernziel: `X_to_ar` gibt es nicht (Arabisch ist keine
+    // Zielsprache), also trägt kein ar-Ziel eine vonSprache.
+    expect(zieleFuerBruecke('ar').every((ziel) => ziel.vonSprache === undefined)).toBe(true);
+  });
+
+  it('löst jedes ar-Ziel über zielFuerDirection auf', () => {
+    for (const ziel of zieleFuerBruecke('ar')) {
+      expect(zielFuerDirection(ziel.direction)).not.toBeNull();
+      expect(goalLanguage(zielFuerDirection(ziel.direction)!)).not.toBe('ar');
+    }
+    // ar_to_de lehrt Deutsch (goalLanguage liest die Zielseite).
+    expect(goalLanguage(zielFuerDirection('ar_to_de')!)).toBe('de');
+    expect(goalLanguage(zielFuerDirection('ar_to_en')!)).toBe('en');
+  });
+
+  it('zählt ehrlich: gekoppelte Paare für en/es/th, NULL für Deutsch (Stufe 2)', () => {
+    const arPool = VOCABULARY_AR;
+    const arConcepts = new Set(arPool.map((entry) => entry.concept));
+    const gekoppeltIn = (pool: typeof VOCABULARY_ES): number =>
+      pool.filter((entry) =>
+        entry.concept !== undefined
+          ? arConcepts.has(entry.concept)
+          : arConcepts.has(entry.id)
+      ).length;
+
+    const [deutsch, englisch, spanisch, thai] = zieleFuerBruecke('ar');
+    // ar_to_de: kein deutscher Pool, mit dem sich koppeln ließe — die Zahl
+    // lügt nicht nach oben (Deutsch als Ziel für die ar-Brücke ist Stufe 2).
+    expect(wortschatzFuerZiel(deutsch)).toBe(0);
+    // ar_to_en/ar_to_es: alle en/es-Einträge MIT Thai-Anker haben ihre
+    // arabische Brückenseite (der generierte Pool deckt ALLE 84 Anker ab).
+    expect(gekoppeltIn(VOCABULARY_ES)).toBeGreaterThan(0);
+    expect(wortschatzFuerZiel(spanisch)).toBe(gekoppeltIn(VOCABULARY_ES));
+    expect(wortschatzFuerZiel(englisch)).toBe(gekoppeltIn(vocabularyFor('en')));
+    // ar_to_th: der ganze Thai-Pool ist referenziert (Fall 3 der Kopplung).
+    expect(gekoppeltIn(VOCABULARY_TH)).toBe(VOCABULARY_TH.length);
+    expect(wortschatzFuerZiel(thai)).toBe(VOCABULARY_TH.length);
+  });
+});
+
 describe('Kreuzrichtung-Typbasis (types.ts)', () => {
   it('pairLanguageOf bleibt im Bestand bei der Nicht-Deutsch-Seite', () => {
     expect(pairLanguageOf('de_to_th')).toBe('th');
@@ -145,6 +194,11 @@ describe('Kreuzrichtung-Typbasis (types.ts)', () => {
     expect(pairLanguageOf('en_to_th')).toBe('th');
   });
 
+  it('ar-Brücke: pairLanguageOf liest die ZIEL-Seite — ar_to_de zielt auf den (leeren) de-Pool', () => {
+    expect(pairLanguageOf('ar_to_th')).toBe('th');
+    expect(pairLanguageOf('ar_to_de')).toBe('de');
+  });
+
   it('isPairDirection erkennt alle zwölf Paare, sonst nichts', () => {
     expect(isPairDirection('en_to_es')).toBe(true);
     expect(isPairDirection('th_to_de')).toBe(true);
@@ -153,10 +207,21 @@ describe('Kreuzrichtung-Typbasis (types.ts)', () => {
     expect(isPairDirection(42)).toBe(false);
   });
 
+  it('isPairDirection erkennt die ar-Richtungen, aber keine ar-Ziele', () => {
+    for (const direction of ['ar_to_de', 'ar_to_en', 'ar_to_es', 'ar_to_th']) {
+      expect(isPairDirection(direction)).toBe(true);
+    }
+    expect(isPairDirection('de_to_ar')).toBe(false); // Arabisch ist keine Zielsprache
+    expect(isPairDirection('ar_to_ar')).toBe(false);
+  });
+
   it('isDeAnchored trennt Bestand von Kreuzrichtung — als Type Predicate', () => {
     const richtungen: PairDirection[] = ['de_to_th', 'th_to_de', 'en_to_es', 'es_to_en'];
     const deGeankert = richtungen.filter((r) => isDeAnchored(r));
     expect(deGeankert).toEqual(['de_to_th', 'th_to_de']);
+    // ar_to_de endet zwar auf `_to_de`, ist aber KEIN Bestand — sonst könnte
+    // die ar-Brücke in Direction-Verträge (Profil, Backup) rutschen.
+    expect(isDeAnchored('ar_to_de')).toBe(false);
   });
 });
 

@@ -4,10 +4,9 @@ import { DrillId } from '../drills/types';
 
 import { LANGUAGES } from './registry';
 import {
-  languageOfTargetDirection,
+  pairLanguageOf,
   PairDirection,
   SyllableAnnotation,
-  TargetDirection,
   TargetLanguage,
 } from './types';
 
@@ -132,10 +131,10 @@ export function featureFor(entry: VocabEntry): LanguageFeatureRuntime {
  */
 export function drillsForDirectionViaFeature(direction: PairDirection): DrillId[] {
   if (direction.endsWith('_to_de')) return ['article', 'verbForms'];
-  // Nach dem `_to_de`-Frühabgang ist die Zielseite typbedingt nie `de` —
-  // `PairDirection` schließt Selbstpaare aus, also bleibt th/en/es. Die
-  // Verengung dokumentiert genau das; zur Laufzeit prüft nichts nach.
-  const language = languageOfTargetDirection(direction as TargetDirection);
+  // pairLanguageOf liefert die ZIELsprache (en_to_es → 'es', ar_to_th → 'th')
+  // und für de-geankerte Richtungen exakt das Bestandsverhalten. Die Brücke
+  // 'ar' darf hier nie ankommen — die Registry kennt sie nicht.
+  const language = pairLanguageOf(direction);
   // Ein entschiedenes Merkmal ist noch kein gebautes. Solange
   // `implemented: false` steht, gibt es hier keine Uebung - lieber eine
   // leere Liste als eine Uebung ohne Stoff (Pflicht 5 aus Phase 15).

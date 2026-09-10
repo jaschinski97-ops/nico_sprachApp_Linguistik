@@ -1,14 +1,19 @@
 import { VocabEntry } from '@/data/vocabulary';
+import { BridgeEntry } from '@/data/vocab-types';
+import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 
 import { createCardState, dueCards, retrievability } from './fsrs/fsrs';
 import { Direction, FSRSCardState } from './fsrs/types';
 import { directionLabel } from './languages/registry';
 import {
+  AR_BRIDGE,
   directionsFor,
+  Lang,
   LanguageCode,
   PairDirection,
   pairLanguageOf,
   parsePairId,
+  SUPPORTED_TARGETS,
 } from './languages/types';
 import { loadCardStatesForDirection, loadVocabulary, seedVocabulary } from './repository';
 import { DataStore, getStore } from './storage';
@@ -26,6 +31,14 @@ import { DataStore, getStore } from './storage';
  * die Begriffs-ID, über die en/es-Einträge ohnehin auf ihren Thai-Anker
  * verweisen. Ohne Concept-Partner gibt es keinen Kartenstoff: Ehrlichkeit
  * geht vor Vollzahl.
+ *
+ * SEIT DEM AR-PILOTEN (2026-09-10) AUCH DIE BRÜCKE 'ar': Die Richtungen
+ * ar_to_en/es/th koppeln gegen den GENERIERTEN Pool `VOCABULARY_AR`
+ * (Ankerwörter der Oberflächensprache, siehe generate-bridge-vocab.cjs) —
+ * dieselbe concept-Kopplung, nur kommt die Brückenseite nicht aus dem
+ * Vokabel-Bestand, sondern aus dem Brücken-Pool. `ar_to_de` bleibt bewusst
+ * ohne Stoff: Es gibt keinen deutschen Pool, mit dem sich koppeln ließe
+ * (Deutsch lebt als `german`-Feld auf den bestehenden Pools) — Stufe 2.
  */
 
 /**
@@ -47,9 +60,41 @@ export type ReviewItem = {
    * BRÜCKENsprache mit demselben `concept`. `null` bei de-geankerten
    * Richtungen — deren Vorderseite baut die Karte wie bisher aus dem
    * deutschen Feld des Eintrags selbst.
+   *
+   * SEIT DEM AR-PILOTEN AUCH `BridgeEntry`: Bei ar_to_* kommt die
+   * Brückenseite aus dem generierten Brücken-Pool und ist kein
+   * `VocabEntry` — die Karte liest nur `term`, und das hat beide Typen.
    */
-  bridgeEntry: VocabEntry | null;
+  bridgeEntry: VocabEntry | BridgeEntry | null;
 };
+
+/**
+ * Die Brückenseite einer Quelle: bei th/en/es der Pool aus dem Vokabel-
+ * Bestand, bei 'ar' der generierte Brücken-Pool (kein `VocabEntry` — er
+ * trägt keinen Ziel-Sprachstoff).
+ */
+function brueckenPoolFuer(
+  alle: VocabEntry[],
+  quelle: Lang | typeof AR_BRIDGE
+): (VocabEntry | BridgeEntry)[] {
+  if (quelle === AR_BRIDGE) return VOCABULARY_AR;
+  return alle.filter((entry) => entry.language === quelle);
+}
+
+/**
+ * Die Quelle und das Ziel einer Richtung — `parsePairId` für den Bestand
+ * über dem Ziel-Kanon, die ar-Brücke wörtlich aus dem Präfix (sie ist kein
+ * `Lang` und wird deshalb vom Bestands-Parser bewusst nicht erkannt).
+ */
+function paarVon(direction: PairDirection): { source: Lang | typeof AR_BRIDGE; target: Lang } | null {
+  if (direction.startsWith(`${AR_BRIDGE}_to_`)) {
+    const ziel = direction.slice(`${AR_BRIDGE}_to_`.length);
+    const istKanon = (value: string): value is Lang =>
+      (SUPPORTED_TARGETS as readonly string[]).includes(value);
+    return istKanon(ziel) ? { source: AR_BRIDGE, target: ziel } : null;
+  }
+  return parsePairId(direction);
+}
 
 /**
  * Die Kopplung einer Kreuzrichtung: Brückenpool und Zielpool je Begriff.
@@ -64,21 +109,21 @@ export type ReviewItem = {
  *      seine ID (Lookup über die Ziel-ID).
  *
  * Ein Paar existiert genau dann, wenn einer der Fälle zutrifft. Ohne
- * Kopplung kein Kartenstoff: Ehrlichkeit geht vor Vollzahl.
+ * Kopplung kein Kartenstoff: Ehrlichkeit geht vor Vollzahl. Für die
+ * ar-Brücke greifen Fall 2 (ar-`concept` = Ziel-`concept`) und Fall 3
+ * (ar-`concept` = Thai-ID).
  */
 function kreuzStoff(
   alle: VocabEntry[],
-  // `bruecke` als `Lang`: Der Aufrufer ruft nur im Kreuz-Zweig (Quelle ≠
-  // 'de'), das kann der Typ am Auftreffpunkt nicht beweisen — die breitere
-  // Signatur ist ehrlicher als ein Cast.
-  bruecke: import('./languages/types').Lang,
+  // Der Brückenpool wird explizit übergeben statt per Sprache gefiltert —
+  // die ar-Brücke hat keinen `VocabEntry`-Bestand (siehe `brueckenPoolFuer`).
+  brueckenPool: (VocabEntry | BridgeEntry)[],
   ziel: LanguageCode
 ): {
   entries: VocabEntry[];
-  brueckeNachId: Map<string, VocabEntry>;
-  brueckeNachConcept: Map<string, VocabEntry>;
+  brueckeNachId: Map<string, VocabEntry | BridgeEntry>;
+  brueckeNachConcept: Map<string, VocabEntry | BridgeEntry>;
 } {
-  const brueckenPool = alle.filter((entry) => entry.language === bruecke);
   const brueckeNachId = new Map(brueckenPool.map((entry) => [entry.id, entry]));
   const brueckeNachConcept = new Map(
     brueckenPool
@@ -98,9 +143,9 @@ function kreuzStoff(
 /** Die Brückenseite eines gekoppelten Zieleintrags — dieselben drei Fälle. */
 function brueckeVon(
   entry: VocabEntry,
-  brueckeNachId: Map<string, VocabEntry>,
-  brueckeNachConcept: Map<string, VocabEntry>
-): VocabEntry | null {
+  brueckeNachId: Map<string, VocabEntry | BridgeEntry>,
+  brueckeNachConcept: Map<string, VocabEntry | BridgeEntry>
+): VocabEntry | BridgeEntry | null {
   const ueberConcept =
     entry.concept !== undefined
       ? (brueckeNachId.get(entry.concept) ?? brueckeNachConcept.get(entry.concept))
@@ -139,11 +184,11 @@ export async function ensureCardStates(
   // exakt das alte Ergebnis (die Nicht-Deutsch-Seite), Kreuzrichtungen die
   // ZIEL-Seite — gelernt wird dort ja die Zielsprache.
   const sprache = pairLanguageOf(direction);
-  const paar = parsePairId(direction);
+  const paar = paarVon(direction);
   const istKreuz = paar !== null && paar.source !== 'de' && paar.target !== 'de';
 
   const entries = istKreuz && paar
-    ? kreuzStoff(alle, paar.source, sprache).entries
+    ? kreuzStoff(alle, brueckenPoolFuer(alle, paar.source), sprache).entries
     : alle.filter((entry) => entry.language === sprache);
 
   const existing = await loadCardStatesForDirection(direction, db);
@@ -187,15 +232,16 @@ export async function buildReviewQueue(
   // geschlagen (siehe `kreuzStoff`). Nur in diesem Zweig wird der
   // Vokabelbestand ein zweites Mal gelesen; die de-geankerten Sitzungen
   // bleiben exakt auf ihrem alten Pfad.
-  const paar = parsePairId(direction);
+  const paar = paarVon(direction);
   const istKreuz = paar !== null && paar.source !== 'de' && paar.target !== 'de';
-  let brueckeNachId = new Map<string, VocabEntry>();
-  let brueckeNachConcept = new Map<string, VocabEntry>();
+  let brueckeNachId = new Map<string, VocabEntry | BridgeEntry>();
+  let brueckeNachConcept = new Map<string, VocabEntry | BridgeEntry>();
   if (istKreuz && paar) {
     const db = store ?? (await getStore());
+    const frisch = await loadVocabulary(db);
     ({ brueckeNachId, brueckeNachConcept } = kreuzStoff(
-      await loadVocabulary(db),
-      paar.source,
+      frisch,
+      brueckenPoolFuer(frisch, paar.source),
       pairLanguageOf(direction)
     ));
   }

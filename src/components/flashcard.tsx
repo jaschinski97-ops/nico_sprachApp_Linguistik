@@ -13,6 +13,7 @@ import { VocabImageView } from './vocab-image';
 
 import { Spacing } from '@/constants/theme';
 import { VocabEntry } from '@/data/vocabulary';
+import { BridgeEntry } from '@/data/vocab-types';
 import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
 import { PairDirection } from '@/lib/fsrs/types';
 import { useLocale } from '@/lib/i18n';
@@ -55,8 +56,13 @@ type Props = {
    * Richtung KEIN Deutsch auf einer Seite hat (th↔en, th↔es, en↔es); die
    * de-geankerten Karten bleiben ohne diesen Zweig und verhalten sich exakt
    * wie bisher.
+   *
+   * SEIT DEM AR-PILOTEN AUCH `BridgeEntry`: Die ar-Brücke kommt aus dem
+   * generierten Pool (vocabulary-ar) und ist kein `VocabEntry`. Die Karte
+   * liest hier nur `term` — das tragen beide Typen. Die stille VORDERSEITE
+   * gilt unverändert auch für ar-Wörter (Audio nur in der Lerntsprache).
    */
-  bridgeEntry?: VocabEntry | null;
+  bridgeEntry?: VocabEntry | BridgeEntry | null;
 };
 
 export function Flashcard({ entry, direction, revealed, bridgeEntry = null }: Props) {

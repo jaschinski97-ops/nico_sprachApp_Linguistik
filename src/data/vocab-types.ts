@@ -174,4 +174,26 @@ export type VocabEntry = {
  */
 export type TargetVocabEntry = Omit<VocabEntry, 'language'> & { language: TargetLanguage };
 
+/**
+ * Ein Eintrag eines **Brücken-Pools** — die Ankerwörter einer
+ * Oberflächen-/Brückensprache für die Karten-VORDERSEITE (Stufe 1, Pilot
+ * Ägyptisch-Arabisch, siehe `vocabulary-ar.ts`).
+ *
+ * WARUM EIN EIGENER, MINIMALER TYP: Ein BridgeEntry ist bewusst KEIN
+ * `VocabEntry` — er hat keinen Ziel-Sprachstoff (keine `language`, keine
+ * Beispiele, keine Quellprüfung), sondern genau das, was die Kreuzkopplung
+ * braucht: die Pool-ID, die `concept`-ID des Begriffs (die ID des
+ * Thai-Ankers, über die Brücke und Zielseite zusammenfinden) und das Wort
+ * für die Vorderseite. Die Pool-Datei ist GENERIERT
+ * (`scripts/content/generate-bridge-vocab.cjs`), nicht handgeprüft — deshalb
+ * trägt sie auch keinen Grundstoff-Vertrag, den sie nicht erfüllt.
+ */
+export type BridgeEntry = {
+  id: string;
+  /** Der gemeinsame Begriff — die ID des Thai-Ankers (Kopplungsschlüssel). */
+  concept: string;
+  /** Das Wort der Brückensprache — die (stumme) Karten-Vorderseite. */
+  term: string;
+};
+
 /** Ein Eintrag des französischen Grundstuffs (`vocabulary-fr.ts`). */

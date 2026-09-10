@@ -55,15 +55,21 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
     expect(detectFrom('en')).toBe('en');
     expect(detectFrom('es')).toBe('es');
     expect(detectFrom('th')).toBe('th');
+    // Die ar-Brücke (Pilot der Heimatsprachen, 10.09.).
+    expect(detectFrom('ar')).toBe('ar');
     // Französisch ist seit der Kern-4-Entscheidung kein Kanon-Code mehr.
     expect(detectFrom('fr')).toBe('de');
   });
 
-  it('normiert Region-Codes auf die Sprache (th-TH bleibt th)', () => {
+  it('normiert Region-Codes auf die Sprache (th-TH bleibt th, ar-EG wird ar)', () => {
     // `getLocales()[0].languageCode` liefert ohnehin nur den Sprachcode; ein
     // versehentlich voller Tag darf die Erkennung nicht kippen.
     mockedGetLocales.mockReturnValue([{ languageCode: 'th', languageTag: 'th-TH' }]);
     expect(detectSystemLocale()).toBe('th');
+    // Systemsprache Ägypten: Je nach Plattform kommt der volle BCP-47-Tag an.
+    mockedGetLocales.mockReturnValue([{ languageCode: 'ar', languageTag: 'ar-EG' }]);
+    expect(detectSystemLocale()).toBe('ar');
+    expect(normalizeLanguageCode('ar-EG')).toBe('ar');
   });
 
   it('fällt für unbekannte Sprachen auf Deutsch zurück', () => {
@@ -140,6 +146,10 @@ describe('translate — Nachschlagen und Fallback', () => {
     expect(translate('en', 'tabs.settings')).toBe('Settings');
     expect(translate('es', 'tabs.settings')).toBe('Ajustes');
     expect(translate('th', 'tabs.settings')).toBe('ตั้งค่า');
+    // ar ist GENERIERT (Pipeline-Job, generate-ui-language.cjs) — der Test
+    // erzwingt nur „nicht der deutsche Text“, nicht einen bestimmten Wortlaut.
+    expect(translate('ar', 'tabs.settings')).not.toBe('Einstellungen');
+    expect(translate('ar', 'tabs.settings').length).toBeGreaterThan(0);
   });
 
   it('interpoliert auch über t()', () => {
@@ -167,7 +177,7 @@ describe('Vollständigkeit der Wörterbücher', () => {
     expect(referenceKeys.length).toBeGreaterThan(100);
   });
 
-  it.each(['en', 'es', 'th'] as UiLanguage[])(
+  it.each(['en', 'es', 'th', 'ar'] as UiLanguage[])(
     '%s deckt alle Schlüssel ab (fehlende ⊆ FALLBACK_ALLOWED_KEYS)',
     (language) => {
       const missing = referenceKeys.filter(

@@ -250,6 +250,10 @@ describe('validateBackupDocument', () => {
     expect(validateBackupDocument(doc).ok).toBe(false);
     doc.data.cards[0].direction = 'en_to_es';
     expect(validateBackupDocument(doc).ok).toBe(true);
+    // SEIT DEM AR-PILOTEN Ebenso: ar_to_* trägt (auf Geräten mit arabischer
+    // Oberfläche) eigene Karten — eine Sicherung ohne sie wäre unvollständig.
+    doc.data.cards[0].direction = 'ar_to_th';
+    expect(validateBackupDocument(doc).ok).toBe(true);
   });
 
   it('lehnt beschädigte Protokolltage ab', () => {

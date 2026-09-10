@@ -9,6 +9,9 @@ import {
   type ReactNode,
 } from 'react';
 
+import { Platform } from 'react-native';
+
+import ar from './dictionaries/ar';
 import de from './dictionaries/de';
 import en from './dictionaries/en';
 import es from './dictionaries/es';
@@ -39,7 +42,8 @@ export { loadLanguageSetting, saveLanguageSetting } from './prefs';
  * lässt sie sich fest einschalten; solange nicht, gilt `'system'`.
  *
  * AUFBAU:
- *   `dictionaries`   — de (Referenz) + en/es/fr/th (Übersetzungen)
+ *   `dictionaries`   — de (Referenz) + en/es/th/ar (Übersetzungen; ar ist
+ *                       GENERIERT via scripts/content/generate-ui-language.cjs)
  *   `translate()`    — Nachschlagen mit de-Fallback, `{{name}}`-Interpolation
  *   `I18nProvider`   — lädt die Einstellung und hält sie im Context
  *   `useLocale()`    — Zugang für Screens/Komponenten; ohne Provider
@@ -47,6 +51,7 @@ export { loadLanguageSetting, saveLanguageSetting } from './prefs';
  */
 
 export const dictionaries: Record<UiLanguage, Partial<Record<TranslationKey, string>>> = {
+  ar,
   de,
   en,
   es,
@@ -95,10 +100,11 @@ export function translate(language: UiLanguage, key: TranslationKey, params?: TP
  * Endonyme („español“, „français“, „ไทย“) — die sichere Selbstbezeichnung.
  */
 export const LANGUAGE_DISPLAY_NAMES: Record<UiLanguage, Record<UiLanguage, string>> = {
-  de: { de: 'Deutsch', en: 'German', es: 'alemán', th: 'ภาษาเยอรมัน' },
-  en: { de: 'Englisch', en: 'English', es: 'inglés', th: 'ภาษาอังกฤษ' },
-  es: { de: 'Spanisch', en: 'Spanish', es: 'español', th: 'ภาษาสเปน' },
-  th: { de: 'Thai', en: 'Thai', es: 'tailandés', th: 'ภาษาไทย' },
+  ar: { ar: 'العربية', de: 'Arabisch', en: 'Arabic', es: 'árabe', th: 'ภาษาอาหรับ' },
+  de: { ar: 'الألمانية', de: 'Deutsch', en: 'German', es: 'alemán', th: 'ภาษาเยอรมัน' },
+  en: { ar: 'الإنجليزية', de: 'Englisch', en: 'English', es: 'inglés', th: 'ภาษาอังกฤษ' },
+  es: { ar: 'الإسبانية', de: 'Spanisch', en: 'Spanish', es: 'español', th: 'ภาษาสเปน' },
+  th: { ar: 'التايلاندية', de: 'Thai', en: 'Thai', es: 'tailandés', th: 'ภาษาไทย' },
 };
 
 /** Anzeigename einer Lernsprache in der aktuellen UI-Sprache. */
@@ -108,6 +114,12 @@ export function languageDisplayName(target: UiLanguage, ui: UiLanguage): string 
 
 /** Monatsnamen für die Screenreader-Ansagen im Fortschritts-Chart. */
 export const MONTH_NAMES: Record<UiLanguage, readonly string[]> = {
+  ar: [
+    // Ägyptische Monatsnamen: In Ägypten sind die syro-libanesischen Namen
+    // (yanaayir … disimbir) üblich, nicht die klassisch-arabischen Ordnungsnamen.
+    'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+    'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر',
+  ],
   de: [
     'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
     'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
@@ -129,6 +141,9 @@ export const MONTH_NAMES: Record<UiLanguage, readonly string[]> = {
 /** Sprachtag für Datumsformatierung (etwa `toLocaleDateString`). */
 export function localeTagFor(language: UiLanguage): string {
   switch (language) {
+    case 'ar':
+      // Ägypten ist die Pilot-Region der arabischen Oberfläche.
+      return 'ar-EG';
     case 'de':
       return 'de-DE';
     case 'en':
@@ -216,6 +231,16 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     () => buildValue(setting, systemLanguage, setSetting),
     [setting, systemLanguage, setSetting]
   );
+
+  // RTL (Web-Pilot): Die arabische Oberfläche läuft von rechts nach links —
+  // gesetzt am Dokument, damit das GANZE Layout (nicht nur Textabsätze) die
+  // Laufrichtung erbt. Bewusst nur im Web: I18nManager-RTL auf nativ braucht
+  // einen App-Neustart und eine eigene Layout-Prüfung aller Screens (Stufe 2,
+  // ausstehend) — nativ bleibt die Laufrichtung LTR.
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    document.documentElement.dir = value.uiLanguage === 'ar' ? 'rtl' : 'ltr';
+  }, [value.uiLanguage]);
 
   return createElement(I18nContext.Provider, { value }, children);
 }

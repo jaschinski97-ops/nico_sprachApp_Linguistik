@@ -214,11 +214,12 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * SEIT DEN KREUZRICHTUNGEN (Stufe 1) VALIDIEREN KARTEN ÜBER ALLE ZWÖLF
- * PAARE: `en_to_es` & Co. tragen eigene Kartenzustände, und der Import darf
- * eine Sicherung eines Kreuz-Lernstands nicht still verlieren. Profil und
- * Gesprächs-Richtung bleiben bewusst bei `isKnownDirection` (de-geankert) —
- * sie speichern nur den Bestand.
+ * SEIT DEN KREUZRICHTUNGEN (Stufe 1) VALIDIEREN KARTEN ÜBER ALLE PAAR-
+ * RICHTUNGEN: `en_to_es` & Co. tragen eigene Kartenzustände, und der Import
+ * darf eine Sicherung eines Kreuz-Lernstands nicht still verlieren. SEIT DEM
+ * AR-PILOTEN AUCH ar_to_* — eine Sicherung mit arabischen Brücken-Karten
+ * bleibt verwertbar. Profil und Gesprächs-Richtung bleiben bewusst bei
+ * `isKnownDirection` (de-geankert) — sie speichern nur den Bestand.
  */
 function isValidCard(entry: unknown): boolean {
   if (!isPlainObject(entry)) return false;

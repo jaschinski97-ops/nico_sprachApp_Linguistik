@@ -8,8 +8,8 @@
  * Bewusst EIN flacher Sprachkanon für UI und Brücke: dieselben fünf Codes.
  */
 
-/** Die fünf Sprachen des Kerns (Roadmap v2: „Kern 5“) — als UI- wie als Zielsprache. */
-export const UI_LANGUAGES = ['de', 'en', 'es', 'th'] as const;
+/** Die Sprachen des Kerns — als UI- wie als Zielsprache. */
+export const UI_LANGUAGES = ['de', 'en', 'es', 'th', 'ar'] as const;
 
 export type UiLanguage = (typeof UI_LANGUAGES)[number];
 
@@ -33,9 +33,17 @@ function isUiLanguage(value: unknown): value is UiLanguage {
  * Kanon normiert; alles Unbekannte fällt auf die Vorgabe zurück.
  *
  * Bewusst nur der SPRACHcode, keine Region: `de-AT` und `de-CH` sind Deutsch.
+ * Einzige Ausnahme: ein voller arabischer Tag (`ar-EG`, Systemsprache
+ * Ägypten — der PILOT der Heimatsprachen) wird auf `'ar'` gekürzt, denn
+ * `getLocales()` liefert je nach Plattform den Sprachcode ODER den vollen
+ * BCP-47-Tag; beides muss dieselbe Oberfläche ergeben.
  */
 export function normalizeLanguageCode(value: unknown): UiLanguage {
-  return isUiLanguage(value) ? value : DEFAULT_UI_LANGUAGE;
+  if (typeof value === 'string') {
+    if (isUiLanguage(value)) return value;
+    if (/^ar(?:-|$)/i.test(value)) return 'ar';
+  }
+  return DEFAULT_UI_LANGUAGE;
 }
 
 /**

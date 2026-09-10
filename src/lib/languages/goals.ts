@@ -1,7 +1,9 @@
 import { vocabularyFor } from '@/data/vocabulary';
+import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 
 import { languageOf } from './registry';
 import {
+  AR_BRIDGE,
   isDeAnchored,
   isLanguageCode,
   Lang,
@@ -75,8 +77,26 @@ export type Lernziel = {
  * REIHENFOLGE: die Pool-Sprachen in `LANGUAGE_CODES`-Ordnung, dann die
  * th↔de-Ziele — Brücke de liefert damit EXAKT die vier Ziele von vor Stufe 1
  * (Thai, Englisch, Spanisch, Deutsch), kein Regression für den Hauptnutzer.
+ *
+ * AR-PILOT (10.09.): Die Brücke `'ar'` zeigt die vier Ziele Deutsch,
+ * Englisch, Spanisch, Thai — in dieser Reihenfolge (de zuerst, dann en/es/th).
+ * Deutsch hängt als Ziel dabei an `ar_to_de` mit EHRLICH LEEREM Stoff: Einen
+ * deutschen Vokabel-Pool gibt es nicht (Deutsch lebt als `german`-Feld auf
+ * den bestehenden Pools), der Aufbau eines ar→de-Grundstoffs ist Stufe 2.
+ * Englisch/Spanisch/Thai kommen über den concept-gekoppelten Bestand sofort
+ * mit echten Karten.
  */
-export function zieleFuerBruecke(bridge: Lang): Lernziel[] {
+export function zieleFuerBruecke(bridge: Lang | typeof AR_BRIDGE): Lernziel[] {
+  // Die ar-Brücke hat eigene Richtungen (`ar_to_*`) — sie liegt außerhalb des
+  // Ziel-Kanons und kann daher nicht durch die LANGUAGE_CODES-Schleife laufen.
+  if (bridge === AR_BRIDGE) {
+    const ziel = (code: Lang): Lernziel => {
+      const direction = `ar_to_${code}` as PairDirection;
+      return { direction, language: pairLanguageOf(direction) };
+    };
+    return [ziel('de'), ziel('en'), ziel('es'), ziel('th')];
+  }
+
   const ziele: Lernziel[] = (LANGUAGE_CODES as readonly LanguageCode[])
     .filter((code) => code !== bridge)
     .map((code) => {
@@ -117,6 +137,7 @@ const ALLE_ZIELE: readonly Lernziel[] = [
   ...zieleFuerBruecke('th'),
   ...zieleFuerBruecke('en'),
   ...zieleFuerBruecke('es'),
+  ...zieleFuerBruecke(AR_BRIDGE),
 ];
 
 /**
@@ -171,19 +192,26 @@ export function goalEndonym(ziel: Lernziel): string {
  * (Brücke th), gleiche `concept`-ID auf beiden Seiten (en↔es), oder
  * Brücken-`concept` = Ziel-ID (Ziel th, das selbst kein `concept` trägt).
  * Die Zahl lügt nicht nach oben, auch wenn der Ziel-Pool größer ist.
+ *
+ * AR-BRÜCKE: dieselbe Kopplung mit dem GENERIERTEN Pool `VOCABULARY_AR` als
+ * Brückenseite. `ar_to_de` liefert bewusst 0 — es gibt keinen deutschen Pool,
+ * mit dem sich koppeln ließe (Stufe 2, siehe `zieleFuerBruecke`).
  */
 export function wortschatzFuerZiel(ziel: Lernziel): number {
   if (isDeAnchored(ziel.direction)) return languageOf(ziel.language).entryCount;
-  // Für Kreuzrichtungen ist die Brücke die Quelle des Paars — sie steht im
-  // Richtungs-Präfix, `ziel.language` ist die Zielseite.
+  // Für Kreuz- und ar-Richtungen steht die Brücke im Richtungs-Präfix —
+  // `ziel.language` ist die Zielseite.
   const [quelle] = ziel.direction.split('_to_');
-  if (!isLanguageCode(quelle)) return 0;
-  const brueckenPool = vocabularyFor(quelle);
+  const zielCode = ziel.direction.slice(quelle.length + '_to_'.length);
+  if (!isLanguageCode(zielCode)) return 0;
+  const brueckenPool =
+    quelle === AR_BRIDGE ? VOCABULARY_AR : isLanguageCode(quelle) ? vocabularyFor(quelle) : null;
+  if (!brueckenPool) return 0;
   const brueckenIds = new Set(brueckenPool.map((entry) => entry.id));
   const brueckenConcepts = new Set(
     brueckenPool.filter((entry) => entry.concept !== undefined).map((entry) => entry.concept!)
   );
-  return vocabularyFor(ziel.language).filter((entry) =>
+  return vocabularyFor(zielCode).filter((entry) =>
     entry.concept !== undefined
       ? brueckenIds.has(entry.concept) || brueckenConcepts.has(entry.concept)
       : brueckenConcepts.has(entry.id)

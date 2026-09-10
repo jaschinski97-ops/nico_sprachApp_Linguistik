@@ -117,6 +117,19 @@ export type PairId =
   | PairsFrom<'es'>
   | PairsFrom<'th'>;
 
+/**
+ * Die Brücke `'ar'` — PILOT der skalierbaren Oberflächensprachen
+ * (Nutzerentscheidung 10.09.): Künftig kann die App-Sprache (= Brücke) auch
+ * außerhalb des Ziel-Kanons liegen. `'ar'` ist bewusst KEIN `Lang` — es gibt
+ * keinen arabischen Ziel-Grundstoff, nur den generierten Brücken-Pool
+ * (`vocabulary-ar.ts`) —, aber wohl Richtungen ar_to_X.
+ */
+export const AR_BRIDGE = 'ar' as const;
+export type ArBridge = typeof AR_BRIDGE;
+
+/** Die Richtungen der arabischen Brücke — gelernt wird jeweils X. */
+export type ArPairDirection = `ar_to_${Exclude<Lang, 'ar'>}`;
+
 /** Die ID eines Paars — im selben Format wie die alten Richtungs-Strings. */
 export function pairId(pair: Pair): PairId {
   // Der Cast ist safe: `pair` kann laut Typ kein Selbstpaar sein, und genau
@@ -214,10 +227,11 @@ export function producesTargetLanguage(direction: PairDirection): boolean {
 
 /**
  * Lernrichtung über **allen** zwölf Paaren des Kanons — der de-geankerte
- * Bestand (`Direction`) plus die sechs Kreuzrichtungen (th↔en, th↔es, en↔es).
+ * Bestand (`Direction`), die sechs Kreuzrichtungen (th↔en, th↔es, en↔es) und
+ * seit dem ar-Piloten die vier ar-Brücken-Richtungen (`ar_to_*`).
  *
- * WARUM EIN ZWEITER NAME NEBEN `PairId`: Es ist dieselbe Zeichenketten-Union
- * — `PairId` benennt die Paare des Sprachmodells, `PairDirection` die
+ * WARUM EIN ZWEITER NAME NEBEN `PairId`: Dieselbe Zeichenketten-Union plus
+ * ar — `PairId` benennt die Paare des Sprachmodells, `PairDirection` die
  * Lernrichtung einer Sitzung darüber. Zwei Namen für denselben Typ halten die
  * Aufrufstellen lesbar („welche Richtung wird gelernt“ statt „welches Paar
  * ist gemeint“) und kosten nichts.
@@ -228,11 +242,25 @@ export function producesTargetLanguage(direction: PairDirection): boolean {
  * Lern-Reiter) arbeiten mit `PairDirection` — jeder `Direction`-Wert ist
  * zugleich ein gültiger `PairDirection`, Bestandsaufrufer ändern sich nicht.
  */
-export type PairDirection = PairId;
+export type PairDirection = PairId | ArPairDirection;
 
-/** Schmale Laufzeitprüfung, passend zum Typ `PairDirection`. */
+/**
+ * Die ar-Richtungen zur Laufzeit — dieselbe Wahrheit wie der Typ
+ * `ArPairDirection`, als Liste für die schmale Prüfung darunter.
+ */
+const AR_PAIR_DIRECTIONS: readonly ArPairDirection[] = [
+  'ar_to_de',
+  'ar_to_en',
+  'ar_to_es',
+  'ar_to_th',
+];
+
+/** Schmale Laufzeitprüfung, passend zum Typ `PairDirection` (ar inklusive). */
 export function isPairDirection(value: unknown): value is PairDirection {
-  return isPairId(value);
+  if (isPairId(value)) return true;
+  return (
+    typeof value === 'string' && (AR_PAIR_DIRECTIONS as readonly string[]).includes(value)
+  );
 }
 
 /**
@@ -243,9 +271,17 @@ export function isPairDirection(value: unknown): value is PairDirection {
  * die **Ziel**-Seite: `en_to_es` fragt den spanischen Pool ab, denn gelernt
  * wird Spanisch — der Englisch-Wortlaut auf der Vorderseite ist nur die
  * Brücke (Stufe 1: Queue über `concept` gekoppelt, siehe `review-session`).
+ *
+ * AR-BRÜCKE: `ar_to_X` fragt X ab — dieselbe Ziel-Regel wie bei den
+ * Kreuzrichtungen, denn die Brücke trägt selbst keinen Stoff. Bei
+ * `ar_to_de` ist das `'de'`: Einen deutschen Vokabel-Pool gibt es nicht
+ * (Deutsch lebt als `german`-Feld auf den bestehenden Pools), also bleibt
+ * diese Richtung bewusst ohne Kartenstoff, bis ihr eigener Grundstoff
+ * gebaut ist (Stufe 2).
  */
 export function pairLanguageOf(direction: PairDirection): LanguageCode {
   const [from, , to] = direction.split('_');
+  if (from === AR_BRIDGE) return to as LanguageCode;
   if (from === HUB_LANGUAGE) return to as LanguageCode;
   if (to === HUB_LANGUAGE) return from as LanguageCode;
   // Kreuzrichtung: die Zielseite trägt den Stoff.
@@ -259,9 +295,12 @@ export function pairLanguageOf(direction: PairDirection): LanguageCode {
  * `PairDirection`-Wert weiter an `Direction`-Verträge geht (Profil,
  * Backup, `directionLabel`), beweist dieser Test die Zuteilung statt zu
  * casten. Kreuzrichtungen fallen hier bewusst durch — sie sind Neuland
- * (Stufe 1), nicht Bestand.
+ * (Stufe 1), nicht Bestand. Genauso `ar_to_de`: Es endet zwar auf `_to_de`,
+ * gehört aber zur ar-Brücke und darf nie als `Direction` in Profil- oder
+ * Backup-Verträge rutschen.
  */
 export function isDeAnchored(value: PairDirection): value is Direction {
+  if (value.startsWith(`${AR_BRIDGE}_to_`)) return false;
   return value.startsWith(`${HUB_LANGUAGE}_to_`) || value.endsWith(`_to_${HUB_LANGUAGE}`);
 }
 

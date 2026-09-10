@@ -2,7 +2,8 @@
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
 import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
-import { VOCABULARY_EN, VOCABULARY_ES, vocabularyFor } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES, VocabEntry, vocabularyFor } from '@/data/vocabulary';
+import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 
 import { DAY_MS, NEW_CARDS_PER_SESSION, retrievability } from './fsrs/fsrs';
 import { Direction } from './fsrs/types';
@@ -178,7 +179,10 @@ describe('buildReviewQueue für Kreuzrichtungen (Stufe 1)', () => {
     queue.forEach((item) => {
       expect(item.entry.language).toBe('es');
       expect(item.bridgeEntry).not.toBeNull();
-      expect(item.bridgeEntry!.language).toBe('en');
+      // SEIT DEM AR-PILOTEN IST DIE BRÜCKENSEITE EINE UNION (auch generierte
+      // BridgeEntry-Einträge ohne `language`) — der Bestands-Zweig (en-Brücke)
+      // wird hier bewusst schmal zugeschnitten.
+      expect((item.bridgeEntry as VocabEntry).language).toBe('en');
       // Derselbe Begriff, hier über die GLEICHE concept-ID (en und es zeigen
       // beide auf denselben Thai-Anker) — nicht ID gegen concept, denn die
       // en/es-Einträge tragen eigene IDs.
@@ -221,6 +225,58 @@ describe('buildReviewQueue für Kreuzrichtungen (Stufe 1)', () => {
       expect(item.bridgeEntry).toBeNull();
       expect(item.entry.language).toBe('th');
     });
+  });
+});
+
+// AR-PILOT (10.09.): Die Brücke 'ar' koppelt gegen den GENERIERTEN Pool
+// (vocabulary-ar.ts) — dieselbe concept-Wahrheit, aber die Brückenseite ist
+// ein BridgeEntry (id/concept/term), kein VocabEntry.
+const gekoppeltePaareUeberAr = (nach: 'en' | 'es' | 'th'): number => {
+  const arConcepts = new Set(VOCABULARY_AR.map((entry) => entry.concept));
+  return vocabularyFor(nach).filter((entry) =>
+    entry.concept !== undefined
+      ? arConcepts.has(entry.concept)
+      : arConcepts.has(entry.id)
+  ).length;
+};
+
+describe('buildReviewQueue mit ar-Brücke (Pilot Heimatsprachen)', () => {
+  it('koppelt ar_to_es über den generierten Brücken-Pool', async () => {
+    const store = await freshStore();
+    const erwartet = gekoppeltePaareUeberAr('es');
+    expect(erwartet).toBeGreaterThan(0);
+
+    const { entries, cards } = await ensureCardStates('ar_to_es', store, T0);
+    expect(entries).toHaveLength(erwartet);
+    expect(cards).toHaveLength(erwartet);
+
+    const queue = await buildReviewQueue('ar_to_es', store, T0);
+    expect(queue.length).toBeGreaterThan(0);
+    queue.forEach((item) => {
+      expect(item.entry.language).toBe('es');
+      expect(item.bridgeEntry).not.toBeNull();
+      // Die ar-Brückenseite kommt aus dem generierten Pool: arabisches
+      // Ankerwort, `concept` zeigt auf denselben Thai-Anker wie das Ziel.
+      expect(item.bridgeEntry!.concept).toBe(item.entry.concept);
+      expect(item.bridgeEntry!.term).toMatch(/\p{Script=Arabic}/u);
+    });
+  });
+
+  it('ar_to_th koppelt den ganzen Thai-Pool: die ar-Concepts sind die Thai-IDs', async () => {
+    const store = await freshStore();
+    const { entries } = await ensureCardStates('ar_to_th', store, T0);
+    expect(entries).toHaveLength(gekoppeltePaareUeberAr('th'));
+  });
+
+  it('ar_to_de bleibt ehrlich leer: es gibt keinen deutschen Pool (Stufe 2)', async () => {
+    const store = await freshStore();
+    const { entries, cards } = await ensureCardStates('ar_to_de', store, T0);
+    expect(entries).toHaveLength(0);
+    expect(cards).toHaveLength(0);
+    expect(await buildReviewQueue('ar_to_de', store, T0)).toHaveLength(0);
+    // Und die leere Richtung hat die de-geankerten Bestände nicht angerührt.
+    const { entries: thBestand } = await ensureCardStates('th_to_de', store, T0);
+    expect(thBestand).toHaveLength(VOCABULARY.length);
   });
 });
 
