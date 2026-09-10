@@ -74,6 +74,11 @@ export default function AppTabs() {
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
+      {/* Untergeordnete Einstellungs-Bereiche: navigierbar, aber bewusst ohne
+          eigenen Tab (href: null) — sie sind Ziel von Zeilen auf der
+          Einstellungsseite, keine Hauptziele der App. */}
+      <Tabs.Screen name="settings/about" options={{ href: null }} />
+      <Tabs.Screen name="settings/studio" options={{ href: null }} />
     </Tabs>
   );
 }

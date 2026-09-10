@@ -1,7 +1,9 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
 import { TextInput } from 'react-native';
-import SettingsScreen from '../app/settings';
+import SettingsScreen from '../app/settings/index';
+import AboutScreen from '../app/settings/about';
+import StudioScreen from '../app/settings/studio';
 import { DeveloperContent } from './developer-content';
 import { isContentDeveloper } from '../lib/content/developer';
 // Der Screen textet über i18n; ohne Provider gilt die Referenzsprache Deutsch.
@@ -11,6 +13,11 @@ import { dictionaries } from '../lib/i18n';
 
 /** Der Material-Hinweis, den die Produktions-Einstellungen zeigen müssen. */
 const MATERIAL_BODY = dictionaries.de['settings.materialBody']!;
+
+jest.mock('expo-router', () => ({
+  Link: ({ children }: React.PropsWithChildren) => <>{children}</>,
+  Redirect: () => null, router: { dismissTo: jest.fn() },
+}));
 
 jest.mock('../lib/content/developer', () => ({ isContentDeveloper: jest.fn(() => true) }));
 // Throwing when loaded proves the release path never even imports the studio.
@@ -26,7 +33,11 @@ test('production settings render no input, key field, provider choice, start but
     expect(screen!.root.findAllByType(TextInput)).toHaveLength(0);
     expect(JSON.stringify(screen!.toJSON())).not.toMatch(/Schlüssel|API|Generator|Fortschrittsbalken|Starten|Claude|Gemini|Stability/i);
     expect(screen!.root.findAll((node) => node.props.accessibilityRole === 'progressbar')).toHaveLength(0);
+    expect(JSON.stringify(screen!.toJSON())).toContain('Über die App');
+    await act(async () => { screen!.update(<AboutScreen />); });
     expect(JSON.stringify(screen!.toJSON())).toContain(MATERIAL_BODY);
+    await act(async () => { screen!.update(<StudioScreen />); });
+    expect(JSON.stringify(screen!.toJSON())).not.toMatch(/Generator|API-Schlüssel/);
     expect(isContentDeveloper).not.toHaveBeenCalled();
   } finally {
     await act(async () => screen?.unmount());

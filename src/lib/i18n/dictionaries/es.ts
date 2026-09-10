@@ -202,7 +202,19 @@ const es: Partial<Record<TranslationKey, string>> = {
   'states.allStarted': 'Todas las tarjetas de este idioma están empezadas.',
   'states.notStarted': 'Sin empezar: {{count}} de {{total}} tarjetas.',
 
-  'settings.subtitle': 'Tu compañero de aprendizaje',
+  'settings.back': 'Volver a ajustes',
+  'settings.backupTitle': 'Copia de seguridad',
+  'settings.backupSummary': 'Guardar y restaurar tu progreso',
+  'settings.about': 'Acerca de la app',
+  'settings.version': 'Versión {{version}}',
+  'settings.studio': 'Estudio de desarrollo',
+  'settings.studioSummary': 'Contenido, proveedores e informes',
+  'settings.local': 'Guardado en este dispositivo',
+  'settings.storageBody': 'El progreso de aprendizaje y los ajustes viven en este dispositivo. La copia de seguridad en los ajustes es una copia para cambiar de dispositivo.',
+  'settings.general': 'General',
+  'settings.development': 'Desarrollo',
+  'settings.studioDevOnly': 'El estudio de desarrollador pertenece solo a la compilación de desarrollo; no forma parte de la app instalada.',
+  'settings.studioOrigin': 'Esta ventana está fuera del puerto del estudio. Abre la compilación de desarrollo en localhost:8081 para generar contenido.',
   'settings.materialTitle': 'Tu material de aprendizaje',
   'settings.materialCount': '{{count}} palabras · tailandés, inglés y español',
   'settings.materialBody':
@@ -213,7 +225,6 @@ const es: Partial<Record<TranslationKey, string>> = {
   'appLanguage.title': 'Idioma de la app',
   'appLanguage.body': 'La app arranca en el idioma de tu dispositivo. Aquí puedes fijarlo.',
   'appLanguage.system': 'Sistema',
-  'backup.title': 'Copia de seguridad y restauración',
   'backup.body':
     'Guarda tu progreso como archivo — por ejemplo antes de cambiar de dispositivo o reinstalar. Puedes restaurar esa copia aquí; sustituye entonces el historial de este dispositivo.',
   'backup.exportA11y': 'Guardar el historial como archivo',

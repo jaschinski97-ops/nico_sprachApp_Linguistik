@@ -73,9 +73,27 @@ export default function AppTabs() {
     </TabTrigger>
   ));
 
+  // Untergeordnete Einstellungs-Bereiche (settings/about, settings/studio):
+  // Der UI-Tabs registriert NUR Routen mit Trigger (common.js
+  // triggersToScreens baut die Screens aus den Triggern) — ohne Trigger hier
+  // fällt /settings/about auf die Übersicht zurück. Sie hängen unsichtbar in
+  // der Leiste und werden nur per router.push erreicht.
+  const versteckteTrigger = (
+    <>
+      <TabTrigger name="settings/about" href="/settings/about" asChild>
+        <View style={styles.hidden} />
+      </TabTrigger>
+      <TabTrigger name="settings/studio" href="/settings/studio" asChild>
+        <View style={styles.hidden} />
+      </TabTrigger>
+    </>
+  );
+
   const tabBar = (
     <TabList asChild>
-      {isNarrow ? <BottomBar>{triggers}</BottomBar> : <NavBar>{triggers}</NavBar>}
+      {isNarrow
+        ? <BottomBar>{triggers}{versteckteTrigger}</BottomBar>
+        : <NavBar>{triggers}{versteckteTrigger}</NavBar>}
     </TabList>
   );
 
@@ -275,6 +293,9 @@ const styles = StyleSheet.create({
   },
   slot: {
     flex: 1,
+  },
+  hidden: {
+    display: 'none',
   },
   pressed: {
     opacity: 0.7,

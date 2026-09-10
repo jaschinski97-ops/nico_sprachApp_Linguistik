@@ -80,6 +80,9 @@ export type StartArgs = {
 };
 
 type Props = {
+  managedKeys?: boolean;
+  onManageKeys?: () => void;
+  onRunningChange?: (running: boolean) => void;
   /**
    * Für welche Sprache erzeugt wird (Phase 18). Fehlt die Angabe, bietet die
    * Karte keine Wahl an — so bei Prüfungsaufgaben (die prüfen Deutsch) und
@@ -108,6 +111,9 @@ type Props = {
 };
 
 export function GeneratorCard({
+  managedKeys = false,
+  onManageKeys,
+  onRunningChange,
   language,
   onLanguageChange,
   heading,
@@ -125,6 +131,7 @@ export function GeneratorCard({
 }: Props) {
   const theme = useTheme();
 
+  const [advanced, setAdvanced] = useState(false);
   const [key, setKey] = useState('');
   const [keyStored, setKeyStored] = useState(false);
   const [mode, setMode] = useState<KeyStorageMode | null>(null);
@@ -134,6 +141,8 @@ export function GeneratorCard({
   const [notice, setNotice] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  useEffect(() => { onRunningChange?.(running); }, [running, onRunningChange]);
 
   const cancelRef = useRef(false);
   const startingRef = useRef(false);
@@ -189,11 +198,11 @@ export function GeneratorCard({
     if (startingRef.current) return;
     startingRef.current = true;
     setNotice(null);
-    const apiKey = key.trim() || (await loadApiKey(provider)) || '';
+    const apiKey = managedKeys ? (await loadApiKey(provider)) || '' : key.trim() || (await loadApiKey(provider)) || '';
     // Der Helper (needsKey: false) zieht seinen Schlüssel serverseitig aus
     // der Umgebung — ihm fehlt einer hier nicht.
     if (!apiKey && providerInfo.needsKey !== false) {
-      setNotice('Erst einen API-Schlüssel eintragen.');
+      setNotice(managedKeys ? 'Bitte unter Anbieter & Schlüssel einen Schlüssel hinterlegen.' : 'Erst einen API-Schlüssel eintragen.');
       startingRef.current = false;
       return;
     }
@@ -227,7 +236,7 @@ export function GeneratorCard({
       startingRef.current = false;
       await onFinished();
     }
-  }, [key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
+  }, [managedKeys, key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
@@ -295,15 +304,6 @@ export function GeneratorCard({
             />
           ))}
         </ChoiceRow>
-        <ThemedText type="small" themeColor="textSecondary">
-          {providerInfo.label === providerInfo.vendor
-            ? `${providerInfo.label}: Schlüssel von ${providerInfo.keySource}.`
-            : `${providerInfo.label} kommt von ${providerInfo.vendor}; Schlüssel von ${providerInfo.keySource}.`}
-          {' '}
-          {groupInfo.needs === 'audio'
-            ? 'Zur Auswahl stehen nur Anbieter mit Sprachausgabe — Claude und Stability AI haben keine.'
-            : `Zur Auswahl stehen nur Anbieter, die ${groupInfo.needs === 'image' ? 'Bilder' : 'Text'} erzeugen — Claude kann keine Bilder, Stability AI keinen Text.`}
-        </ThemedText>
         {/* Nur im Web: nativ gibt es kein CORS, dort gilt der Hinweis nicht. */}
         {Platform.OS === 'web' && providerInfo.webWarning ? (
           <ThemedView type="backgroundSelected" style={styles.warning}>
@@ -312,6 +312,12 @@ export function GeneratorCard({
         ) : null}
       </View>
 
+      <Pressable accessibilityRole="button" accessibilityState={{ expanded: advanced }}
+        onPress={() => setAdvanced(value => !value)} style={styles.tapTarget}>
+        <ThemedText type="small" themeColor="link">{advanced ? '▾' : '▸'} Erweitert · Modell{groupInfo.needs === 'audio' ? ' & Stimme' : ''}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">{choice.model || providerInfo.modelPlaceholder[groupInfo.needs]}{groupInfo.needs === 'audio' ? ` · ${choice.voice || providerInfo.voicePlaceholder}` : ''}</ThemedText>
+      </Pressable>
+      {advanced ? <>
       <View style={styles.field}>
         <ThemedText type="small">Modell</ThemedText>
         <TextInput
@@ -328,7 +334,7 @@ export function GeneratorCard({
         <ThemedText type="small" themeColor="textSecondary">
           Freitext, bewusst ohne Prüfung: Modellnamen wechseln zu oft, um sie in
           der App festzuschreiben. Leer lassen nimmt „
-          {providerInfo.modelPlaceholder[groupInfo.needs]}".
+          {providerInfo.modelPlaceholder[groupInfo.needs]}“.
           {provider === 'gemini'
             ? ' Bei Gemini ist ein Tippfehler im Namen nicht vom falschen Schlüssel zu unterscheiden — die API meldet beides als „API key not valid" (gemessen, AE-26).'
             : ''}
@@ -357,7 +363,7 @@ export function GeneratorCard({
               </ChoiceRow>
               <ThemedText type="small" themeColor="textSecondary">
                 Google nennt das Geschlecht seiner Stimmen nicht auf der
-                Gemini-Seite, sondern in der Tabelle „Voice options" der
+                Gemini-Seite, sondern in der Tabelle „Voice options“ der
                 Cloud-Text-to-Speech-Unterlagen — dieselben dreißig Namen,
                 abgerufen am {VOICE_SOURCES.geminiGender.retrieved}. Die Knöpfe
                 setzen eine belegte Stimme dieser Lage; im Feld darunter geht
@@ -368,7 +374,7 @@ export function GeneratorCard({
             <ThemedText type="small" themeColor="textSecondary">
               {providerInfo.vendor} macht zum Geschlecht seiner Stimmen keine
               Angabe (abgerufen am {VOICE_SOURCES.openaiVoices.retrieved}).
-              Eine Auswahl „weiblich/männlich" wäre hier geraten, deshalb gibt
+              Eine Auswahl „weiblich/männlich“ wäre hier geraten, deshalb gibt
               es nur die Namen.
             </ThemedText>
           )}
@@ -393,6 +399,13 @@ export function GeneratorCard({
         </View>
       ) : null}
 
+      </> : null}
+      {managedKeys ? <View style={styles.field}>
+        <ThemedText type="small" themeColor="textSecondary">{providerInfo.needsKey === false
+          ? 'Schlüssel wird vom lokalen Helper bereitgestellt.'
+          : keyStored ? `${providerInfo.vendor} · Schlüssel gespeichert` : `${providerInfo.vendor} · Noch kein Schlüssel`}</ThemedText>
+        {providerInfo.needsKey !== false ? <Button label="Anbieter & Schlüssel" onPress={() => onManageKeys?.()} disabled={running} /> : null}
+      </View> : (
       <View style={styles.field}>
         <ThemedText type="small">
           {providerInfo.needsKey === false
@@ -432,6 +445,8 @@ export function GeneratorCard({
           {keyStored ? <Button label="Löschen" onPress={onClearKey} disabled={running} /> : null}
         </View>
       </View>
+
+      )}
 
       <View style={styles.field}>
         <ThemedText type="small">Umfang</ThemedText>

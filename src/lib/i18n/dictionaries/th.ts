@@ -201,7 +201,19 @@ const th: Partial<Record<TranslationKey, string>> = {
   'states.allStarted': 'การ์ดของภาษานี้เริ่มหมดแล้ว',
   'states.notStarted': 'ยังไม่เริ่ม: {{count}} จาก {{total}} ใบ',
 
-  'settings.subtitle': 'ผู้ช่วยเรียนของคุณ',
+  'settings.back': 'กลับไปการตั้งค่า',
+  'settings.backupTitle': 'สำรองข้อมูล',
+  'settings.backupSummary': 'สำรองและกู้คืนความก้าวหน้า',
+  'settings.about': 'เกี่ยวกับแอป',
+  'settings.version': 'เวอร์ชัน {{version}}',
+  'settings.studio': 'สตูดิโอนักพัฒนา',
+  'settings.studioSummary': 'เนื้อหา ผู้ให้บริการ และรายงาน',
+  'settings.local': 'จัดเก็บบนอุปกรณ์นี้',
+  'settings.storageBody': 'ความคืบหน้าการเรียนและการตั้งค่าอยู่บนเครื่องนี้ การสำรองข้อมูลในหน้าตั้งค่าคือสำเนาสำหรับย้ายไปเครื่องใหม่',
+  'settings.general': 'ทั่วไป',
+  'settings.development': 'การพัฒนา',
+  'settings.studioDevOnly': 'สตูดิโอนักพัฒนามีเฉพาะในตัวบิลด์สำหรับพัฒนา ไม่รวมอยู่ในแอปที่ติดตั้ง',
+  'settings.studioOrigin': 'หน้าต่างนี้ไม่ได้เปิดที่พอร์ตของสตูดิโอ เปิดตัวบิลด์พัฒนาที่ localhost:8081 เพื่อสร้างเนื้อหา',
   'settings.materialTitle': 'เนื้อหาการเรียนของคุณ',
   'settings.materialCount': '{{count}} คำ · ไทย อังกฤษ และสเปน',
   'settings.materialBody':
@@ -212,7 +224,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'appLanguage.title': 'ภาษาของแอป',
   'appLanguage.body': 'แอปเริ่มด้วยภาษาของเครื่อง ตั้งค่าให้แน่นอนได้ที่นี่',
   'appLanguage.system': 'ตามระบบ',
-  'backup.title': 'สำรองและกู้คืน',
   'backup.body':
     'บันทึกความก้าวหน้าเป็นไฟล์ — เช่น ก่อนเปลี่ยนเครื่องหรือติดตั้งใหม่ กู้คืนไฟล์สำรองได้ที่นี่ ซึ่งจะแทนประวัติการเรียนบนเครื่องนี้',
   'backup.exportA11y': 'บันทึกประวัติการเรียนเป็นไฟล์',

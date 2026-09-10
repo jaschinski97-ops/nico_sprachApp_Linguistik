@@ -55,7 +55,7 @@ npm test            # Testreihe
 
 ## Inhalt erzeugen (nur Admin, Debug-Modus)
 
-Der Ablauf — drei Schlüsselfelder in den Einstellungen, Generierung im
+Der Ablauf — zentrale Schlüsselverwaltung unter Einstellungen → Entwicklerstudio, Generierung im
 Studio mit automatischer Tonhöhenprüfung je Clip, Publish, Gegenmessung,
 Release — steht in [docs/PIPELINE.md](docs/PIPELINE.md). Kurzform:
 

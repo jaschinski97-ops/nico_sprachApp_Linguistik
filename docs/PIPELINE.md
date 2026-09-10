@@ -4,22 +4,25 @@ Ziel: Nutzer bekommen alle Inhalte **offline mit dem App-Build**. Die
 KI-Anbieter braucht nur der Admin zum Erzeugen — auf seinem Gerät, mit seinen
 Schlüsseln. Nichts davon landet im Release.
 
-## 1. Schlüssel hinterlegen (Einstellungen → „API-Schlüssel (Debug)")
+## 1. Schlüssel hinterlegen (Einstellungen → Entwicklerstudio → Anbieter & Schlüssel)
 
-Genau drei Felder, je eines pro Fähigkeit:
+Einen Anbieter öffnen, Schlüssel eintragen und speichern. Es gibt einen
+Schlüssel je Anbieter (Anthropic, OpenAI, Google, Stability AI); alle passenden
+Generatoren verwenden diesen Zugang. Der lokale OpenAI-Helper verwendet
+seinen serverseitigen Schlüssel und hat hier kein Eingabefeld.
 
-| Feld | Erzeugt | Anbieter (Standard) |
-|---|---|---|
-| **1 · Text** | Vokabeltexte, Sätze, Gesprächssituationen | Claude |
-| **2 · Audio** | Hörclips für Vokabeln, Sätze, Übungsgespräche | Gemini TTS |
-| **3 · Bilder** | Vokabelbilder | Stability AI |
-
-Anbieter antippen, Schlüssel eintippen, speichern. Die Wahl gilt für die
-zugehörigen Generator-Gruppen; das Web-Studio darf je Lauf abweichen.
-Ablage: nativ Keychain/Keystore, im Web nur für die Sitzung (AE-10).
-In Release-Builds sind die Felder weg.
+Die Anbieterwahl bleibt beim jeweiligen Generator. Gespeicherte Modelle,
+Stimmen und Schlüssel bleiben beim Umbau erhalten. Im lokalen Web-Studio
+werden Schlüssel wie bisher im Browser gespeichert und beim Öffnen sichtbar
+angezeigt (Nutzerentscheidung 09.09.2026). Das Studio ist ausschließlich im
+Debug-Web-Build auf localhost:8081 zugänglich; Release-Builds enthalten es nicht.
 
 ## 2. Generieren (Debug-Studio, localhost:8081)
+
+Im Entwicklerstudio Bilder, Audio, Dialoge oder Prüfungsaufgaben öffnen.
+Modell und Stimme stehen unter „Erweitert“. Umfang und Kostenbestätigung
+bleiben vor dem Start sichtbar. Prüfberichte und Diagnose haben einen eigenen
+Bereich in der Studio-Übersicht.
 
 Generator-Karte starten. **Nach jedem Hörclip läuft automatisch die
 Tonhöhenprüfung** (`src/lib/clips/batch.ts` → `checkThaiTone`):

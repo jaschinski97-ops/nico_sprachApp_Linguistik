@@ -220,7 +220,19 @@ const de = {
   'states.notStarted': 'Noch nicht begonnen: {{count}} von {{total}} Karten.',
 
   /* ---------- Einstellungen (settings.tsx) ---------- */
-  'settings.subtitle': 'Dein Lernbegleiter',
+  'settings.back': 'Zurück zu Einstellungen',
+  'settings.backupTitle': 'Datensicherung',
+  'settings.backupSummary': 'Lernfortschritt sichern und wiederherstellen',
+  'settings.about': 'Über die App',
+  'settings.version': 'Version {{version}}',
+  'settings.studio': 'Entwicklerstudio',
+  'settings.studioSummary': 'Inhalte, Anbieter und Prüfberichte',
+  'settings.local': 'Auf diesem Gerät gespeichert',
+  'settings.storageBody': 'Lernfortschritt und Einstellungen liegen auf diesem Gerät. Eine Kopie für den Gerätewechsel ist die Datensicherung in den Einstellungen.',
+  'settings.general': 'Allgemein',
+  'settings.development': 'Entwicklung',
+  'settings.studioDevOnly': 'Das Entwicklerstudio gehört nur zum Entwicklungsbau und ist nicht Teil der installierten App.',
+  'settings.studioOrigin': 'Dieses Fenster läuft außerhalb des Studio-Ports. Öffne den Entwicklungsbau auf localhost:8081, um Inhalte zu erzeugen.',
   'settings.materialTitle': 'Dein Lernmaterial',
   'settings.materialCount': '{{count}} Wörter · Thai, Englisch und Spanisch',
   'settings.materialBody':
@@ -232,7 +244,6 @@ const de = {
   'appLanguage.body':
     'Die App startet in der Sprache deines Geräts. Hier stellst du sie dauerhaft um.',
   'appLanguage.system': 'System',
-  'backup.title': 'Sicherung & Wiederherstellen',
   'backup.body':
     'Sichere deinen Lernfortschritt als Datei — etwa vor einem Gerätewechsel oder einer Neuinstallation. Eine solche Sicherung kannst du hier wiederherstellen; sie ersetzt dann die Lernhistorie auf diesem Gerät.',
   'backup.exportA11y': 'Lernhistorie als Datei sichern',

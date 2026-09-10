@@ -204,7 +204,19 @@ const en: Partial<Record<TranslationKey, string>> = {
   'states.allStarted': 'All cards of this language have been started.',
   'states.notStarted': 'Not yet started: {{count}} of {{total}} cards.',
 
-  'settings.subtitle': 'Your learning companion',
+  'settings.back': 'Back to settings',
+  'settings.backupTitle': 'Backup',
+  'settings.backupSummary': 'Save and restore your progress',
+  'settings.about': 'About the app',
+  'settings.version': 'Version {{version}}',
+  'settings.studio': 'Developer studio',
+  'settings.studioSummary': 'Content, providers and reports',
+  'settings.local': 'Stored on this device',
+  'settings.storageBody': 'Learning progress and settings live on this device. The backup in the settings is a copy for moving to a new device.',
+  'settings.general': 'General',
+  'settings.development': 'Development',
+  'settings.studioDevOnly': 'The developer studio belongs to the development build only — it is not part of the installed app.',
+  'settings.studioOrigin': 'This window is running outside the studio port. Open the development build on localhost:8081 to generate content.',
   'settings.materialTitle': 'Your learning material',
   'settings.materialCount': '{{count}} words · Thai, English and Spanish',
   'settings.materialBody':
@@ -216,7 +228,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'appLanguage.body':
     'The app starts in your device’s language. Here you can set it permanently.',
   'appLanguage.system': 'System',
-  'backup.title': 'Backup & restore',
   'backup.body':
     'Save your learning progress as a file — for example before switching devices or reinstalling. You can restore such a backup here; it then replaces the learning history on this device.',
   'backup.exportA11y': 'Save learning history as a file',

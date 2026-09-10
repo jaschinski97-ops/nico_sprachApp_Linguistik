@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, Pressable, StyleSheet, View } from 'react-native';
 
-import { DeveloperContent } from '@/components/developer-content';
-import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { isContentDeveloper } from '@/lib/content/developer';
 import {
   SYSTEM_LANGUAGE_SETTING,
   UI_LANGUAGES,
@@ -16,7 +13,6 @@ import {
   type TranslationKey,
 } from '@/lib/i18n';
 import { Spacing } from '@/constants/theme';
-import { VOCABULARY } from '@/data/vocabulary';
 import {
   BackupImportSummary,
   chooseBackupFile,
@@ -24,7 +20,9 @@ import {
   restoreBackup,
 } from '@/lib/backup';
 import { isStorageDegraded } from '@/lib/storage';
-import { useToneColor } from '@/hooks/use-theme';
+import { useTheme } from '@/hooks/use-theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { ThemedButton } from '@/components/themed-button';
 
 type StatusMessage = { kind: 'success' | 'error'; text: string };
 
@@ -80,7 +78,7 @@ function confirmReplace(t: Translate): Promise<boolean> {
  * blockiert nichts — sie sagt nur ehrlich, was los ist, und verweist auf die
  * Sicherung direkt darunter.
  */
-function PersistenceWarning() {
+export function PersistenceWarning() {
   const { t } = useLocale();
   const [degraded, setDegraded] = useState(false);
 
@@ -121,9 +119,9 @@ function PersistenceWarning() {
  * muss sich auch dann finden lassen, wenn die Oberfläche gerade in einer
  * Sprache erscheint, die man nicht liest.
  */
-function AppLanguageSection() {
+export function AppLanguageSection() {
   const { t, setting, setSetting } = useLocale();
-  const toneColor = useToneColor();
+  const theme = useTheme();
 
   const options: { value: LanguageSetting; label: string }[] = [
     { value: SYSTEM_LANGUAGE_SETTING, label: t('appLanguage.system') },
@@ -135,11 +133,10 @@ function AppLanguageSection() {
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">{t('appLanguage.title')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {t('appLanguage.body')}
       </ThemedText>
-      <View style={styles.languageRow}>
+      <View accessibilityRole="radiogroup" accessibilityLabel={t('appLanguage.title')} style={styles.languageRow}>
         {options.map((option) => {
           const active = setting === option.value;
           return (
@@ -153,8 +150,9 @@ function AppLanguageSection() {
               style={({ pressed }) => pressed && styles.pressed}>
               <ThemedView
                 type={active ? 'backgroundSelected' : 'backgroundElement'}
-                style={[styles.languageChip, active && { borderColor: toneColor('mid') }]}>
+                style={[styles.languageChip, active && { borderColor: theme.accent }]}>
                 <ThemedText type="small">{option.label}</ThemedText>
+                {active ? <Ionicons name="checkmark" size={20} color={theme.accent} accessible={false} /> : null}
               </ThemedView>
             </Pressable>
           );
@@ -164,7 +162,7 @@ function AppLanguageSection() {
   );
 }
 
-function BackupSection() {
+export function BackupSection() {
   const { t, uiLanguage } = useLocale();
   const [busy, setBusy] = useState<null | 'export' | 'import'>(null);
   const [status, setStatus] = useState<StatusMessage | null>(null);
@@ -206,34 +204,15 @@ function BackupSection() {
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
-      <ThemedText type="smallBold">{t('backup.title')}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {t('backup.body')}
       </ThemedText>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('backup.exportA11y')}
-        disabled={busy !== null}
-        onPress={onExport}
-        style={({ pressed }) => [pressed && styles.pressed]}>
-        <ThemedView type="backgroundSelected" style={styles.actionButton}>
-          <ThemedText type="smallBold">
-            {busy === 'export' ? t('backup.exporting') : t('backup.exportButton')}
-          </ThemedText>
-        </ThemedView>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={t('backup.importA11y')}
-        disabled={busy !== null}
-        onPress={onImport}
-        style={({ pressed }) => [pressed && styles.pressed]}>
-        <ThemedView type="backgroundSelected" style={styles.actionButton}>
-          <ThemedText type="smallBold">
-            {busy === 'import' ? t('backup.importing') : t('backup.importButton')}
-          </ThemedText>
-        </ThemedView>
-      </Pressable>
+      <ThemedButton variant="primary" accessibilityLabel={t('backup.exportA11y')}
+        disabled={busy !== null} onPress={onExport}
+        label={busy === 'export' ? t('backup.exporting') : t('backup.exportButton')} />
+      <ThemedButton accessibilityLabel={t('backup.importA11y')}
+        disabled={busy !== null} onPress={onImport}
+        label={busy === 'import' ? t('backup.importing') : t('backup.importButton')} />
       {status ? (
         status.kind === 'error' ? (
           <ThemedText type="smallBold">
@@ -249,58 +228,13 @@ function BackupSection() {
   );
 }
 
-/**
- * Die drei Schlüsselfelder nur im Debug-Betrieb. Der `require` liegt bewusst
- * IM Zweig (wie in developer-content.tsx): Ein statischer Import zöge
- * `lib/api-key` und die Anbieter-Clients in den Produktionsgraphen — genau
- * das meldet scripts/content/verify-production.cjs als Fehler.
- */
-function DeveloperApiKeys() {
-  if (__DEV__ && isContentDeveloper()) {
-    const { ApiKeysCard } = require('@/components/api-keys-card');
-    return <ApiKeysCard />;
-  }
-  return null;
-}
-
-export default function SettingsScreen() {
-  const { t } = useLocale();
-  return (
-    <ScreenScaffold title={t('tabs.settings')} subtitle={t('settings.subtitle')}>
-      <PersistenceWarning />
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">{t('settings.materialTitle')}</ThemedText>
-        <ThemedText>
-          {t('settings.materialCount', { count: VOCABULARY.length })}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('settings.materialBody')}
-        </ThemedText>
-      </ThemedView>
-      <AppLanguageSection />
-      <BackupSection />
-      {/* Drei Schlüsselfelder für den Debug-Ablauf; in Release rendert sie nichts. */}
-      <DeveloperApiKeys />
-      <DeveloperContent />
-    </ScreenScaffold>
-  );
-}
-
 const styles = StyleSheet.create({
   card: {
     padding: Spacing.three,
     gap: Spacing.two,
     borderRadius: Spacing.three,
   },
-  actionButton: {
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-  },
   languageRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: Spacing.two,
   },
   languageChip: {
@@ -310,7 +244,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
     minHeight: 44,
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   pressed: {
     opacity: 0.7,

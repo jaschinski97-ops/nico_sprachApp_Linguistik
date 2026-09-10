@@ -1,0 +1,17 @@
+env: load .env.local
+env: export OPENAI_API_KEY
+Starting project at C:\Users\root\Desktop\ThaiSpeaker
+Logs: C:\Users\root\Desktop\ThaiSpeaker\.expo\dev\logs\start.log
+Using src/app as the root directory for Expo Router.
+React Compiler enabled
+Starting Metro Bundler
+
+Waiting on http://localhost:8081
+
+An update for expo is available: 57.0.18 → ~57.0.21
+10 other packages may need updating. Run npx expo install --check for details.
+Logs for your project will appear below.
+Web Bundled 20859ms node_modules\expo-router\entry.js (1628 modules)
+λ Bundled 20936ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1677 modules)
+λ Bundled 58ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 421ms node_modules\expo-router\entry.js (1 module)

@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
+import { ApiKeysCard } from '@/components/api-keys-card';
+import { SettingsRow } from '@/components/settings-row';
+import { ThemedButton } from '@/components/themed-button';
 import { ContentReport } from './content-report';
 import { estimateRunCost } from './run-cost';
 import { exportDrafts, studioRequest } from './content-client';
 import { planDeliveryAudio } from '@/lib/content/audio-plan';
 import { previewAudioDelivery } from '@/lib/content/delivery-preview';
-import { loadExamModules } from '@/lib/repository';
 import type { ExamModule } from '@/lib/exam/types';
 
 import { DiagnosticsCard } from '@/components/diagnostics-card';
@@ -45,6 +47,7 @@ import {
 } from '@/lib/providers/settings';
 import { helperAudioAvailable } from '@/lib/providers/audio';
 import {
+  loadExamModules,
   clearAudioClips,
   clearGeneratedExamModules,
   clearSituations,
@@ -161,7 +164,9 @@ function clipRunOptions(
   return { options, specsFor: (optionId) => plans[optionId] ?? plans.test };
 }
 
-export default function SettingsScreen() {
+export default function ContentStudio() {
+  const [section, setSection] = useState<'home' | 'keys' | 'reports' | GeneratorGroupId>('home');
+  const [running, setRunning] = useState(false);
   const [reportRevision, setReportRevision] = useState(0);
   const [exportMessage, setExportMessage] = useState('');
   const [situations, setSituations] = useState<number | null>(null);
@@ -183,30 +188,37 @@ export default function SettingsScreen() {
   const [mediaLanguage, setMediaLanguage] = useState<LanguageCode>('th');
 
   const refreshSituations = useCallback(async () => {
-    setSituations(await countSituations());
+    const count = await countSituations();
+    setSituations(count);
     // Die Clip-Umfaenge haengen an den gespeicherten Situationen.
     setStoredSituations(await loadSituations());
   }, []);
 
   const refreshClips = useCallback(async () => {
-    setClips({ count: await countAudioClips(), bytes: await sumAudioClipBytes() });
+    const [count, bytes] = await Promise.all([countAudioClips(), sumAudioClipBytes()]);
+    setClips({ count, bytes });
   }, []);
 
   const refreshImages = useCallback(async () => {
-    setImages(await countVocabImages());
+    const count = await countVocabImages();
+    setImages(count);
   }, []);
 
   const refreshExams = useCallback(async () => {
-    setStoredExams(await loadExamModules());
+    const modules = await loadExamModules();
+    setStoredExams(modules);
     setExams({ total: await countExamModules(), generated: await countGeneratedExamModules() });
   }, []);
 
   useEffect(() => {
     let cancelled = false;
-    refreshSituations();
-    refreshImages();
-    refreshExams();
-    refreshClips();
+    Promise.all([countSituations(), loadSituations(), countVocabImages(), loadExamModules(),
+      countExamModules(), countGeneratedExamModules(), countAudioClips(), sumAudioClipBytes()])
+      .then(([situationsCount, dialogs, imagesCount, modules, total, generated, count, bytes]) => {
+        if (cancelled) return;
+        setSituations(situationsCount); setStoredSituations(dialogs); setImages(imagesCount);
+        setStoredExams(modules); setExams({ total, generated }); setClips({ count, bytes });
+      }).catch(() => { if (!cancelled) setExportMessage('Der gespeicherte Bestand konnte nicht geladen werden. Bitte Studio erneut öffnen.'); });
     getAudioBlobStore().then(() => setClipBackend(getActiveAudioBlobBackend()));
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
     // tatsaechlich laeuft (Datei, IndexedDB oder Arbeitsspeicher).
@@ -234,7 +246,7 @@ export default function SettingsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [refreshSituations, refreshImages, refreshExams, refreshClips]);
+  }, []);
 
   /**
    * Ein Anbieterwechsel zieht den Modellnamen mit (siehe `setGeneratorProvider`),
@@ -316,7 +328,7 @@ export default function SettingsScreen() {
       await exportDrafts(setExportMessage);
       setReportRevision(value => value + 1);
     },
-    [storedSituations]
+    []
   );
 
   const startExams = useCallback(
@@ -339,13 +351,30 @@ export default function SettingsScreen() {
 
   return (
     <View style={{ gap: Spacing.three }}>
-      <ContentReport revision={reportRevision} />
-      <ThemedText accessibilityLiveRegion="polite" type="small">{exportMessage}</ThemedText>
-      <DiagnosticsCard />
-
+      {section !== 'home' ? <ThemedButton label="Studio-Übersicht" disabled={running} onPress={() => setSection('home')} /> : null}
+      {section === 'home' ? <>
+        <ThemedText type="small" themeColor="textSecondary">Was möchtest du verwalten?</ThemedText>
+        <ThemedText type="smallBold">Inhalte erzeugen</ThemedText>
+        <View style={{ borderRadius: 16, overflow: 'hidden', gap: 1 }}>
+          <SettingsRow title="Bilder" detail="Vokabelbilder erstellen" icon="image-outline" onPress={() => setSection('images')} />
+          <SettingsRow title="Audio" detail="Wörter, Sätze und Dialoge vertonen" icon="volume-medium-outline" onPress={() => setSection('audio')} />
+          <SettingsRow title="Dialoge" detail="Sprachsituationen erstellen" icon="chatbubbles-outline" onPress={() => setSection('situations')} />
+          <SettingsRow title="Prüfungsaufgaben" detail="Lese- und Höraufgaben erstellen" icon="ribbon-outline" onPress={() => setSection('exam')} />
+        </View>
+        <ThemedText type="smallBold">Verwaltung</ThemedText>
+        <View style={{ borderRadius: 16, overflow: 'hidden', gap: 1 }}>
+          <SettingsRow title="Anbieter & Schlüssel" detail="Zugänge zentral verwalten" icon="key-outline" onPress={() => setSection('keys')} />
+          <SettingsRow title="Prüfberichte & Diagnose" detail="Qualität und gespeicherte Inhalte" icon="pulse-outline" onPress={() => setSection('reports')} />
+        </View>
+      </> : null}
+      {section === 'keys' ? <ApiKeysCard /> : null}
+      {section === 'reports' ? <><ContentReport revision={reportRevision} /><DiagnosticsCard /></> : null}
+      {exportMessage ? <ThemedText accessibilityLiveRegion="polite" type="small">{exportMessage}</ThemedText> : null}
+      {section === 'situations' ? (
       <GeneratorCard
+        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Sprachsituationen"
-        description="Dialoge werden einmalig erzeugt und lokal gespeichert. Danach funktioniert das Üben ohne Internet und ohne Schlüssel — es gibt bewusst keinen Live-Chat."
+        description="Dialoge einmalig erstellen und lokal zum Üben speichern."
         group="situations"
         choice={generators.situations}
         onChoiceChange={(change) => changeGenerator('situations', change)}
@@ -357,10 +386,13 @@ export default function SettingsScreen() {
         canDelete={Boolean(situations && situations > 0)}
         onFinished={refreshSituations}
       />
+      ) : null}
 
+      {section === 'images' ? (
       <GeneratorCard
+        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Bilder"
-        description="Ein Bild je konkreter Vokabel, einmalig erzeugt und lokal gespeichert — danach offline auf der Karteikarte, ohne Netz und ohne Schlüssel. Abstrakte Wörter, Partikeln und Funktionswörter bekommen bewusst kein Bild: ein Bild zu „nicht“ wäre keine Merkhilfe."
+        description="Ein Bild je konkreter Vokabel. Abstrakte Wörter erhalten kein Bild."
         group="images"
         choice={generators.images}
         onChoiceChange={(change) => changeGenerator('images', change)}
@@ -374,10 +406,13 @@ export default function SettingsScreen() {
         canDelete={Boolean(images && images > 0)}
         onFinished={refreshImages}
       />
+      ) : null}
 
+      {section === 'exam' ? (
       <GeneratorCard
+        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Prüfungsaufgaben"
-        description="Zusätzliche Lese- und Höraufgaben für die Goethe-Zertifikate A1 und A2. Die mitgelieferten Aufgaben bleiben immer erhalten; erzeugt wird nur, was dazukommt. Schreiben und Sprechen werden bewusst nicht erzeugt — dort gäbe es keine geprüfte Musterlösung."
+        description="Zusätzliche Lese- und Höraufgaben für Deutsch A1 und A2. Mitgelieferte Aufgaben bleiben erhalten."
         group="exam"
         choice={generators.exam}
         onChoiceChange={(change) => changeGenerator('exam', change)}
@@ -389,10 +424,13 @@ export default function SettingsScreen() {
         canDelete={Boolean(exams && exams.generated > 0)}
         onFinished={refreshExams}
       />
+      ) : null}
 
+      {section === 'audio' ? (
       <GeneratorCard
+        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Hörclips"
-        description="Eine Aufnahme je Vokabel, Beispielsatz und Gesprächszug, einmalig erzeugt und lokal gespeichert — danach spielt „Anhören“ den Clip statt der Sprachausgabe des Geräts, auch wenn dort gar keine Stimme dieser Sprache installiert ist. Genau darauf laufen auch die Hörübungen. Es sind synthetische Stimmen, keine Muttersprachler-Aufnahmen; die App sagt das beim Abspielen dazu. Ob die Töne stimmen, ist gemessen (AE-31), nicht versprochen."
+        description="Synthetische Hörclips für Wörter, Sätze und Dialoge. Thai-Töne werden automatisch geprüft; das ersetzt keinen Hörtest."
         language={mediaLanguage}
         onLanguageChange={setMediaLanguage}
         group="audio"
@@ -406,27 +444,8 @@ export default function SettingsScreen() {
         canDelete={Boolean(clips && clips.count > 0)}
         onFinished={refreshClips}
       />
+      ) : null}
 
-      <ThemedText type="small" themeColor="textSecondary">
-        Jede Gruppe hat ihren eigenen Anbieter und ihren eigenen Schlüssel. Das
-        ist kein Selbstzweck: Claude erzeugt überhaupt keine Bilder, deshalb
-        stehen dort andere Anbieter zur Wahl als bei Dialogen und
-        Prüfungsaufgaben. Voreingestellt bleibt, was bisher lief — Claude für
-        Text, Stability AI für Bilder. Schlüssel werden nur für
-        Generierungsläufe gebraucht, nie zum Lernen: Wer nichts erzeugt,
-        braucht keinen einzigen.
-      </ThemedText>
-
-      <ThemedText type="small" themeColor="textSecondary">
-        Am 03.09.2026 aus diesem Web-Build gemessen: Claude (mit seinem
-        Sonderheader), Gemini und Stability AI antworten direkt aus dem Browser
-        — jeweils mit einem lesbaren Fehler statt einer CORS-Blockade. ChatGPT
-        war davon ausgenommen (AE-27), hat aber mit der Nachmessung vom
-        08.09.2026 aufgeholt: Preflight und POST mit gültigem Schlüssel
-        kommen mit CORS-Headern durch, OpenAI läuft seither ebenfalls aus
-        dem Browser. Auf dem Gerät (Android/iOS) gibt es CORS nicht, dort
-        gelten diese Einschränkungen alle nicht.
-      </ThemedText>
     </View>
   );
 }
