@@ -47,7 +47,7 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { Platform } from 'react-native';
 
-import { HUB_LANGUAGE, isLanguageCode } from './languages/types';
+import { HUB_LANGUAGE, isLanguageCode, isPairDirection } from './languages/types';
 import { LearnerProfile, loadProfile, setConversationDirection, setLanguage, setReviewSpot } from './profile';
 import { loadAllCardStates } from './repository';
 import { dayKey, loadReviewLog, ReviewDayLog } from './review-log';
@@ -213,12 +213,19 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+/**
+ * SEIT DEN KREUZRICHTUNGEN (Stufe 1) VALIDIEREN KARTEN ÜBER ALLE ZWÖLF
+ * PAARE: `en_to_es` & Co. tragen eigene Kartenzustände, und der Import darf
+ * eine Sicherung eines Kreuz-Lernstands nicht still verlieren. Profil und
+ * Gesprächs-Richtung bleiben bewusst bei `isKnownDirection` (de-geankert) —
+ * sie speichern nur den Bestand.
+ */
 function isValidCard(entry: unknown): boolean {
   if (!isPlainObject(entry)) return false;
   return (
     typeof entry.vocabId === 'string' &&
     entry.vocabId.length > 0 &&
-    isKnownDirection(entry.direction) &&
+    isPairDirection(entry.direction) &&
     isCardState(entry.state) &&
     (entry.difficulty === null || isFiniteNumber(entry.difficulty)) &&
     (entry.stability === null || isFiniteNumber(entry.stability)) &&

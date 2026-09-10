@@ -2,6 +2,7 @@
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
 import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES, vocabularyFor } from '@/data/vocabulary';
 
 import { DAY_MS, NEW_CARDS_PER_SESSION, retrievability } from './fsrs/fsrs';
 import { Direction } from './fsrs/types';
@@ -148,6 +149,78 @@ describe('buildReviewQueue', () => {
 
     expect(await buildReviewQueue('th_to_de', store, T0)).toHaveLength(0);
     expect(await buildReviewQueue('de_to_th', store, T0)).toHaveLength(NEW_CARDS_PER_SESSION);
+  });
+});
+
+// STUFE 1: Kreuzrichtungen koppeln Brückenwort und Zielwort über `concept`.
+// Erwartungswert wird hier UNABHÄNGIG aus den Daten gerechnet (dieselben drei
+// Kopplungsfälle wie im Modul, hier eigenständig notiert), damit der Test
+// nicht dieselbe Annahme wie die Implementierung nur wiederholt.
+const gekoppeltePaare = (von: 'en' | 'es' | 'th', nach: 'en' | 'es' | 'th'): number => {
+  const bruecke = vocabularyFor(von);
+  const ids = new Set(bruecke.map((entry) => entry.id));
+  const concepts = new Set(
+    bruecke.filter((entry) => entry.concept !== undefined).map((entry) => entry.concept!)
+  );
+  return vocabularyFor(nach).filter((entry) =>
+    entry.concept !== undefined
+      ? ids.has(entry.concept) || concepts.has(entry.concept)
+      : concepts.has(entry.id)
+  ).length;
+};
+
+describe('buildReviewQueue für Kreuzrichtungen (Stufe 1)', () => {
+  it('koppelt Brückenwort und Zielwort desselben Begriffs', async () => {
+    const store = await freshStore();
+    const queue = await buildReviewQueue('en_to_es', store, T0);
+
+    expect(queue.length).toBeGreaterThan(0);
+    queue.forEach((item) => {
+      expect(item.entry.language).toBe('es');
+      expect(item.bridgeEntry).not.toBeNull();
+      expect(item.bridgeEntry!.language).toBe('en');
+      // Derselbe Begriff, hier über die GLEICHE concept-ID (en und es zeigen
+      // beide auf denselben Thai-Anker) — nicht ID gegen concept, denn die
+      // en/es-Einträge tragen eigene IDs.
+      expect(item.bridgeEntry!.concept).toBe(item.entry.concept);
+    });
+  });
+
+  it('nimmt nur Einträge MIT Concept-Partner in Karten und Queue auf', async () => {
+    const store = await freshStore();
+    const erwartet = gekoppeltePaare('en', 'es');
+    expect(erwartet).toBeGreaterThan(0);
+    expect(erwartet).toBeLessThan(VOCABULARY_ES.length);
+
+    const { entries, cards } = await ensureCardStates('en_to_es', store, T0);
+    expect(entries).toHaveLength(erwartet);
+    expect(cards).toHaveLength(erwartet);
+    // Und die Queue selbst bleibt im Zweifel hinter dem Sitzungsdeckel.
+    const queue = await buildReviewQueue('en_to_es', store, T0);
+    expect(queue).toHaveLength(Math.min(erwartet, NEW_CARDS_PER_SESSION));
+  });
+
+  it('hält Kreuzkarten vom de-geankerten Bestand getrennt', async () => {
+    const store = await freshStore();
+    await ensureCardStates('en_to_es', store, T0);
+    await ensureCardStates('de_to_es', store, T0);
+
+    const kreuz = await loadCardStatesForDirection('en_to_es', store);
+    const bestand = await loadCardStatesForDirection('de_to_es', store);
+    expect(kreuz).toHaveLength(gekoppeltePaare('en', 'es'));
+    expect(bestand).toHaveLength(VOCABULARY_ES.length);
+    kreuz.forEach((card) => expect(card.direction).toBe('en_to_es'));
+  });
+
+  it('lässt den de-geankerten Bestand unverändert: bridgeEntry bleibt null', async () => {
+    const store = await freshStore();
+    const queue = await buildReviewQueue('th_to_de', store, T0);
+
+    expect(queue).toHaveLength(NEW_CARDS_PER_SESSION);
+    queue.forEach((item) => {
+      expect(item.bridgeEntry).toBeNull();
+      expect(item.entry.language).toBe('th');
+    });
   });
 });
 

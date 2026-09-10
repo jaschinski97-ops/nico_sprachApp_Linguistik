@@ -201,9 +201,68 @@ export function languageOfTargetDirection(direction: TargetDirection): TargetLan
   return (from === HUB_LANGUAGE ? to : from) as TargetLanguage;
 }
 
-/** Bringt die lernende Person in dieser Richtung die Zielsprache hervor? */
-export function producesTargetLanguage(direction: Direction): boolean {
+/**
+ * Bringt die lernende Person in dieser Richtung die Zielsprache hervor?
+ *
+ * SEIT DEN KREUZRICHTUNGEN AUF `PairDirection`: Auch `en_to_es` produziert
+ * seine Zielseite — die Frage ist paarsymmetrisch und braucht keinen
+ * de-geankerten Vertrag mehr.
+ */
+export function producesTargetLanguage(direction: PairDirection): boolean {
   return direction.startsWith(`${HUB_LANGUAGE}_to_`);
+}
+
+/**
+ * Lernrichtung über **allen** zwölf Paaren des Kanons — der de-geankerte
+ * Bestand (`Direction`) plus die sechs Kreuzrichtungen (th↔en, th↔es, en↔es).
+ *
+ * WARUM EIN ZWEITER NAME NEBEN `PairId`: Es ist dieselbe Zeichenketten-Union
+ * — `PairId` benennt die Paare des Sprachmodells, `PairDirection` die
+ * Lernrichtung einer Sitzung darüber. Zwei Namen für denselben Typ halten die
+ * Aufrufstellen lesbar („welche Richtung wird gelernt“ statt „welches Paar
+ * ist gemeint“) und kosten nichts.
+ *
+ * WARUM `Direction` NICHT ANGEFASST WIRD: Gespeicherte Profile, Backups und
+ * Kartenschlüssel tragen de-geankerte Richtungen; `Direction` bleibt deren
+ * Vertrag. Nur Ziele, Auswahl und Queue (`goals.ts`, `review-session.ts`,
+ * Lern-Reiter) arbeiten mit `PairDirection` — jeder `Direction`-Wert ist
+ * zugleich ein gültiger `PairDirection`, Bestandsaufrufer ändern sich nicht.
+ */
+export type PairDirection = PairId;
+
+/** Schmale Laufzeitprüfung, passend zum Typ `PairDirection`. */
+export function isPairDirection(value: unknown): value is PairDirection {
+  return isPairId(value);
+}
+
+/**
+ * Die Sprache, deren Stoff eine Richtung abfragt — die „Paarsprache“.
+ *
+ * BEI DEN DE-GEANKERTEN RICHTUNGEN EXAKT `languageOfDirection` (Bestand):
+ * `de_to_th` und `th_to_de` gehören beide zum Thai-Pool. Bei Kreuzrichtungen
+ * die **Ziel**-Seite: `en_to_es` fragt den spanischen Pool ab, denn gelernt
+ * wird Spanisch — der Englisch-Wortlaut auf der Vorderseite ist nur die
+ * Brücke (Stufe 1: Queue über `concept` gekoppelt, siehe `review-session`).
+ */
+export function pairLanguageOf(direction: PairDirection): LanguageCode {
+  const [from, , to] = direction.split('_');
+  if (from === HUB_LANGUAGE) return to as LanguageCode;
+  if (to === HUB_LANGUAGE) return from as LanguageCode;
+  // Kreuzrichtung: die Zielseite trägt den Stoff.
+  return to as LanguageCode;
+}
+
+/**
+ * Ist das eine de-geankerte Richtung (Deutsch auf einer Seite)?
+ *
+ * ALS TYPE PREDICATE, DAMIT BESTANDSSTELLEN SCHMALER LAUFEN: Wo ein
+ * `PairDirection`-Wert weiter an `Direction`-Verträge geht (Profil,
+ * Backup, `directionLabel`), beweist dieser Test die Zuteilung statt zu
+ * casten. Kreuzrichtungen fallen hier bewusst durch — sie sind Neuland
+ * (Stufe 1), nicht Bestand.
+ */
+export function isDeAnchored(value: PairDirection): value is Direction {
+  return value.startsWith(`${HUB_LANGUAGE}_to_`) || value.endsWith(`_to_${HUB_LANGUAGE}`);
 }
 
 /**

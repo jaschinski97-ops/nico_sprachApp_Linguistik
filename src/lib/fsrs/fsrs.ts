@@ -13,7 +13,7 @@
  * eigenen Lerndaten optimieren.
  */
 
-import { CardState, Direction, FSRSCardState, Rating } from './types';
+import { CardState, FSRSCardState, PairDirection, Rating } from './types';
 
 export const DAY_MS = 86_400_000;
 
@@ -40,7 +40,10 @@ function clamp(value: number, lo: number, hi: number): number {
 /** Frische Karte, sofort fällig, noch ohne Stabilität oder Difficulty. */
 export function createCardState(
   vocabId: string,
-  direction: Direction,
+  // SEIT DEN KREUZRICHTUNGEN AUF `PairDirection` (reine Weitung): Auch für
+  // `en_to_es` & Co. entsteht hier die erste Karte; de-geankerte Aufrufer
+  // übergeben weiter ihre `Direction`-Werte.
+  direction: PairDirection,
   now: number = Date.now()
 ): FSRSCardState {
   return {

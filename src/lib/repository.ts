@@ -21,7 +21,7 @@ import { getImageBlobStore } from './images/blob-store';
 import { ImageBlobStore, VocabImage } from './images/types';
 
 import { createCardState, reviewCard } from './fsrs/fsrs';
-import { cardKey, Direction, FSRSCardState, Rating } from './fsrs/types';
+import { cardKey, Direction, FSRSCardState, PairDirection, Rating } from './fsrs/types';
 import { packImageUri } from './packs/loader';
 import type { PackLanguage } from './packs/manifest';
 import { recordReviewInTransaction } from './review-log';
@@ -82,7 +82,10 @@ export async function loadVocabEntry(
 
 export async function loadCardState(
   vocabId: string,
-  direction: Direction,
+  // SEIT DEN KREUZRICHTUNGEN AUF `PairDirection` (reine Weitung): Auch
+  // Kreuzkarten werden hier gesucht; Bestandsaufrufer übergeben weiter
+  // `Direction`-Werte und verhalten sich unverändert.
+  direction: PairDirection,
   store?: DataStore
 ): Promise<FSRSCardState | null> {
   const db = store ?? (await getStore());
@@ -96,7 +99,7 @@ export async function loadCardState(
  */
 export async function loadOrCreateCardState(
   vocabId: string,
-  direction: Direction,
+  direction: PairDirection,
   store?: DataStore,
   now: number = Date.now()
 ): Promise<FSRSCardState> {
@@ -153,7 +156,9 @@ export async function rateCard(
 }
 
 export async function loadCardStatesForDirection(
-  direction: Direction,
+  // SEIT DEN KREUZRICHTUNGEN AUF `PairDirection`: Die Sitzungs-
+  // zusammenstellung (`review-session`) lädt auch `en_to_es` & Co.
+  direction: PairDirection,
   store?: DataStore
 ): Promise<FSRSCardState[]> {
   const all = await loadAllCardStates(store);

@@ -1,4 +1,4 @@
-import { Direction } from '../languages/types';
+import { Direction, PairDirection } from '../languages/types';
 
 /**
  * Lernrichtung. Bewusst zwei getrennte Karten pro Vokabel, nicht ein Flip.
@@ -9,6 +9,17 @@ import { Direction } from '../languages/types';
  * gespeicherte Kartenschluessel muessen deshalb NICHT angefasst werden.
  */
 export type { Direction };
+
+/**
+ * Kartenzustände tragen seit den Kreuzrichtungen (Stufe 1) alle
+ * `PairDirection`-Werte — auch `en_to_es` & Co. haben je Vokabel eine eigene
+ * Karte (`vocabId:direction`).
+ *
+ * WARUM REINE WEITUNG: `Direction` ist in `PairDirection` enthalten, jeder
+ * bestehende Leser vergleicht weiter gegen de-geankerte Literale und bleibt
+ * unverändert. Gespeicherte Schlüssel sehen identisch aus wie vorher.
+ */
+export type { PairDirection };
 
 /**
  * Bewertung nach dem Aufdecken einer Karte.
@@ -28,7 +39,8 @@ export type CardState = 'new' | 'learning' | 'review' | 'mastered';
 
 export type FSRSCardState = {
   vocabId: string;
-  direction: Direction;
+  /** Werte aus allen zwölf Paaren — siehe `PairDirection`. */
+  direction: PairDirection;
   state: CardState;
   /** 1..10; `null`, solange die Karte noch nie bewertet wurde. */
   difficulty: number | null;
@@ -43,6 +55,6 @@ export type FSRSCardState = {
 };
 
 /** Zusammengesetzter Schlüssel einer Karte: eine Vokabel je Richtung. */
-export function cardKey(vocabId: string, direction: Direction): string {
+export function cardKey(vocabId: string, direction: PairDirection): string {
   return `${vocabId}:${direction}`;
 }

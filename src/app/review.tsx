@@ -17,10 +17,21 @@ import { WritingRunner } from '@/components/writing-runner';
 import { Spacing, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
-import { Direction, Rating } from '@/lib/fsrs/types';
+import { Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { goalEndonym, goalLanguage, LERNZIELE, zielFuerDirection } from '@/lib/languages/goals';
-import { isLanguageCode, languageOfDirection } from '@/lib/languages/types';
+import {
+  goalEndonym,
+  goalLanguage,
+  zielFuerDirection,
+  zieleFuerBruecke,
+  type Lernziel,
+} from '@/lib/languages/goals';
+import {
+  isDeAnchored,
+  isPairDirection,
+  pairLanguageOf,
+  type PairDirection,
+} from '@/lib/languages/types';
 import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
 import { rateCard } from '@/lib/repository';
 import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
@@ -75,19 +86,14 @@ type Mode = 'cards' | DrillId | 'speaking' | 'writing' | 'dictation' | SentenceM
 /**
  * Ist das eine Richtung, die es wirklich gibt?
  *
- * SEIT PHASE 16 AUS DEM SPRACHMODELL STATT ALS ZWEI LITERALE. Vorher stand
- * hier `value === 'de_to_th' || value === 'th_to_de'`; ein Aufruf mit
- * `?direction=de_to_es` waere still auf die Richtungsauswahl zurueckgefallen.
+ * SEIT STUFE 1 ÜBER `isPairDirection`: Der Lern-Reiter validiert alle zwölf
+ * Paare — Kreuzziele (etwa „Spanisch“ hinter `en_to_es`) sind über Adressen
+ * und gemerkte Wahlen genauso erreichbar wie die de-geankerten Bestands-
+ * richtungen. Die Laufzeitprüfung sitzt im Sprachmodell (`lib/languages/
+ * types`), damit Profil, Auswahl und Screens dieselbe Schranke lesen.
  */
-function isDirection(value: unknown): value is Direction {
-  if (typeof value !== 'string') return false;
-  const teile = value.split('_to_');
-  if (teile.length !== 2) return false;
-  const [von, nach] = teile;
-  return (von === 'de' && isLanguageCode(nach)) || (nach === 'de' && isLanguageCode(von));
-}
 
-function parseMode(value: unknown, direction: Direction): Mode {
+function parseMode(value: unknown, direction: PairDirection): Mode {
   // SEIT AE-66 ÜBER DIE MODESLISTE STATT EINZELNER LITERALE: `?mode=shadowing`
   // ist für jede Richtung gültig oder fällt auf Karteikarten zurück — auch ein
   // gemerkter Modus einer alten Richtung kann nie einen ungültigen Zustand
@@ -96,8 +102,24 @@ function parseMode(value: unknown, direction: Direction): Mode {
   return typeof value === 'string' && modes.includes(value) ? (value as Mode) : 'cards';
 }
 
-function modesForDirection(direction: Direction): Mode[] {
-  const language = languageOfDirection(direction);
+/**
+ * Die Übungsliste einer Richtung.
+ *
+ * SEIT STUFE 1 ÜBER `pairLanguageOf`: Kreuzrichtungen erben die Übungsstoffe
+ * ihrer ZIELsprache — `en_to_es` bekommt die Betonungsübungen, `es_to_th` die
+ * Ton-Übungen; die deutschen Grammatikübungen bleiben an `_to_de` gebunden
+ * (`drillsForDirection`). Das Diktat bleibt in jeder Liste: Sein Stoff ist
+ * je Sprache geregelt, und der Runner zeigt für Sprachen ohne Stoff den
+ * ehrlichen Leerzustand.
+ *
+ * FREIES SCHREIBEN BLEIBT DE-GEANKERT: Die Schreibaufgabe fragt den
+ * deutschen Bestand ab (`lib/writing/prompt` zeigt das deutsche Stichwort
+ * bzw. die deutsche Zielform). Für Kreuzrichtungen wäre der „Anker“ das
+ * falsche Brückenwort — statt falscher Aufgaben bleibt die Übung draußen,
+ * bis die Schreib-Schicht Brückenanker kennt (Stufe 2).
+ */
+function modesForDirection(direction: PairDirection): Mode[] {
+  const language = pairLanguageOf(direction);
   return [
     'cards',
     ...drillsForDirection(direction),
@@ -116,9 +138,9 @@ function modesForDirection(direction: Direction): Mode[] {
     // holt sich Stoff, Bewertung und Karte selbst und zeigt für Sprachen
     // ohne Diktatstoff einen ehrlichen Leerzustand.
     'dictation',
-    // Freies Schreiben gibt es in BEIDEN Richtungen - anders als die
-    // Auswahluebungen, die je Richtung verschieden sind (Phase 14).
-    'writing',
+    // Freies Schreiben nur im de-geankerten Bestand (siehe oben) — bisher in
+    // BEIDEN Richtungen, anders als die Auswahlübungen (Phase 14).
+    ...(isDeAnchored(direction) ? (['writing'] as const) : []),
   ];
 }
 
@@ -151,7 +173,7 @@ function modeLabel(mode: Mode, t: (key: TranslationKey) => string): string {
  */
 type Group = { label: TranslationKey; modes: Mode[] };
 
-function groupsForDirection(direction: Direction): Group[] {
+function groupsForDirection(direction: PairDirection): Group[] {
   const modes = modesForDirection(direction);
   const drills = modes.filter((mode): mode is DrillId => mode in DRILL_META);
   const bySkill = (skill: 'hoeren' | 'lesen' | 'grammatik') =>
@@ -203,13 +225,20 @@ export default function ReviewScreen() {
    * Nicht als „Standard", den man setzt und wieder aufhebt, sondern als
    * Lesezeichen: Beim nächsten Öffnen steht man wieder dort. Zurückgesetzt
    * wird es nur durch eine Zielwahl — die Geste „von vorn".
+   *
+   * SEIT STUFE 1 NUR DE-GEANKERTE STÄNDE: Das Profil bleibt auf dem
+   * Bestandstyp `Direction` (Profile/Backups laufen unverändert weiter);
+   * Kreuzrichtungen merken sich deshalb noch nicht dauerhaft und starten
+   * nach einem Neustart ehrlich in der Zielauswahl. `null` räumt weiterhin
+   * auf — auch bei gemischten Ständen.
    */
-  const remember = useCallback(async (direction: Direction | null, mode?: Mode) => {
+  const remember = useCallback(async (direction: PairDirection | null, mode?: Mode) => {
+    if (direction !== null && !isDeAnchored(direction)) return;
     setProfile(await setReviewSpot(direction ? { direction, mode: mode ?? 'cards' } : null));
   }, []);
 
   const open = useCallback(
-    (direction: Direction, mode: Mode) => {
+    (direction: PairDirection, mode: Mode) => {
       router.setParams({
         direction,
         mode: mode === 'cards' ? undefined : mode,
@@ -239,7 +268,7 @@ export default function ReviewScreen() {
     );
   }
 
-  const explicit = isDirection(params.direction) ? params.direction : null;
+  const explicit = isPairDirection(params.direction) ? params.direction : null;
   // `waehlen=1` setzt der Wechsel-Knopf: die Auswahl muss auch dann erreichbar
   // bleiben, wenn ein Stand gemerkt ist - sonst waere er eine Einbahnstrasse.
   // `profile.review` traegt nur einen Stand der AKTUELLEN Sprache; darum
@@ -251,11 +280,12 @@ export default function ReviewScreen() {
       <DirectionPicker
         profile={profile}
         onPick={(picked) => {
-          // Lernziel gewählt: Die Sprache gehört zum Ziel — `setLanguage`
+          // Lernziel gewählt: Die Paarsprache gehört zum Ziel — `setLanguage`
           // wirft den alten gemerkten Stand weg, und der ReviewBody-Effekt
-          // schreibt die neue Richtung sofort als Lesezeichen zurück. Ein
-          // Speicherfehler ändert nichts an der Adresse, die schon stimmt.
-          void setLanguage(languageOfDirection(picked))
+          // schreibt die neue Richtung sofort als Lesezeichen zurück (bei
+          // Kreuzzielen verzichtet `remember` bewusst auf das Schreiben).
+          // Ein Speicherfehler ändert nichts an der Adresse, die schon stimmt.
+          void setLanguage(pairLanguageOf(picked))
             .then(setProfile)
             .catch(() => {});
           router.setParams({ direction: picked, waehlen: undefined, mode: undefined });
@@ -309,11 +339,11 @@ function ReviewBody({
   onRemember,
   onExit,
 }: {
-  direction: Direction;
+  direction: PairDirection;
   mode: Mode;
-  onOpen: (direction: Direction, mode: Mode) => void;
+  onOpen: (direction: PairDirection, mode: Mode) => void;
   onSwitch: () => void;
-  onRemember: (direction: Direction | null, mode?: Mode) => void;
+  onRemember: (direction: PairDirection | null, mode?: Mode) => void;
   onExit: () => void;
 }) {
   const { t, languageName, uiLanguage } = useLocale();
@@ -333,7 +363,11 @@ function ReviewBody({
     <ScreenScaffold
       title={t('tabs.learn')}
       subtitle={
-        ziel ? languageName(goalLanguage(ziel)) : directionLabel(direction, uiLanguage)
+        ziel
+          ? languageName(goalLanguage(ziel))
+          : isDeAnchored(direction)
+            ? directionLabel(direction, uiLanguage)
+            : direction
       }>
       <ModeBar direction={direction} mode={mode} onPick={(picked) => onOpen(direction, picked)} />
 
@@ -342,22 +376,26 @@ function ReviewBody({
       {mode === 'cards' ? (
         <CardSession direction={direction} key={direction} />
       ) : mode === 'writing' ? (
-        <WritingRunner
-          key={`${direction}:writing`}
-          direction={direction}
-          onExit={onExit}
-        />
+        // Freies Schreiben ist de-geankert (siehe `modesForDirection`); der
+        // Typvertrag des Runners bleibt beim Bestand.
+        isDeAnchored(direction) ? (
+          <WritingRunner
+            key={`${direction}:writing`}
+            direction={direction}
+            onExit={onExit}
+          />
+        ) : null
       ) : mode === 'dictation' ? (
         <DictationRunner
           key={`${direction}:dictation`}
-          language={languageOfDirection(direction)}
+          language={pairLanguageOf(direction)}
           onExit={onExit}
         />
       ) : mode === 'shadowing' || mode === 'sentenceRepeat' || mode === 'sentenceListening' ? (
         <SentenceRunner
           key={`${direction}:${mode}`}
           mode={mode}
-          language={languageOfDirection(direction)}
+          language={pairLanguageOf(direction)}
           onExit={onExit}
         />
       ) : mode === 'speaking' ? (
@@ -368,34 +406,36 @@ function ReviewBody({
       ) : (
         <DrillRunner
           drill={mode}
-          language={languageOfDirection(direction)}
+          language={pairLanguageOf(direction)}
           key={`${direction}:${mode}`}
           onExit={onExit}
         />
       )}
 
       {/* Je Sprache ihr eigenes Merkmal: Toene bei Thai, Betonungsregel bei
-          Spanisch, Schriftstueck-Gruppen bei Englisch (Phase 18). */}
-      <FeatureLegend language={languageOfDirection(direction)} compact />
+          Spanisch, Schriftstueck-Gruppen bei Englisch (Phase 18) — bei Kreuz-
+          richtungen das Merkmal der ZIELsprache. */}
+      <FeatureLegend language={pairLanguageOf(direction)} compact />
     </ScreenScaffold>
   );
 }
 
 /**
- * Ohne gewähltes Ziel wird nicht gelernt. Die VIER Lernziele (Nutzer-
- * entscheidung 2026-09-10) ersetzen die alte Richtungsliste „Deutsch → Thai“ /
- * „Thai → Deutsch“: Deutsch steht als eigene Wahl darunter, und jede Wahl
- * setzt Sprache UND Richtung in einem (`lib/languages/goals`). Die internen
- * Abläufe bleiben richtungsbasiert — nur die Beschriftung zeigt das Ziel.
+ * Ohne gewähltes Ziel wird nicht gelernt. Die Lernziele folgen seit Stufe 1
+ * der BRÜCKE (Nutzerentscheidung 2026-09-10): Die App-/Oberflächensprache
+ * bestimmt, welche Ziele hier stehen — Brücke Deutsch sieht die vier
+ * Bestandsziele, Brücken th/en/es ihre jeweiligen Paare. Jede Wahl setzt
+ * Sprache UND Richtung in einem (`lib/languages/goals`); die internen Abläufe
+ * bleiben richtungsbasiert — nur die Beschriftung zeigt das Ziel.
  */
 function DirectionPicker({
   profile,
   onPick,
 }: {
   profile: LearnerProfile;
-  onPick: (direction: Direction) => void;
+  onPick: (direction: PairDirection) => void;
 }) {
-  const { t, languageName } = useLocale();
+  const { t, languageName, uiLanguage } = useLocale();
   // Hervorheben, wo man gerade war — der gemerkte Stand, nicht der (hier
   // leere) Adressparameter. Gehört die gemerkte Richtung zu keinem Ziel
   // (en_to_de/es_to_de), bleibt keine Zeile hervorgehoben.
@@ -403,7 +443,7 @@ function DirectionPicker({
   return (
     <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.pickSubtitle')}>
       <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')}>
-        {LERNZIELE.map((ziel) => {
+        {zieleFuerBruecke(uiLanguage).map((ziel: Lernziel) => {
           const name = languageName(goalLanguage(ziel));
           const endonym = goalEndonym(ziel);
           const active = ziel.direction === aktuell;
@@ -421,8 +461,15 @@ function DirectionPicker({
                 <ThemedText type="default" style={styles.goalName}>
                   {name}
                 </ThemedText>
-                {/* Bei Deutsch fallen Name und Endonym zusammen. */}
-                {endonym !== name ? (
+                {/* Brücken-Lernziel: die Quellsprache nennen — „Thai (von
+                    Deutsch)“ unterscheidet sich als Ziel nur durch ihre
+                    Herkunft. Sonst gilt wie bisher: Bei Deutsch fallen Name
+                    und Endonym zusammen. */}
+                {ziel.vonSprache ? (
+                  <ThemedText type="small" themeColor="textSecondary">
+                    {t('goal.fromSource', { language: languageName(ziel.vonSprache) })}
+                  </ThemedText>
+                ) : endonym !== name ? (
                   <ThemedText type="small" themeColor="textSecondary">
                     {endonym}
                   </ThemedText>
@@ -443,7 +490,7 @@ function ModeBar({
   mode,
   onPick,
 }: {
-  direction: Direction;
+  direction: PairDirection;
   mode: Mode;
   onPick: (mode: Mode) => void;
 }) {
@@ -532,7 +579,7 @@ function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
   );
 }
 
-function CardSession({ direction }: { direction: Direction }) {
+function CardSession({ direction }: { direction: PairDirection }) {
   const { t } = useLocale();
   const colors = useTheme();
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
@@ -643,7 +690,12 @@ function CardSession({ direction }: { direction: Direction }) {
         </ThemedText>
       </View>
 
-      <Flashcard entry={item.entry} direction={direction} revealed={revealed} />
+      <Flashcard
+        entry={item.entry}
+        direction={direction}
+        revealed={revealed}
+        bridgeEntry={item.bridgeEntry}
+      />
 
       {revealed ? (
         <View style={styles.ratings}>

@@ -14,7 +14,7 @@ import { VocabImageView } from './vocab-image';
 import { Spacing } from '@/constants/theme';
 import { VocabEntry } from '@/data/vocabulary';
 import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
-import { Direction } from '@/lib/fsrs/types';
+import { PairDirection } from '@/lib/fsrs/types';
 import { useLocale } from '@/lib/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -42,17 +42,64 @@ import { useTheme } from '@/hooks/use-theme';
 
 type Props = {
   entry: VocabEntry;
-  direction: Direction;
+  /**
+   * SEIT DEN KREUZRICHTUNGEN AUF `PairDirection`: Die Karte liest nur die
+   * Form der Richtung (`_to_de`); alle de-geankerten Werte verhalten sich
+   * exakt wie bisher.
+   */
+  direction: PairDirection;
   revealed: boolean;
+  /**
+   * SEIT STUFE 1 (Kreuzrichtungen): die Brückenseite der Karte — der Eintrag
+   * der App-/Brückensprache mit demselben `concept`. Nur gesetzt, wenn die
+   * Richtung KEIN Deutsch auf einer Seite hat (th↔en, th↔es, en↔es); die
+   * de-geankerten Karten bleiben ohne diesen Zweig und verhalten sich exakt
+   * wie bisher.
+   */
+  bridgeEntry?: VocabEntry | null;
 };
 
-export function Flashcard({ entry, direction, revealed }: Props) {
+export function Flashcard({ entry, direction, revealed, bridgeEntry = null }: Props) {
   // SEIT PHASE 16 AUS DER RICHTUNG STATT AUS EINEM LITERAL: Vorher stand hier
   // `direction === 'th_to_de'`, und eine spanische Karte waere in beiden
   // Richtungen gleich gelaufen.
   const { t, languageName } = useLocale();
   const targetFirst = direction.endsWith('_to_de');
   const anhoeren = t('flashcard.listenA11y', { language: languageName(entry.language) });
+
+  if (bridgeEntry) {
+    // KREUZRICHTUNG: Vorderseite das Brückenwort — STUMM (Nutzerentscheidung
+    // 10.09., Audio nur in der Sprache, die man LERNT). Das Bild darf schon
+    // vorne stehen wie bei de_to_th: es zeigt den BEGRIFF, nie die Zielform.
+    // Die Rückseite bringt ausschließlich Zielsprache (+ Umschrift/Lautschrift
+    // über `TermWord`); deutsche Erklärtexte und die deutsche Gerätestimme
+    // haben hier nichts verloren, denn die Brücke ist ja keine deutsche.
+    return (
+      <ThemedView type="backgroundElement" style={styles.card}>
+        <View style={styles.frontBridge}>
+          <ThemedText
+            maxFontSizeMultiplier={2}
+            style={[styles.bridgeLarge, { lineHeight: displayLineHeight(34, 2, 1.35) }]}>
+            {bridgeEntry.term}
+          </ThemedText>
+        </View>
+        <VocabImageView entry={entry} />
+        {revealed ? (
+          <>
+            <TermWord entry={entry} />
+            <SpeakButton
+              label={anhoeren}
+              text={entry.term}
+              language={entry.language}
+              assetId={entry.audioAssetId}
+            />
+          </>
+        ) : null}
+        {revealed ? <ExampleBlock entry={entry} /> : null}
+        {revealed ? <VerificationBadge entry={entry} /> : null}
+      </ThemedView>
+    );
+  }
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -295,6 +342,15 @@ const styles = StyleSheet.create({
   },
   frontThai: {
     paddingVertical: Spacing.three,
+  },
+  /** Vorderseite der Kreuzkarte: das Brückenwort in Displaygröße (stumm). */
+  frontBridge: {
+    paddingVertical: Spacing.three,
+  },
+  bridgeLarge: {
+    fontSize: 34,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   germanBlock: {
     alignItems: 'center',

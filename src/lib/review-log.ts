@@ -1,4 +1,4 @@
-import { Direction, Rating } from './fsrs/types';
+import { PairDirection, Rating } from './fsrs/types';
 import { DataStore, getStore, withStoreLock } from './storage';
 
 /**
@@ -27,7 +27,12 @@ export type ReviewDayLog = {
   /** Kalendertag in lokaler Zeit, `YYYY-MM-DD`. */
   date: string;
   total: number;
-  byDirection: Partial<Record<Direction, number>>;
+  /**
+   * Schlüssel sind Richtungen über allen zwölf Paaren (`PairDirection`) —
+   * reine Weitung: alte Dokumente tragen nur de-geankerte Schlüssel und
+   * bleiben unverändert lesbar, Kreuzrichtungen zählen hier ab Stufe 1 mit.
+   */
+  byDirection: Partial<Record<PairDirection, number>>;
   /** Schlüssel sind die Bewertungen 1..4 als Zeichenkette. */
   byRating: Record<string, number>;
   /**
@@ -95,7 +100,10 @@ export function dayIsActive(entry: ReviewDayLog): boolean {
  * den letzten Stand jeweils überschreiben — gezählt wäre am Ende eine.
  */
 export async function recordReview(
-  direction: Direction,
+  // SEIT DEN KREUZRICHTUNGEN AUF `PairDirection` (reine Weitung) — `rateCard`
+  // reicht die Richtung der Karte durch, und die kann jetzt auch `en_to_es`
+  // sein. De-geankerte Werte verhalten sich exakt wie bisher.
+  direction: PairDirection,
   rating: Rating,
   at: number,
   store?: DataStore
@@ -111,7 +119,7 @@ export async function recordReview(
  * gehaltene Sperre ruft, macht die Serialisierung wieder wirkungslos.
  */
 export async function recordReviewInTransaction(
-  direction: Direction,
+  direction: PairDirection,
   rating: Rating,
   at: number,
   db: DataStore

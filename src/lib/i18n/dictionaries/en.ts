@@ -33,6 +33,9 @@ const en: Partial<Record<TranslationKey, string>> = {
 
   'picker.chooseA11y': 'Choose language',
   'picker.goalDeutschDetail': '{{count}} words, from Thai into German',
+  // Bridge-learning goal: the „(from X)“ part — learning the bridge itself
+  // from another language (goals.ts, vonSprache).
+  'goal.fromSource': 'from {{language}}',
 
   'dashboard.cta': 'Practise {{direction}}',
 
@@ -61,7 +64,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'feature.tones': 'Tones',
   'feature.stress': 'Stress',
   'feature.pronunciation': 'Pronunciation',
-  'feature.gender': 'Gender',
 
   'flashcard.listenA11y': 'Listen to {{language}}',
   'flashcard.listenGermanA11y': 'Listen to German',
@@ -204,7 +206,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'settings.development': 'Development',
   'settings.studioDevOnly': 'The developer studio belongs to the development build only — it is not part of the installed app.',
   'settings.studioOrigin': 'This window is running outside the studio port. Open the development build on localhost:8081 to generate content.',
-  'settings.materialTitle': 'Your learning material',
   'settings.materialCount': '{{count}} words · Thai, English and Spanish',
   'settings.materialBody':
     'Learning material belongs to the app. New words, dialogs and exercises arrive with app updates. Your learning progress stays on this device.',
@@ -239,8 +240,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   /* ---------- Shared pieces of the exercise runners ---------- */
   'common.back': 'Back',
   'common.next': 'Next',
-  'common.cancel': 'Cancel',
-  'common.failed': 'That failed: {{message}}',
 
   /* ---------- Exercises (drill-runner; round strings shared by runners) ---------- */
   'drill.loadFailedTitle': 'Exercise could not be loaded',
@@ -447,14 +446,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'sentence.correct': 'Correct.',
   'sentence.meant': 'What was meant: {{answer}}',
 
-  /* ---------- Word with marking (term-word) ---------- */
-  'term.stressed': 'stressed: {{syllable}}',
-
-  /* ---------- Source badge (verification-badge) ---------- */
-  'verification.a11y': 'Show note on the source situation',
-  'verification.label': 'Meaning not source-verified',
-  'verification.noNote': 'No further note recorded.',
-
   /* ---------- Diagnostics (diagnostics-card) ---------- */
   'diagnostics.title': 'Diagnostics',
   'diagnostics.body':
@@ -464,111 +455,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'diagnostics.backends': 'Data store: {{data}} · image store: {{images}} · clip store: {{clips}}',
   'diagnostics.loading': 'Loading …',
 
-  /* ---------- Measured tone contour (measured-tone-contour) ---------- */
-  'contour.measuredA11y': 'Measured tone contour in relative semitones: {{points}}',
-
-  /* ---------- Vocabulary image (vocab-image) ---------- */
-  'vocabImage.a11y': 'Image for {{word}}',
-
-  /* ---------- API keys (api-keys-card, debug) ---------- */
-  'apikeys.title': 'API keys (debug)',
-  'apikeys.body':
-    'Three fields for the content workflow: choose a provider, type the key, save. The choice applies to the associated generator groups; in the web studio you can still choose differently per run.',
-  'apikeys.labelText': '1 · Text',
-  'apikeys.labelAudio': '2 · Audio',
-  'apikeys.labelImages': '3 · Images',
-  'apikeys.textHint':
-    'Produces vocabulary texts, sentences and conversation situations (generator groups “language situations” and “exam content”).',
-  'apikeys.audioHint':
-    'Adds audio to vocabulary, sentences and practice dialogues. After each clip the pitch check runs automatically; rejected clips are not saved.',
-  'apikeys.imagesHint': 'Produces the vocabulary images.',
-  'apikeys.providerSet': '{{capability}}: provider {{provider}} set for {{count}} group(s).',
-  'apikeys.keySaved': '{{capability}}: key for {{provider}} saved.',
-  'apikeys.keyCleared': '{{capability}}: key for {{provider}} deleted.',
-  'apikeys.emptyField': 'The field is empty — use “{{action}}” to remove a key.',
-  'apikeys.badKey': 'This does not look like a key: at least 20 characters, no spaces.',
-  'apikeys.storedPlaceholder': 'saved — type again to replace',
-  'apikeys.save': 'Save key',
-  'apikeys.delete': 'Delete',
-  'apikeys.modeSecure':
-    'Keys are stored encrypted on this device (Keychain/Keystore) and survive restarts. They are never shipped with the app.',
-  'apikeys.modeSession':
-    'This environment has no secure storage — keys stay in memory only for this session and are gone after reloading. That is intentional (AE-10).',
-  'apikeys.modeChecking': 'Checking storage …',
-
   /* ---------- Generator card (generator-card, debug) ---------- */
-  'generator.badKey': 'This does not look like a key (too short or with spaces).',
-  'generator.keySaved': 'Key applied.',
-  'generator.keyCleared': 'Key deleted.',
-  'generator.needKey': 'Enter an API key first.',
-  'generator.deleted': 'Stock deleted.',
-  'generator.language': 'Language',
-  'generator.languageFor': 'Language for {{what}}',
-  'generator.languageNote':
-    'Everything is always produced for exactly one language. What has already been produced stays — a second run for another language takes nothing away.',
-  'generator.provider': 'Provider',
-  'generator.providerFor': 'Provider for {{what}}',
-  'generator.keySource': '{{label}}: key from {{source}}.',
-  'generator.keySourceVia': '{{label}} comes from {{vendor}}; key from {{source}}.',
-  'generator.providersAudio':
-    'Only providers with speech output can be chosen — Claude and Stability AI have none.',
-  'generator.providersImages':
-    'Only providers that produce images can be chosen — Claude cannot produce images, Stability AI no text.',
-  'generator.providersText':
-    'Only providers that produce text can be chosen — Claude cannot produce images, Stability AI no text.',
-  'generator.model': 'Model',
-  'generator.modelFor': 'Model name for {{what}}',
-  'generator.modelNote':
-    'Free text, deliberately unchecked: model names change too often to hard-code them in the app. Leave empty to take “{{placeholder}}”. {{geminiNote}}',
-  'generator.modelNoteGemini':
-    'With Gemini, a typo in the name cannot be distinguished from the wrong key — the API reports both as “API key not valid” (measured, AE-26).',
-  'generator.voice': 'Voice',
-  'generator.genderFor': 'Voice type for {{what}}',
-  'generator.female': 'Female',
-  'generator.male': 'Male',
-  'generator.genderGoogle':
-    'Google does not name the gender of its voices on the Gemini page, but in the “Voice options” table of the Cloud Text-to-Speech documentation — the same thirty names, retrieved {{date}}. The buttons set a documented voice of that type; the field below takes any other.',
-  'generator.genderUnknown':
-    '{{vendor}} gives no information about the gender of its voices (retrieved {{date}}). A “female/male” choice would be a guess here, so there are only the names.',
-  'generator.voiceFor': 'Voice for {{what}}',
-  'generator.voiceChosen': '{{voice}}: {{description}}.',
-  'generator.voiceEmpty': 'Leave empty to take “{{placeholder}}”.',
-  'generator.voiceSynthetic':
-    'All voices are synthetic, no native-speaker recordings — which one hits the Thai tones was measured (AE-31), not promised.',
-  'generator.keyFor': 'API key for {{vendor}}',
-  'generator.storedPlaceholder': 'saved — type again to replace',
-  'generator.modeSecure':
-    'Stored encrypted on the device (Keychain/Keystore) and survives restarts. Each provider has its own place — switching here deletes no other key.',
-  'generator.modeSession':
-    'The browser has no secure storage — the key stays in memory only for this session and is gone after reloading. That is intentional (AE-10).',
-  'generator.saveKey': 'Apply key',
-  'generator.delete': 'Delete',
-  'generator.scope': 'Scope',
-  'generator.scopeFor': 'Scope for {{what}}',
-  'generator.stop': 'Stop',
-  'generator.start': 'Start',
-  'generator.estimateTitle': '{{count}} provider calls · {{provider}} · {{model}}',
-  'generator.deliveryTitle': 'Delivery preview for {{total}} planned clips',
-  'generator.deliveryStats':
-    '{{toneCheckable}} Thai clips tone-checkable · {{technicalOnly}} clips only technically checkable · {{unchecked}} Thai clips delivered unchecked · {{excluded}} excluded',
-  'generator.deliveryNote':
-    'At most {{passable}} of {{total}} clips ({{percent}} %) can pass. The actual pass rate is only known after the tone and integrity checks; it can be lower. The costs apply to the missing generations, including clips excluded later.',
-  'generator.costInputA11y': 'Estimated total cost in USD',
-  'generator.costPlaceholder': 'Total estimate USD',
-  'generator.cost': 'Estimated cost: {{usd}} USD',
-  'generator.confirmCost': 'Confirm cost and start the run',
-  'generator.showErrors': 'Show {{count}} failures',
-  'generator.confirmDelete': 'Really delete everything?',
-  'generator.progress': '{{processed}} / {{total}}{{status}}',
-  'generator.progressHalted': ' — stopped',
-  'generator.progressDone': ' — done',
-  'generator.countOk': 'Generated',
-  'generator.countFailed': 'Failed',
-  'generator.countSkipped': 'Skipped',
-  'generator.tonePassed': 'Tone passed',
-  'generator.toneRejected': 'Tone rejected',
-  'generator.toneUnchecked': 'Tone unchecked',
-  'generator.current': 'current: {{item}}',
 };
 
 export default en;

@@ -3,7 +3,7 @@ import { Tone } from '@/constants/tones';
 import { SpeechLanguage } from '../audio';
 import { Direction } from '../fsrs/types';
 import { drillsForDirectionViaFeature } from '../languages/feature';
-import { HUB_LANGUAGE, TargetDirection, TargetLanguage } from '../languages/types';
+import { HUB_LANGUAGE, PairDirection, TargetLanguage } from '../languages/types';
 import { DerivationStep } from '../reading/syllable';
 
 /**
@@ -199,8 +199,12 @@ export const SKILL_LABELS: Record<DrillMeta['skill'], string> = {
  * und nicht zu Thai allein; sobald Englisch oder Spanisch Inhalte haben, sind
  * sie dort ohne weiteres Zutun verfügbar. Die Ton-Übungen dagegen sind das
  * Thai-**Merkmal** und hängen an der Sprache (AE-44).
+ *
+ * SEIT DEN KREUZRICHTUNGEN AUF `PairDirection` (reine Weitung): Kreuzpaare
+ * erben in `drillsForDirectionViaFeature` die Merkmalsübungen ihrer
+ * Zielsprache; de-geankerte Aufrufer verhalten sich unverändert.
  */
-export function drillsForDirection(direction: TargetDirection): DrillId[] {
+export function drillsForDirection(direction: PairDirection): DrillId[] {
   return drillsForDirectionViaFeature(direction);
 }
 

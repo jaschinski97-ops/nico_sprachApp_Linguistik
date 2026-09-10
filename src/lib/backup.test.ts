@@ -241,8 +241,15 @@ describe('validateBackupDocument', () => {
 
   it('lehnt unbekannte Richtungen in Karten ab', () => {
     const doc = validDocument();
-    doc.data.cards[0].direction = 'th_to_en';
+    // SEIT STUFE 1 GÜLTIG, NICHT MEHR UNBEKANNT: `th_to_en` ist eine der
+    // sechs Kreuzrichtungen und trägt eigene Karten — der Import muss sie
+    // akzeptieren, sonst verlöre eine Sicherung den Kreuz-Lernstand. Abge-
+    // lehnt wird weiter, was kein Kanon-Paar ist (hier: Französisch, seit
+    // dem Kern-4-Entscheid entfernt, und das Selbstpaar).
+    doc.data.cards[0].direction = 'th_to_fr';
     expect(validateBackupDocument(doc).ok).toBe(false);
+    doc.data.cards[0].direction = 'en_to_es';
+    expect(validateBackupDocument(doc).ok).toBe(true);
   });
 
   it('lehnt beschädigte Protokolltage ab', () => {

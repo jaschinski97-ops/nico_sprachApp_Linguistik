@@ -50,3 +50,46 @@ export function useDirectionSummaries(language: LanguageCode, enabled = true): D
 
   return { summaries, error };
 }
+
+/**
+ * Richtungs-Zahlen für MEHRERE Paarsprachen — seit Stufe 1 die Quelle der
+ * Fällig-Badges auf der Übersicht.
+ *
+ * WARUM MEHRERE: Die Zielliste hängt an der Brücke (App-Sprache), ihre Ziele
+ * verteilen sich auf bis zu drei Paarsprachen. Nur die aktuelle zu laden
+ * ließe Kreuz-Zeilen dauerhaft ohne Badge — jeder Sprung zwischen Zielen
+ * würde neue Ladevorgänge auslösen. Höchstens drei Paarsprachen bedeuten
+ * höchstens drei Lesevorgänge; geladen wird parallel, und solange nicht alle
+ * da sind, gilt weiter die Ehrlichkeitsregel: kein Badge, keine geratene
+ * Zahl. `useDirectionSummaries` bleibt für einzelne Sprachen erhalten.
+ */
+export function useDirectionSummariesForLanguages(
+  languages: readonly LanguageCode[],
+  enabled = true
+): DirectionSummaries {
+  const [summaries, setSummaries] = useState<DirectionSummary[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  // Effekt am Sprach-Satz, nicht am Array identität ausrichten — die Liste
+  // wird bei jedem Render neu gebaut.
+  const sprachenSchluessel = languages.join('|');
+
+  useEffect(() => {
+    if (!enabled) return;
+    let cancelled = false;
+    setSummaries(null);
+    setError(null);
+    const liste = sprachenSchluessel.split('|') as LanguageCode[];
+    Promise.all(liste.map((language) => summarizeAllDirections(language)))
+      .then((gestapelt) => {
+        if (!cancelled) setSummaries(gestapelt.flat());
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sprachenSchluessel, enabled]);
+
+  return { summaries, error };
+}

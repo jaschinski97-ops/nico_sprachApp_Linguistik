@@ -5,6 +5,7 @@ import { DrillId } from '../drills/types';
 import { LANGUAGES } from './registry';
 import {
   languageOfTargetDirection,
+  PairDirection,
   SyllableAnnotation,
   TargetDirection,
   TargetLanguage,
@@ -123,14 +124,18 @@ export function featureFor(entry: VocabEntry): LanguageFeatureRuntime {
  * bekommt die Merkmalsübungen der Zielsprache; hat die Sprache noch keine,
  * ist die Liste leer statt falsch gefüllt.
  *
- * SEIT DEM PAARMATRIX-START AUF `TargetDirection`: Die französischen
- * Richtungen sind hier willkommen; `directionLabel`
- * und der App-Bestand bleiben auf `Direction` und damit auf den
- * ausgelieferten Paaren.
+ * SEIT DEN KREUZRICHTUNGEN AUF `PairDirection`: Eine Kreuzrichtung erbt die
+ * Merkmalsübungen ihrer **Ziel**-Sprache — `en_to_es` übt die spanische
+ * Betonung, `es_to_th` die Thai-Töne. Die Übungen fragen den Stoff der
+ * Zielsprache ab und hängen nicht an der Brücke; nur die de-geankerten
+ * Regeln (`_to_de`) bleiben beim Bestand.
  */
-export function drillsForDirectionViaFeature(direction: TargetDirection): DrillId[] {
+export function drillsForDirectionViaFeature(direction: PairDirection): DrillId[] {
   if (direction.endsWith('_to_de')) return ['article', 'verbForms'];
-  const language = languageOfTargetDirection(direction);
+  // Nach dem `_to_de`-Frühabgang ist die Zielseite typbedingt nie `de` —
+  // `PairDirection` schließt Selbstpaare aus, also bleibt th/en/es. Die
+  // Verengung dokumentiert genau das; zur Laufzeit prüft nichts nach.
+  const language = languageOfTargetDirection(direction as TargetDirection);
   // Ein entschiedenes Merkmal ist noch kein gebautes. Solange
   // `implemented: false` steht, gibt es hier keine Uebung - lieber eine
   // leere Liste als eine Uebung ohne Stoff (Pflicht 5 aus Phase 15).

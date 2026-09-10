@@ -7,9 +7,19 @@ import { Spacing } from '@/constants/theme';
 import { TONE_KEYS } from '@/constants/tones';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { goalEndonym, goalLanguage, LERNZIELE } from '@/lib/languages/goals';
+import {
+  goalEndonym,
+  goalLanguage,
+  wortschatzFuerZiel,
+  zieleFuerBruecke,
+  type Lernziel,
+} from '@/lib/languages/goals';
 import { languageOf } from '@/lib/languages/registry';
-import { Direction, LanguageCode } from '@/lib/languages/types';
+import {
+  isDeAnchored,
+  LanguageCode,
+  PairDirection,
+} from '@/lib/languages/types';
 import { DirectionSummary } from '@/lib/review-session';
 
 /**
@@ -31,15 +41,20 @@ function featureKey(code: LanguageCode): TranslationKey {
  * Die Auswahl als LERNZIELE statt als Richtungen (Nutzerentscheidung
  * 2026-09-10, wörtlich: „Ich wollte dieses ‚Deutsch → Thai‘ und
  * ‚Thai → Deutsch‘ weghaben. Deutsch muss noch als eigene Sprache eingefügt
- * werden.“): Vier Zeilen — Thai, Englisch, Spanisch, Deutsch — hinter denen
- * intern jeweils eine Richtung steht (`lib/languages/goals`).
+ * werden.“).
  *
- * EHRLICH BEI DEN ZAHLEN: Die Fällig-Badges kommen aus `useDirectionSummaries`
- * und decken nur die beiden Richtungen der aktuellen Paarsprache ab — Zeilen
- * fremder Paarsprachen stehen bewusst ohne Zahl, solange nichts geladen ist,
- * wird keine behauptet. Die Wortzahl des Deutsch-Ziels ist der Thai-Pool: Es
- * gibt keinen eigenen deutschen Grundstoff, die Richtung fragt Thai-Wörter auf
- * Deutsch ab.
+ * SEIT STUFE 1 JE BRÜCKE: Die Zeilen kommen aus `zieleFuerBruecke` — die
+ * App-/Oberflächensprache bestimmt die Liste. Brücke Deutsch sieht die vier
+ * Bestandsziele wie vorher; Brücken th/en/es sehen ihre Paare, Kreuzziele
+ * inklusive. Brücken-Lernziele („Thai (von Deutsch)“) tragen den
+ * `goal.fromSource`-Baustein statt des Endonyms als zweite Zeile.
+ *
+ * EHRLICH BEI DEN ZAHLEN: Die Fällig-Badges kommen aus den geladenen
+ * Summaries (Übersicht lädt ALLE Paarsprachen der Brücke) und erscheinen nur,
+ * wo die Zahl wirklich da ist — niemals geraten. Die Wortzahl zählt bei
+ * de-geankerten Zielen den Pool, bei Kreuzzielen nur die concept-gekoppelten
+ * Paare (`wortschatzFuerZiel`) — kein Eintrag ohne Brückenseite wird
+ * mitversprochen.
  *
  * Bauart wie bisher (UI-Review 2026-09-09): aktives Ziel als abgerundete
  * Fläche, die übrigen als offene Zeilen mit Trennlinie.
@@ -51,24 +66,25 @@ export function LanguagePicker({
   due,
 }: {
   selected: LanguageCode;
-  /** Gemerkte Richtung des Profils — bei Thai entscheidet sie, WELCHES der beiden Ziele (Thai/Deutsch) aktiv ist. */
-  selectedDirection: Direction | null;
+  /** Gemerkte Richtung des Profils — entscheidet mit, WELCHES Ziel der Paarsprache aktiv ist. */
+  selectedDirection: PairDirection | null;
   /** Wählt ein Ziel; die Richtung trägt Sprache und Lesezeichen zugleich. Navigation passiert bewusst NICHT hier. */
-  onSelect: (direction: Direction) => void;
-  /** Geladene Fälligkeitszahlen der aktuellen Paarsprache; `null`, solange nichts geladen ist. */
+  onSelect: (direction: PairDirection) => void;
+  /** Geladene Fälligkeitszahlen der Brücke; `null`, solange nichts geladen ist. */
   due: readonly DirectionSummary[] | null;
 }) {
   const toneColor = useToneColor();
   const theme = useTheme();
-  const { t, languageName } = useLocale();
+  const { t, languageName, uiLanguage } = useLocale();
 
   const fälligJeRichtung = new Map(
     (due ?? []).map((summary) => [summary.direction, summary.due])
   );
-  // Aktives Ziel: die gemerkte Richtung, wenn sie zur gewählten Sprache
-  // gehört, sonst das erste Ziel dieser Sprache — Thai hat zwei Ziele, darum
-  // reicht die Sprache allein nicht als „aktuell“.
-  const zieleDerSprache = LERNZIELE.filter((ziel) => ziel.language === selected);
+  // Aktives Ziel: die gemerkte Richtung, wenn sie zur gewählten Paar-Sprache
+  // gehört, sonst das erste Ziel dieser Sprache — Thai hat mehrere Ziele,
+  // darum reicht die Sprache allein nicht als „aktuell“.
+  const ziele = zieleFuerBruecke(uiLanguage);
+  const zieleDerSprache = ziele.filter((ziel) => ziel.language === selected);
   const aktiveRichtung =
     selectedDirection && zieleDerSprache.some((ziel) => ziel.direction === selectedDirection)
       ? selectedDirection
@@ -76,16 +92,16 @@ export function LanguagePicker({
 
   return (
     <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')}>
-      {LERNZIELE.map((ziel, index) => {
+      {ziele.map((ziel: Lernziel, index: number) => {
         const name = languageName(goalLanguage(ziel));
         const endonym = goalEndonym(ziel);
         const gelehrteSprache = goalLanguage(ziel);
-        const wortschatz = languageOf(ziel.language).entryCount;
+        const wortschatz = wortschatzFuerZiel(ziel);
         const fällig = fälligJeRichtung.get(ziel.direction);
         const active = ziel.direction === aktiveRichtung;
         // Haarlinien nur zwischen offenen Zeilen: Die aktive Zeile ist eine
         // Fläche, und an ihren Kanten wäre die Trennlinie doppelt.
-        const previous = index > 0 ? LERNZIELE[index - 1] : null;
+        const previous = index > 0 ? ziele[index - 1] : null;
         const previousActive = previous !== null && previous.direction === aktiveRichtung;
         const showHairline = index > 0 && !active && !previousActive;
 
@@ -99,6 +115,9 @@ export function LanguagePicker({
                 t('dashboard.cta', { direction: name }),
                 fällig !== undefined ? t('home.dueBadge', { count: fällig }) : null,
                 t('home.vocabCount', { count: wortschatz }),
+                ziel.vonSprache !== undefined
+                  ? t('goal.fromSource', { language: languageName(ziel.vonSprache) })
+                  : null,
                 gelehrteSprache !== 'de' ? languageOf(gelehrteSprache).challenge : null,
                 gelehrteSprache !== 'de' ? t(featureKey(gelehrteSprache)) : null,
               ]
@@ -115,17 +134,22 @@ export function LanguagePicker({
             <ThemedText type="default" style={[styles.name, styles.shrink]}>
               {name}
             </ThemedText>
-            {/* Bei Deutsch fallen Name und Endonym in eines zusammen — doppelt
-                gelesen stört nur. */}
-            {endonym !== name ? (
+            {/* Brücken-Lernziel: die Quellsprache nennen. Sonst wie bisher —
+                bei Deutsch fallen Name und Endonym in eines zusammen. */}
+            {ziel.vonSprache !== undefined ? (
+              <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
+                {t('goal.fromSource', { language: languageName(ziel.vonSprache) })}
+              </ThemedText>
+            ) : endonym !== name ? (
               <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
                 {endonym}
               </ThemedText>
             ) : null}
 
-            {/* Tonpunkte nur, wenn das Ziel Thai PRODUZIERT (de_to_th) — das
-                Merkmal hängt an der hervorgebrachten Sprache, nicht an der
-                Paar-Sprache: th_to_de produziert Deutsch, also keine Punkte. */}
+            {/* Tonpunkte nur, wenn das Ziel Thai PRODUZIERT — das Merkmal
+                hängt an der hervorgebrachten Sprache, nicht an der Paar-
+                Sprache: th_to_de produziert Deutsch, also keine Punkte;
+                en_to_th produziert Thai, also Punkte. */}
             {gelehrteSprache === 'th' ? (
               <View
                 style={styles.dots}
@@ -139,9 +163,10 @@ export function LanguagePicker({
             ) : null}
 
             <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
-              {gelehrteSprache === 'de'
+              {gelehrteSprache === 'de' && isDeAnchored(ziel.direction)
                 ? // Ehrlich, woher der Bestand kommt: Deutsch hat keinen eigenen
-                  // Grundstoff, die Richtung fragt den Thai-Pool auf Deutsch ab.
+                  // Grundstoff, die Richtung fragt den Pool der Paarsprache auf
+                  // Deutsch ab.
                   t('picker.goalDeutschDetail', { count: wortschatz })
                 : t('home.vocabCount', { count: wortschatz })}
             </ThemedText>

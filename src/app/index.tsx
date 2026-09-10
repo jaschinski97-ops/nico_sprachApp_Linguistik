@@ -2,7 +2,7 @@ import { Link } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useDirectionSummaries } from '@/components/direction-dashboard';
+import { useDirectionSummariesForLanguages } from '@/components/direction-dashboard';
 import { FeatureLegend } from '@/components/feature-legend';
 import { LanguagePicker } from '@/components/language-picker';
 import { ScreenScaffold } from '@/components/screen-scaffold';
@@ -14,8 +14,14 @@ import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
+import { zieleFuerBruecke } from '@/lib/languages/goals';
 import { languageOf } from '@/lib/languages/registry';
-import { Direction, languageOfDirection } from '@/lib/languages/types';
+import {
+  isDeAnchored,
+  pairLanguageOf,
+  type LanguageCode,
+  type PairDirection,
+} from '@/lib/languages/types';
 import { setReviewSpot } from '@/lib/profile';
 import { migrateStore } from '@/lib/storage/migration';
 
@@ -38,29 +44,47 @@ import { migrateStore } from '@/lib/storage/migration';
  */
 export default function DashboardScreen() {
   const { language, profile, chooseLanguage } = useLearnerLanguage();
-  const { t, systemLanguage, languageName } = useLocale();
+  const { t, systemLanguage, languageName, uiLanguage } = useLocale();
   const theme = useTheme();
   const definition = languageOf(language);
-  const due = useDirectionSummaries(language);
-  const totalDue = due.summaries?.reduce((sum, item) => sum + item.due, 0) ?? null;
+  // SEIT STUFE 1 FOLGT DIE ZIELLISTE DER BRÜCKE (App-/Oberflächensprache):
+  // Brücke Deutsch sieht die vier Bestandsziele, Brücken th/en/es ihre
+  // jeweiligen Paare — inklusive Kreuzzielen mit concept-gekoppeltem Stoff.
+  const ziele = zieleFuerBruecke(uiLanguage);
+  // Höchstens drei Paarsprachen — also höchstens drei Store-Lesevorgänge für
+  // ALLE Fällig-Badges der Brücke (Entscheidung: einmal je Paarsprache laden
+  // statt nur der aktuellen, damit Kreuz-Zeilen nicht ewig ohne Badge stehen).
+  const paarsprachen = [...new Set(ziele.map((ziel) => ziel.language))] as LanguageCode[];
+  const due = useDirectionSummariesForLanguages(paarsprachen);
+  // Der CTA zählt wie bisher NUR die de-geankerten Richtungen der aktuellen
+  // Lernsprache — „Weiter lernen“ öffnet genau deren Sitzung, nicht die
+  // Kreuzziele der Brücke.
+  const totalDue =
+    due.summaries
+      ?.filter((item) => isDeAnchored(item.direction) && pairLanguageOf(item.direction) === language)
+      .reduce((sum, item) => sum + item.due, 0) ?? null;
   // Lokale Wahl schlägt das Profil: Sie steht sofort fest, während das
   // Lesezeichen noch geschrieben wird — sonst spränge die Markierung des
   // Deutsch-Ziels (gleiche Profil-Sprache wie Thai) kurz zurück.
-  const [wahlRichtung, setWahlRichtung] = useState<Direction | null>(null);
+  const [wahlRichtung, setWahlRichtung] = useState<PairDirection | null>(null);
   const selectedDirection = wahlRichtung ?? profile?.review?.direction ?? null;
 
   /**
-   * Lernziel gewählt: Sprache UND Richtung in einem. Reihenfolge ist
+   * Lernziel gewählt: Paarsprache UND Richtung in einem. Reihenfolge ist
    * Bedeutung — `setLanguage` wirft den gemerkten Stand bewusst weg (Geste
    * „von vorn“), erst danach darf die neue Richtung als Lesezeichen
-   * (`review` spot) geschrieben werden. Fehler werden geschluckt; navigiert
-   * wird wie bisher nicht hier, sondern über den CTA.
+   * (`review` spot) geschrieben werden — bei Kreuzzielen verzichtet das
+   * Schreiben bewusst darauf, das Profil trägt nur de-geankerte Stände.
+   * Fehler werden geschluckt; navigiert wird wie bisher nicht hier, sondern
+   * über den CTA.
    */
   const chooseGoal = useCallback(
-    (direction: Direction) => {
+    (direction: PairDirection) => {
       setWahlRichtung(direction);
-      void chooseLanguage(languageOfDirection(direction))
-        .then(() => setReviewSpot({ direction, mode: 'cards' }))
+      void chooseLanguage(pairLanguageOf(direction))
+        .then(() => {
+          if (isDeAnchored(direction)) return setReviewSpot({ direction, mode: 'cards' });
+        })
         .catch(() => {});
     },
     [chooseLanguage]

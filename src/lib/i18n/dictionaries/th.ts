@@ -35,6 +35,8 @@ const th: Partial<Record<TranslationKey, string>> = {
 
   'picker.chooseA11y': 'เลือกภาษา',
   'picker.goalDeutschDetail': 'คำศัพท์ {{count}} คำ (ไทย→เยอรมัน)',
+  // เป้าหมายการเรียนภาษาสะพาน: ส่วน „จาก X“ — เรียนภาษาสะพานจากภาษาอื่น (goals.ts, vonSprache)
+  'goal.fromSource': 'จาก{{language}}',
 
   'dashboard.cta': 'ฝึก{{direction}}',
 
@@ -63,7 +65,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'feature.tones': 'วรรณยุกต์',
   'feature.stress': 'การเน้นพยางค์',
   'feature.pronunciation': 'การออกเสียง',
-  'feature.gender': 'เพศของคำนาม',
 
   'flashcard.listenA11y': 'ฟัง{{language}}',
   'flashcard.listenGermanA11y': 'ฟังภาษาเยอรมัน',
@@ -202,7 +203,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'settings.development': 'การพัฒนา',
   'settings.studioDevOnly': 'สตูดิโอนักพัฒนามีเฉพาะในตัวบิลด์สำหรับพัฒนา ไม่รวมอยู่ในแอปที่ติดตั้ง',
   'settings.studioOrigin': 'หน้าต่างนี้ไม่ได้เปิดที่พอร์ตของสตูดิโอ เปิดตัวบิลด์พัฒนาที่ localhost:8081 เพื่อสร้างเนื้อหา',
-  'settings.materialTitle': 'เนื้อหาการเรียนของคุณ',
   'settings.materialCount': '{{count}} คำ · ไทย อังกฤษ และสเปน',
   'settings.materialBody':
     'เนื้อหาการเรียนมาพร้อมแอป คำ บทสนทนา และแบบฝึกใหม่มาพร้อมอัปเดต ความก้าวหน้าอยู่บนเครื่องนี้',
@@ -235,8 +235,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   /* ---------- ส่วนร่วมของรันเนอร์แบบฝึก ---------- */
   'common.back': 'ย้อนกลับ',
   'common.next': 'ถัดไป',
-  'common.cancel': 'ยกเลิก',
-  'common.failed': 'เกิดข้อผิดพลาด: {{message}}',
 
   /* ---------- แบบฝึก (drill-runner; ข้อความรอบที่ใช้ร่วมกัน) ---------- */
   'drill.loadFailedTitle': 'โหลดแบบฝึกไม่สำเร็จ',
@@ -427,14 +425,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'sentence.correct': 'ถูกต้อง',
   'sentence.meant': 'ที่ต้องการคือ: {{answer}}',
 
-  /* ---------- คำพร้อมการกำกับ (term-word) ---------- */
-  'term.stressed': 'พยางค์ที่เน้น: {{syllable}}',
-
-  /* ---------- ป้ายแหล่งอ้างอิง (verification-badge) ---------- */
-  'verification.a11y': 'แสดงหมายเหตุเรื่องแหล่งอ้างอิง',
-  'verification.label': 'ความหมายยังไม่ได้ตรวจกับแหล่งอ้างอิง',
-  'verification.noNote': 'ไม่มีหมายเหตุเพิ่มเติม',
-
   /* ---------- การวินิจฉัยระบบ (diagnostics-card) ---------- */
   'diagnostics.title': 'การวินิจฉัยระบบ',
   'diagnostics.body': 'แสดงว่ามีอะไรเก็บอยู่และเก็บไว้ที่ใด ไม่จำเป็นสำหรับการเรียน — มีประโยชน์เมื่อบางอย่างไม่เป็นไปตามคาด',
@@ -443,105 +433,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'diagnostics.backends': 'ที่เก็บข้อมูล: {{data}} · คลังภาพ: {{images}} · คลังคลิป: {{clips}}',
   'diagnostics.loading': 'กำลังโหลด …',
 
-  /* ---------- เส้นวรรณยุกต์ที่วัดได้ (measured-tone-contour) ---------- */
-  'contour.measuredA11y': 'เส้นวรรณยุกต์ที่วัดได้เป็นเซมิโทนสัมพัทธ์: {{points}}',
-
-  /* ---------- ภาพคำศัพท์ (vocab-image) ---------- */
-  'vocabImage.a11y': 'ภาพของ {{word}}',
-
-  /* ---------- คีย์ API (api-keys-card, ดีบัก) ---------- */
-  'apikeys.title': 'คีย์ API (ดีบัก)',
-  'apikeys.body':
-    'สามช่องสำหรับขั้นตอนผลิตเนื้อหา: เลือกผู้ให้บริการ พิมพ์คีย์ บันทึก การเลือกมีผลกับกลุ่มเจนเนอเรเตอร์ที่เกี่ยวข้อง ในเว็บสตูดิโอยังเลือกต่างจากนี้รายรอบได้',
-  'apikeys.labelText': '1 · ข้อความ',
-  'apikeys.labelAudio': '2 · เสียง',
-  'apikeys.labelImages': '3 · ภาพ',
-  'apikeys.textHint': 'สร้างข้อความคำศัพท์ ประโยค และสถานการณ์บทสนทนา (กลุ่มเจนเนอเรเตอร์ สถานการณ์บทสนทนา และ เนื้อหาสอบ)',
-  'apikeys.audioHint':
-    'ใส่เสียงให้คำศัพท์ ประโยค และบทสนทนาฝึก หลังทำคลิปทุกคลิปจะตรวจความสูงต่ำของเสียงโดยอัตโนมัติ คลิปที่ถูกปฏิเสธจะไม่ถูกบันทึก',
-  'apikeys.imagesHint': 'สร้างภาพประกอบคำศัพท์',
-  'apikeys.providerSet': '{{capability}}: ตั้งผู้ให้บริการ {{provider}} สำหรับ {{count}} กลุ่มแล้ว',
-  'apikeys.keySaved': '{{capability}}: บันทึกคีย์ของ {{provider}} แล้ว',
-  'apikeys.keyCleared': '{{capability}}: ลบคีย์ของ {{provider}} แล้ว',
-  'apikeys.emptyField': 'ช่องนี้ว่างอยู่ — ใช้ „{{action}}“ เพื่อลบคีย์',
-  'apikeys.badKey': 'ข้อความนี้ไม่เหมือนคีย์: ต้องมีอย่างน้อย 20 ตัวอักษรและไม่มีเว้นวรรค',
-  'apikeys.storedPlaceholder': 'บันทึกแล้ว — พิมพ์ใหม่เพื่อแทนที่',
-  'apikeys.save': 'บันทึกคีย์',
-  'apikeys.delete': 'ลบ',
-  'apikeys.modeSecure':
-    'คีย์ถูกเก็บแบบเข้ารหัสในอุปกรณ์นี้ (Keychain/Keystore) และอยู่ทนหลังรีสตาร์ต ไม่มีวันแถมมากับแอป',
-  'apikeys.modeSession':
-    'สภาพแวดล้อมนี้ไม่มีที่เก็บที่ปลอดภัย — คีย์อยู่ในหน่วยความจำเฉพาะเซสชันนี้และหายไปหลังโหลดใหม่ ซึ่งเป็นเจตนา (AE-10)',
-  'apikeys.modeChecking': 'กำลังตรวจสอบที่เก็บ …',
-
   /* ---------- การ์ดเจนเนอเรเตอร์ (generator-card, ดีบัก) ---------- */
-  'generator.badKey': 'ข้อความนี้ไม่เหมือนคีย์ (สั้นเกินไปหรือมีเว้นวรรค)',
-  'generator.keySaved': 'บันทึกคีย์แล้ว',
-  'generator.keyCleared': 'ลบคีย์แล้ว',
-  'generator.needKey': 'ต้องใส่คีย์ API ก่อน',
-  'generator.deleted': 'ลบเนื้อหาที่มีอยู่แล้ว',
-  'generator.language': 'ภาษา',
-  'generator.languageFor': 'ภาษาสำหรับ {{what}}',
-  'generator.languageNote': 'ผลิตสำหรับภาษาเดียวต่อรอบเสมอ สิ่งที่ผลิตแล้วยังอยู่ครบ — การรอบใหม่สำหรับภาษาอื่นไม่ได้ลบอะไร',
-  'generator.provider': 'ผู้ให้บริการ',
-  'generator.providerFor': 'ผู้ให้บริการสำหรับ {{what}}',
-  'generator.keySource': '{{label}}: คีย์จาก {{source}}',
-  'generator.keySourceVia': '{{label}} มาจาก {{vendor}}; คีย์จาก {{source}}',
-  'generator.providersAudio': 'เลือกได้เฉพาะผู้ให้บริการที่มีการอ่านออกเสียง — Claude และ Stability AI ไม่มี',
-  'generator.providersImages': 'เลือกได้เฉพาะผู้ให้บริการที่ผลิตภาพได้ — Claude ผลิตภาพไม่ได้ Stability AI ผลิตข้อความไม่ได้',
-  'generator.providersText': 'เลือกได้เฉพาะผู้ให้บริการที่ผลิตข้อความได้ — Claude ผลิตภาพไม่ได้ Stability AI ผลิตข้อความไม่ได้',
-  'generator.model': 'โมเดล',
-  'generator.modelFor': 'ชื่อโมเดลสำหรับ {{what}}',
-  'generator.modelNote':
-    'ข้อความอิสระ จงใจไม่ตรวจสอบ: ชื่อโมเดลเปลี่ยนบ่อยเกินกว่าจะฝังในแอป ปล่อยว่างเพื่อใช้ „{{placeholder}}“ {{geminiNote}}',
-  'generator.modelNoteGemini':
-    'กับ Gemini พิมพ์ชื่อผิดแยกจากคีย์ผิดไม่ได้ — API รายงานทั้งสองกรณีว่า „API key not valid“ (วัดจริง, AE-26)',
-  'generator.voice': 'เสียง',
-  'generator.genderFor': 'ลักษณะเสียงสำหรับ {{what}}',
-  'generator.female': 'หญิง',
-  'generator.male': 'ชาย',
-  'generator.genderGoogle':
-    'Google ไม่ระบุเพศของเสียงในหน้า Gemini แต่ระบุในตาราง „Voice options“ ของเอกสาร Cloud Text-to-Speech — ชื่อเดียวกันสามสิบชื่อ ดึงข้อมูลเมื่อ {{date}} ปุ่มต่าง ๆ ตั้งเสียงที่มีในเอกสารตามลักษณะนั้น ส่วนช่องด้านล่างใช้เสียงอื่นใดก็ได้',
-  'generator.genderUnknown':
-    '{{vendor}} ไม่ระบุเพศของเสียง (ดึงข้อมูลเมื่อ {{date}}) การเลือก „หญิง/ชาย“ จะเป็นการเดา จึงมีเฉพาะชื่อเสียง',
-  'generator.voiceFor': 'เสียงสำหรับ {{what}}',
-  'generator.voiceChosen': '{{voice}}: {{description}}',
-  'generator.voiceEmpty': 'ปล่อยว่างเพื่อใช้ „{{placeholder}}“',
-  'generator.voiceSynthetic': 'เสียงทั้งหมดเป็นเสียงสังเคราะห์ ไม่ใช่เสียงเจ้าของภาษา — เสียงที่ตรงวรรณยุกต์ไทยได้รับการวัดจริง (AE-31) ไม่ใช่คำสัญญา',
-  'generator.keyFor': 'คีย์ API สำหรับ {{vendor}}',
-  'generator.storedPlaceholder': 'บันทึกแล้ว — พิมพ์ใหม่เพื่อแทนที่',
-  'generator.modeSecure':
-    'เก็บแบบเข้ารหัสในอุปกรณ์ (Keychain/Keystore) และอยู่ทนหลังรีสตาร์ต ผู้ให้บริการแต่ละรายมีที่ของตัวเอง — เปลี่ยนที่นี่ไม่ลบคีย์อื่น',
-  'generator.modeSession':
-    'เบราว์เซอร์ไม่มีที่เก็บที่ปลอดภัย — คีย์อยู่ในหน่วยความจำเฉพาะเซสชันนี้และหายไปหลังโหลดใหม่ ซึ่งเป็นเจตนา (AE-10)',
-  'generator.saveKey': 'ใช้คีย์นี้',
-  'generator.delete': 'ลบ',
-  'generator.scope': 'จำนวน',
-  'generator.scopeFor': 'จำนวนสำหรับ {{what}}',
-  'generator.stop': 'หยุด',
-  'generator.start': 'เริ่ม',
-  'generator.estimateTitle': 'เรียกผู้ให้บริการ {{count}} ครั้ง · {{provider}} · {{model}}',
-  'generator.deliveryTitle': 'ตัวอย่างการส่งมอบสำหรับ {{total}} คลิปที่วางแผนไว้',
-  'generator.deliveryStats':
-    '{{toneCheckable}} คลิปไทยตรวจวรรณยุกต์ได้ · {{technicalOnly}} คลิปตรวจได้เชิงเทคนิคเท่านั้น · {{unchecked}} คลิปไทยส่งมอบโดยยังไม่ตรวจ · {{excluded}} ถูกยกเว้น',
-  'generator.deliveryNote':
-    'ผ่านได้มากที่สุด {{passable}} จาก {{total}} คลิป ({{percent}} %) อัตราผ่านจริงจะรู้หลังตรวจวรรณยุกต์และความสมบูรณ์เท่านั้น อาจต่ำกว่านี้ ค่าใช้จ่ายคิดกับการผลิตที่ยังขาด รวมถึงคลิปที่ถูกยกเว้นภายหลัง',
-  'generator.costInputA11y': 'ต้นทุนรวมโดยประมาณเป็น USD',
-  'generator.costPlaceholder': 'ประมาณการรวม USD',
-  'generator.cost': 'ต้นทุนโดยประมาณ: {{usd}} USD',
-  'generator.confirmCost': 'ยืนยันต้นทุนและเริ่มรอบผลิต',
-  'generator.showErrors': 'แสดง {{count}} รายการที่ล้มเหลว',
-  'generator.confirmDelete': 'ลบทั้งหมดจริงหรือไม่?',
-  'generator.progress': '{{processed}} / {{total}}{{status}}',
-  'generator.progressHalted': ' — หยุดแล้ว',
-  'generator.progressDone': ' — เสร็จแล้ว',
-  'generator.countOk': 'สร้างแล้ว',
-  'generator.countFailed': 'ล้มเหลว',
-  'generator.countSkipped': 'ข้าม',
-  'generator.tonePassed': 'วรรณยุกต์ผ่าน',
-  'generator.toneRejected': 'วรรณยุกต์ถูกปฏิเสธ',
-  'generator.toneUnchecked': 'วรรณยุกต์ไม่ได้ตรวจ',
-  'generator.current': 'กำลังทำ: {{item}}',
 };
 
 export default th;
