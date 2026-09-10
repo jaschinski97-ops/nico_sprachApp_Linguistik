@@ -296,16 +296,6 @@ export default function ExamScreen() {
           ))}
         </>
       )}
-
-      <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">{t('exam.aboutTitle')}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('exam.aboutBody')}
-        </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('exam.aboutGermanOnly')}
-        </ThemedText>
-      </ThemedView>
     </ScreenScaffold>
   );
 }

@@ -36,6 +36,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   // Bridge-learning goal: the „(from X)“ part — learning the bridge itself
   // from another language (goals.ts, vonSprache).
   'goal.fromSource': 'from {{language}}',
+  'goal.deutschDescription': 'German words, from Thai into German — grammar (articles, verb forms) is practised along the way.',
 
   'dashboard.cta': 'Practise {{direction}}',
 
@@ -153,11 +154,6 @@ const en: Partial<Record<TranslationKey, string>> = {
   'exam.noModules':
     'No task available yet for {{level}}. More tasks arrive with app updates.',
   'exam.moduleMinutes': 'about {{minutes}} min',
-  'exam.aboutTitle': 'What this is — and what it is not',
-  'exam.aboutBody':
-    'The structure above comes from the Goethe-Institut. The tasks, by contrast, were written by us; they are neither original tasks nor model sets of the Goethe-Institut. Authentic model sets and practice materials are available from the Goethe-Institut itself.',
-  'exam.aboutGermanOnly':
-    'The Goethe-Institut certifies German. This module is therefore aimed at everyone who learns German — whether their language is Thai, English or Spanish. For the reverse direction (German → Thai) there is a small A1 start modelled on the Goethe format — practice, not an official exam.',
 
   'progress.subtitle': 'Learning history',
   'progress.subtitleLanguage': 'Learning history · {{language}}',

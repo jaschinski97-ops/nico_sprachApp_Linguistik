@@ -35,6 +35,7 @@ const es: Partial<Record<TranslationKey, string>> = {
   // Objetivo del puente: la parte „desde X“ — aprender el propio puente
   // desde otro idioma (goals.ts, vonSprache).
   'goal.fromSource': 'desde {{language}}',
+  'goal.deutschDescription': 'Palabras alemanas, del tailandés al alemán — se practica también la gramática (artículos, formas verbales).',
 
   'dashboard.cta': 'Practicar {{direction}}',
 
@@ -152,11 +153,6 @@ const es: Partial<Record<TranslationKey, string>> = {
   'exam.noModules':
     'Para {{level}} aún no hay tareas. Más tareas llegan con las actualizaciones de la app.',
   'exam.moduleMinutes': 'unos {{minutes}} min',
-  'exam.aboutTitle': 'Qué es esto — y qué no es',
-  'exam.aboutBody':
-    'La estructura de arriba procede del Goethe-Institut. Las tareas, en cambio, están escritas por nosotros: no son tareas originales ni modelos del Goethe-Institut. Modelos auténticos y material de práctica están en el propio Goethe-Institut.',
-  'exam.aboutGermanOnly':
-    'El Goethe-Institut certifica alemán. Por eso este módulo va dirigido a todo el que aprende alemán — su idioma sea tailandés, inglés o español. Para la dirección contraria (alemán → tailandés) hay un pequeño inicio A1 según el esqueleto Goethe — es práctica, no un examen oficial.',
 
   'progress.subtitle': 'Historial de aprendizaje',
   'progress.subtitleLanguage': 'Historial de aprendizaje · {{language}}',

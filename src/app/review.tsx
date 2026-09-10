@@ -12,7 +12,6 @@ import type { SentenceMode } from '@/lib/speaking/sentence-session';
 import { ThemedButton } from '@/components/themed-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { FeatureLegend } from '@/components/feature-legend';
 import { WritingRunner } from '@/components/writing-runner';
 import { Spacing, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -412,10 +411,9 @@ function ReviewBody({
         />
       )}
 
-      {/* Je Sprache ihr eigenes Merkmal: Toene bei Thai, Betonungsregel bei
-          Spanisch, Schriftstueck-Gruppen bei Englisch (Phase 18) — bei Kreuz-
-          richtungen das Merkmal der ZIELsprache. */}
-      <FeatureLegend language={pairLanguageOf(direction)} compact />
+      {/* Die Merkmal-Legende (Tonfarben etc.) ist hier bewusst ENTFERNT
+          (Nutzerentscheidung 10.09.): Die Töne stehen bereits farbig an der
+          Umschrift jeder Karte — der Extra-Kasten wiederholte sie nur. */}
     </ScreenScaffold>
   );
 }
@@ -479,7 +477,8 @@ function DirectionPicker({
           );
         })}
       </View>
-      <FeatureLegend language={profile.language} />
+      {/* Merkmal-Legende ebenfalls entfernt (Nutzerentscheidung 10.09.) —
+          sie erscheint weiterhin auf der Übersicht. */}
     </ScreenScaffold>
   );
 }

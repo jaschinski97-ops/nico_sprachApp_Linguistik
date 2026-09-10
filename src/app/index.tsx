@@ -14,7 +14,7 @@ import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
-import { zieleFuerBruecke } from '@/lib/languages/goals';
+import { zieleFuerBruecke, zielFuerDirection } from '@/lib/languages/goals';
 import { languageOf } from '@/lib/languages/registry';
 import {
   isDeAnchored,
@@ -46,7 +46,6 @@ export default function DashboardScreen() {
   const { language, profile, chooseLanguage } = useLearnerLanguage();
   const { t, systemLanguage, languageName, uiLanguage } = useLocale();
   const theme = useTheme();
-  const definition = languageOf(language);
   // SEIT STUFE 1 FOLGT DIE ZIELLISTE DER BRÜCKE (App-/Oberflächensprache):
   // Brücke Deutsch sieht die vier Bestandsziele, Brücken th/en/es ihre
   // jeweiligen Paare — inklusive Kreuzzielen mit concept-gekoppeltem Stoff.
@@ -68,6 +67,16 @@ export default function DashboardScreen() {
   // Deutsch-Ziels (gleiche Profil-Sprache wie Thai) kurz zurück.
   const [wahlRichtung, setWahlRichtung] = useState<PairDirection | null>(null);
   const selectedDirection = wahlRichtung ?? profile?.review?.direction ?? null;
+
+  // Die Beschreibung unter dem Picker hängt am GEWÄHLTEN Ziel: Beim Deutsch-
+  // Ziel war sonst der Thai-Tontext zu lesen (gleiche Paarsprache, anderes
+  // Ziel — Nutzerhinweis 10.09.). Deutsch hat kein Registry-Merkmal und
+  // bekommt einen eigenen Satz; ohne Wahl gilt das erste Ziel der Brücke.
+  const aktivesZiel =
+    (selectedDirection && zielFuerDirection(selectedDirection)) || ziele[0];
+  const zielBeschreibung = aktivesZiel.direction.endsWith('_to_de')
+    ? t('goal.deutschDescription')
+    : languageOf(pairLanguageOf(aktivesZiel.direction)).feature.description;
 
   /**
    * Lernziel gewählt: Paarsprache UND Richtung in einem. Reihenfolge ist
@@ -148,8 +157,12 @@ export default function DashboardScreen() {
           Bedingung war auf die Toene gemuenzt und schloss die anderen aus. */}
       {featureIsImplemented(language) ? <FeatureLegend language={language} /> : null}
 
+      {/* Die Beschreibung folgt dem GEWÄHLTEN Ziel, nicht der Paarsprache:
+          Beim Deutsch-Ziel stand hier sonst der Thai-Tontext (Nutzerhinweis
+          10.09.). Deutsch hat kein Registry-Merkmal und bekommt einen eigenen
+          Satz; Kreuzziele erben die Beschreibung ihrer Zielsprache. */}
       <ThemedText type="small" themeColor="textSecondary">
-        {definition.feature.description}
+        {zielBeschreibung}
       </ThemedText>
 
       {/* Dezent, ganz unten: welche Sprache das Gerät meldet. Sie ist die

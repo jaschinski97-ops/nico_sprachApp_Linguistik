@@ -44,6 +44,7 @@ const de = {
   // Brücken-Lernziel: der „(von X)“-Anteil — die Brücke selbst von einer
   // anderen Sprache gelernt (goals.ts, vonSprache).
   'goal.fromSource': 'von {{language}}',
+  'goal.deutschDescription': 'Wörter von Thai auf Deutsch — die deutsche Grammatik (Artikel, Stammformen) wird mitgeübt.',
 
   /* ---------- Fällig-Badges der Lernziel-Zeilen (language-picker) ---------- */
   'dashboard.cta': '{{direction}} üben',
@@ -167,11 +168,6 @@ const de = {
   'exam.noModules':
     'Für {{level}} liegt hier noch keine Aufgabe. Weitere Aufgaben kommen mit App-Updates dazu.',
   'exam.moduleMinutes': 'etwa {{minutes}} Min',
-  'exam.aboutTitle': 'Was das hier ist — und was nicht',
-  'exam.aboutBody':
-    'Die Struktur oben stammt vom Goethe-Institut. Die Aufgaben sind dagegen selbst geschrieben und sind keine Originalaufgaben und keine Modellsätze des Goethe-Instituts. Echte Modellsätze und Übungsmaterialien gibt es beim Goethe-Institut selbst.',
-  'exam.aboutGermanOnly':
-    'Das Goethe-Institut zertifiziert Deutsch. Dieses Modul richtet sich deshalb an alle, die Deutsch lernen — gleich, ob ihre Sprache Thai, Englisch oder Spanisch ist. Für die Gegenrichtung (Deutsch → Thai) gibt es einen kleinen A1-Anfang nach dem Goethe-Skelett — eine Übung im Prüfformat, keine offizielle Prüfung.',
 
   /* ---------- Fortschritt (progress.tsx) ---------- */
   'progress.subtitle': 'Lernverlauf',

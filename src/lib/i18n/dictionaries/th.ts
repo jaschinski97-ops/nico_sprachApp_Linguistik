@@ -37,6 +37,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'picker.goalDeutschDetail': 'คำศัพท์ {{count}} คำ (ไทย→เยอรมัน)',
   // เป้าหมายการเรียนภาษาสะพาน: ส่วน „จาก X“ — เรียนภาษาสะพานจากภาษาอื่น (goals.ts, vonSprache)
   'goal.fromSource': 'จาก{{language}}',
+  'goal.deutschDescription': 'คำศัพท์เยอรมันจากภาษาไทย — ฝึกไวยากรณ์เยอรมัน (คำนำหน้านาม รูปกริยา) ไปด้วย',
 
   'dashboard.cta': 'ฝึก{{direction}}',
 
@@ -152,11 +153,6 @@ const th: Partial<Record<TranslationKey, string>> = {
   'exam.filterAll': 'ทั้งหมด',
   'exam.noModules': 'ระดับ {{level}} ยังไม่มีโจทย์ โจทย์เพิ่มมาพร้อมอัปเดต',
   'exam.moduleMinutes': 'ประมาณ {{minutes}} นาที',
-  'exam.aboutTitle': 'นี่คืออะไร — และไม่ใช่อะไร',
-  'exam.aboutBody':
-    'โครงสร้างข้างบนมาจาก Goethe-Institut ส่วนโจทย์เราเขียนเอง ไม่ใช่โจทย์ต้นฉบับหรือชุดตัวอย่างของ Goethe-Institut ชุดต้นฉบับมีที่ Goethe-Institut',
-  'exam.aboutGermanOnly':
-    'Goethe-Institut รับรองภาษาเยอรมัน โมดูลนี้จึงสำหรับผู้เรียนเยอรมันทุกคน — ไม่ว่าภาษาแม่จะเป็นไทย อังกฤษ หรือสเปน สำหรับทิศทางตรงข้าม (เยอรมัน → ไทย) มีชุดเริ่มต้น A1 ตามโครงสร้างแบบ Goethe — เป็นการฝึกตามรูปแบบการสอบ ไม่ใช่การสอบรับรอง',
 
   'progress.subtitle': 'ประวัติการเรียน',
   'progress.subtitleLanguage': 'ประวัติการเรียน · {{language}}',
