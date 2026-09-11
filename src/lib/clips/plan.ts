@@ -125,8 +125,6 @@ export const BYTES_PER_SECOND: Record<ProviderId, number | null> = {
   // Derselbe OpenAI-Weg wie `chatgpt`, nur über den Helper des Studios
   // geleitet — dasselbe mp3, also dieselbe Größenordnung.
   'chatgpt-helper': 6000,
-  claude: null,
-  stability: null,
 };
 
 export function estimateClipSeconds(specs: AudioClipSpec[]): number {

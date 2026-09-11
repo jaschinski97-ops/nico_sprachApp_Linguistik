@@ -11,7 +11,8 @@
       ]
     },
     "types": [
-      "jest"
+      "jest",
+      "node"
     ]
   },
   "exclude": ["node_modules", "build-verification", ".content-studio"],

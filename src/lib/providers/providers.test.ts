@@ -17,7 +17,6 @@ import {
   buildImagePrompt,
   createImageClient,
   IMAGE_ASPECT_RATIO,
-  IMAGE_ENDPOINT,
   IMAGE_FORMAT,
   IMAGE_MODEL,
   NEGATIVE_PROMPT,
@@ -32,8 +31,6 @@ import {
   formatFromMimeType,
   parseGeminiImage,
   parseOpenAiImage,
-  parseStabilityImage,
-  stabilityEndpoint,
   withPromptFallbacks,
 } from './image';
 import {
@@ -55,6 +52,7 @@ import {
 import {
   ImageClient,
   ImageRequest,
+  isProviderId,
   PROVIDER_INFO,
   PROVIDERS,
   providersFor,
@@ -125,10 +123,21 @@ function fakeImageClient() {
 // ---------------------------------------------------------------------------
 
 describe('Fähigkeiten der Anbieter', () => {
-  it('führt genau die drei geforderten Anbieter, den Bestandsanbieter und den Studio-Helper', () => {
+  it('führt genau die zwei Cloud-Anbieter und den Studio-Helper', () => {
+    // NUTZERENTSCHEIDUNG 10.09.: Claude und Stability sind aus der Auswahl
+    // gefallen — die zwei verbliebenen decken Text, Bild und Audio ab.
     // `chatgpt-helper` ist kein Cloud-Anbieter, sondern der lokale Durchgang
     // des Inhaltsstudios (Roadmap v2, Phase 2) — nur für Sprachausgabe.
-    expect([...PROVIDERS]).toEqual(['claude', 'chatgpt', 'chatgpt-helper', 'gemini', 'stability']);
+    expect([...PROVIDERS]).toEqual(['chatgpt', 'chatgpt-helper', 'gemini']);
+  });
+
+  it('kennt die entfernten Anbieter nicht mehr', () => {
+    // Der Test bleibt die Wache: Ein Wiedereinstieg wäre eine bewusste
+    // Entscheidung und müsste diese Zeilen wieder aufschlagen.
+    expect('claude' in PROVIDER_INFO).toBe(false);
+    expect('stability' in PROVIDER_INFO).toBe(false);
+    expect(isProviderId('claude')).toBe(false);
+    expect(isProviderId('stability')).toBe(false);
   });
 
   it('der Helper spricht, aber ohne eigenen Schlüsselbedarf im Gerät', () => {
@@ -141,16 +150,8 @@ describe('Fähigkeiten der Anbieter', () => {
     }
   });
 
-  it('lässt Claude keine Bilder erzeugen', () => {
-    // Anthropic bietet keine Bild-API an - das war schon der Grund, warum
-    // Phase 5 ueberhaupt einen zweiten Anbieter suchen musste (AE-13).
-    expect(PROVIDER_INFO.claude.can.image).toBe(false);
-    expect(providersFor('image').map((info) => info.id)).not.toContain('claude');
-  });
-
-  it('lässt Stability keinen Text erzeugen', () => {
-    expect(PROVIDER_INFO.stability.can.text).toBe(false);
-    expect(providersFor('text').map((info) => info.id)).not.toContain('stability');
+  it('bietet Bilder für beide Cloud-Anbieter an', () => {
+    expect(providersFor('image').map((info) => info.id)).toEqual(['chatgpt', 'gemini']);
   });
 
   it('bietet in jeder Gruppe nur Anbieter an, die die Aufgabe können', () => {
@@ -180,33 +181,27 @@ describe('Fähigkeiten der Anbieter', () => {
     // Die Oberflaeche bietet das gar nicht erst an. Die Sperre liegt trotzdem
     // hier, weil eine gespeicherte Einstellung aus einer aelteren Version
     // eine Kombination tragen kann, die es nicht mehr gibt (AE-25-Muster).
-    expect(() => createImageProvider('claude', 'k', 'm')).toThrow(/keine Bilder/);
-    expect(() => createTextClient('stability', 'k', 'm')).toThrow(/keinen Text/);
+    // Der Helper spricht nur — Text und Bild verweigert er.
+    expect(() => createImageProvider('chatgpt-helper', 'k', 'm')).toThrow(/keine Bilder/);
+    expect(() => createTextClient('chatgpt-helper', 'k', 'm')).toThrow(/keinen Text/);
   });
 });
 
 // ---------------------------------------------------------------------------
 
-describe('Voreinstellungen — der Bestand darf sich nicht still verschieben', () => {
-  it('startet mit Claude für Sprachsituationen und Prüfungsinhalte', () => {
+describe('Voreinstellungen nach der Anbieter-Entfernung (10.09.)', () => {
+  it('startet mit Gemini für Sprachsituationen und Prüfungsinhalte', () => {
+    // Der frühere claude-Default existiert nicht mehr; der Default MUSSTE
+    // wandern — nicht still, sondern als Folge der Nutzerentscheidung.
     expect(defaultChoiceFor('situations')).toEqual({
-      provider: 'claude',
+      provider: 'gemini',
       model: GENERATOR_MODEL,
     });
-    expect(defaultChoiceFor('exam')).toEqual({ provider: 'claude', model: EXAM_GENERATOR_MODEL });
+    expect(defaultChoiceFor('exam')).toEqual({ provider: 'gemini', model: EXAM_GENERATOR_MODEL });
   });
 
-  it('startet mit Stability für Bilder', () => {
-    expect(defaultChoiceFor('images')).toEqual({ provider: 'stability', model: IMAGE_MODEL });
-  });
-
-  it('trifft mit der Voreinstellung genau den in Phase 5 gemessenen Endpunkt', () => {
-    // AE-13 hat diese Adresse gegen die laufende API belegt (401 statt 404).
-    // Waere sie beim Umbau verrutscht, faende es sonst erst der Nutzer heraus.
-    expect(stabilityEndpoint(IMAGE_MODEL)).toBe(
-      'https://api.stability.ai/v2beta/stable-image/generate/core'
-    );
-    expect(IMAGE_ENDPOINT).toBe('https://api.stability.ai/v2beta/stable-image/generate/core');
+  it('startet mit Gemini für Bilder', () => {
+    expect(defaultChoiceFor('images')).toEqual({ provider: 'gemini', model: IMAGE_MODEL });
   });
 });
 
@@ -219,19 +214,19 @@ describe('Einstellungen je Generator-Gruppe', () => {
     const gelesen = await loadGeneratorSettings(store);
 
     expect(gelesen.situations).toEqual({ provider: 'gemini', model: 'gemini-9.9-pro' });
-    // Die anderen Gruppen bleiben unberuehrt - genau darum sind es drei.
-    expect(gelesen.exam.provider).toBe('claude');
-    expect(gelesen.images.provider).toBe('stability');
+    // Die anderen Gruppen bleiben unberuehrt.
+    expect(gelesen.exam.provider).toBe('gemini');
+    expect(gelesen.images.provider).toBe('gemini');
   });
 
   it('zieht beim Anbieterwechsel den Modellnamen mit', async () => {
     const store = new MemoryDataStore();
     await store.init();
 
-    await setGeneratorChoice('exam', { model: 'claude-eigenbau-1' }, store);
+    await setGeneratorChoice('exam', { model: 'gemini-eigenbau-1' }, store);
     const nachher = await setGeneratorProvider('exam', 'chatgpt', store);
 
-    // `claude-eigenbau-1` an OpenAI zu schicken gaebe nur einen Fehlschlag,
+    // `gemini-eigenbau-1` an OpenAI zu schicken gaebe nur einen Fehlschlag,
     // den niemand mit dem Wechsel in Verbindung braechte.
     expect(nachher.exam).toEqual({ provider: 'chatgpt', model: PROVIDER_INFO.chatgpt.modelPlaceholder.text });
   });
@@ -254,10 +249,31 @@ describe('Einstellungen je Generator-Gruppe', () => {
   });
 
   it('verwirft einen Anbieter, der die Aufgabe der Gruppe nicht kann', () => {
-    // Ein gespeichertes „Bilder von Claude" wuerde sonst bei jedem Lauf
+    // Ein gespeichertes „Bilder vom Helper" wuerde sonst bei jedem Lauf
     // scheitern, ohne dass in der Auswahl zu sehen waere, warum.
-    expect(normalizeChoice({ provider: 'claude', model: 'x' }, 'images').provider).toBe('stability');
-    expect(normalizeChoice({ provider: 'stability', model: 'x' }, 'exam').provider).toBe('claude');
+    expect(normalizeChoice({ provider: 'chatgpt-helper', model: 'x' }, 'images').provider).toBe(
+      'gemini'
+    );
+  });
+
+  it('toleriert gespeicherte Staende mit den entfernten Anbietern claude/stability', () => {
+    // NUTZERENTSCHEIDUNG 10.09.: Claude und Stability sind aus der Auswahl
+    // gefallen. Gespeicherte Profile und Backups koennen sie noch nennen —
+    // `normalizeChoice` erkennt sie nicht mehr (isProviderId) und faellt
+    // nachsichtig auf den Gruppen-Default zurueck (AE-25-Muster), statt zu
+    // crashen oder einen toten Anbieter zu starten.
+    expect(normalizeChoice({ provider: 'claude', model: 'claude-opus-5' }, 'situations')).toEqual(
+      defaultChoiceFor('situations')
+    );
+    expect(normalizeChoice({ provider: 'claude', model: 'x' }, 'exam')).toEqual(
+      defaultChoiceFor('exam')
+    );
+    expect(normalizeChoice({ provider: 'stability', model: 'stable-image-core' }, 'images')).toEqual(
+      defaultChoiceFor('images')
+    );
+    expect(normalizeChoice({ provider: 'stability', model: 'x' }, 'audio')).toEqual(
+      defaultChoiceFor('audio')
+    );
   });
 
   it('behandelt ein leeres Modellfeld als „nimm den Vorschlag"', () => {
@@ -276,14 +292,13 @@ describe('Schlüssel je Anbieter (AE-10, jetzt vierfach)', () => {
     resetKeyStorageForTests();
   });
 
-  it('hält vier Schlüssel getrennt', async () => {
-    await saveApiKey('schluessel-fuer-claude-0000', 'claude');
+  it('hält die Schlüssel je Anbieter getrennt', async () => {
+    await saveApiKey('schluessel-fuer-chatgpt-000', 'chatgpt');
     await saveApiKey('schluessel-fuer-gemini-0000', 'gemini');
 
-    expect(await loadApiKey('claude')).toBe('schluessel-fuer-claude-0000');
+    expect(await loadApiKey('chatgpt')).toBe('schluessel-fuer-chatgpt-000');
     expect(await loadApiKey('gemini')).toBe('schluessel-fuer-gemini-0000');
-    expect(await loadApiKey('chatgpt')).toBeNull();
-    expect(await loadApiKey('stability')).toBeNull();
+    expect(await loadApiKey('chatgpt-helper')).toBeNull();
   });
 
   it('löscht beim Wechsel keinen fremden Schlüssel', async () => {
@@ -291,24 +306,18 @@ describe('Schlüssel je Anbieter (AE-10, jetzt vierfach)', () => {
     await clearApiKey('chatgpt');
 
     expect(await loadApiKey('chatgpt')).toBeNull();
-    expect(await loadApiKey('claude')).toBe('geheim-claude-000000');
     expect(await loadApiKey('gemini')).toBe('geheim-gemini-000000');
-    expect(await loadApiKey('stability')).toBe('geheim-stability-000000');
+    expect(await loadApiKey('chatgpt-helper')).toBe('geheim-chatgpt-helper-000000');
   });
 
-  it('legt den Claude-Schlüssel weiter unter dem alten Namen ab', async () => {
-    // Der Ablagename heisst seit Phase 4 `anthropic-api-key` und liegt auf den
-    // Geraeten der Nutzer im Keychain. Ihn zur Sauberkeit umzubenennen, wuerde
-    // einen dort gespeicherten Schluessel unauffindbar machen: die App fragte
-    // kommentarlos erneut danach, und der alte Eintrag bliebe fuer immer
-    // liegen. Genau davor schuetzt dieser Test.
-    await saveApiKey('schluessel-fuer-claude-0000', 'claude');
-    expect(mockSecureStoreInhalt.get('anthropic-api-key')).toBe('schluessel-fuer-claude-0000');
+  it('legt die Schlüssel unter den etablierten Ablagenamen ab', async () => {
+    await saveApiKey('schluessel-fuer-chatgpt-000', 'chatgpt');
+    expect(mockSecureStoreInhalt.get('openai-api-key')).toBe('schluessel-fuer-chatgpt-000');
 
     await saveApiKey('schluessel-fuer-gemini-0000', 'gemini');
     expect([...mockSecureStoreInhalt.keys()].sort()).toEqual([
-      'anthropic-api-key',
       'gemini-api-key',
+      'openai-api-key',
     ]);
   });
 
@@ -441,7 +450,6 @@ describe('Bildanbieter: Antworten lesen', () => {
   });
 
   it('lehnt Bilddaten ab, die kein brauchbares Base64 sind', () => {
-    expect(() => parseStabilityImage({ image: 'kurz!' }, 'webp', 'm')).toThrow(/Base64/);
     expect(() =>
       parseGeminiImage(
         { candidates: [{ content: { parts: [{ inlineData: { mimeType: 'image/png', data: 'kurz!' } }] } }] },
@@ -472,12 +480,6 @@ describe('Bildanbieter: Antworten lesen', () => {
     expect(text).toContain('letters');
     expect(text).toContain('1:1');
     expect(text).toContain('digital-art');
-  });
-
-  it('füllt den Modellnamen bei Stability in den Pfad, ohne ihn zu prüfen', () => {
-    expect(stabilityEndpoint('ultra')).toMatch(/generate\/ultra$/);
-    expect(stabilityEndpoint('stable-image-sd3')).toMatch(/generate\/sd3$/);
-    expect(stabilityEndpoint('  ')).toMatch(/generate\/core$/);
   });
 });
 

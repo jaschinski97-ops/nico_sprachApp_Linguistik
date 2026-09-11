@@ -1,17 +1,12 @@
-import { describeHttpError, describeNetworkFailure, fieldNamesOf, hostOf, postJson } from './http';
+import { fieldNamesOf, postJson } from './http';
 import { ImageClient, ImageRequest, ImageResponse, ProviderId, unsupported } from './types';
 
 /**
  * Die Bildanbieter hinter einer Schnittstelle.
  *
- * DREI SEHR UNTERSCHIEDLICHE GEGENSTELLEN, und der Unterschied ist nicht nur
+ * ZWEI SEHR UNTERSCHIEDLICHE GEGENSTELLEN, und der Unterschied ist nicht nur
  * Formsache:
  *
- * - **Stability** nimmt eine `multipart`-Anfrage entgegen, kennt
- *   `negative_prompt`, `aspect_ratio`, `style_preset` und `output_format` und
- *   prüft all das **vor** der Authentifizierung. Deshalb — und nur deshalb —
- *   ließ sich seine Anfrageform in Phase 5 ohne bezahlten Schlüssel
- *   vollständig belegen (AE-13).
  * - **Gemini** erzeugt Bilder über denselben `generateContent`-Aufruf wie Text
  *   und kennt weder Negativ-Prompt noch Seitenverhältnis als Feld; beides muss
  *   in den Prompt. Das Format bestimmt das Modell und nennt es im `mimeType`.
@@ -19,9 +14,12 @@ import { ImageClient, ImageRequest, ImageResponse, ProviderId, unsupported } fro
  *   Negativ-Prompt und beschreibt die Größe in Pixeln statt als Verhältnis.
  *
  * Was ein Anbieter nicht als Feld kennt, wird an den Prompt gehängt statt
- * stillschweigend fallen gelassen — sonst hieße „kein Text im Bild" bei zwei
- * von drei Anbietern gar nichts, und AE-15 hält fest, warum genau diese
- * Vorgabe wichtig ist.
+ * stillschweigend fallen gelassen — sonst hieße „kein Text im Bild" bei
+ * einem der beiden Anbieter gar nichts, und AE-15 hält fest, warum genau
+ * diese Vorgabe wichtig ist.
+ *
+ * NUTZERENTSCHEIDUNG 10.09.: Stability (multipart-Weg aus AE-13) ist aus der
+ * Auswahl gefallen; sein Weg stand hier bis dahin unverändert.
  */
 
 /** Aus `image/webp` wird `webp` — und alles Unbekannte fliegt auf. */
@@ -50,103 +48,6 @@ export function withPromptFallbacks(request: ImageRequest): string {
     `Square ${request.aspectRatio} composition, ${request.stylePreset} style. ` +
     `Avoid: ${request.negativePrompt}.`
   );
-}
-
-// ---------------------------------------------------------------------------
-// Stability AI — unverändert der Weg aus AE-13
-// ---------------------------------------------------------------------------
-
-export const STABILITY_BASE = 'https://api.stability.ai/v2beta/stable-image/generate';
-
-/**
- * Der Modellname ist bei Stability der **letzte Pfadabschnitt**, nicht ein
- * Feld im Körper (`core`, `sd3`, `ultra`). Das Freitextfeld aus Phase 10 füllt
- * ihn direkt. Gemessen wurde in Phase 5 nur `core`; ein falscher Wert
- * antwortet mit 404, und das steht dann in der Fehlerliste des Laufs.
- */
-export function stabilityEndpoint(model: string): string {
-  const variant = model.trim().replace(/^stable-image-/, '') || 'core';
-  return `${STABILITY_BASE}/${encodeURIComponent(variant)}`;
-}
-
-/**
- * Prüft die Antwort, bevor sie abgelegt wird.
- *
- * Die Antwortform ließ sich ohne gültigen Schlüssel **nicht** messen — anders
- * als die Anfrageform. Deshalb nennt die Fehlermeldung die tatsächlich
- * gelieferten Felder: heißt das Feld eines Tages anders, steht das sofort in
- * der Fehlerliste des Laufs, statt als Rätsel zu enden.
- */
-export function parseStabilityImage(
-  payload: unknown,
-  format: ImageResponse['format'],
-  model: string
-): ImageResponse {
-  if (typeof payload !== 'object' || payload === null) {
-    throw new Error('Antwort war kein JSON-Objekt.');
-  }
-  const data = payload as Record<string, unknown>;
-
-  // Stability liefert bei ausgefiltertem Inhalt ein absichtlich unscharfes
-  // Bild statt eines Fehlers. Das gehoert nicht in den Bestand.
-  if (data.finish_reason === 'CONTENT_FILTERED') {
-    throw new Error('Antwort wurde vom Anbieter gefiltert (finish_reason: CONTENT_FILTERED).');
-  }
-
-  const image = data.image;
-  if (typeof image !== 'string' || image.trim() === '') {
-    throw new Error(`Antwort enthielt kein Feld "image" (gelieferte Felder: ${fieldNamesOf(data)}).`);
-  }
-  const base64 = image.trim();
-  if (!looksLikeBase64(base64)) {
-    throw new Error('Bilddaten sind kein brauchbares Base64.');
-  }
-
-  return { base64, format, model };
-}
-
-export function createStabilityImageProvider(apiKey: string, model: string): ImageClient {
-  const url = stabilityEndpoint(model);
-
-  return {
-    provider: 'stability',
-    model,
-    async create(request: ImageRequest): Promise<ImageResponse> {
-      const form = new FormData();
-      form.append('prompt', request.prompt);
-      form.append('negative_prompt', request.negativePrompt);
-      form.append('aspect_ratio', request.aspectRatio);
-      form.append('output_format', request.preferredFormat);
-      form.append('style_preset', request.stylePreset);
-
-      let response: Response;
-      try {
-        response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            // Ohne diesen Header liefert die API die rohen Bildbytes; mit ihm
-            // ein JSON-Objekt mit Base64 - genau das, was fuer die
-            // Offline-Ablage gebraucht wird.
-            Accept: 'application/json',
-          },
-          body: form,
-          // Siehe `NO_CREDENTIALS` in http.ts: die Fetch-Umsetzung von React
-          // Native schickt sonst Anmeldedaten mit, was bei einem Anbieter mit
-          // `Access-Control-Allow-Origin: *` die Antwort verwirft.
-          credentials: 'omit',
-        });
-      } catch (error) {
-        throw describeNetworkFailure(error, hostOf(url));
-      }
-
-      if (!response.ok) {
-        throw new Error(describeHttpError(response.status, await response.text()));
-      }
-
-      return parseStabilityImage(await response.json(), request.preferredFormat, model);
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -282,8 +183,6 @@ export function createImageProvider(
   model: string
 ): ImageClient {
   switch (provider) {
-    case 'stability':
-      return createStabilityImageProvider(apiKey, model);
     case 'gemini':
       return createGeminiImageProvider(apiKey, model);
     case 'chatgpt':

@@ -1,5 +1,6 @@
 import { vocabularyFor } from '@/data/vocabulary';
 import { VOCABULARY_AR } from '@/data/vocabulary-ar';
+import { VOCABULARY_DE } from '@/data/vocabulary-de';
 
 import { languageOf } from './registry';
 import {
@@ -35,10 +36,12 @@ import {
  * an Richtungen, und das Datenmodell wird nicht umgebaut. Jedes Lernziel IST
  * daher genau eine Richtung, und sein Label ist der Sprachname des Gelehrten.
  *
- * `en_to_de`/`es_to_de` halten KEIN Lernziel (dorthin gibt es keinen Inhalt):
- * Sie tauchen in keiner Wahl auf, bleiben aber intern gültig, damit gemerkte
- * Profile und Adressen (`?direction=en_to_de`) weiter funktionieren — die
- * Screens validieren Richtungen bereits.
+ * `en_to_de`/`es_to_de` trugen lange KEIN Lernziel (dorthin gab es keinen
+ * ehrlichen Inhalt). SEIT „Füge noch Deutsch zum Generieren hinzu"
+ * (Nutzerentscheidung 10.09.) sind sie Ziele mit echtem Stoff: Der deutsche
+ * Wortschatz steht als `german`-Feld auf den bestehenden Pools bzw. im
+ * abgeleiteten de-Pool (`VOCABULARY_DE`) — die Karten laufen über den
+ * Bestandsweg (`review-session`), es braucht dafür keinen neuen Grundstoff.
  */
 export type Lernziel = {
   /** Die Richtung, die intern alles trägt — sie wird nie als solche angezeigt. */
@@ -77,14 +80,17 @@ export type Lernziel = {
  * REIHENFOLGE: die Pool-Sprachen in `LANGUAGE_CODES`-Ordnung, dann die
  * th↔de-Ziele — Brücke de liefert damit EXAKT die vier Ziele von vor Stufe 1
  * (Thai, Englisch, Spanisch, Deutsch), kein Regression für den Hauptnutzer.
+ * NUTZERENTSCHEIDUNG 10.09. („Füge noch Deutsch zum Generieren hinzu"):
+ * Für die Brücke de kommt bewusst NICHTS dazu (die de_to_X-Ziele decken
+ * Deutsch schon ab — „Deutsch (von Englisch)" für deutsche Oberfläche wäre
+ * Stufe 2); die Brücken en/es bekommen ihr Deutsch-Ziel dafür jetzt.
  *
  * AR-PILOT (10.09.): Die Brücke `'ar'` zeigt die vier Ziele Deutsch,
  * Englisch, Spanisch, Thai — in dieser Reihenfolge (de zuerst, dann en/es/th).
- * Deutsch hängt als Ziel dabei an `ar_to_de` mit EHRLICH LEEREM Stoff: Einen
- * deutschen Vokabel-Pool gibt es nicht (Deutsch lebt als `german`-Feld auf
- * den bestehenden Pools), der Aufbau eines ar→de-Grundstoffs ist Stufe 2.
- * Englisch/Spanisch/Thai kommen über den concept-gekoppelten Bestand sofort
- * mit echten Karten.
+ * Deutsch hängt als Ziel an `ar_to_de` und koppelt seit derselbigen
+ * Nutzerentscheidung gegen den abgeleiteten de-Pool (`VOCABULARY_DE`) —
+ * vorher hing daran ehrlich leerer Stoff (Stufe 2). Englisch/Spanisch/Thai
+ * kommen über den concept-gekoppelten Bestand sofort mit echten Karten.
  */
 export function zieleFuerBruecke(bridge: Lang | typeof AR_BRIDGE): Lernziel[] {
   // Die ar-Brücke hat eigene Richtungen (`ar_to_*`) — sie liegt außerhalb des
@@ -113,6 +119,11 @@ export function zieleFuerBruecke(bridge: Lang | typeof AR_BRIDGE): Lernziel[] {
   } else if (bridge === 'th') {
     ziele.push({ direction: 'th_to_de', language: 'th' });
     ziele.push({ direction: 'de_to_th', language: 'th', vonSprache: 'de' });
+  } else if (bridge === 'en' || bridge === 'es') {
+    // NUTZERENTSCHEIDUNG 10.09.: Deutsch als Ziel — der Stoff ist das
+    // `german`-Feld der bestehenden Pools, die Queue läuft über den
+    // unveränderten Bestandsweg der X_to_de-Richtungen.
+    ziele.push({ direction: `${bridge}_to_de`, language: bridge });
   }
   return ziele;
 }
@@ -141,12 +152,15 @@ const ALLE_ZIELE: readonly Lernziel[] = [
 ];
 
 /**
- * Das Ziel zu einer Richtung — `null` für Richtungen ohne Lernziel
- * (`en_to_de`/`es_to_de`), die nur als interner Bestand weiterleben.
+ * Das Ziel zu einer Richtung — `null` nur für Werte außerhalb aller
+ * Brücken (Fremdformat wie `de_to_fr`).
  *
  * SEIT STUFE 1 ÜBER ALLE PAARRICHTUNGEN: Auch Kreuzrichtungen tragen ein
  * Ziel, damit der Lern-Reiter sie betiteln kann, wenn sie über eine Adresse
- * (`?direction=en_to_es`) oder die Queue erreicht werden.
+ * (`?direction=en_to_es`) oder die Queue erreicht werden. SEIT DER
+ * NUTZERENTSCHEIDUNG VOM 10.09. tragen auch `en_to_de`/`es_to_de` ein Ziel —
+ * Deutsch ist jetzt überall dort Ziel, wo eine Brücke dorthin führen kann;
+ * der frühere null-Fall existiert nicht mehr.
  */
 export function zielFuerDirection(direction: PairDirection): Lernziel | null {
   return ALLE_ZIELE.find((ziel) => ziel.direction === direction) ?? null;
@@ -194,8 +208,9 @@ export function goalEndonym(ziel: Lernziel): string {
  * Die Zahl lügt nicht nach oben, auch wenn der Ziel-Pool größer ist.
  *
  * AR-BRÜCKE: dieselbe Kopplung mit dem GENERIERTEN Pool `VOCABULARY_AR` als
- * Brückenseite. `ar_to_de` liefert bewusst 0 — es gibt keinen deutschen Pool,
- * mit dem sich koppeln ließe (Stufe 2, siehe `zieleFuerBruecke`).
+ * Brückenseite. `ar_to_de` zählt seit „Füge noch Deutsch zum Generieren
+ * hinzu" (10.09.) die ar-Anker mit deutschem Partner im abgeleiteten
+ * de-Pool — vorher bewusst 0 (Stufe 2), siehe `zieleFuerBruecke`.
  */
 export function wortschatzFuerZiel(ziel: Lernziel): number {
   if (isDeAnchored(ziel.direction)) return languageOf(ziel.language).entryCount;
@@ -203,6 +218,12 @@ export function wortschatzFuerZiel(ziel: Lernziel): number {
   // `ziel.language` ist die Zielseite.
   const [quelle] = ziel.direction.split('_to_');
   const zielCode = ziel.direction.slice(quelle.length + '_to_'.length);
+  // ar_to_de: Ziel-Pool ist der ABGELEITETE de-Pool (`VOCABULARY_DE`) —
+  // gezählt werden die ar-Anker, zu denen es einen deutschen Partner gibt.
+  if (quelle === AR_BRIDGE && zielCode === 'de') {
+    const deConcepts = new Set(VOCABULARY_DE.map((entry) => entry.concept));
+    return VOCABULARY_AR.filter((entry) => deConcepts.has(entry.concept)).length;
+  }
   if (!isLanguageCode(zielCode)) return 0;
   const brueckenPool =
     quelle === AR_BRIDGE ? VOCABULARY_AR : isLanguageCode(quelle) ? vocabularyFor(quelle) : null;

@@ -1,5 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 import { describeNetworkFailure, fieldNamesOf, postJson } from './http';
 import { ProviderId, TextClient, TextRequest, TextResponse, unsupported } from './types';
 
@@ -8,16 +6,18 @@ import { ProviderId, TextClient, TextRequest, TextResponse, unsupported } from '
  *
  * Die Prompts stehen weiterhin bei den Generatoren (Phase 4 für Dialoge,
  * Phase 7 für Prüfungsaufgaben) und sind hier nicht zu sehen — das ist der
- * Sinn der Naht. Hier steht nur, wie man aus „System + Nutzertext" bei drei
+ * Sinn der Naht. Hier steht nur, wie man aus „System + Nutzertext" bei den
  * verschiedenen Gegenstellen einen Antworttext bekommt.
  *
- * ALLE DREI WEGE SIND AUS DEM LAUFENDEN WEB-BUILD GEMESSEN (AE-26/AE-27):
- * Claude braucht seinen Sonderheader und antwortet damit; ChatGPT und Gemini
- * kommen ohne Sonderbehandlung durch. Was sich **nicht** messen ließ, ist bei
- * ChatGPT und Gemini die Anfrage- und Antwortform: beide prüfen den Schlüssel
- * **vor** dem Rest und antworten auf jede Anfrage mit demselben Auth-Fehler.
- * Deshalb nennt der Parser unten im Fehlerfall die tatsächlich gelieferten
- * Feldnamen — dieselbe Vorsichtsmaßnahme wie beim Bild-Parser aus AE-13.
+ * BEIDE WEGE SIND AUS DEM LAUFENDEN WEB-BUILD GEMESSEN (AE-26/AE-27):
+ * ChatGPT und Gemini kommen ohne Sonderbehandlung durch und prüfen den
+ * Schlüssel **vor** der Anfrage- und Antwortform — beide antworten auf jede
+ * Anfrage mit demselben Auth-Fehler. Deshalb nennt der Parser unten im
+ * Fehlerfall die tatsächlich gelieferten Feldnamen — dieselbe
+ * Vorsichtsmaßnahme wie beim Bild-Parser aus AE-13.
+ *
+ * NUTZERENTSCHEIDUNG 10.09.: Claude (Anthropic-SDK, AE-12) ist aus der
+ * Auswahl gefallen; sein Weg stand hier bis dahin unverändert.
  */
 
 function textOrThrow(text: string, provider: ProviderId, detail: string): string {
@@ -25,54 +25,6 @@ function textOrThrow(text: string, provider: ProviderId, detail: string): string
     throw new Error(`Leere Antwort von ${provider} (${detail}).`);
   }
   return text;
-}
-
-// ---------------------------------------------------------------------------
-// Claude (Anthropic) — unverändert der Weg aus AE-12
-// ---------------------------------------------------------------------------
-
-/**
- * WORTGLEICH DER AUFRUF AUS PHASE 4, nur ohne den fest verdrahteten
- * Modellnamen. `dangerouslyAllowBrowser: true` setzt genau den Header
- * `anthropic-dangerous-direct-browser-access: true` (im SDK-Quelltext
- * nachgesehen, AE-12); ohne ihn blockt CORS den Web-Build, mit ihm nicht.
- * Beides in Phase 10 noch einmal als Kontrollmessung bestätigt.
- *
- * `effort: 'low'` bleibt: Ein kurzer A1/A2-Dialog in vorgegebenem JSON ist
- * eine einfache Aufgabe, und bei 512 Aufrufen schlägt der Aufwand auf Kosten
- * und Dauer durch (Phase 4).
- */
-export function createClaudeTextClient(apiKey: string, model: string): TextClient {
-  const anthropic = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
-
-  return {
-    provider: 'claude',
-    model,
-    async complete(request: TextRequest): Promise<TextResponse> {
-      let response: Anthropic.Message;
-      try {
-        response = await anthropic.messages.create({
-          model,
-          max_tokens: request.maxTokens,
-          output_config: { effort: 'low' },
-          system: request.system,
-          messages: [{ role: 'user', content: request.user }],
-        });
-      } catch (error) {
-        throw describeNetworkFailure(error, 'api.anthropic.com');
-      }
-
-      const text = response.content
-        .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-        .map((block) => block.text)
-        .join('\n');
-
-      return {
-        text: textOrThrow(text, 'claude', `stop_reason: ${response.stop_reason}`),
-        model: response.model ?? model,
-      };
-    },
-  };
 }
 
 // ---------------------------------------------------------------------------
@@ -210,8 +162,6 @@ export function createGeminiTextClient(apiKey: string, model: string): TextClien
 
 export function createTextClient(provider: ProviderId, apiKey: string, model: string): TextClient {
   switch (provider) {
-    case 'claude':
-      return createClaudeTextClient(apiKey, model);
     case 'chatgpt':
       return createOpenAiTextClient(apiKey, model);
     case 'gemini':

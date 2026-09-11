@@ -4,6 +4,7 @@
 import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
 import { VOCABULARY_EN, VOCABULARY_ES, VocabEntry, vocabularyFor } from '@/data/vocabulary';
 import { VOCABULARY_AR } from '@/data/vocabulary-ar';
+import { VOCABULARY_DE } from '@/data/vocabulary-de';
 
 import { DAY_MS, NEW_CARDS_PER_SESSION, retrievability } from './fsrs/fsrs';
 import { Direction } from './fsrs/types';
@@ -268,13 +269,32 @@ describe('buildReviewQueue mit ar-Brücke (Pilot Heimatsprachen)', () => {
     expect(entries).toHaveLength(gekoppeltePaareUeberAr('th'));
   });
 
-  it('ar_to_de bleibt ehrlich leer: es gibt keinen deutschen Pool (Stufe 2)', async () => {
+  it('koppelt ar_to_de gegen den abgeleiteten de-Pool (Nutzerentscheidung 10.09.)', async () => {
     const store = await freshStore();
+    // Kopplung unabhängig aus den Daten gerechnet: ar-Anker ↔ de-Pool-Begriff.
+    const deConcepts = new Set(VOCABULARY_DE.map((entry) => entry.concept));
+    const erwartet = VOCABULARY_AR.filter((entry) => deConcepts.has(entry.concept)).length;
+    expect(erwartet).toBeGreaterThan(0);
+
     const { entries, cards } = await ensureCardStates('ar_to_de', store, T0);
-    expect(entries).toHaveLength(0);
-    expect(cards).toHaveLength(0);
-    expect(await buildReviewQueue('ar_to_de', store, T0)).toHaveLength(0);
-    // Und die leere Richtung hat die de-geankerten Bestände nicht angerührt.
+    expect(entries).toHaveLength(erwartet);
+    expect(cards).toHaveLength(erwartet);
+    // Karten-IDs sind die Begriffs-IDs — kollisionsfrei zu den de-geankerten
+    // Beständen, weil die Richtung im Kartenschlüssel steckt.
+    entries.forEach((entry) => expect(entry.concept).toBe(entry.id));
+
+    const queue = await buildReviewQueue('ar_to_de', store, T0);
+    expect(queue.length).toBeGreaterThan(0);
+    queue.forEach((item) => {
+      // Rückseite: das deutsche Wort desselben Begriffs.
+      expect(item.entry.concept).toBe(item.entry.id);
+      expect(item.entry.term.length).toBeGreaterThan(0);
+      // Vorderseite: das arabische Ankerwort mit derselben Begriffs-ID.
+      expect(item.bridgeEntry).not.toBeNull();
+      expect(item.bridgeEntry!.concept).toBe(item.entry.concept);
+      expect(item.bridgeEntry!.term).toMatch(/\p{Script=Arabic}/u);
+    });
+    // Die neuen Karten dürfen den de-geankerten Bestand nicht angerührt haben.
     const { entries: thBestand } = await ensureCardStates('th_to_de', store, T0);
     expect(thBestand).toHaveLength(VOCABULARY.length);
   });

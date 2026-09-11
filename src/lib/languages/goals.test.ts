@@ -1,4 +1,5 @@
 import { VOCABULARY_AR } from '@/data/vocabulary-ar';
+import { VOCABULARY_DE } from '@/data/vocabulary-de';
 import { VOCABULARY_ES, VOCABULARY_TH, vocabularyFor } from '@/data/vocabulary';
 
 import { goalEndonym, goalLanguage, LERNZIELE, zielFuerDirection, zieleFuerBruecke, wortschatzFuerZiel } from './goals';
@@ -34,11 +35,14 @@ describe('Lernziele — Deutsch als eigene Wahl (Brücke de, Bestand)', () => {
     }
   });
 
-  it('hält Richtungen ohne Lernziel bewusst leer — der Bestand bleibt gültig', () => {
-    // en_to_de/es_to_de werden nicht mehr angeboten, dürfen aber als gemerkte
-    // Richtung oder Adressparameter weiter funktionieren.
-    expect(zielFuerDirection('en_to_de')).toBeNull();
-    expect(zielFuerDirection('es_to_de')).toBeNull();
+  it('löst jetzt auch en_to_de/es_to_de zu Zielen auf (Nutzerentscheidung 10.09.)', () => {
+    // „Füge noch Deutsch zum Generieren hinzu": Deutsch ist überall dort
+    // Ziel, wo eine Brücke dorthin führt — der Stoff kommt aus dem
+    // german-Feld des Bestands bzw. dem abgeleiteten de-Pool.
+    expect(zielFuerDirection('en_to_de')!.direction).toBe('en_to_de');
+    expect(zielFuerDirection('es_to_de')!.direction).toBe('es_to_de');
+    expect(goalLanguage(zielFuerDirection('en_to_de')!)).toBe('de');
+    expect(goalEndonym(zielFuerDirection('en_to_de')!)).toBe('Deutsch');
   });
 
   it('bleibt für die Profil-Sprache bei der Paar-Sprache — Deutsch (th_to_de) zählt zu Thai', () => {
@@ -77,18 +81,22 @@ describe('Lernziele je Brücke (Stufe 1)', () => {
     ]);
   });
 
-  it('Brücke en: Thai und Spanisch — KEIN Brücken-Lernziel (Stufe 2)', () => {
+  it('Brücke en: Thai, Spanisch — und Deutsch als neues Ziel (10.09.)', () => {
     expect(zieleFuerBruecke('en').map((ziel) => ziel.direction)).toEqual([
       'en_to_th',
       'en_to_es',
+      'en_to_de',
     ]);
+    // Kein Brücken-Lernziel (Stufe 2); das Deutsch-Ziel ist ein normales
+    // Ziel, keine „von“-Form.
     expect(zieleFuerBruecke('en').every((ziel) => ziel.vonSprache === undefined)).toBe(true);
   });
 
-  it('Brücke es: Thai und Englisch — KEIN Brücken-Lernziel (Stufe 2)', () => {
+  it('Brücke es: Thai, Englisch — und Deutsch als neues Ziel (10.09.)', () => {
     expect(zieleFuerBruecke('es').map((ziel) => ziel.direction)).toEqual([
       'es_to_th',
       'es_to_en',
+      'es_to_de',
     ]);
   });
 
@@ -155,7 +163,7 @@ describe('Lernziele der ar-Brücke (Pilot Heimatsprachen, 10.09.)', () => {
     expect(goalLanguage(zielFuerDirection('ar_to_en')!)).toBe('en');
   });
 
-  it('zählt ehrlich: gekoppelte Paare für en/es/th, NULL für Deutsch (Stufe 2)', () => {
+  it('zählt ehrlich: gekoppelte Paare für en/es/th und jetzt auch für Deutsch (10.09.)', () => {
     const arPool = VOCABULARY_AR;
     const arConcepts = new Set(arPool.map((entry) => entry.concept));
     const gekoppeltIn = (pool: typeof VOCABULARY_ES): number =>
@@ -166,9 +174,13 @@ describe('Lernziele der ar-Brücke (Pilot Heimatsprachen, 10.09.)', () => {
       ).length;
 
     const [deutsch, englisch, spanisch, thai] = zieleFuerBruecke('ar');
-    // ar_to_de: kein deutscher Pool, mit dem sich koppeln ließe — die Zahl
-    // lügt nicht nach oben (Deutsch als Ziel für die ar-Brücke ist Stufe 2).
-    expect(wortschatzFuerZiel(deutsch)).toBe(0);
+    // ar_to_de: seit „Füge noch Deutsch zum Generieren hinzu" koppelt die
+    // Richtung gegen den abgeleiteten de-Pool — der generierte ar-Pool deckt
+    // alle 84 Begriffe ab, also genau so viele deutsche Partner.
+    const deConcepts = new Set(VOCABULARY_DE.map((entry) => entry.concept));
+    const erwartetDe = arPool.filter((entry) => deConcepts.has(entry.concept)).length;
+    expect(erwartetDe).toBeGreaterThan(0);
+    expect(wortschatzFuerZiel(deutsch)).toBe(erwartetDe);
     // ar_to_en/ar_to_es: alle en/es-Einträge MIT Thai-Anker haben ihre
     // arabische Brückenseite (der generierte Pool deckt ALLE 84 Anker ab).
     expect(gekoppeltIn(VOCABULARY_ES)).toBeGreaterThan(0);
@@ -177,6 +189,16 @@ describe('Lernziele der ar-Brücke (Pilot Heimatsprachen, 10.09.)', () => {
     // ar_to_th: der ganze Thai-Pool ist referenziert (Fall 3 der Kopplung).
     expect(gekoppeltIn(VOCABULARY_TH)).toBe(VOCABULARY_TH.length);
     expect(wortschatzFuerZiel(thai)).toBe(VOCABULARY_TH.length);
+  });
+
+  it('zählt für die neuen Deutsch-Ziele den Bestand, nicht mehr null (10.09.)', () => {
+    // en_to_de/es_to_de laufen über den unveränderten Bestandsweg — die Zahl
+    // ist die Pool-Größe der Brückenseite (so wie th_to_de den Thai-Pool
+    // zählt).
+    const [, , deutschVonEnglisch] = zieleFuerBruecke('en');
+    const [, , deutschVonSpanisch] = zieleFuerBruecke('es');
+    expect(wortschatzFuerZiel(deutschVonEnglisch)).toBe(vocabularyFor('en').length);
+    expect(wortschatzFuerZiel(deutschVonSpanisch)).toBe(vocabularyFor('es').length);
   });
 });
 
@@ -194,7 +216,7 @@ describe('Kreuzrichtung-Typbasis (types.ts)', () => {
     expect(pairLanguageOf('en_to_th')).toBe('th');
   });
 
-  it('ar-Brücke: pairLanguageOf liest die ZIEL-Seite — ar_to_de zielt auf den (leeren) de-Pool', () => {
+  it('ar-Brücke: pairLanguageOf liest die ZIEL-Seite — ar_to_de zielt auf den de-Pool', () => {
     expect(pairLanguageOf('ar_to_th')).toBe('th');
     expect(pairLanguageOf('ar_to_de')).toBe('de');
   });

@@ -100,6 +100,18 @@ const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
  */
 
 
+/**
+ * Deutsch als ZIEL-Sprache (Nutzerentscheidung 10.09.): keine
+ * silbenspezifische Auszeichnung — das deutsche Wort steht, wie es
+ * geschrieben wird. Keine Merkmalsübungen: Die deutschen Übungen sind die
+ * Grammatik-Drills (Genus, Stammformen), und die hängen an der RICHTUNG
+ * (`_to_de`), nicht am Sprachmerkmal — siehe `drillsForDirectionViaFeature`.
+ */
+const GERMAN_RUNTIME: LanguageFeatureRuntime = {
+  annotate: (entry) => [{ roman: entry.romanization || entry.term }],
+  drills: [],
+};
+
 const RUNTIMES: Record<TargetLanguage, LanguageFeatureRuntime> = {
   th: THAI_RUNTIME,
   en: ENGLISH_RUNTIME,
@@ -107,6 +119,11 @@ const RUNTIMES: Record<TargetLanguage, LanguageFeatureRuntime> = {
 };
 
 export function featureRuntime(language: TargetLanguage): LanguageFeatureRuntime {
+  // Deutsch ist kein `TargetLanguage`-Wert (kein eigener Grundstoff im
+  // Bestand), taucht aber als Zielsprache im abgeleiteten de-Pool
+  // (vocabulary-de.ts) auf. Der Vergleich über die Zeichenkette hält den
+  // Bestandstyp eng und die Karteikarte trotzdem lebendig.
+  if ((language as string) === 'de') return GERMAN_RUNTIME;
   return RUNTIMES[language];
 }
 

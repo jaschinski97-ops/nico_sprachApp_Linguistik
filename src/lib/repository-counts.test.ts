@@ -59,21 +59,21 @@ const situation = (id: string, direction: string) => ({
 });
 
 describe('countAudioClipsByLanguage', () => {
-  it('zählt je Zielsprache und lässt Deutsch außen vor', async () => {
+  it('zählt je Generator-Sprache, seitdem Deutsch dazu gehört (10.09.)', async () => {
     const store = await freshStore();
     await store.put('audio', 'th-1', clip('th-1', 'th'));
     await store.put('audio', 'th-2', clip('th-2', 'th'));
     await store.put('audio', 'en-1', clip('en-1', 'en'));
     await store.put('audio', 'de-1', clip('de-1', 'de'));
 
-    // Deutsch ist kein Ziel-Grundstock; de-Clips (Auslieferungslauf) gehören
-    // in die Gesamtzahl, nicht in die Sprachzeile.
-    expect(await countAudioClipsByLanguage(store)).toEqual({ th: 2, en: 1, es: 0 });
+    // Deutsch ist Generator-Zielsprache (X_to_de-Rückseiten) — de-Clips
+    // erscheinen in der eigenen Zeile, sobald sie abgelegt sind.
+    expect(await countAudioClipsByLanguage(store)).toEqual({ th: 2, en: 1, es: 0, de: 1 });
   });
 });
 
 describe('countImagesByLanguage', () => {
-  it('zählt über die Sprache der Vokabel, zu der das Bild gehört', async () => {
+  it('zählt über die Sprache der Vokabel; Deutsch zählt seine Konzeptbilder', async () => {
     const store = await freshStore();
     const thId = vocabularyFor('th')[0].id;
     const enId = vocabularyFor('en')[0].id;
@@ -84,7 +84,10 @@ describe('countImagesByLanguage', () => {
     // erraten — es wäre ohnehin nicht auffindbar.
     await store.put('images', 'unbekannt', bild('unbekannt'));
 
-    expect(await countImagesByLanguage(store)).toEqual({ th: 1, en: 1, es: 0 });
+    // Die Thai-IDs sind Begriffs-Anker: dasselbe Bild zählt in der Thai-Zeile
+    // UND als Konzeptbild der Deutsch-Zeile (AE-46 — das Motiv gehört zum
+    // Begriff, und deutsche Karten zeigen es ebenfalls).
+    expect(await countImagesByLanguage(store)).toEqual({ th: 1, en: 1, es: 0, de: 1 });
   });
 });
 

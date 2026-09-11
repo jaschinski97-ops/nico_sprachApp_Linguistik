@@ -16,12 +16,13 @@ import {
  * eigenen Server, und der Schlüssel verlässt das Gerät nur in Richtung des
  * gewählten Anbieters.
  *
- * SEIT PHASE 10 IST DER ANBIETER WÄHLBAR (Claude, ChatGPT, Gemini). Was sich
- * dadurch **nicht** ändert: der Prompt, die strenge Prüfung der Antwort und
- * das Verhalten des Batch-Laufs. Diese Datei kennt keinen Anbieter mehr,
- * sondern nur noch einen `TextClient` — wie der Text zustande kommt, steht in
- * `lib/providers/text.ts`. Voreingestellt bleibt Claude: den Standard still zu
- * wechseln wäre eine Verhaltensänderung für alle, die nichts umstellen.
+ * SEIT PHASE 10 IST DER ANBIETER WÄHLBAR. Was sich dadurch **nicht** ändert:
+ * der Prompt, die strenge Prüfung der Antwort und das Verhalten des
+ * Batch-Laufs. Diese Datei kennt keinen Anbieter, sondern nur noch einen
+ * `TextClient` — wie der Text zustande kommt, steht in
+ * `lib/providers/text.ts`. NUTZERENTSCHEIDUNG 10.09.: Der frühere Default
+ * Claude ist aus der Auswahl gefallen; das Modell-Vorgabefeld folgt dem
+ * neuen Gruppen-Default Gemini.
  *
  * ANTWORTFORMAT: Es wird JSON im Prompt verlangt und danach **streng
  * geprüft**, statt `output_config.format` zu benutzen. Grund: Die Pipeline
@@ -33,7 +34,7 @@ import {
  */
 
 /** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
-export const GENERATOR_MODEL = 'claude-opus-5';
+export const GENERATOR_MODEL = 'gemini-2.5-flash';
 
 /**
  * Antwortlänge. Großzügig, weil ein abgeschnittenes JSON den ganzen Eintrag
@@ -202,15 +203,3 @@ export function createGenerationClient(
   return createSituationClient(createTextClient(provider, apiKey, model));
 }
 
-/**
- * Der Weg aus Phase 4, unverändert erreichbar.
- *
- * Bleibt erhalten, damit „die bestehenden Generatoren laufen weiter" nicht nur
- * eine Behauptung im Protokoll ist, sondern am Aufruf ablesbar.
- */
-export function createAnthropicClient(
-  apiKey: string,
-  model: string = GENERATOR_MODEL
-): GenerationClient {
-  return createGenerationClient('claude', apiKey, model);
-}

@@ -21,7 +21,7 @@ import { certificateFor, ExamItem, ExamModule, ExamStimulus, SKILL_LABELS } from
  */
 
 /** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
-export const EXAM_GENERATOR_MODEL = 'claude-opus-5';
+export const EXAM_GENERATOR_MODEL = 'gemini-2.5-flash';
 
 export const EXAM_MAX_TOKENS = 16000;
 
@@ -212,10 +212,3 @@ export function createExamGenerationClient(
   return createExamModuleClient(createTextClient(provider, apiKey, model));
 }
 
-/** Der Weg aus Phase 7, unverändert erreichbar. */
-export function createExamClient(
-  apiKey: string,
-  model: string = EXAM_GENERATOR_MODEL
-): ExamGenerationClient {
-  return createExamGenerationClient('claude', apiKey, model);
-}

@@ -15,6 +15,7 @@ import { isContentDeveloper } from './content/developer';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
 import { isLanguageCode, LanguageCode } from './languages/types';
+import { VOCABULARY_DE } from '@/data/vocabulary-de';
 import { getAudioBlobStore } from './clips/blob-store';
 import { invalidateClipIndex } from './clips/lookup';
 import { AudioBlobStore, AudioClip, isValidAudioClip } from './clips/types';
@@ -251,8 +252,8 @@ export async function countVocabImages(store?: DataStore): Promise<number> {
   return (await loadVocabImages(store)).length;
 }
 
-/** Bildbestand je Zielsprache. */
-export type ImageLanguageCounts = Record<LanguageCode, number>;
+/** Bildbestand je Generator-Zielsprache — seit dem 10.09. inklusive Deutsch. */
+export type ImageLanguageCounts = Record<LanguageCode | 'de', number>;
 
 /**
  * Bilder je Zielsprache — über den Vokabel-Eintrag, zu dem das Bild gehört.
@@ -262,14 +263,25 @@ export type ImageLanguageCounts = Record<LanguageCode, number>;
  * Eintrag des Grundstocks. Einträge außerhalb des Grundstocks werden
  * ausgelassen statt erraten — ein Bild ohne Vokabel wäre ohnehin nicht
  * auffindbar.
+ *
+ * SEIT „Füge noch Deutsch zum Generieren hinzu" (10.09.) zählt die Zeile
+ * Deutsch mit, und zwar ehrlich für ihre Frage: Ein Bildmotiv gehört zum
+ * BEGRIFF, nicht zur Sprache (AE-46) — deutsche Karten zeigen das
+ * Konzeptbild ihres Ankers. Die Zeile sagt also, wie viele der de-Pool-
+ * Begriffe ein Bild haben; dasselbe Bild kann dadurch auch in der Zeile
+ * seines Ankers stehen. Die th/en/es-Zeilen zählen unverändert über die
+ * Sprache ihres Grundstock-Eintrags.
  */
 export async function countImagesByLanguage(
   store?: DataStore
 ): Promise<ImageLanguageCounts> {
-  const zaehler: ImageLanguageCounts = { th: 0, en: 0, es: 0 };
+  const zaehler: ImageLanguageCounts = { th: 0, en: 0, es: 0, de: 0 };
+  const deConcepts = new Set(VOCABULARY_DE.map((entry) => entry.id));
   for (const image of await loadVocabImages(store)) {
-    const eintrag = findVocab(image.vocabId || image.id);
+    const id = image.vocabId || image.id;
+    const eintrag = findVocab(id);
     if (eintrag && isLanguageCode(eintrag.language)) zaehler[eintrag.language] += 1;
+    if (deConcepts.has(id)) zaehler.de += 1;
   }
   return zaehler;
 }
@@ -345,23 +357,26 @@ export async function sumAudioClipBytes(store?: DataStore): Promise<number> {
 }
 
 /** Clipbestand je Zielsprache. */
-export type ClipLanguageCounts = Record<LanguageCode, number>;
+export type ClipLanguageCounts = Record<LanguageCode | 'de', number>;
 
 /**
- * Hörclips je ZIELsprache.
+ * Hörclips je Generator-Zielsprache.
  *
- * Deutsch bleibt bewusst außen vor: de-Clips entstehen nur im
- * Auslieferungslauf (Prüfungstexte, deutsche Seite) und gehören zu keinem
- * lernbaren Grundstock — wer sie zählen will, nimmt `countAudioClips`.
+ * SEIT „Füge noch Deutsch zum Generieren hinzu" (10.09.) MIT Deutsch: Der
+ * Studio-Audio-Generator erzeugt deutsche Clips für den de-Pool (X_to_de-
+ * Rückseiten), und die Zeile zeigt, wie viele davon liegen. Vorher
+ * entstanden de-Clips nur im Auslieferungslauf (Prüfungstexte); wer alle
+ * zählen will, nimmt `countAudioClips`.
  */
 export async function countAudioClipsByLanguage(
   store?: DataStore
 ): Promise<ClipLanguageCounts> {
-  const zaehler: ClipLanguageCounts = { th: 0, en: 0, es: 0 };
+  const zaehler: ClipLanguageCounts = { th: 0, en: 0, es: 0, de: 0 };
   for (const clip of await loadAudioClips(store)) {
-    // Die Typschranke filtert 'de' und alles Fremde aus — der Schlüssel
-    // `ClipLanguage` ist breiter als der Ziel-Kanon.
-    if (isLanguageCode(clip.language)) zaehler[clip.language] += 1;
+    // Der Schlüssel `ClipLanguage` deckt alle vier Generator-Sprachen ab.
+    if (clip.language === 'th' || clip.language === 'en' || clip.language === 'es' || clip.language === 'de') {
+      zaehler[clip.language] += 1;
+    }
   }
   return zaehler;
 }

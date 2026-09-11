@@ -190,3 +190,900 @@ Call Stack
   StudioScreen (src\app\settings\studio.tsx:22:16)
   AppTabs (src\components\app-tabs.web.tsx:101:5)
   TabLayout (src\app\_layout.tsx:31:9)
+Web Bundled 20107ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 20266ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 97ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web Bundled 2ms src\lib\blobs\backend.web.ts (1 module)
+Web Bundled 55ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 1637ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 65ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web Bundled 1ms src\lib\blobs\backend.web.ts (1 module)
+λ Bundled 48ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 370ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 84ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web Bundled 1ms src\lib\blobs\backend.web.ts (1 module)
+λ Bundled 40ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 371ms node_modules\expo-router\entry.js (1 module)
+Web Bundled 65ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web Bundled 2ms src\lib\blobs\backend.web.ts (1 module)
+Web Bundled 14419ms node_modules\expo-router\entry.js (1 module)
+λ Bundled 14465ms node_modules\expo\node_modules\@expo\cli\node_modules\@expo\router-server\node\render.js (1 module)
+Web Bundled 9580ms node_modules\expo-router\entry.js (1 module)
+Web  INFO  %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+Web  LOG  Running application "main" with appParams:
+ {"hydrate": undefined, "rootTag": "#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+Web Bundled 1ms src\lib\blobs\backend.web.ts (1 module)
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 111 |[39m [36mexport[39m [36mfunction[39m defaultSettings()[33m:[39m [33mGeneratorSettings[39m {
+ [90m 112 |[39m   [36mreturn[39m {
+[31m[1m>[22m[39m[90m 113 |[39m     situations[33m:[39m defaultChoiceFor([32m'situations'[39m)[33m,[39m
+ [90m     |[39m                                  [31m[1m^[22m[39m
+ [90m 114 |[39m     exam[33m:[39m defaultChoiceFor([32m'exam'[39m)[33m,[39m
+ [90m 115 |[39m     images[33m:[39m defaultChoiceFor([32m'images'[39m)[33m,[39m
+ [90m 116 |[39m     audio[33m:[39m defaultChoiceFor([32m'audio'[39m)[33m,[39m[0m
+Call Stack
+  defaultSettings (src\lib\providers\settings.ts:113:34)
+  providersForGroup (src\lib\providers\settings.ts:122:10)
+  <global> (src\lib\providers\settings.ts:129)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 111 |[39m [36mexport[39m [36mfunction[39m defaultSettings()[33m:[39m [33mGeneratorSettings[39m {
+ [90m 112 |[39m   [36mreturn[39m {
+[31m[1m>[22m[39m[90m 113 |[39m     situations[33m:[39m defaultChoiceFor([32m'situations'[39m)[33m,[39m
+ [90m     |[39m                                  [31m[1m^[22m[39m
+ [90m 114 |[39m     exam[33m:[39m defaultChoiceFor([32m'exam'[39m)[33m,[39m
+ [90m 115 |[39m     images[33m:[39m defaultChoiceFor([32m'images'[39m)[33m,[39m
+ [90m 116 |[39m     audio[33m:[39m defaultChoiceFor([32m'audio'[39m)[33m,[39m[0m
+Call Stack
+  defaultSettings (src\lib\providers\settings.ts:113:34)
+  providersForGroup (src\lib\providers\settings.ts:122:10)
+  <global> (src\lib\providers\settings.ts:129)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 139 |[39m
+ [90m 140 |[39m   [36mconst[39m model [33m=[39m
+[31m[1m>[22m[39m[90m 141 |[39m     [36mtypeof[39m value[33m.[39mmodel [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mmodel[33m.[39mtrim() [33m!==[39m [32m''[39m
+ [90m     |[39m                            [31m[1m^[22m[39m
+ [90m 142 |[39m       [33m?[39m value[33m.[39mmodel[33m.[39mtrim()
+ [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:141:28)
+  normalizeChoice (src\lib\providers\settings.ts:153)
+  loadGeneratorSettings (src\lib\providers\settings.ts:161:12)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 139 |[39m
+ [90m 140 |[39m   [36mconst[39m model [33m=[39m
+[31m[1m>[22m[39m[90m 141 |[39m     [36mtypeof[39m value[33m.[39mmodel [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mmodel[33m.[39mtrim() [33m!==[39m [32m''[39m
+ [90m     |[39m                            [31m[1m^[22m[39m
+ [90m 142 |[39m       [33m?[39m value[33m.[39mmodel[33m.[39mtrim()
+ [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:141:28)
+  normalizeChoice (src\lib\providers\settings.ts:153)
+  loadGeneratorSettings (src\lib\providers\settings.ts:161:12)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <ContentStudio> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: Cannot read properties of undefined (reading 'modelPlaceholder')] 
+
+Code: settings.ts
+[0m [90m 143 |[39m       [33m:[39m defaultModelFor(provider[33m,[39m info[33m.[39mneeds)[33m;[39m
+ [90m 144 |[39m
+[31m[1m>[22m[39m[90m 145 |[39m   [36mconst[39m choice[33m:[39m [33mGeneratorChoice[39m [33m=[39m { provider[33m,[39m model }[33m;[39m
+ [90m     |[39m                                               [31m[1m^[22m[39m
+ [90m 146 |[39m   [36mif[39m (info[33m.[39mneeds [33m===[39m [32m'audio'[39m) {
+ [90m 147 |[39m     choice[33m.[39mvoice [33m=[39m
+ [90m 148 |[39m       [36mtypeof[39m value[33m.[39mvoice [33m===[39m [32m'string'[39m [33m&&[39m value[33m.[39mvoice[33m.[39mtrim() [33m!==[39m [32m''[39m[0m
+Call Stack
+  normalizeChoice (src\lib\providers\settings.ts:145:47)
+  loadGeneratorSettings (src\lib\providers\settings.ts:157:10)
+  setGeneratorChoice (src\lib\providers\settings.ts:165:23)
+  ContentStudio (src\dev\content-studio.tsx:259:82) 
+
+Code: studio.tsx
+[0m [90m 39 |[39m     [33m<[39m[33mScreenScaffold[39m title[33m=[39m{t([32m'settings.studio'[39m)}[33m>[39m
+ [90m 40 |[39m       [33m<[39m[33mZurueckZeile[39m [33m/[39m[33m>[39m
+[31m[1m>[22m[39m[90m 41 |[39m       [33m<[39m[33mStudio[39m [33m/[39m[33m>[39m
+ [90m    |[39m       [31m[1m^[22m[39m
+ [90m 42 |[39m     [33m<[39m[33m/[39m[33mScreenScaffold[39m[33m>[39m
+ [90m 43 |[39m   )[33m;[39m
+ [90m 44 |[39m }[0m
+Call Stack
+  StudioScreen (src\app\settings\studio.tsx:41:7)
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  WARN  An error occurred in the <StudioScreen(./settings/studio.tsx)> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <StudioScreen(./settings/studio.tsx)> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: app-tabs.web.tsx
+[0m [90m  99 |[39m
+ [90m 100 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 101 |[39m     [33m<[39m[33mTabs[39m[33m>[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 102 |[39m       {isNarrow [33m?[39m (
+ [90m 103 |[39m         [90m// Schmal: TabSlot zuerst, TabList danach — expo-router/ui (v57) zeigt[39m
+ [90m 104 |[39m         [90m// genau diese Reihenfolge im Doku-Beispiel; im flexiblen Column-Root[39m[0m
+Call Stack
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: app-tabs.web.tsx
+[0m [90m  99 |[39m
+ [90m 100 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 101 |[39m     [33m<[39m[33mTabs[39m[33m>[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 102 |[39m       {isNarrow [33m?[39m (
+ [90m 103 |[39m         [90m// Schmal: TabSlot zuerst, TabList danach — expo-router/ui (v57) zeigt[39m
+ [90m 104 |[39m         [90m// genau diese Reihenfolge im Doku-Beispiel; im flexiblen Column-Root[39m[0m
+Call Stack
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  WARN  An error occurred in the <StudioScreen(./settings/studio.tsx)> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  WARN  An error occurred in the <StudioScreen(./settings/studio.tsx)> component.
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://react.dev/link/error-boundaries to learn more about error boundaries.
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: app-tabs.web.tsx
+[0m [90m  99 |[39m
+ [90m 100 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 101 |[39m     [33m<[39m[33mTabs[39m[33m>[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 102 |[39m       {isNarrow [33m?[39m (
+ [90m 103 |[39m         [90m// Schmal: TabSlot zuerst, TabList danach — expo-router/ui (v57) zeigt[39m
+ [90m 104 |[39m         [90m// genau diese Reihenfolge im Doku-Beispiel; im flexiblen Column-Root[39m[0m
+Call Stack
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: app-tabs.web.tsx
+[0m [90m  99 |[39m
+ [90m 100 |[39m   [36mreturn[39m (
+[31m[1m>[22m[39m[90m 101 |[39m     [33m<[39m[33mTabs[39m[33m>[39m
+ [90m     |[39m     [31m[1m^[22m[39m
+ [90m 102 |[39m       {isNarrow [33m?[39m (
+ [90m 103 |[39m         [90m// Schmal: TabSlot zuerst, TabList danach — expo-router/ui (v57) zeigt[39m
+ [90m 104 |[39m         [90m// genau diese Reihenfolge im Doku-Beispiel; im flexiblen Column-Root[39m[0m
+Call Stack
+  AppTabs (src\components\app-tabs.web.tsx:101:5)
+  TabLayout (src\app\_layout.tsx:31:9)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)
+Web  ERROR  [TypeError: (0 , _providersImage.stabilityEndpoint) is not a function] 
+
+Code: require.js
+[0m [90m 246 |[39m         }
+ [90m 247 |[39m         moduleObject[33m.[39mid [33m=[39m moduleId[33m;[39m
+[31m[1m>[22m[39m[90m 248 |[39m         factory [33m==[39m [36mnull[39m [33m?[39m [36mvoid[39m [35m0[39m [33m:[39m factory(global[33m,[39m metroRequire[33m,[39m metroImportDefault[33m,[39m metroImportAll[33m,[39m moduleObject[33m,[39m moduleObject[33m.[39mexports[33m,[39m dependencyMap)[33m;[39m
+ [90m     |[39m                                    [31m[1m^[22m[39m
+ [90m 249 |[39m         [36mif[39m ([33m![39m__DEV__) {
+ [90m 250 |[39m             module[33m.[39mfactory [33m=[39m undefined[33m;[39m
+ [90m 251 |[39m             module[33m.[39mdependencyMap [33m=[39m undefined[33m;[39m[0m
+Call Stack
+  <unknown> (http:\localhost:8081\node_modules\expo-router\entry.bundle)
+  loadModuleImplementation (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:248:36)
+  guardedLoadModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:163:16)
+  metroRequire (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:74:75)
+  runUpdatedModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:491:9)
+  metroHotUpdateModule (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:383:30)
+  define (node_modules\expo\node_modules\@expo\cli\build\metro-require\require.js:28:24)
+  eval (http:\localhost:8081\src\lib\providers\image.bundle)
+  inject (node_modules\metro-runtime\src\modules\HMRClient.js:9:5)
+  Array.forEach (<anonymous>)
+  injectUpdate (node_modules\metro-runtime\src\modules\HMRClient.js:14:19)
+  on$argument_1 (node_modules\metro-runtime\src\modules\HMRClient.js:68:9)
+  emit (node_modules\metro-runtime\src\modules\vendor\eventemitter3.js:104:27)
+  _ws.onmessage (node_modules\metro-runtime\src\modules\HMRClient.js:51:16)

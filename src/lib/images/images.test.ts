@@ -21,7 +21,6 @@ import {
   IMAGE_MODEL,
   ImageGenerationClient,
   NEGATIVE_PROMPT,
-  parseImageResponse,
 } from './generator';
 import { hasMotif, IMAGE_MOTIFS, motifFor } from './motifs';
 import {
@@ -347,8 +346,9 @@ describe('runImageBatch - Ablage', () => {
     const specs = planImages({ limit: 2 });
     const client: ImageGenerationClient = {
       async generate() {
-        // So verhaelt sich der echte Client bei einer Antwort ohne Bilddaten.
-        return parseImageResponse({ finish_reason: 'SUCCESS' }, 'egal');
+        // So verhaelt sich der echte Client bei einer Antwort ohne Bilddaten:
+        // benannter Fehlschlag statt halber Eintrag.
+        throw new Error('Antwort enthielt kein Bild.');
       },
     };
 
@@ -411,44 +411,6 @@ describe('clearVocabImages', () => {
     expect(await countVocabImages(store)).toBe(0);
     expect(await blobs.has(`${specs[0].vocabId}.${IMAGE_FORMAT}`)).toBe(false);
     expect(await loadVocabImageUri(specs[0].vocabId, store, blobs)).toBeNull();
-  });
-});
-
-describe('parseImageResponse', () => {
-  it('liest eine gueltige Antwort ein', () => {
-    const image = parseImageResponse(
-      { image: FAKE_BASE64, finish_reason: 'SUCCESS', seed: 42 },
-      'ein Prompt'
-    );
-    expect(image.base64).toBe(FAKE_BASE64);
-    expect(image.format).toBe(IMAGE_FORMAT);
-    expect(image.model).toBe(IMAGE_MODEL);
-    expect(image.prompt).toBe('ein Prompt');
-  });
-
-  it('lehnt eine Antwort ohne Bildfeld ab und nennt die gelieferten Felder', () => {
-    // Die Antwortform liess sich ohne gueltigen Schluessel nicht messen. Wenn
-    // das Feld eines Tages anders heisst, soll das in der Fehlerliste stehen
-    // und nicht als Raetsel enden.
-    expect(() => parseImageResponse({ finish_reason: 'SUCCESS', seed: 1 }, 'p')).toThrow(
-      /gelieferte Felder: finish_reason, seed/
-    );
-  });
-
-  it('lehnt gefilterte Antworten ab, auch wenn ein Bild dabei ist', () => {
-    // Stability liefert bei ausgefiltertem Inhalt ein absichtlich unscharfes
-    // Bild statt eines Fehlers - das gehoert nicht in den Bestand.
-    expect(() =>
-      parseImageResponse({ image: FAKE_BASE64, finish_reason: 'CONTENT_FILTERED' }, 'p')
-    ).toThrow(/CONTENT_FILTERED/);
-  });
-
-  it('lehnt unbrauchbare Bilddaten ab', () => {
-    expect(() => parseImageResponse({ image: 'kurz!' }, 'p')).toThrow(/Base64/);
-  });
-
-  it('lehnt eine Antwort ab, die gar kein Objekt ist', () => {
-    expect(() => parseImageResponse('<html>Fehlerseite</html>', 'p')).toThrow(/JSON-Objekt/);
   });
 });
 

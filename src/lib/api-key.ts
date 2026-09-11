@@ -31,46 +31,39 @@ import { PROVIDERS, ProviderId } from './providers/types';
  * so verhält sich der Code richtig, falls eine Plattform die sichere Ablage
  * unerwartet nicht anbietet.
  *
- * SEIT PHASE 5 MEHRERE ANBIETER: Anthropic erzeugte die Sprachsituationen,
- * Stability AI die Bilder (AE-13). Die Schlüssel liegen getrennt und nach genau
+ * SEIT PHASE 5 MEHRERE ANBIETER: Sprachsituationen, Bilder und Hörclips
+ * brauchen je einen Schlüssel. Die Schlüssel liegen getrennt und nach genau
  * demselben Muster — ein gemeinsamer Schlüssel wäre schon deshalb falsch,
  * weil die Läufe unabhängig voneinander gestartet werden können und niemand
  * einen Schlüssel eintippen soll, den er gar nicht braucht.
  *
- * SEIT PHASE 10 SIND ES VIER (Pflicht 4). Am Muster ändert das nichts: nativ
- * Keychain, Web-Studio localStorage im Dev-Fall, sonst Arbeitsspeicher für
- * die Sitzung. Es gilt **je Anbieter** statt einmalig — die Liste der Anbieter
- * kommt aus `providers/types.ts`, damit es nicht zwei Wahrheiten darüber gibt,
- * welche es gibt.
- *
- * DER ABLAGENAME FÜR CLAUDE BLEIBT `anthropic-api-key`. Er heißt seit Phase 4
- * so und liegt auf den Geräten der Nutzer im Keychain; ihn zur Sauberkeit
- * umzubenennen, würde einen dort gespeicherten Schlüssel unauffindbar machen —
- * die App fragte kommentarlos erneut danach, und der alte Eintrag bliebe für
- * immer liegen.
+ * SEIT PHASE 10 NACH DEMSELBEN MUSTER GEZAHLT. Die Liste der Anbieter kommt
+ * aus `providers/types.ts`, damit es nicht zwei Wahrheiten darüber gibt,
+ * welche es gibt. NUTZERENTSCHEIDUNG 10.09.: `claude` und `stability` sind
+ * aus der Liste gefallen — ihre Ablagenamen (`anthropic-api-key`,
+ * `stability-api-key`) existieren in dieser Karte nicht mehr. Ein auf alten
+ * Geräten noch vorhandener Eintrag im Keychain/localStorage bleibt dann
+ * einfach liegen: unerreichbar, aber harmlos — ihn gezielt zu löschen, wäre
+ * ein Eingriff in fremde Gerätedaten für einen Weg, den es nicht mehr gibt.
  */
 
 export type Provider = ProviderId;
 export { PROVIDERS };
 
 const KEY_NAMES: Record<Provider, string> = {
-  claude: 'anthropic-api-key',
   chatgpt: 'openai-api-key',
   // Der Helper hält seinen Schlüssel serverseitig in der Umgebung — für ihn
   // gibt es trotzdem einen eigenen Ablagenamen, damit die Struktur stimmt,
   // auch wenn ihn niemand nützen sollte.
   'chatgpt-helper': 'openai-helper-api-key',
   gemini: 'gemini-api-key',
-  stability: 'stability-api-key',
 };
 
 /** Nur für die laufende Sitzung, wenn keine sichere Ablage vorhanden ist. */
 const sessionOnlyKeys: Record<Provider, string | null> = {
-  claude: null,
   chatgpt: null,
   'chatgpt-helper': null,
   gemini: null,
-  stability: null,
 };
 
 export type KeyStorageMode = 'secure-store' | 'local-dev' | 'session-only';

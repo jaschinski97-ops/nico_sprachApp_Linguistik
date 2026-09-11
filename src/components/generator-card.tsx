@@ -30,8 +30,8 @@ import {
   findVoice,
   VOICE_SOURCES,
 } from '@/data/tts-voices';
-import { LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
-import { LanguageCode } from '@/lib/languages/types';
+import { LANGUAGE_LABELS } from '@/lib/languages/registry';
+import { Lang, SUPPORTED_TARGETS } from '@/lib/languages/types';
 import type { RunEstimate } from '@/dev/run-cost';
 
 /**
@@ -53,10 +53,24 @@ import type { RunEstimate } from '@/dev/run-cost';
  * ist genau das Muster, das in dieser App schon für Umfang und Lernrichtung
  * benutzt und in Phase 9 auf Tippziele, Fokus und Beschriftung geprüft wurde.
  *
- * DER SCHLÜSSEL HÄNGT AM ANBIETER, nicht an der Karte: Wer von Claude auf
+ * DER SCHLÜSSEL HÄNGT AM ANBIETER, nicht an der Karte: Wer von ChatGPT auf
  * Gemini umstellt, sieht sofort das Schlüsselfeld für Gemini — und der
- * Claude-Schlüssel bleibt liegen, wo er war (AE-10, jetzt je Anbieter).
+ * ChatGPT-Schlüssel bleibt liegen, wo er war (AE-10, jetzt je Anbieter).
  */
+
+/**
+ * Die Generator-Zielsprachen — Thai, Englisch, Spanisch UND Deutsch
+ * (Nutzerentscheidung 10.09., „Füge noch Deutsch zum Generieren hinzu").
+ *
+ * WHY HIER EIGENE LISTE STATT `LANGUAGE_ORDER`: Deutsch ist kein
+ * `LanguageCode` mit eigenem Grundstoff, aber Lernziel (`X_to_de`) — Clips
+ * und Bilder für die deutschen Rückseiten sind seit dem 10.09. generierbar.
+ * Die Beschriftung kommt aus `LANGUAGE_LABELS`, damit kein zweites
+ * Namensverzeichnis entsteht.
+ */
+export const GENERATOR_LANGUAGES: { code: Lang; label: string }[] = SUPPORTED_TARGETS.map(
+  (code) => ({ code, label: LANGUAGE_LABELS[code] })
+);
 
 export type RunOption = {
   id: string;
@@ -82,7 +96,7 @@ export type CountItem = {
 export type StartArgs = {
   optionId: string;
   /** Für welche Sprache der Lauf gilt — nur bei Gruppen, die eine Wahl anbieten. */
-  language: LanguageCode;
+  language: Lang;
   /**
    * Aus dem Feld „Max. neue erzeugen“: der Lauf erzeugt höchstens so viele
    * **neue** Einheiten; leer/0 heißt alles Fehlende. Angewendet wird die Zahl
@@ -118,9 +132,12 @@ type Props = {
    * Für welche Sprache erzeugt wird (Phase 18). Fehlt die Angabe, bietet die
    * Karte keine Wahl an — so bei Prüfungsaufgaben (die prüfen Deutsch) und
    * Sprachsituationen (deren Aufgabentext bisher nur Thai kennt, AE-48).
+   *
+   * SEIT DEM 10.09. VOM TYP `Lang`: Deutsch ist als Generier-Ziel dabei
+   * (`X_to_de`-Rückseiten), siehe `GENERATOR_LANGUAGES`.
    */
-  language?: LanguageCode;
-  onLanguageChange?: (language: LanguageCode) => void;
+  language?: Lang;
+  onLanguageChange?: (language: Lang) => void;
   heading: string;
   description: string;
   /** Welche Generator-Gruppe — bestimmt, welche Anbieter überhaupt taugen. */
@@ -354,10 +371,10 @@ export function GeneratorCard({
         <View style={styles.field}>
           <ThemedText type="small">Sprache</ThemedText>
           <ChoiceRow label={`Sprache für ${heading}`}>
-            {LANGUAGE_ORDER.map((code) => (
+            {GENERATOR_LANGUAGES.map(({ code, label }) => (
               <Button
                 key={code}
-                label={languageOf(code).label}
+                label={label}
                 onPress={() => onLanguageChange(code)}
                 selected={language === code}
                 disabled={running}

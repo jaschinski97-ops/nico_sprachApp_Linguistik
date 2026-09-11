@@ -16,6 +16,7 @@ import { CountItem, GeneratorCard, RunOption, StartArgs } from '@/components/gen
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { VOCABULARY_DE } from '@/data/vocabulary-de';
 import { runClipBatch, missingClipSpecs } from '@/lib/clips/batch';
 import { getActiveAudioBlobBackend, getAudioBlobStore } from '@/lib/clips/blob-store';
 import { createClipGenerationClient } from '@/lib/clips/generator';
@@ -33,8 +34,9 @@ import { runImageBatch, missingImageSpecs } from '@/lib/images/batch';
 import { createImageGenerationClient } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
 import { vocabularyFor } from '@/data/vocabulary';
-import { LanguageCode } from '@/lib/languages/types';
-import { directionLabel, LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';
+import { VocabEntry } from '@/data/vocab-types';
+import { directionLabel, LANGUAGE_ORDER, LANGUAGE_LABELS } from '@/lib/languages/registry';
+import { LanguageCode, Lang } from '@/lib/languages/types';
 import { loadProfile } from '@/lib/profile';
 import { HELPER_AUDIO_PROVIDER, ProviderId } from '@/lib/providers/types';
 import {
@@ -77,9 +79,10 @@ import type { Direction } from '@/lib/fsrs/types';
  * darunter denselben Batch-Läufer und seit Phase 10 auch denselben
  * Anbieter-Vertrag; unterschiedlich sind nur Bauplan und Ablage.
  *
- * Die Anbieterwahl liegt **je Gruppe** getrennt (`meta/generators`), weil
- * genau das der Punkt ist: Claude erzeugt keine Bilder, also muss man Dialoge
- * und Bilder verschieden einstellen können.
+ * Die Anbieterwahl liegt **je Gruppe** getrennt (`meta/generators`) — auch
+ * seit der Nutzerentscheidung vom 10.09. (nur noch Gemini und OpenAI/Helper
+ * in der Auswahl), denn die Trennung kostet nichts und wer für Bilder und
+ * Text verschieden einstellen will, soll das weiter können.
  */
 
 const SITUATION_RUNS: RunOption[] = [
@@ -116,15 +119,20 @@ const EXAM_RUNS: RunOption[] = [
 /**
  * Der Bilderlauf haengt seit Phase 18 an der gewaehlten Sprache: Wie viele
  * Bilder es werden, steht erst fest, wenn die Sprache feststeht.
+ *
+ * SEIT DEM 10.09. AUCH DEUTSCH: Die de-Pool-Begriffe teilen das Konzeptbild
+ * ihres Ankers (AE-46) — der Lauf toppt fehlende Konzeptbilder auf.
  */
-function imageRunOptions(language: LanguageCode): RunOption[] {
-  const alle = countImageCandidates(vocabularyFor(language));
+function imageRunOptions(language: Lang): RunOption[] {
+  const alle = countImageCandidates(
+    language === 'de' ? VOCABULARY_DE : vocabularyFor(language)
+  );
   return [
     { id: 'test', label: 'Probelauf', hint: `${IMAGE_TEST_RUN} Bilder — kleiner Testlauf` },
     {
       id: 'full',
       label: 'Alle konkreten Vokabeln',
-      hint: `${alle} Bilder (${languageOf(language).label}) — kostet echtes Geld und dauert`,
+      hint: `${alle} Bilder (${LANGUAGE_LABELS[language]}) — kostet echtes Geld und dauert`,
     },
   ];
 }
@@ -134,21 +142,28 @@ function imageRunOptions(language: LanguageCode): RunOption[] {
  * gespeichert sind) und vom Anbieter (WAV bei Gemini, mp3 bei ChatGPT) —
  * deshalb werden sie je Aufruf gebaut, nicht als Konstante. Die Schätzung
  * steht **vor** dem Start am Knopf (Pflicht 3).
+ *
+ * SEIT DEM 10.09. AUCH DEUTSCH: Für `'de'` kommt der abgeleitete de-Pool
+ * (`VOCABULARY_DE`) als Quelle — seine Einträge tragen `language: 'de'`, die
+ * Clips landen also als deutsche Clips im Store und greifen an den X_to_de-
+ * Rückseiten automatisch (resolveClipUri über Sprache + Text).
  */
 function clipRunOptions(
   storedSituations: ConversationSituation[],
   provider: ProviderId,
-  language: LanguageCode,
+  language: Lang,
   exams: ExamModule[] = []
 ): { options: RunOption[]; specsFor: (optionId: string) => AudioClipSpec[] } {
+  const poolFuer = (code: Lang): VocabEntry[] =>
+    code === 'de' ? VOCABULARY_DE : vocabularyFor(code);
   const plans: Record<string, AudioClipSpec[]> = {
     delivery: planDeliveryAudio(storedSituations, exams),
-    test: planClipTestRun(vocabularyFor(language)),
-    vocab: planClips({ language }),
+    test: planClipTestRun(poolFuer(language)),
+    vocab: planClips({ vocabulary: poolFuer(language) }),
     // Gespraechszuege gibt es bisher nur auf Thai (AE-48); sie haengen an den
     // gespeicherten Situationen und nicht an dieser Wahl.
     turns: planClips({ includeWords: false, includeExamples: false, situations: storedSituations }),
-    all: planClips({ language, situations: storedSituations }),
+    all: planClips({ vocabulary: poolFuer(language), situations: storedSituations }),
   };
   const size = (specs: AudioClipSpec[]) => {
     const bytes = estimateClipBytes(specs, provider);
@@ -160,7 +175,7 @@ function clipRunOptions(
     {
       id: 'vocab',
       label: 'Alle Vokabeln',
-      hint: `${plans.vocab.length} Clips (${languageOf(language).label}) — jedes Wort und, wo es eines gibt, der Beispielsatz${size(plans.vocab)}`,
+      hint: `${plans.vocab.length} Clips (${LANGUAGE_LABELS[language]}) — jedes Wort und, wo es eines gibt, der Beispielsatz${size(plans.vocab)}`,
     },
     {
       id: 'turns',
@@ -181,18 +196,27 @@ function clipRunOptions(
 // sprachneutrale Registry/Planung und die Zähler-Helfer des Repositorys.
 // ---------------------------------------------------------------------------
 
-/** Der statische Vokabel-Bestand — eine Zeile fürs Grundstock-Panel. */
+/**
+ * Der statische Vokabel-Bestand — eine Zeile fürs Grundstock-Panel. Der
+ * deutsche Pool steht dort bewusst NICHT: Er ist abgeleitet (aus den
+ * `german`-Feldern dieses Bestands), kein zweiter eingetragener Grundstock.
+ */
 const POOL_ZAEHLER = LANGUAGE_ORDER.map(
-  (code) => `${languageOf(code).label} ${vocabularyFor(code).length}`
+  (code) => `${LANGUAGE_LABELS[code]} ${vocabularyFor(code).length}`
 ).join(' · ');
 
 /** Die gespeicherten Dialoge kennen genau diese beiden Richtungen. */
 const RICHTUNGEN = ['de_to_th', 'th_to_de'] as const;
 
-/** „Alle Sprachen“: th → en → es, dieselbe Reihenfolge wie die Auswahl. */
-const ALLE_SPRACHEN: ChainStep[] = LANGUAGE_ORDER.map((code) => ({
+/**
+ * „Alle Sprachen“ der Bilder-/Audio-Kette: th → en → es → de — die vierte
+ * Sprache ist Deutsch (Nutzerentscheidung 10.09., Deutsch als
+ * Generier-/Zielsprache), beschriftet über dasselbe Verzeichnis wie die
+ * Zielauswahl.
+ */
+const ALLE_SPRACHEN: ChainStep[] = [...LANGUAGE_ORDER, 'de' as const].map((code) => ({
   key: code,
-  label: languageOf(code).label,
+  label: LANGUAGE_LABELS[code],
 }));
 
 /** „Alle Richtungen“ — der Dialog-Plan kennt nur Thai, also beide Hälften. */
@@ -204,19 +228,25 @@ const ALLE_RICHTUNGEN: ChainStep[] = RICHTUNGEN.map((richtung) => ({
 /** „Alle Levels“ — der Prüfungs-Generator kennt A1 und A2, nicht alle Sprachen. */
 const ALLE_STUFEN: ChainStep[] = GENERATED_LEVELS.map((stufe) => ({ key: stufe, label: stufe }));
 
-/** Eine Zeile „Thai 12 · Englisch 3 · Spanisch 0“ fürs Grundstock-Panel. */
+/**
+ * Eine Zeile „Thai 12 · Englisch 3 · Spanisch 0 · Deutsch 0“ fürs
+ * Grundstock-Panel — die Deutsch-Zeile zählt die Clips/Bilder des
+ * abgeleiteten de-Pools (siehe `countAudioClipsByLanguage`).
+ */
 function jeSprache(counts: ClipLanguageCounts | ImageLanguageCounts | null): string {
-  return LANGUAGE_ORDER.map((code) => `${languageOf(code).label} ${counts ? counts[code] : '…'}`).join(' · ');
+  return [...LANGUAGE_ORDER, 'de' as const]
+    .map((code) => `${LANGUAGE_LABELS[code]} ${counts ? counts[code] : '…'}`)
+    .join(' · ');
 }
 
 /** Die Zähler-Zeile im Kopf eines Generators; die gewählte Sprache wird hervorgehoben. */
 function sprachZaehler(
   counts: ClipLanguageCounts | ImageLanguageCounts | null,
-  gewaehlt?: LanguageCode
+  gewaehlt?: Lang
 ): CountItem[] {
-  return LANGUAGE_ORDER.map((code) => ({
+  return [...LANGUAGE_ORDER, 'de' as const].map((code) => ({
     key: code,
-    label: languageOf(code).label,
+    label: LANGUAGE_LABELS[code],
     count: counts ? counts[code] : null,
     ...(gewaehlt ? { highlighted: code === gewaehlt } : {}),
   }));
@@ -264,7 +294,9 @@ export default function ContentStudio() {
    * gemeinte. Sie steht getrennt vom Lernprofil, weil ein Generierungslauf
    * eine einmalige Handlung ist und nicht bestimmen soll, was man lernt.
    */
-  const [mediaLanguage, setMediaLanguage] = useState<LanguageCode>('th');
+  // SEIT DEM 10.09. VOM TYP `Lang`: Deutsch ist als Generier-Sprache dabei
+  // (X_to_de-Rückseiten, abgeleiteter de-Pool) — siehe `ALLE_SPRACHEN`.
+  const [mediaLanguage, setMediaLanguage] = useState<Lang>('th');
 
   const refreshSituations = useCallback(async () => {
     const [count, nachRichtung] = await Promise.all([countSituations(), countSituationsByDirection()]);
@@ -405,10 +437,18 @@ export default function ContentStudio() {
     await studioRequest('/state');
     // Ohne Kette ein Schritt (die gewählte Sprache), mit „Alle Sprachen“
     // einer je Pool — derselbe Bauplan, eine kombinierte Bestätigung.
+    // Deutsch plant über den abgeleiteten de-Pool: Ein Bildmotiv gehört zum
+    // Begriff (AE-46), der Lauf toppt also fehlende Konzeptbilder auf.
     const { steps, all } = await planChain(
-      chain ?? [{ key: language, label: languageOf(language).label }],
+      chain ?? [{ key: language, label: LANGUAGE_LABELS[language] }],
       (key) => planImages(
-        optionId === 'full' ? { language: key as LanguageCode } : { language: key as LanguageCode, limit: IMAGE_TEST_RUN }
+        key === 'de'
+          ? {
+              ...(optionId === 'full' ? { entries: VOCABULARY_DE } : { entries: VOCABULARY_DE, limit: IMAGE_TEST_RUN }),
+            }
+          : optionId === 'full'
+            ? { language: key as LanguageCode }
+            : { language: key as LanguageCode, limit: IMAGE_TEST_RUN }
       ),
       (specs) => missingImageSpecs(specs),
       maxNew
@@ -438,8 +478,8 @@ export default function ContentStudio() {
       const dialogs = await loadSituations();
       const pruefungen = await loadExamModules();
       const { steps, all } = await planChain(
-        chain ?? [{ key: language, label: languageOf(language).label }],
-        (key) => clipRunOptions(dialogs, provider, key as LanguageCode, pruefungen).specsFor(optionId),
+        chain ?? [{ key: language, label: LANGUAGE_LABELS[language] }],
+        (key) => clipRunOptions(dialogs, provider, key as Lang, pruefungen).specsFor(optionId),
         (specs) => missingClipSpecs(specs),
         maxNew
       );

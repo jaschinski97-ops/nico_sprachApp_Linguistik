@@ -12,10 +12,12 @@ import {
 /**
  * Welcher Anbieter und welches Modell je Generator-Gruppe (Phase 10).
  *
- * DREI GRUPPEN, NICHT EINE EINSTELLUNG FÜR ALLES. Wer Dialoge von Claude und
- * Bilder von Gemini haben will, soll das können — und muss es sogar, weil
- * Claude überhaupt keine Bilder erzeugt. Eine einzige App-weite Anbieterwahl
- * hätte genau diese Kombination unmöglich gemacht.
+ * VIER GRUPPEN, NICHT EINE EINSTELLUNG FÜR ALLES. Wer Dialoge von OpenAI und
+ * Bilder von Gemini haben will, soll das können. Eine einzige App-weite
+ * Anbieterwahl wäre eine Einschränkung ohne Not — die Trennung kostet nichts
+ * und bleibt, auch wenn seit der Nutzerentscheidung vom 10.09. („Entferne bei
+ * den KIs Claude und Stability") beide Cloud-Anbieter alle drei Fähigkeiten
+ * abdecken.
  *
  * ABGELEGT IN DER SAMMLUNG `meta`, neben dem Lernprofil aus AE-17 — dieselbe
  * Stelle, die seit Phase 1 für „Einstellungen, Lernprofil, Zähler" vorgesehen
@@ -24,7 +26,8 @@ import {
  *
  * NACHSICHTIG GELESEN wie das Lernprofil und die Dokumente an der Lesegrenze
  * (AE-25): Eine gespeicherte Einstellung aus einer älteren Version kann einen
- * Anbieter nennen, den es nicht mehr gibt, oder einen, der die verlangte
+ * Anbieter nennen, den es nicht mehr gibt — seit dem 10.09. trifft das jeden
+ * gespeicherten `claude`/`stability`-Stand —, oder einen, der die verlangte
  * Fähigkeit gar nicht hat. Beides ergibt den Standard der Gruppe statt eines
  * Absturzes — Einstellungen sind kein Grund, eine App unbenutzbar zu machen.
  */
@@ -46,22 +49,28 @@ export const GENERATOR_GROUP_INFO: Record<GeneratorGroupId, GeneratorGroupInfo> 
     id: 'situations',
     label: 'Sprachsituationen',
     needs: 'text',
-    // Der Bestand aus Phase 4. Die Voreinstellung zu wechseln waere eine
-    // stille Verhaltensaenderung fuer alle, die nichts umstellen.
-    defaultProvider: 'claude',
+    // NUTZERENTSCHEIDUNG 10.09.: Der bisherige Text-Default Claude ist aus der
+    // Auswahl gefallen — der Default MUSS deshalb wandern. Gemini, weil die
+    // Audio-Gruppe ihn schon trägt (derselbe Schlüssel deckt dann alle
+    // Textgruppen) und sein Web-Weg gemessen ist (AE-26).
+    defaultProvider: 'gemini',
   },
   exam: {
     id: 'exam',
     label: 'Prüfungsinhalte',
     needs: 'text',
-    defaultProvider: 'claude',
+    // Derselbe Grund wie `situations`: Der claude-Default existiert nicht
+    // mehr, Gemini rückt an seine Stelle.
+    defaultProvider: 'gemini',
   },
   images: {
     id: 'images',
     label: 'Bilder',
     needs: 'image',
-    // Der Bestand aus Phase 5 (AE-13).
-    defaultProvider: 'stability',
+    // NUTZERENTSCHEIDUNG 10.09.: Der Bild-Default Stability ist aus der
+    // Auswahl gefallen — Gemini ist der gemessene Bildweg aus dem Web-Build
+    // (AE-27-Nachmessung; ChatGPT-Bilder laufen über denselben CORS-Befund).
+    defaultProvider: 'gemini',
   },
   audio: {
     id: 'audio',
@@ -127,25 +136,33 @@ export function providersForGroup(group: GeneratorGroupId) {
  *
  * Ein leeres Modellfeld ist ausdrücklich **kein** Fehler: Wer das Feld leert,
  * will den Vorschlag des Anbieters, nicht eine Fehlermeldung.
+ *
+ * SEIT DER ANBIETER-ENTFERNUNG (10.09.): Fällt der gespeicherte Anbieter auf
+ * den Gruppen-Default zurück — weil es ihn nicht mehr gibt (alter
+ * `claude`/`stability`-Stand) oder weil er die Aufgabe nicht kann —, wandert
+ * Modell (und Stimme) mit in den Default. Dieselbe Regel wie bei
+ * `setGeneratorProvider`: Der bisherige Name gehört dem alten Anbieter, und
+ * `claude-opus-5` an Gemini geschickt wäre nur ein Fehlschlag, den niemand
+ * mit dem stillen Wechsel in Verbindung brächte.
  */
 export function normalizeChoice(raw: unknown, group: GeneratorGroupId): GeneratorChoice {
   const info = GENERATOR_GROUP_INFO[group];
   const value = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
 
-  const provider =
-    isProviderId(value.provider) && PROVIDER_INFO[value.provider].can[info.needs]
-      ? value.provider
-      : info.defaultProvider;
+  const gespeichert = value.provider;
+  const anbieterVerfaellt =
+    !isProviderId(gespeichert) || !PROVIDER_INFO[gespeichert].can[info.needs];
+  const provider = anbieterVerfaellt ? info.defaultProvider : gespeichert;
 
   const model =
-    typeof value.model === 'string' && value.model.trim() !== ''
+    !anbieterVerfaellt && typeof value.model === 'string' && value.model.trim() !== ''
       ? value.model.trim()
       : defaultModelFor(provider, info.needs);
 
   const choice: GeneratorChoice = { provider, model };
   if (info.needs === 'audio') {
     choice.voice =
-      typeof value.voice === 'string' && value.voice.trim() !== ''
+      !anbieterVerfaellt && typeof value.voice === 'string' && value.voice.trim() !== ''
         ? value.voice.trim()
         : defaultVoiceFor(provider);
   }
@@ -177,11 +194,12 @@ export async function setGeneratorChoice(
 /**
  * Anbieter wechseln — und dabei den Modellnamen mitziehen.
  *
- * Der bisherige Name gehört dem alten Anbieter: `claude-opus-5` an Gemini zu
- * schicken ergibt nur einen Fehlschlag, den niemand sofort mit dem Wechsel in
- * Verbindung bringt. Deshalb setzt ein Anbieterwechsel den Vorschlag des neuen
- * Anbieters ein. Wer einen eigenen Namen eingetragen hatte, tippt ihn neu —
- * das ist der seltenere Fall und der offensichtlichere Verlust.
+ * Der bisherige Name gehört dem alten Anbieter: ein OpenAI-Modellname an
+ * Gemini zu schicken ergibt nur einen Fehlschlag, den niemand sofort mit dem
+ * Wechsel in Verbindung bringt. Deshalb setzt ein Anbieterwechsel den
+ * Vorschlag des neuen Anbieters ein. Wer einen eigenen Namen eingetragen
+ * hatte, tippt ihn neu — das ist der seltenere Fall und der offensichtlichere
+ * Verlust.
  */
 export async function setGeneratorProvider(
   group: GeneratorGroupId,

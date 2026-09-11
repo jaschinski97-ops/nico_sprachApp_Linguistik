@@ -199,12 +199,10 @@ describe('Bauplan', () => {
 describe('Speicherbedarf (Pflicht 3)', () => {
   it('rechnet Gemini als 24 kHz × 16 Bit mono — 48 000 Byte je Sekunde', () => {
     expect(BYTES_PER_SECOND.gemini).toBe(48000);
-    expect(BYTES_PER_SECOND.claude).toBeNull();
     const specs = planClipTestRun();
     const seconds = estimateClipSeconds(specs);
     expect(seconds).toBeGreaterThan(0);
     expect(estimateClipBytes(specs, 'gemini')).toBe(Math.round(seconds * 48000));
-    expect(estimateClipBytes(specs, 'claude')).toBeNull();
   });
 
   it('macht ChatGPT-mp3 deutlich kleiner als Gemini-WAV', () => {
@@ -301,18 +299,17 @@ describe('Gemini-Audioantwort', () => {
 });
 
 describe('Anbieter für Sprachausgabe', () => {
-  it('sind ChatGPT, der Studio-Helper und Gemini — Claude und Stability sprechen nicht', () => {
+  it('sind ChatGPT, der Studio-Helper und Gemini — und sonst niemand', () => {
     // `chatgpt-helper` ist der lokale Durchgang des Studios, kein Cloud-Dienst —
     // derselbe OpenAI-Aufruf, serverseitig mit Umgebungsschlüssel.
+    // NUTZERENTSCHEIDUNG 10.09.: Claude und Stability sind aus der Auswahl
+    // gefallen; wer sie noch in einem gespeicherten Stand trägt, landet über
+    // `normalizeChoice` beim Gruppen-Default (siehe providers.test.ts).
     expect(providersForGroup('audio').map((p) => p.id)).toEqual([
       'chatgpt',
       'chatgpt-helper',
       'gemini',
     ]);
-    expect(PROVIDER_INFO.claude.can.audio).toBe(false);
-    expect(PROVIDER_INFO.stability.can.audio).toBe(false);
-    expect(() => createAudioClient('claude', 'k', 'm', 'v')).toThrow(/keine Sprachausgabe/);
-    expect(() => createAudioClient('stability', 'k', 'm', 'v')).toThrow(/keine Sprachausgabe/);
   });
 
   it('startet mit Gemini, weil dessen Weg aus dem Browser gemessen offen ist', () => {
@@ -328,7 +325,7 @@ describe('Anbieter für Sprachausgabe', () => {
     expect(normalizeChoice({ provider: 'gemini', model: 'x', voice: '  ' }, 'audio').voice).toBe('Kore');
     expect(normalizeChoice({ provider: 'chatgpt', model: 'x', voice: 'Fantasie' }, 'audio').voice).toBe('Fantasie');
     // Textgruppen tragen keine Stimme.
-    expect(normalizeChoice({ provider: 'claude', model: 'x', voice: 'Kore' }, 'situations')).not.toHaveProperty('voice');
+    expect(normalizeChoice({ provider: 'gemini', model: 'x', voice: 'Kore' }, 'situations')).not.toHaveProperty('voice');
 
     const store = await freshStore();
     const next = await setGeneratorProvider('audio', 'chatgpt', store);

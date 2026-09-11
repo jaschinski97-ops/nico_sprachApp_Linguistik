@@ -7,9 +7,6 @@ import { SpeechLanguage } from '../audio';
  * Sprachsituationen und die Prüfungsaufgaben riefen den Anthropic-SDK direkt
  * auf (AE-12), die Bilder ein eigenes `fetch` gegen Stability (AE-13). Beide
  * Aufrufe standen im jeweiligen Generator neben dem Prompt und dem Parser.
- * Ein dritter Anbieter hätte also entweder ein drittes Mal dieselbe
- * Aufrufschleife bekommen oder jede Prompt-Datei mit einer Anbieterweiche
- * durchzogen.
  *
  * DIE NAHT LIEGT DESHALB DORT, WO SIE ANBIETERUNABHÄNGIG IST:
  *
@@ -31,20 +28,26 @@ import { SpeechLanguage } from '../audio';
 /**
  * Die auswählbaren Anbieter.
  *
- * Drei davon sind in Phase 10 dazugekommen (`claude`, `chatgpt`, `gemini`) —
- * `stability` ist der **Bestandsanbieter** aus AE-13 und bleibt für Bilder
- * wählbar. Der Grund steht in AE-28: Claude erzeugt überhaupt keine Bilder,
- * und ein Bildgenerator, dessen einzige verbliebene Anbieter beide erst noch
- * mit einem bezahlten Schlüssel zu belegen wären, wäre ein Rückschritt
- * gegenüber dem, was heute nachweislich läuft.
+ * NUTZERENTSCHEIDUNG (10.09., wörtlich): „Entferne bei den KIs Claude und
+ * Stability" — beide sind aus der Auswahl gefallen. WHY das reicht: Die zwei
+ * verbliebenen Cloud-Anbieter decken zusammen alle drei Fähigkeiten ab
+ * (Gemini und OpenAI je Text + Bild + Sprachausgabe), der Helper bleibt als
+ * serverseitiger Audio-Durchgang. Die frühere Begründung für den
+ * Bestandsanbieter Stability (AE-28: Claude erzeugt keine Bilder) trägt
+ * damit nicht mehr.
  *
  * `chatgpt-helper` ist kein Cloud-Anbieter, sondern der lokale Helper des
  * Inhaltsstudios (Roadmap v2, Phase 2): Er reicht Sprachausgabe an OpenAI
  * **serverseitig** durch — der Schlüssel steht in der Umgebung des Helpers
  * (env `OPENAI_API_KEY`) und wird nie im Browser angetastet. Er spricht nur
  * Sprachausgabe und taucht deshalb nur in der Hörclip-Gruppe auf.
+ *
+ * GESPEICHERTE STÄNDE: Profile und Backups können noch `claude`/`stability`
+ * nennen. `isProviderId` erkennt sie nicht mehr, und `normalizeChoice`
+ * (providers/settings.ts) fällt dann nachsichtig auf den Gruppen-Default
+ * zurück (AE-25-Muster) — ein alter Speicherstand darf nicht crashen.
  */
-export const PROVIDERS = ['claude', 'chatgpt', 'chatgpt-helper', 'gemini', 'stability'] as const;
+export const PROVIDERS = ['chatgpt', 'chatgpt-helper', 'gemini'] as const;
 export type ProviderId = (typeof PROVIDERS)[number];
 
 /** Der Hörclip-Anbieter für den lokalen Helper des Studios. */
@@ -95,20 +98,6 @@ export type ProviderInfo = {
 };
 
 export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
-  claude: {
-    id: 'claude',
-    label: 'Claude',
-    vendor: 'Anthropic',
-    // Anthropic bietet keine Bild-Erzeugung an - das war schon der Grund,
-    // warum Phase 5 ueberhaupt einen zweiten Anbieter suchen musste.
-    // ... und keine Sprachausgabe: Anthropic hat kein TTS-Modell (Phase 11).
-    can: { text: true, image: false, audio: false },
-    keyPlaceholder: 'sk-ant-…',
-    keySource: 'console.anthropic.com',
-    modelPlaceholder: { text: 'claude-opus-5', image: '', audio: '' },
-    voicePlaceholder: '',
-    webWarning: null,
-  },
   chatgpt: {
     id: 'chatgpt',
     label: 'ChatGPT',
@@ -189,20 +178,6 @@ export const PROVIDER_INFO: Record<ProviderId, ProviderInfo> = {
     // (OPENAI_API_KEY); ein im Browser eingetragener Schlüssel wird nie
     // verschickt. Deshalb braucht dieser Weg keinen.
     needsKey: false,
-  },
-  stability: {
-    id: 'stability',
-    label: 'Stability AI',
-    vendor: 'Stability AI',
-    // Reiner Bildanbieter - Textmodelle gibt es dort nicht.
-    can: { text: false, image: true, audio: false },
-    keyPlaceholder: 'sk-…',
-    keySource: 'platform.stability.ai',
-    // Bei Stability steckt das Modell im Pfad (`…/generate/core`). Das Feld
-    // nimmt beide Schreibweisen an, `stable-image-core` und `core`.
-    modelPlaceholder: { text: '', image: 'stable-image-core', audio: '' },
-    voicePlaceholder: '',
-    webWarning: null,
   },
 };
 
@@ -312,10 +287,10 @@ const CAPABILITY_NEGATED: Record<ProviderCapability, string> = {
 /**
  * Ein Anbieter kann das nicht — als Fehler, nicht als stiller Leerlauf.
  *
- * Die Oberfläche verhindert die Kombination bereits (das Auswahlfeld zeigt für
- * Bilder gar kein Claude an). Diese Sperre liegt trotzdem hier, weil
- * gespeicherte Einstellungen aus einer älteren Version eine Kombination
- * tragen können, die es inzwischen nicht mehr gibt — dieselbe Überlegung wie
+ * Die Oberfläche verhindert die Kombination bereits (das Auswahlfeld zeigt
+ * für eine Gruppe nur Anbieter an, die die Aufgabe können). Diese Sperre
+ * liegt trotzdem hier, weil gespeicherte Einstellungen aus einer älteren
+ * Version eine Kombination tragen können, die es inzwischen nicht mehr gibt — dieselbe Überlegung wie
  * beim dreifachen isConcrete-Tor (AE-15) und beim Prüfen an der Lesegrenze
  * (AE-25).
  */

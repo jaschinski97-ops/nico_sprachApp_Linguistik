@@ -1,9 +1,5 @@
 import { describeHttpError } from '../providers/http';
-import {
-  createImageProvider,
-  parseStabilityImage,
-  stabilityEndpoint,
-} from '../providers/image';
+import { createImageProvider } from '../providers/image';
 import { ImageClient, ProviderId } from '../providers/types';
 
 import { assertConcreteSpec } from './plan';
@@ -12,12 +8,12 @@ import { GeneratedImage, ImageFormat, ImageSpec } from './types';
 /**
  * Erzeugt ein einzelnes Vokabelbild.
  *
- * SEIT PHASE 10 IST DER ANBIETER WÄHLBAR (Stability, Gemini, ChatGPT — Claude
- * erzeugt keine Bilder). Der Prompt, das isConcrete-Tor und die zweiteilige
- * Ablage bleiben davon unberührt; wie ein Bild über die Leitung kommt, steht
- * in `lib/providers/image.ts`. Voreingestellt bleibt Stability, und der Grund
- * dafür steht unten: es ist der einzige der drei, dessen Anfrageform sich ohne
- * bezahlten Schlüssel überhaupt belegen ließ.
+ * SEIT PHASE 10 IST DER ANBIETER WÄHLBAR. Der Prompt, das isConcrete-Tor und
+ * die zweiteilige Ablage bleiben davon unberührt; wie ein Bild über die
+ * Leitung kommt, steht in `lib/providers/image.ts`. NUTZERENTSCHEIDUNG
+ * 10.09.: Der frühere Bild-Default Stability ist aus der Auswahl gefallen
+ * („Entferne bei den KIs Claude und Stability") — der Modell-Vorschlag folgt
+ * dem neuen Gruppen-Default Gemini, dessen Bildweg im Web-Build gemessen ist.
  *
  * ANBIETERWAHL (AE-13) — gemessen, nicht angenommen. Die Anthropic-API aus
  * Phase 4 erzeugt keine Bilder, es musste also ein zweiter Anbieter her.
@@ -62,10 +58,8 @@ import { GeneratedImage, ImageFormat, ImageSpec } from './types';
  *     Endpunkt gibt.
  */
 
-export const IMAGE_ENDPOINT = stabilityEndpoint('core');
-
-/** Voreinstellung — bei Stability steckt das Modell im Pfad (`…/generate/core`). */
-export const IMAGE_MODEL = 'stable-image-core';
+/** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
+export const IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 /**
  * WebP statt PNG: Das Bild landet auf dem Gerät in einer Datei und im Web in
@@ -119,26 +113,6 @@ export function buildImagePrompt(spec: ImageSpec): string {
 export const describeApiError = describeHttpError;
 
 /**
- * Prüft die Antwort, bevor sie abgelegt wird.
- *
- * Dieselbe Haltung wie beim Dialog-Parser aus Phase 4: lieber ein Fehlschlag
- * im Protokoll als eine kaputte Datei im Offline-Bestand, die erst beim Lernen
- * auffällt. Die Antwortform ließ sich ohne gültigen Schlüssel **nicht** messen
- * — anders als die Anfrageform. Deshalb nennt die Fehlermeldung die tatsächlich
- * gelieferten Felder: heißt das Feld eines Tages anders, steht das sofort in
- * der Fehlerliste des Laufs, statt als Rätsel zu enden.
- */
-export function parseImageResponse(
-  payload: unknown,
-  prompt: string,
-  format: ImageFormat = IMAGE_FORMAT,
-  model: string = IMAGE_MODEL
-): GeneratedImage {
-  const image = parseStabilityImage(payload, format, model);
-  return { ...image, prompt };
-}
-
-/**
  * Verbindet den Prompt dieser Datei mit einem beliebigen Bildanbieter.
  *
  * HIER SITZT DIE DRITTE SPERRE DES isConcrete-TORS (AE-15) — unmittelbar vor
@@ -172,12 +146,4 @@ export function createImageGenerationClient(
   model: string = IMAGE_MODEL
 ): ImageGenerationClient {
   return createImageClient(createImageProvider(provider, apiKey, model));
-}
-
-/** Der Weg aus Phase 5, unverändert erreichbar. */
-export function createStabilityImageClient(
-  apiKey: string,
-  model: string = IMAGE_MODEL
-): ImageGenerationClient {
-  return createImageGenerationClient('stability', apiKey, model);
 }

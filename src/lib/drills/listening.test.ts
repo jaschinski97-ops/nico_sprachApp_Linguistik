@@ -163,8 +163,9 @@ describe('Die Stimmen der Anbieter (Phase 18)', () => {
     expect(describeVoice('gemini', 'Erfunden')).toContain('Unbekannter Name');
   });
 
-  it('kennt für Anbieter ohne Sprachausgabe keine Stimmen', () => {
-    expect(voicesFor('claude')).toEqual([]);
-    expect(voicesFor('stability')).toEqual([]);
+  it('kennt für Anbieter ohne Stimmliste keine Stimmen', () => {
+    // Der Studio-Helper spricht zwar (über OpenAI), führt aber keine eigene
+    // Stimmliste — die Stimme kommt serverseitig.
+    expect(voicesFor('chatgpt-helper')).toEqual([]);
   });
 });
