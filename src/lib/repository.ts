@@ -6,14 +6,15 @@
  * Plattform SQLite oder AsyncStorage (AE-3).
  */
 
-import { VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { VOCABULARY, VocabEntry, findVocab } from '@/data/vocabulary';
 
 import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
+import { EXAM_LEVELS, ExamLevel, ExamModule, isValidExamModule } from './exam/types';
 import { bundledAssetUri, bundledDocuments, preferBundled } from './content/bundled';
 import { isContentDeveloper } from './content/developer';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
-import { ExamModule, isValidExamModule } from './exam/types';
+import { isLanguageCode, LanguageCode } from './languages/types';
 import { getAudioBlobStore } from './clips/blob-store';
 import { invalidateClipIndex } from './clips/lookup';
 import { AudioBlobStore, AudioClip, isValidAudioClip } from './clips/types';
@@ -187,6 +188,34 @@ export async function countSituations(store?: DataStore): Promise<number> {
   return (await loadSituations(store)).length;
 }
 
+/**
+ * Die beiden Richtungen, die gespeicherte Situationen kennen können —
+ * `isValidSituation` lässt nur diese beiden zu; der Typ steht bewusst hier
+ * als eigenes Bündel, damit das Studio nicht die breite `Direction`-Union
+ * als Schlüssel braucht.
+ */
+export type SituationDirection = Extract<Direction, 'de_to_th' | 'th_to_de'>;
+export type SituationDirectionCounts = Record<SituationDirection, number>;
+
+/**
+ * Situationen je Lernrichtung — der Bestand hinter dem Dialog-Reiter.
+ *
+ * Warum je Richtung und nicht nur gesamt: Der Generator erzeugt beide
+ * Richtungen getrennt voneinander (sie sind eigene Plan-Einträge), und der
+ * Nutzer soll sehen, welche Hälfte der Brücke schon gefüllt ist.
+ */
+export async function countSituationsByDirection(
+  store?: DataStore
+): Promise<SituationDirectionCounts> {
+  const zaehler: SituationDirectionCounts = { de_to_th: 0, th_to_de: 0 };
+  for (const situation of await loadSituations(store)) {
+    if (situation.direction === 'de_to_th' || situation.direction === 'th_to_de') {
+      zaehler[situation.direction] += 1;
+    }
+  }
+  return zaehler;
+}
+
 export async function clearSituations(store?: DataStore): Promise<void> {
   const db = store ?? (await getStore());
   await db.clear('situations');
@@ -220,6 +249,29 @@ export async function loadVocabImages(store?: DataStore): Promise<VocabImage[]> 
 
 export async function countVocabImages(store?: DataStore): Promise<number> {
   return (await loadVocabImages(store)).length;
+}
+
+/** Bildbestand je Zielsprache. */
+export type ImageLanguageCounts = Record<LanguageCode, number>;
+
+/**
+ * Bilder je Zielsprache — über den Vokabel-Eintrag, zu dem das Bild gehört.
+ *
+ * Die Bild-ID IST die Vokabel-ID („Gleich der Vokabel-ID", `images/types.ts`);
+ * die Sprache steht also nicht im Bilddokument, sondern am zugehörigen
+ * Eintrag des Grundstocks. Einträge außerhalb des Grundstocks werden
+ * ausgelassen statt erraten — ein Bild ohne Vokabel wäre ohnehin nicht
+ * auffindbar.
+ */
+export async function countImagesByLanguage(
+  store?: DataStore
+): Promise<ImageLanguageCounts> {
+  const zaehler: ImageLanguageCounts = { th: 0, en: 0, es: 0 };
+  for (const image of await loadVocabImages(store)) {
+    const eintrag = findVocab(image.vocabId || image.id);
+    if (eintrag && isLanguageCode(eintrag.language)) zaehler[eintrag.language] += 1;
+  }
+  return zaehler;
 }
 
 /**
@@ -292,6 +344,28 @@ export async function sumAudioClipBytes(store?: DataStore): Promise<number> {
   return (await loadAudioClips(store)).reduce((sum, clip) => sum + clip.byteSize, 0);
 }
 
+/** Clipbestand je Zielsprache. */
+export type ClipLanguageCounts = Record<LanguageCode, number>;
+
+/**
+ * Hörclips je ZIELsprache.
+ *
+ * Deutsch bleibt bewusst außen vor: de-Clips entstehen nur im
+ * Auslieferungslauf (Prüfungstexte, deutsche Seite) und gehören zu keinem
+ * lernbaren Grundstock — wer sie zählen will, nimmt `countAudioClips`.
+ */
+export async function countAudioClipsByLanguage(
+  store?: DataStore
+): Promise<ClipLanguageCounts> {
+  const zaehler: ClipLanguageCounts = { th: 0, en: 0, es: 0 };
+  for (const clip of await loadAudioClips(store)) {
+    // Die Typschranke filtert 'de' und alles Fremde aus — der Schlüssel
+    // `ClipLanguage` ist breiter als der Ziel-Kanon.
+    if (isLanguageCode(clip.language)) zaehler[clip.language] += 1;
+  }
+  return zaehler;
+}
+
 export async function clearAudioClips(
   store?: DataStore,
   blobStore?: AudioBlobStore
@@ -352,6 +426,29 @@ export async function countExamModules(store?: DataStore): Promise<number> {
 
 export async function countGeneratedExamModules(store?: DataStore): Promise<number> {
   return (await loadExamModules(store)).filter((module) => module.source === 'generated').length;
+}
+
+/** Aufgaben je Stufe — gesamt und davon erzeugt. */
+export type ExamLevelCounts = Record<ExamLevel, { total: number; generated: number }>;
+
+/**
+ * Prüfungsaufgaben je Stufe.
+ *
+ * Erzeugt und mitgeliefert getrennt zu sehen ist hier der eigentliche Punkt:
+ * die mitgelieferten Aufgaben sind Teil der App, nur die übrigen sind das
+ * Ergebnis von Generierungsläufen — und nur die kosten beim Löschen etwas.
+ */
+export async function countExamModulesByLevel(store?: DataStore): Promise<ExamLevelCounts> {
+  const zaehler = Object.fromEntries(
+    EXAM_LEVELS.map((level) => [level, { total: 0, generated: 0 }])
+  ) as ExamLevelCounts;
+  for (const module of await loadExamModules(store)) {
+    const stufe = zaehler[module.level];
+    if (!stufe) continue;
+    stufe.total += 1;
+    if (module.source === 'generated') stufe.generated += 1;
+  }
+  return zaehler;
 }
 
 /**

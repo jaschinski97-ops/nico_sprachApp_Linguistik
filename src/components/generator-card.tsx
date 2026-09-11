@@ -64,10 +64,41 @@ export type RunOption = {
   hint: string;
 };
 
+/**
+ * Ein Bestandszähler im Kopf der Karte — je Zielsprache (Bilder, Hörclips),
+ * je Lernrichtung (Dialoge) oder je Stufe (Prüfungsaufgaben). `count: null`
+ * heißt: noch nicht geladen.
+ */
+export type CountItem = {
+  key: string;
+  label: string;
+  count: number | null;
+  /** Ergänzender Text, etwa „3 erzeugt“ bei Prüfungsaufgaben. */
+  detail?: string;
+  /** Hervorgehoben ist die gerade gewählte Sprache. */
+  highlighted?: boolean;
+};
+
 export type StartArgs = {
   optionId: string;
   /** Für welche Sprache der Lauf gilt — nur bei Gruppen, die eine Wahl anbieten. */
   language: LanguageCode;
+  /**
+   * Aus dem Feld „Max. neue erzeugen“: der Lauf erzeugt höchstens so viele
+   * **neue** Einheiten; leer/0 heißt alles Fehlende. Angewendet wird die Zahl
+   * im Studio-Start, weil nur der den Bauplan kennt — die Karte reicht sie
+   * als Start-Argument durch.
+   */
+  maxNew?: number;
+  /**
+   * Der „Alle Sprachen“/„Alle Richtungen“/„Alle Levels“-Kettenlauf: dieselben
+   * Start-Argumente je Schritt. Fehlt es, ist es der eine Lauf der gewählten
+   * Sprache. Die kombinierte Vorschau und die EINE Bestätigung berechnet der
+   * Studio-Start über alle Schritte hinweg — die Karte fragt nicht zweimal.
+   */
+  chain?: { key: string; label: string }[];
+  /** Meldet den laufenden Schritt für die Anzeige „2/3 · Spanisch“. */
+  onChainStep?: (step: { index: number; total: number; label: string }) => void;
   apiKey: string;
   provider: ProviderId;
   /** Freitext aus dem Modellfeld — ungeprüft, siehe Pflicht 5. */
@@ -100,6 +131,8 @@ type Props = {
   onChoiceChange: (change: Partial<GeneratorChoice>) => void | Promise<void>;
   /** Eine Zeile mit Bestand. */
   statusLine: string;
+  /** Bestandszähler je Zielsprache/Richtung/Stufe — die Zeile unter dem Status. */
+  counts?: CountItem[];
   runOptions: RunOption[];
   onStart: (args: StartArgs) => Promise<void>;
   onDelete: () => Promise<void>;
@@ -108,6 +141,14 @@ type Props = {
   canDelete: boolean;
   /** Nach Lauf und Löschen aufgerufen, damit der Bestand neu gezählt wird. */
   onFinished: () => void | Promise<void>;
+  /**
+   * Der „Alle …“-Kettenlauf: ein Knopf, der denselben Umfang für alle
+   * Schritte fährt (Sprachen, Richtungen oder Stufen). Die Beschriftung sagt
+   * ehrlich, was „alle“ hier heißt. Fehlt der Eintrag, gibt es nur den
+   * normalen Start. Der Knopf steht nur im Leerlauf zur Verfügung — während
+   * eines Laufs ist die ganze Reihe blockiert.
+   */
+  allRun?: { label: string; steps: { key: string; label: string }[] };
 };
 
 export function GeneratorCard({
@@ -122,12 +163,14 @@ export function GeneratorCard({
   choice,
   onChoiceChange,
   statusLine,
+  counts,
   runOptions,
   onStart,
   onDelete,
   deleteLabel,
   canDelete,
   onFinished,
+  allRun,
 }: Props) {
   const theme = useTheme();
 
@@ -141,6 +184,12 @@ export function GeneratorCard({
   const [notice, setNotice] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  /** Das Feld „Max. neue erzeugen“ — als Text; leer heißt: alles Fehlende. */
+  const [maxNewText, setMaxNewText] = useState('');
+  /** Der laufende Schritt eines „Alle …“-Kettenlaufs — für die Anzeige. */
+  const [chainStep, setChainStep] = useState<{ index: number; total: number; label: string } | null>(
+    null
+  );
 
   useEffect(() => { onRunningChange?.(running); }, [running, onRunningChange]);
 
@@ -194,7 +243,11 @@ export function GeneratorCard({
     setNotice('Schlüssel gelöscht.');
   }, [provider]);
 
-  const start = useCallback(async () => {
+  // Nur Ziffern landen im Feld (onChangeText filtert) — negativ kann gar
+  // nicht entstehen, und 0 bedeuted wie leer „keine Begrenzung“.
+  const maxNew = maxNewText.trim() ? Number.parseInt(maxNewText, 10) || undefined : undefined;
+
+  const start = useCallback(async (mitKette = false) => {
     if (startingRef.current) return;
     startingRef.current = true;
     setNotice(null);
@@ -214,6 +267,12 @@ export function GeneratorCard({
       await onStart({
         optionId: runOption,
         language: language ?? 'th',
+        maxNew,
+        // „Alle Sprachen“/„Alle Richtungen“/„Alle Levels“: die Schritte der
+        // Kette gehen an den Studio-Start, der für ALLE Schritte gemeinsam
+        // plant, die Vorschau summiert und genau einmal bestätigen lässt.
+        chain: mitKette ? allRun?.steps : undefined,
+        onChainStep: mitKette ? setChainStep : undefined,
         apiKey,
         provider,
         // Leeres Feld heisst „nimm den Vorschlag" - kein Grund fuer eine
@@ -234,9 +293,10 @@ export function GeneratorCard({
     } finally {
       setRunning(false);
       startingRef.current = false;
+      setChainStep(null);
       await onFinished();
     }
-  }, [managedKeys, key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished]);
+  }, [managedKeys, key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished, maxNew, allRun]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
@@ -268,6 +328,27 @@ export function GeneratorCard({
       <ThemedText type="small" themeColor="textSecondary">
         {statusLine}
       </ThemedText>
+
+      {/* Bestand je Zielsprache (bzw. Richtung/Stufe) — mit Blick darauf, was
+          der nächste Lauf überhaupt noch zu tun hat. Die Hervorhebung folgt
+          der Sprachwahl sofort, denn die Zähler sind ohnehin alle geladen. */}
+      {counts ? (
+        <View style={styles.buttonRow} accessibilityLiveRegion="polite">
+          {counts.map((item) => (
+            <ThemedView
+              key={item.key}
+              type={item.highlighted ? 'backgroundSelected' : 'backgroundElement'}
+              style={[
+                styles.countChip,
+                item.highlighted && { borderWidth: 1, borderColor: theme.borderSubtle },
+              ]}>
+              <ThemedText type="small" themeColor={item.highlighted ? 'text' : 'textSecondary'}>
+                {`${item.label}: ${item.count === null ? '…' : item.count}${item.detail ? ` · ${item.detail}` : ''}`}
+              </ThemedText>
+            </ThemedView>
+          ))}
+        </View>
+      ) : null}
 
       {language && onLanguageChange ? (
         <View style={styles.field}>
@@ -463,6 +544,24 @@ export function GeneratorCard({
         </ChoiceRow>
         <ThemedText type="small" themeColor="textSecondary">
           {activeOption.hint}
+          {maxNew ? ` — begrenzt auf max. ${maxNew} neue` : ''}
+        </ThemedText>
+        <ThemedText type="small">Max. neue erzeugen</ThemedText>
+        <TextInput
+          value={maxNewText}
+          // Nur Ziffern: negative Zahlen können gar nicht entstehen, und „0“
+          // ist erlaubt, weil sie wie leer „alles Fehlende“ heißt.
+          onChangeText={(value) => setMaxNewText(value.replace(/[^0-9]/g, ''))}
+          keyboardType="number-pad"
+          placeholder="leer = alles Fehlende"
+          placeholderTextColor={theme.textSecondary}
+          editable={!running}
+          accessibilityLabel={`Max. neue erzeugen für ${heading}`}
+          style={[styles.input, styles.capInput, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          Begrenzt den Lauf auf höchstens so viele NEUE Einheiten (Bilder, Clips,
+          Aufgaben), die es noch nicht gibt. Leer lassen erzeugt alles Fehlende.
         </ThemedText>
       </View>
 
@@ -470,7 +569,12 @@ export function GeneratorCard({
         {running ? (
           <Button label="Anhalten" onPress={stop} />
         ) : (
-          <Button label="Start" onPress={start} />
+          <>
+            <Button label="Start" onPress={() => start(false)} />
+            {/* Nur im Leerlauf: Ein Kettenlauf darf nie neben einem anderen
+                Lauf stehen — „Anhalten“ bricht die ganze Kette ab. */}
+            {allRun ? <Button label={allRun.label} onPress={() => start(true)} /> : null}
+          </>
         )}
       </View>
 
@@ -488,6 +592,14 @@ export function GeneratorCard({
         <Button label="Kosten bestätigen und Lauf starten" disabled={estimate.usd === null && (!customCost.trim() || !Number.isFinite(Number(customCost.replace(',', '.'))) || Number(customCost.replace(',', '.')) <= 0)} onPress={() => answerEstimate(true)} />
         <Button label="Abbrechen" onPress={() => answerEstimate(false)} />
       </View> : null}
+
+      {/* Kettenlauf („Alle Sprachen“ & Co.): welcher Schritt von wie vielen
+          gerade läuft. Der Balken darunter summiert über die Kette. */}
+      {chainStep ? (
+        <ThemedText type="smallBold" accessibilityLiveRegion="polite">
+          {`Schritt ${chainStep.index} / ${chainStep.total} · ${chainStep.label}`}
+        </ThemedText>
+      ) : null}
 
       {progress ? <ProgressPanel progress={progress} /> : null}
 
@@ -701,6 +813,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 15,
+  },
+  /**
+   * Das Zahleneingabefeld als vollwertiges Tippziel: Die reine Eingabehöhe
+   * läge unter dem 44-Punkte-Maß, das dieselbe Regel wie bei den Knöpfen
+   * verlangt (siehe `tapTarget`).
+   */
+  capInput: {
+    minHeight: 44,
+  },
+  countChip: {
+    borderRadius: Spacing.two,
+    paddingVertical: Spacing.one,
+    paddingHorizontal: Spacing.two,
   },
   buttonRow: {
     flexDirection: 'row',
