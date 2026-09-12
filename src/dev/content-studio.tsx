@@ -36,7 +36,7 @@ import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/p
 import { vocabularyFor } from '@/data/vocabulary';
 import { VocabEntry } from '@/data/vocab-types';
 import { directionLabel, LANGUAGE_ORDER, LANGUAGE_LABELS } from '@/lib/languages/registry';
-import { LanguageCode, Lang } from '@/lib/languages/types';
+import { Lang } from '@/lib/languages/types';
 import { loadProfile } from '@/lib/profile';
 import { HELPER_AUDIO_PROVIDER, ProviderId } from '@/lib/providers/types';
 import {
@@ -117,16 +117,24 @@ const EXAM_RUNS: RunOption[] = [
 ];
 
 /**
+ * Der Vokabel-Pool einer Generier-Sprache (Nutzerentscheidung 10.09.,
+ * Deutsch als Generator-Sprache): Für `'de'` kommt der abgeleitete de-Pool
+ * (`VOCABULARY_DE`) — seine Einträge tragen `language: 'de'`, Clips und
+ * Bilder landen also als deutsche im Store und greifen an den X_to_de-
+ * Rückseiten automatisch (resolveClipUri über Sprache + Text).
+ */
+function poolFuer(code: Lang): VocabEntry[] {
+  return code === 'de' ? VOCABULARY_DE : vocabularyFor(code);
+}
+
+/**
  * Der Bilderlauf haengt seit Phase 18 an der gewaehlten Sprache: Wie viele
- * Bilder es werden, steht erst fest, wenn die Sprache feststeht.
- *
- * SEIT DEM 10.09. AUCH DEUTSCH: Die de-Pool-Begriffe teilen das Konzeptbild
- * ihres Ankers (AE-46) — der Lauf toppt fehlende Konzeptbilder auf.
+ * Bilder es werden, steht erst fest, wenn die Sprache feststeht. Die
+ * de-Pool-Begriffe teilen das Konzeptbild ihres Ankers (AE-46) — der Lauf
+ * toppt fehlende Konzeptbilder auf.
  */
 function imageRunOptions(language: Lang): RunOption[] {
-  const alle = countImageCandidates(
-    language === 'de' ? VOCABULARY_DE : vocabularyFor(language)
-  );
+  const alle = countImageCandidates(poolFuer(language));
   return [
     { id: 'test', label: 'Probelauf', hint: `${IMAGE_TEST_RUN} Bilder — kleiner Testlauf` },
     {
@@ -142,11 +150,6 @@ function imageRunOptions(language: Lang): RunOption[] {
  * gespeichert sind) und vom Anbieter (WAV bei Gemini, mp3 bei ChatGPT) —
  * deshalb werden sie je Aufruf gebaut, nicht als Konstante. Die Schätzung
  * steht **vor** dem Start am Knopf (Pflicht 3).
- *
- * SEIT DEM 10.09. AUCH DEUTSCH: Für `'de'` kommt der abgeleitete de-Pool
- * (`VOCABULARY_DE`) als Quelle — seine Einträge tragen `language: 'de'`, die
- * Clips landen also als deutsche Clips im Store und greifen an den X_to_de-
- * Rückseiten automatisch (resolveClipUri über Sprache + Text).
  */
 function clipRunOptions(
   storedSituations: ConversationSituation[],
@@ -154,8 +157,6 @@ function clipRunOptions(
   language: Lang,
   exams: ExamModule[] = []
 ): { options: RunOption[]; specsFor: (optionId: string) => AudioClipSpec[] } {
-  const poolFuer = (code: Lang): VocabEntry[] =>
-    code === 'de' ? VOCABULARY_DE : vocabularyFor(code);
   const plans: Record<string, AudioClipSpec[]> = {
     delivery: planDeliveryAudio(storedSituations, exams),
     test: planClipTestRun(poolFuer(language)),
@@ -209,12 +210,15 @@ const POOL_ZAEHLER = LANGUAGE_ORDER.map(
 const RICHTUNGEN = ['de_to_th', 'th_to_de'] as const;
 
 /**
- * „Alle Sprachen“ der Bilder-/Audio-Kette: th → en → es → de — die vierte
- * Sprache ist Deutsch (Nutzerentscheidung 10.09., Deutsch als
- * Generier-/Zielsprache), beschriftet über dasselbe Verzeichnis wie die
- * Zielauswahl.
+ * Die Generier-Sprachen in Kettenreihenfolge — die drei Bestandspools
+ * (`LANGUAGE_ORDER`), Deutsch zuletzt (Nutzerentscheidung 10.09., Deutsch
+ * als Generier-/Zielsprache). Dieselben Schlüssel wie die Sprach-Zähler des
+ * Repositorys (`LanguageCode | 'de'`).
  */
-const ALLE_SPRACHEN: ChainStep[] = [...LANGUAGE_ORDER, 'de' as const].map((code) => ({
+const GENERIER_SPRACHEN: Lang[] = [...LANGUAGE_ORDER, 'de'];
+
+/** „Alle Sprachen“ der Bilder-/Audio-Kette: Thai → Englisch → Spanisch → Deutsch. */
+const ALLE_SPRACHEN: ChainStep[] = GENERIER_SPRACHEN.map((code) => ({
   key: code,
   label: LANGUAGE_LABELS[code],
 }));
@@ -234,7 +238,7 @@ const ALLE_STUFEN: ChainStep[] = GENERATED_LEVELS.map((stufe) => ({ key: stufe, 
  * abgeleiteten de-Pools (siehe `countAudioClipsByLanguage`).
  */
 function jeSprache(counts: ClipLanguageCounts | ImageLanguageCounts | null): string {
-  return [...LANGUAGE_ORDER, 'de' as const]
+  return GENERIER_SPRACHEN
     .map((code) => `${LANGUAGE_LABELS[code]} ${counts ? counts[code] : '…'}`)
     .join(' · ');
 }
@@ -244,7 +248,7 @@ function sprachZaehler(
   counts: ClipLanguageCounts | ImageLanguageCounts | null,
   gewaehlt?: Lang
 ): CountItem[] {
-  return [...LANGUAGE_ORDER, 'de' as const].map((code) => ({
+  return GENERIER_SPRACHEN.map((code) => ({
     key: code,
     label: LANGUAGE_LABELS[code],
     count: counts ? counts[code] : null,
@@ -437,19 +441,12 @@ export default function ContentStudio() {
     await studioRequest('/state');
     // Ohne Kette ein Schritt (die gewählte Sprache), mit „Alle Sprachen“
     // einer je Pool — derselbe Bauplan, eine kombinierte Bestätigung.
-    // Deutsch plant über den abgeleiteten de-Pool: Ein Bildmotiv gehört zum
-    // Begriff (AE-46), der Lauf toppt also fehlende Konzeptbilder auf.
     const { steps, all } = await planChain(
       chain ?? [{ key: language, label: LANGUAGE_LABELS[language] }],
-      (key) => planImages(
-        key === 'de'
-          ? {
-              ...(optionId === 'full' ? { entries: VOCABULARY_DE } : { entries: VOCABULARY_DE, limit: IMAGE_TEST_RUN }),
-            }
-          : optionId === 'full'
-            ? { language: key as LanguageCode }
-            : { language: key as LanguageCode, limit: IMAGE_TEST_RUN }
-      ),
+      (key) => planImages({
+        entries: poolFuer(key as Lang),
+        ...(optionId === 'full' ? {} : { limit: IMAGE_TEST_RUN }),
+      }),
       (specs) => missingImageSpecs(specs),
       maxNew
     );

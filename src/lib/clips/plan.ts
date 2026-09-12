@@ -1,8 +1,6 @@
 import { VocabEntry } from '@/data/vocab-types';
 import { vocabularyFor } from '@/data/vocabulary';
 
-import { LanguageCode } from '../languages/types';
-
 import { ConversationSituation } from '../conversation/types';
 import { assertUniqueIds, limitPlan } from '../generation/plan';
 import { ProviderId } from '../providers/types';
@@ -27,14 +25,13 @@ export const CLIP_TEST_RUN = 5;
 
 export type ClipPlanOptions = {
   /**
-   * Welche Sprache vertont wird.
+   * Der Stoff des Laufs.
    *
-   * SEIT PHASE 16 NOETIG (Pflicht 4): Ohne diese Angabe liefe ein Lauf ueber
-   * alle drei Grundstoecke und erzeugte 248 statt 84 Woerter - bezahlt und
+   * SEIT PHASE 16 NOETIG (Pflicht 4): Ohne diese Eingrenzung liefe ein Lauf
+   * ueber alle Grundstoecke und erzeugte 248 statt 84 Woerter - bezahlt und
    * abgelegt wuerden sie trotzdem. Der Generator wurde parametrisiert und
    * nicht dupliziert.
    */
-  language?: LanguageCode;
   vocabulary?: VocabEntry[];
   includeWords?: boolean;
   includeExamples?: boolean;
@@ -44,8 +41,7 @@ export type ClipPlanOptions = {
 };
 
 export function planClips(options: ClipPlanOptions = {}): AudioClipSpec[] {
-  const language = options.language ?? 'th';
-  const entries = options.vocabulary ?? vocabularyFor(language);
+  const entries = options.vocabulary ?? vocabularyFor('th');
   const specs: AudioClipSpec[] = [];
   const seen = new Set<string>();
 

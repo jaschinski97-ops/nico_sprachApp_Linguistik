@@ -14,8 +14,8 @@ import { bundledAssetUri, bundledDocuments, preferBundled } from './content/bund
 import { isContentDeveloper } from './content/developer';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
-import { isLanguageCode, LanguageCode } from './languages/types';
-import { VOCABULARY_DE } from '@/data/vocabulary-de';
+import { isLanguageCode, Lang } from './languages/types';
+import { DE_CONCEPTS } from '@/data/vocabulary-de';
 import { getAudioBlobStore } from './clips/blob-store';
 import { invalidateClipIndex } from './clips/lookup';
 import { AudioBlobStore, AudioClip, isValidAudioClip } from './clips/types';
@@ -253,7 +253,7 @@ export async function countVocabImages(store?: DataStore): Promise<number> {
 }
 
 /** Bildbestand je Generator-Zielsprache — seit dem 10.09. inklusive Deutsch. */
-export type ImageLanguageCounts = Record<LanguageCode | 'de', number>;
+export type ImageLanguageCounts = Record<Lang, number>;
 
 /**
  * Bilder je Zielsprache — über den Vokabel-Eintrag, zu dem das Bild gehört.
@@ -276,12 +276,11 @@ export async function countImagesByLanguage(
   store?: DataStore
 ): Promise<ImageLanguageCounts> {
   const zaehler: ImageLanguageCounts = { th: 0, en: 0, es: 0, de: 0 };
-  const deConcepts = new Set(VOCABULARY_DE.map((entry) => entry.id));
   for (const image of await loadVocabImages(store)) {
     const id = image.vocabId || image.id;
     const eintrag = findVocab(id);
     if (eintrag && isLanguageCode(eintrag.language)) zaehler[eintrag.language] += 1;
-    if (deConcepts.has(id)) zaehler.de += 1;
+    if (DE_CONCEPTS.has(id)) zaehler.de += 1;
   }
   return zaehler;
 }
@@ -357,7 +356,7 @@ export async function sumAudioClipBytes(store?: DataStore): Promise<number> {
 }
 
 /** Clipbestand je Zielsprache. */
-export type ClipLanguageCounts = Record<LanguageCode | 'de', number>;
+export type ClipLanguageCounts = Record<Lang, number>;
 
 /**
  * Hörclips je Generator-Zielsprache.
@@ -373,10 +372,9 @@ export async function countAudioClipsByLanguage(
 ): Promise<ClipLanguageCounts> {
   const zaehler: ClipLanguageCounts = { th: 0, en: 0, es: 0, de: 0 };
   for (const clip of await loadAudioClips(store)) {
-    // Der Schlüssel `ClipLanguage` deckt alle vier Generator-Sprachen ab.
-    if (clip.language === 'th' || clip.language === 'en' || clip.language === 'es' || clip.language === 'de') {
-      zaehler[clip.language] += 1;
-    }
+    // `loadAudioClips` sortiert Fremdes aus (`isValidAudioClip`) — der
+    // Schlüssel `ClipLanguage` deckt genau die vier Generator-Sprachen ab.
+    zaehler[clip.language] += 1;
   }
   return zaehler;
 }

@@ -1,4 +1,4 @@
-import { describeNetworkFailure, fieldNamesOf, postJson } from './http';
+import { fieldNamesOf, postJson } from './http';
 import { ProviderId, TextClient, TextRequest, TextResponse, unsupported } from './types';
 
 /**

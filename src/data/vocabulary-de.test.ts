@@ -1,6 +1,6 @@
 import { VOCABULARY, findVocab, vocabularyFor } from './vocabulary';
 import { VOCABULARY_AR } from './vocabulary-ar';
-import { VOCABULARY_DE } from './vocabulary-de';
+import { VOCABULARY_DE, DE_CONCEPTS } from './vocabulary-de';
 
 /**
  * Der abgeleitete deutsche Ziel-Pool (Nutzerentscheidung 10.09., „Füge noch
@@ -17,10 +17,15 @@ describe('VOCABULARY_DE (abgeleiteter de-Pool)', () => {
     }
     expect(VOCABULARY_DE).toHaveLength(erwartet.size);
     expect(new Set(VOCABULARY_DE.map((entry) => entry.id))).toEqual(erwartet);
-    // Dedup je Begriff: die Pool-ID ist die Begriffs-ID.
-    expect(new Set(VOCABULARY_DE.map((entry) => entry.id)).size).toBe(VOCABULARY_DE.length);
     // Und der Umfang ist der volle Ankerbestand (84 Begriffe).
     expect(VOCABULARY_DE.length).toBe(84);
+  });
+
+  it('koppelt über concept: id und concept sind derselbe Schlüssel', () => {
+    // repository (über `id`) und goals/review-session (über `concept`) bauen
+    // auf derselben Kopplung auf — DE_CONCEPTS setzt sie als Menge um.
+    for (const entry of VOCABULARY_DE) expect(entry.id).toBe(entry.concept);
+    expect(DE_CONCEPTS.size).toBe(VOCABULARY_DE.length);
   });
 
   it('trägt je Begriff den deutschen Text des geprüften Ankers', () => {

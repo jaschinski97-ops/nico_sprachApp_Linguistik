@@ -308,7 +308,7 @@ describe('Bilder und Clips für die neuen Sprachen (Phase 18)', () => {
 
   it('plant für jede Sprache Hörclips in ihrer eigenen Sprache', () => {
     for (const language of LANGUAGE_CODES) {
-      const specs = planClips({ language });
+      const specs = planClips({ vocabulary: vocabularyFor(language) });
       expect(specs.length).toBeGreaterThan(0);
       for (const spec of specs) expect(spec.language).toBe(language);
     }

@@ -1,5 +1,5 @@
 import { createTextClient } from '../providers/text';
-import { ProviderId, TextClient } from '../providers/types';
+import { PROVIDER_INFO, ProviderId, TextClient } from '../providers/types';
 
 import {
   ConversationSituation,
@@ -34,7 +34,7 @@ import {
  */
 
 /** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
-export const GENERATOR_MODEL = 'gemini-2.5-flash';
+export const GENERATOR_MODEL = PROVIDER_INFO.gemini.modelPlaceholder.text;
 
 /**
  * Antwortlänge. Großzügig, weil ein abgeschnittenes JSON den ganzen Eintrag

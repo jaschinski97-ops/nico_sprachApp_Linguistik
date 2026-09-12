@@ -1,5 +1,5 @@
 import { createTextClient } from '../providers/text';
-import { ProviderId, TextClient } from '../providers/types';
+import { PROVIDER_INFO, ProviderId, TextClient } from '../providers/types';
 
 import { ExamSpec } from './plan';
 import { certificateFor, ExamItem, ExamModule, ExamStimulus, SKILL_LABELS } from './types';
@@ -21,7 +21,7 @@ import { certificateFor, ExamItem, ExamModule, ExamStimulus, SKILL_LABELS } from
  */
 
 /** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
-export const EXAM_GENERATOR_MODEL = 'gemini-2.5-flash';
+export const EXAM_GENERATOR_MODEL = PROVIDER_INFO.gemini.modelPlaceholder.text;
 
 export const EXAM_MAX_TOKENS = 16000;
 

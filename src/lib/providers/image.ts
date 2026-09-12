@@ -15,8 +15,8 @@ import { ImageClient, ImageRequest, ImageResponse, ProviderId, unsupported } fro
  *
  * Was ein Anbieter nicht als Feld kennt, wird an den Prompt gehängt statt
  * stillschweigend fallen gelassen — sonst hieße „kein Text im Bild" bei
- * einem der beiden Anbieter gar nichts, und AE-15 hält fest, warum genau
- * diese Vorgabe wichtig ist.
+ * beiden Anbietern gar nichts, und AE-15 hält fest, warum genau diese
+ * Vorgabe wichtig ist.
  *
  * NUTZERENTSCHEIDUNG 10.09.: Stability (multipart-Weg aus AE-13) ist aus der
  * Auswahl gefallen; sein Weg stand hier bis dahin unverändert.

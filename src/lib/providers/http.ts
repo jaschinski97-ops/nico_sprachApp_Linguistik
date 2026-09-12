@@ -1,15 +1,13 @@
 /**
  * Gemeinsame Kleinteile für die selbst geschriebenen Anbieter-Clients.
  *
- * WARUM SELBST GESCHRIEBEN UND NICHT DREI SDKs: Für Claude bleibt der
- * offizielle SDK (AE-12) — er läuft, und der Web-Build ist dafür in
- * `metro.config.js` eigens hergerichtet. Für Stability gibt es gar keinen
- * offiziellen JS-SDK (AE-13). Für ChatGPT und Gemini gäbe es welche, und
- * genau das war die Versuchung: Jeder zusätzliche Node-SDK im Browser-Bundle
- * bringt sein eigenes Auflösungsverhalten mit, und AE-12 hält fest, was das
- * beim ersten SDK gekostet hat („Unable to resolve module
+ * WARUM SELBST GESCHRIEBEN UND NICHT SDKs: ChatGPT und Gemini bräuchten je
+ * ein Node-SDK — und genau darin lag die Versuchung: Jedes zusätzliche
+ * Node-SDK im Browser-Bundle bringt sein eigenes Auflösungsverhalten mit,
+ * und AE-12 hält fest, was das beim ersten SDK (Anthropic, inzwischen
+ * entfernt) gekostet hat („Unable to resolve module
  * ./lib/credentials/types.js"). Beide Anbieter brauchen hier genau **einen**
- * POST mit JSON — dafür drei Megabyte Abhängigkeit einzuhandeln, wäre das
+ * POST mit JSON — dafür Megabyte Abhängigkeit einzuhandeln, wäre das
  * schlechtere Geschäft.
  */
 
@@ -50,20 +48,15 @@ export function describeNetworkFailure(error: unknown, endpointHost: string): Er
 /**
  * Zieht aus einer Fehlerantwort heraus, was sich herausziehen lässt.
  *
- * Die vier Anbieter melden Fehler in vier Formen — Stability als
- * `{"errors":[…],"name":"…"}`, OpenAI und Google als `{"error":{…}}`, Anthropic
- * über seinen SDK. Die drei JSON-Formen stehen hier zusammen, statt dass jeder
- * Client seinen eigenen Leser mitbringt: Was in der Fehlerliste eines Laufs
- * landet, soll überall gleich aussehen.
+ * Beide Anbieter melden Fehler in derselben Form `{"error":{…}}`; die
+ * string- und message/name-Fälle fangen abweichende Antworten ab. Die Formen
+ * stehen hier zusammen, statt dass jeder Client seinen eigenen Leser
+ * mitbringt: Was in der Fehlerliste eines Laufs landet, soll überall gleich
+ * aussehen.
  */
 export function describeHttpError(status: number, body: string): string {
   try {
     const parsed = JSON.parse(body) as Record<string, unknown>;
-
-    // Stability: eine Liste von Meldungen, dazu ein Kurzname.
-    if (Array.isArray(parsed.errors) && parsed.errors.length > 0) {
-      return `HTTP ${status}: ${parsed.errors.join('; ')}`;
-    }
 
     const error = parsed.error;
     if (typeof error === 'string') return `HTTP ${status}: ${error}`;
@@ -85,7 +78,7 @@ export function describeHttpError(status: number, body: string): string {
 /**
  * Keine Cookies an fremde APIs.
  *
- * Alle vier Anbieter authentifizieren über einen Header; Cookies werden nie
+ * Beide Anbieter authentifizieren über einen Header; Cookies werden nie
  * gebraucht und hätten an einer fremden API auch nichts zu suchen. Zusätzlich
  * verträgt sich eine Anfrage **mit** Anmeldedaten nicht mit einem
  * `Access-Control-Allow-Origin: *`, wie OpenAI es schickt — der Browser

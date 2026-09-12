@@ -15,7 +15,7 @@ import { SpeechLanguage } from '../audio';
  *   Prompt und prüfen die Antwort selbst (Phase 4/7). Prompts und Parser
  *   bleiben damit unangetastet und anbieterfrei.
  * - `ImageClient` — „Prompt rein, Bilddaten raus". Das Format kommt aus der
- *   **Antwort** zurück und wird nicht vorausgesetzt: Stability nimmt
+ *   **Antwort** zurück und wird nicht vorausgesetzt: ChatGPT nimmt
  *   `output_format` entgegen, Gemini bestimmt es selbst und nennt es im
  *   `mimeType`. Wer es vorschreiben wollte, müsste bei Gemini lügen.
  *
@@ -29,7 +29,7 @@ import { SpeechLanguage } from '../audio';
  * Die auswählbaren Anbieter.
  *
  * NUTZERENTSCHEIDUNG (10.09., wörtlich): „Entferne bei den KIs Claude und
- * Stability" — beide sind aus der Auswahl gefallen. WHY das reicht: Die zwei
+ * Stability" — beide sind aus der Auswahl gefallen. WARUM das reicht: Die zwei
  * verbliebenen Cloud-Anbieter decken zusammen alle drei Fähigkeiten ab
  * (Gemini und OpenAI je Text + Bild + Sprachausgabe), der Helper bleibt als
  * serverseitiger Audio-Durchgang. Die frühere Begründung für den
@@ -290,9 +290,9 @@ const CAPABILITY_NEGATED: Record<ProviderCapability, string> = {
  * Die Oberfläche verhindert die Kombination bereits (das Auswahlfeld zeigt
  * für eine Gruppe nur Anbieter an, die die Aufgabe können). Diese Sperre
  * liegt trotzdem hier, weil gespeicherte Einstellungen aus einer älteren
- * Version eine Kombination tragen können, die es inzwischen nicht mehr gibt — dieselbe Überlegung wie
- * beim dreifachen isConcrete-Tor (AE-15) und beim Prüfen an der Lesegrenze
- * (AE-25).
+ * Version eine Kombination tragen können, die es inzwischen nicht mehr gibt —
+ * dieselbe Überlegung wie beim dreifachen isConcrete-Tor (AE-15) und beim
+ * Prüfen an der Lesegrenze (AE-25).
  */
 export function unsupported(provider: ProviderId, capability: ProviderCapability): Error {
   const info = PROVIDER_INFO[provider];

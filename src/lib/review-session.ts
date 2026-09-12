@@ -220,13 +220,16 @@ export async function ensureCardStates(
   const istKreuz = paar !== null && paar.source !== 'de' && paar.target !== 'de';
   // ar_to_de läuft über den abgeleiteten de-Pool statt über den Speicher —
   // `VOCABULARY` trägt kein Deutsch, der Stoff kommt aus den german-Feldern.
-  const istArNachDe = paar !== null && paar.source === AR_BRIDGE && paar.target === 'de';
+  const istArNachDe = direction === 'ar_to_de';
 
-  const entries = istArNachDe
-    ? arNachDeStoff()
-    : istKreuz && paar
-      ? kreuzStoff(alle, brueckenPoolFuer(alle, paar.source), sprache).entries
-      : alle.filter((entry) => entry.language === sprache);
+  let entries: VocabEntry[];
+  if (istArNachDe) {
+    entries = arNachDeStoff();
+  } else if (istKreuz && paar) {
+    entries = kreuzStoff(alle, brueckenPoolFuer(alle, paar.source), sprache).entries;
+  } else {
+    entries = alle.filter((entry) => entry.language === sprache);
+  }
 
   const existing = await loadCardStatesForDirection(direction, db);
   const byVocabId = new Map(existing.map((card) => [card.vocabId, card]));
@@ -271,7 +274,7 @@ export async function buildReviewQueue(
   // bleiben exakt auf ihrem alten Pfad.
   const paar = paarVon(direction);
   const istKreuz = paar !== null && paar.source !== 'de' && paar.target !== 'de';
-  const istArNachDe = paar !== null && paar.source === AR_BRIDGE && paar.target === 'de';
+  const istArNachDe = direction === 'ar_to_de';
   let brueckeNachId = new Map<string, VocabEntry | BridgeEntry>();
   let brueckeNachConcept = new Map<string, VocabEntry | BridgeEntry>();
   if (istKreuz && paar) {
@@ -290,11 +293,12 @@ export async function buildReviewQueue(
       if (!entry) return null;
       // ar_to_de: die Brückenseite kommt direkt aus dem ar-Pool (gleiche
       // Begriffs-ID) — derselbe Grundsatz wie bei den Kreuzrichtungen.
-      const bridgeEntry = istArNachDe
-        ? arBrueckeVon(entry.concept ?? entry.id)
-        : istKreuz
-          ? brueckeVon(entry, brueckeNachId, brueckeNachConcept)
-          : null;
+      let bridgeEntry: VocabEntry | BridgeEntry | null = null;
+      if (istArNachDe) {
+        bridgeEntry = arBrueckeVon(entry.concept ?? entry.id);
+      } else if (istKreuz) {
+        bridgeEntry = brueckeVon(entry, brueckeNachId, brueckeNachConcept);
+      }
       return { entry, card, bridgeEntry };
     })
     .filter((item): item is ReviewItem => item !== null);

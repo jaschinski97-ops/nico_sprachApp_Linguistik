@@ -80,3 +80,13 @@ function deriveGermanPool(): VocabEntry[] {
 
 /** Die deutschen Ziel-Einträge — 84 Begriffe über den gesamten Bestand. */
 export const VOCABULARY_DE: VocabEntry[] = deriveGermanPool();
+
+/**
+ * Die Begriffe des de-Pools. Kopplungsschlüssel ist `concept` — und da jeder
+ * Eintrag hier `id: concept` trägt, sind beide Sichtweisen dieselbe Menge
+ * (gepinnt im Test). Verbraucher nehmen diese Menge, statt selbst über die
+ * Einträge zu mappen, damit `id` und `concept` nicht auseinanderlaufen.
+ */
+export const DE_CONCEPTS: ReadonlySet<string> = new Set(
+  VOCABULARY_DE.map((entry) => entry.concept).filter((concept): concept is string => !!concept)
+);

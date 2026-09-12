@@ -150,21 +150,21 @@ export function normalizeChoice(raw: unknown, group: GeneratorGroupId): Generato
   const value = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
 
   const gespeichert = value.provider;
-  const anbieterVerfaellt =
-    !isProviderId(gespeichert) || !PROVIDER_INFO[gespeichert].can[info.needs];
-  const provider = anbieterVerfaellt ? info.defaultProvider : gespeichert;
+  if (!isProviderId(gespeichert) || !PROVIDER_INFO[gespeichert].can[info.needs]) {
+    return defaultChoiceFor(group);
+  }
 
   const model =
-    !anbieterVerfaellt && typeof value.model === 'string' && value.model.trim() !== ''
+    typeof value.model === 'string' && value.model.trim() !== ''
       ? value.model.trim()
-      : defaultModelFor(provider, info.needs);
+      : defaultModelFor(gespeichert, info.needs);
 
-  const choice: GeneratorChoice = { provider, model };
+  const choice: GeneratorChoice = { provider: gespeichert, model };
   if (info.needs === 'audio') {
     choice.voice =
-      !anbieterVerfaellt && typeof value.voice === 'string' && value.voice.trim() !== ''
+      typeof value.voice === 'string' && value.voice.trim() !== ''
         ? value.voice.trim()
-        : defaultVoiceFor(provider);
+        : defaultVoiceFor(gespeichert);
   }
   return choice;
 }

@@ -1,6 +1,6 @@
 import { vocabularyFor } from '@/data/vocabulary';
 import { VOCABULARY_AR } from '@/data/vocabulary-ar';
-import { VOCABULARY_DE } from '@/data/vocabulary-de';
+import { DE_CONCEPTS } from '@/data/vocabulary-de';
 
 import { languageOf } from './registry';
 import {
@@ -77,13 +77,16 @@ export type Lernziel = {
  *      (Stufe 2): Es gäbe heute weder Dialoge noch deutsche Grammatikstoff
  *      ehrlich anzubieten.
  *
- * REIHENFOLGE: die Pool-Sprachen in `LANGUAGE_CODES`-Ordnung, dann die
- * th↔de-Ziele — Brücke de liefert damit EXAKT die vier Ziele von vor Stufe 1
- * (Thai, Englisch, Spanisch, Deutsch), kein Regression für den Hauptnutzer.
+ * REIHENFOLGE: die Pool-Sprachen in `LANGUAGE_CODES`-Ordnung, dann Deutsch
+ * als Ziel (`Brücke_to_de`, seit dem 10.09. für en/es; bei Brücke de fehlt
+ * es als Selbstpaar), dann die th↔de-Ziele — Brücke de liefert damit EXAKT
+ * die vier Ziele von vor Stufe 1 (Thai, Englisch, Spanisch, Deutsch), kein
+ * Regression für den Hauptnutzer.
  * NUTZERENTSCHEIDUNG 10.09. („Füge noch Deutsch zum Generieren hinzu"):
- * Für die Brücke de kommt bewusst NICHTS dazu (die de_to_X-Ziele decken
- * Deutsch schon ab — „Deutsch (von Englisch)" für deutsche Oberfläche wäre
- * Stufe 2); die Brücken en/es bekommen ihr Deutsch-Ziel dafür jetzt.
+ * Über die Brücke de hinaus kommt bewusst NICHTS an de_to_X-Zielen dazu (die
+ * de_to_X-Ziele decken Deutsch schon ab — „Deutsch (von Englisch)" für
+ * deutsche Oberfläche wäre Stufe 2); die Brücken en/es bekommen ihr
+ * Deutsch-Ziel dafür jetzt.
  *
  * AR-PILOT (10.09.): Die Brücke `'ar'` zeigt die vier Ziele Deutsch,
  * Englisch, Spanisch, Thai — in dieser Reihenfolge (de zuerst, dann en/es/th).
@@ -103,11 +106,11 @@ export function zieleFuerBruecke(bridge: Lang | typeof AR_BRIDGE): Lernziel[] {
     return [ziel('de'), ziel('en'), ziel('es'), ziel('th')];
   }
 
-  const ziele: Lernziel[] = (LANGUAGE_CODES as readonly LanguageCode[])
+  const ziele: Lernziel[] = [...LANGUAGE_CODES, 'de']
     .filter((code) => code !== bridge)
     .map((code) => {
-      // Kein Selbstpaar: der Filter oben nimmt die Brücke selbst heraus,
-      // und `de` steht gar nicht in `LANGUAGE_CODES`. Der Cast beweist nur,
+      // Kein Selbstpaar: der Filter oben nimmt die Brücke selbst heraus —
+      // 'de' inklusive, seit es in der Liste steht. Der Cast beweist nur,
       // was der Filter garantiert.
       const direction = `${bridge}_to_${code}` as PairDirection;
       return { direction, language: pairLanguageOf(direction) };
@@ -117,13 +120,7 @@ export function zieleFuerBruecke(bridge: Lang | typeof AR_BRIDGE): Lernziel[] {
   if (bridge === 'de') {
     ziele.push({ direction: 'th_to_de', language: 'th' });
   } else if (bridge === 'th') {
-    ziele.push({ direction: 'th_to_de', language: 'th' });
     ziele.push({ direction: 'de_to_th', language: 'th', vonSprache: 'de' });
-  } else if (bridge === 'en' || bridge === 'es') {
-    // NUTZERENTSCHEIDUNG 10.09.: Deutsch als Ziel — der Stoff ist das
-    // `german`-Feld der bestehenden Pools, die Queue läuft über den
-    // unveränderten Bestandsweg der X_to_de-Richtungen.
-    ziele.push({ direction: `${bridge}_to_de`, language: bridge });
   }
   return ziele;
 }
@@ -221,8 +218,7 @@ export function wortschatzFuerZiel(ziel: Lernziel): number {
   // ar_to_de: Ziel-Pool ist der ABGELEITETE de-Pool (`VOCABULARY_DE`) —
   // gezählt werden die ar-Anker, zu denen es einen deutschen Partner gibt.
   if (quelle === AR_BRIDGE && zielCode === 'de') {
-    const deConcepts = new Set(VOCABULARY_DE.map((entry) => entry.concept));
-    return VOCABULARY_AR.filter((entry) => deConcepts.has(entry.concept)).length;
+    return VOCABULARY_AR.filter((entry) => DE_CONCEPTS.has(entry.concept)).length;
   }
   if (!isLanguageCode(zielCode)) return 0;
   const brueckenPool =

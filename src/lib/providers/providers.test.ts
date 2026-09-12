@@ -285,7 +285,7 @@ describe('Einstellungen je Generator-Gruppe', () => {
 
 // ---------------------------------------------------------------------------
 
-describe('Schlüssel je Anbieter (AE-10, jetzt vierfach)', () => {
+describe('Schlüssel je Anbieter (AE-10)', () => {
   beforeEach(() => {
     mockSecureStoreInhalt.clear();
     mockSecureStoreVorhanden = true;
@@ -467,8 +467,8 @@ describe('Bildanbieter: Antworten lesen', () => {
 
   it('hängt bei Anbietern ohne eigene Felder Stil und Verbote an den Prompt', () => {
     // Gemini und ChatGPT kennen kein negative_prompt. Es stillschweigend
-    // fallen zu lassen, hiesse: „kein Text im Bild" gilt bei zwei von drei
-    // Anbietern nicht mehr - und genau das ist laut AE-15 der wichtigste Punkt.
+    // fallen zu lassen, hiesse: „kein Text im Bild" gälte bei keinem der
+    // Bildanbieter mehr - und genau das ist laut AE-15 der wichtigste Punkt.
     const text = withPromptFallbacks({
       prompt: 'a chicken.',
       negativePrompt: NEGATIVE_PROMPT,
@@ -518,10 +518,7 @@ describe('Fehlermeldungen', () => {
     expect(describeNetworkFailure(echt, 'api.openai.com')).toBe(echt);
   });
 
-  it('liest alle drei JSON-Fehlerformen der Anbieter', () => {
-    expect(describeHttpError(401, '{"errors":["authorization: invalid"],"name":"unauthorized"}')).toBe(
-      'HTTP 401: authorization: invalid'
-    );
+  it('liest die JSON-Fehlerformen der Anbieter', () => {
     expect(
       describeHttpError(401, '{"error":{"message":"Incorrect API key","type":"invalid_request_error"}}')
     ).toBe('HTTP 401: Incorrect API key — invalid_request_error');

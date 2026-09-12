@@ -7,6 +7,7 @@ import {
   pairLanguageOf,
   PairDirection,
   SyllableAnnotation,
+  Lang,
   TargetLanguage,
 } from './types';
 
@@ -93,37 +94,29 @@ const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
 };
 
 /**
- *
- * ANDERS ALS BEI SPANISCH KEINE HERLEITUNG: Die Betonung liegt an der letzten
- * vollen Silbe — sie ist regelhaft, aber nicht aus der Schreibung errechnet,
- * sondern aus der Schreibung **abgelesen** (welches e ist stumm?). Die
- */
-
-
-/**
  * Deutsch als ZIEL-Sprache (Nutzerentscheidung 10.09.): keine
  * silbenspezifische Auszeichnung — das deutsche Wort steht, wie es
  * geschrieben wird. Keine Merkmalsübungen: Die deutschen Übungen sind die
  * Grammatik-Drills (Genus, Stammformen), und die hängen an der RICHTUNG
  * (`_to_de`), nicht am Sprachmerkmal — siehe `drillsForDirectionViaFeature`.
+ *
+ * Der Schlüssel `de` steht hier, obwohl Deutsch kein `TargetLanguage` ist:
+ * Einträge des abgeleiteten de-Pools (vocabulary-de.ts) tragen zur Laufzeit
+ * `language: 'de'`, und `featureFor` liest genau dieses Feld.
  */
 const GERMAN_RUNTIME: LanguageFeatureRuntime = {
   annotate: (entry) => [{ roman: entry.romanization || entry.term }],
   drills: [],
 };
 
-const RUNTIMES: Record<TargetLanguage, LanguageFeatureRuntime> = {
+const RUNTIMES: Record<Lang, LanguageFeatureRuntime> = {
   th: THAI_RUNTIME,
   en: ENGLISH_RUNTIME,
   es: SPANISH_RUNTIME,
+  de: GERMAN_RUNTIME,
 };
 
 export function featureRuntime(language: TargetLanguage): LanguageFeatureRuntime {
-  // Deutsch ist kein `TargetLanguage`-Wert (kein eigener Grundstoff im
-  // Bestand), taucht aber als Zielsprache im abgeleiteten de-Pool
-  // (vocabulary-de.ts) auf. Der Vergleich über die Zeichenkette hält den
-  // Bestandstyp eng und die Karteikarte trotzdem lebendig.
-  if ((language as string) === 'de') return GERMAN_RUNTIME;
   return RUNTIMES[language];
 }
 

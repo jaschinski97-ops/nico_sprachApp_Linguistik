@@ -1,6 +1,6 @@
 import { describeHttpError } from '../providers/http';
 import { createImageProvider } from '../providers/image';
-import { ImageClient, ProviderId } from '../providers/types';
+import { ImageClient, PROVIDER_INFO, ProviderId } from '../providers/types';
 
 import { assertConcreteSpec } from './plan';
 import { GeneratedImage, ImageFormat, ImageSpec } from './types';
@@ -59,7 +59,7 @@ import { GeneratedImage, ImageFormat, ImageSpec } from './types';
  */
 
 /** Voreinstellung, kein Zwang — das Modell ist ein Freitextfeld (Pflicht 5). */
-export const IMAGE_MODEL = 'gemini-2.5-flash-image';
+export const IMAGE_MODEL = PROVIDER_INFO.gemini.modelPlaceholder.image;
 
 /**
  * WebP statt PNG: Das Bild landet auf dem Gerät in einer Datei und im Web in

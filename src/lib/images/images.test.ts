@@ -415,13 +415,7 @@ describe('clearVocabImages', () => {
 });
 
 describe('describeApiError', () => {
-  it('holt die Begruendung aus der Fehlerform des Anbieters', () => {
-    expect(
-      describeApiError(401, '{"errors":["authorization: invalid or missing header value"],"name":"unauthorized"}')
-    ).toBe('HTTP 401: authorization: invalid or missing header value');
-  });
-
-  it('kommt auch mit einer Antwort klar, die kein JSON ist', () => {
+  it('kommt mit einer Antwort klar, die kein JSON ist', () => {
     expect(describeApiError(502, 'Bad Gateway')).toContain('HTTP 502: Bad Gateway');
   });
 });

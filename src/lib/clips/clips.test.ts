@@ -12,7 +12,7 @@ import {
 } from '../audio';
 import { MemoryBlobStore } from '../blobs/memory';
 import { ConversationSituation } from '../conversation/types';
-import { createAudioClient, parseGeminiAudio } from '../providers/audio';
+import { parseGeminiAudio } from '../providers/audio';
 import {
   defaultChoiceFor,
   GENERATOR_GROUP_INFO,
