@@ -425,6 +425,18 @@ const ur = {
   "roleplay.summary": "آپ نے {{done}} اپنے سطریں کہیں، {{correct}} یقینی طور پر۔",
   "roleplay.otherScene": "دوسرا منظر",
   "roleplay.note": "ایپ دوسرا کردار بولتی ہے؛ آپ صرف اپنے سطریں بناتے ہیں۔ کردار ادا کرنا اعادے کے منصوبے کو نہیں بدلتا۔",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "مطالعہ کے متن",
+  "texts.pick": "ایک متن منتخب کریں",
+  "texts.knownOf": "آپ کے ذخیرے کے {{total}} الفاظ، {{known}} شروع",
+  "texts.lockedBody": "قفل — اس منظر کے {{needed}} الفاظ شروع ہوتے ہی کھل جائے گا (فی الحال {{total}} میں {{known}})۔",
+  "texts.showTranslation": "ترجمہ دکھائیں",
+  "texts.questionsTitle": "فہم کے سوالات",
+  "texts.questionMeaning": "کون سا سطر یہ مطلب ہے؟",
+  "texts.questionSpeaker": "یہ سطر کون کہتا ہے؟",
+  "texts.done": "متن مکمل",
+  "texts.note": "متن موجودہ صورتحال کے مکمل مکالمے ہیں۔ قابلِ لمس الفاظ جانچے گئے ذخیرے سے معنی دکھاتے ہیں۔",
 } as const;
 
 export default ur;

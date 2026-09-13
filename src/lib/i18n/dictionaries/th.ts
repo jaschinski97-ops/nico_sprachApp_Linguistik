@@ -490,6 +490,18 @@ const th: Partial<Record<TranslationKey, string>> = {
   'roleplay.summary': 'คุณพูดบรรทัดของตัวเอง {{done}} บรรทัด มั่นใจ {{correct}} บรรทัด',
   'roleplay.otherScene': 'ฉากอื่น',
   'roleplay.note': 'แอปพูดฝ่ายตรงข้าม คุณสร้างเฉพาะบรรทัดของตัวเอง การสวมบทบาทไม่เปลี่ยนแผนทบทวน',
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  'mode.lesestoffe': 'บทอ่าน',
+  'texts.pick': 'เลือกบทอ่าน',
+  'texts.knownOf': 'คำจากคลังของคุณ {{total}} คำ เริ่มแล้ว {{known}} คำ',
+  'texts.lockedBody': 'ล็อกอยู่ — เปิดเมื่อเริ่มคำของฉากนี้ครบ {{needed}} คำ (ขณะนี้ {{known}} จาก {{total}})',
+  'texts.showTranslation': 'แสดงคำแปล',
+  'texts.questionsTitle': 'คำถามความเข้าใจ',
+  'texts.questionMeaning': 'บรรทัดใดมีความหมายนี้?',
+  'texts.questionSpeaker': 'ใครพูดบรรทัดนี้?',
+  'texts.done': 'บทอ่านจบแล้ว',
+  'texts.note': 'บทอ่านคือสถานการณ์ที่มีอยู่ในรูปบทสนทนาเต็ม คำที่แตะได้จะแสดงความหมายจากคลังคำที่ตรวจสอบแล้ว',
 };
 
 export default th;

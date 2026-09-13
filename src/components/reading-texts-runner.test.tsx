@@ -1,0 +1,90 @@
+import type { ReactElement } from 'react';
+import { act, create, type ReactTestRenderer } from 'react-test-renderer';
+
+import { ReadingTextsRunner } from './reading-texts-runner';
+import { type ConversationSituation } from '@/lib/conversation/types';
+import { dictionaries, type TranslationKey } from '@/lib/i18n';
+import { VOCABULARY_TH } from '@/data/vocabulary';
+
+/** Beschriftung eines Keys in der Referenzsprache Deutsch. */
+const d = (key: TranslationKey) => dictionaries.de[key]!;
+
+const mockSzene: ConversationSituation = {
+  id: 'lese-szene',
+  level: 'A1',
+  topic: 'greeting',
+  direction: 'de_to_th',
+  title: 'Leseszene',
+  setting: 'Zwei Personen treffen sich.',
+  scriptTurns: [
+    { speaker: 'partner', thai: 'สวัสดีครับ', roman: 'sà-wàt-dii kráp', german: 'Hallo!' },
+    { speaker: 'learner', thai: 'สวัสดีค่ะ ผมชอบกาแฟ', roman: '', german: 'Hallo, ich mag Kaffee.' },
+    { speaker: 'partner', thai: 'อาหาร ดี', roman: '', german: 'Das Essen ist gut.' },
+    { speaker: 'learner', thai: 'ขอบคุณครับ', roman: '', german: 'Danke.' },
+  ],
+  corrections: [],
+  generatedAt: Date.UTC(2026, 8, 13),
+  modelUsed: 'test',
+};
+
+const mockKarten = () => VOCABULARY_TH.map((entry) => ({ vocabId: entry.id, state: 'review' }));
+jest.mock('@/lib/repository', () => ({
+  loadSituations: async () => [mockSzene],
+  loadCardStatesForDirection: async () => mockKarten(),
+}));
+jest.mock('@/lib/audio', () => ({
+  playPronunciationWithStatus: async () => ({ kind: 'tts', label: '' }),
+  stopPronunciation: async () => {},
+  isLanguageAvailable: async () => true,
+  hasPronunciationClip: async () => false,
+}));
+
+async function rendere(element: ReactElement): Promise<ReactTestRenderer> {
+  let renderer!: ReactTestRenderer;
+  await act(async () => {
+    renderer = create(element);
+  });
+  await act(async () => {
+    await Promise.resolve();
+  });
+  return renderer;
+}
+
+function textVon(renderer: ReactTestRenderer): string {
+  const knoten: string[] = [];
+  renderer.root.findAll((n) => typeof n.props.children === 'string' || Array.isArray(n.props.children)).forEach((n) => {
+    const kinder = Array.isArray(n.props.children) ? n.props.children : [n.props.children];
+    kinder.forEach((kind: unknown) => {
+      if (typeof kind === 'string') knoten.push(kind);
+    });
+  });
+  return knoten.join('\n');
+}
+
+describe('ReadingTextsRunner — der ganze Weg', () => {
+  it('listet die offene Szene mit ihrem Wortschatzstand', async () => {
+    const renderer = await rendere(<ReadingTextsRunner direction="de_to_th" onExit={() => {}} />);
+    const text = textVon(renderer);
+    expect(text).toContain('Leseszene');
+    // Interpoliert: der Template-Vorsilbe vor {{total}} muss im Text stehen.
+    expect(text).toContain(d('texts.knownOf').split('{{total}}')[0]);
+  });
+
+  it('zeigt den Text mit Antipp-Wörtern und Verständnisfragen', async () => {
+    const renderer = await rendere(<ReadingTextsRunner direction="de_to_th" onExit={() => {}} />);
+    // Szene öffnen: der eine offene Knopf der Liste.
+    const knoepfe = renderer.root.findAll((n) => n.props.accessibilityRole === 'button');
+    const szeneKopf = knoepfe.find((n) => JSON.stringify(n.props.accessibilityLabel ?? '').includes('Leseszene'));
+    expect(szeneKopf).toBeTruthy();
+    await act(async () => {
+      szeneKopf!.props.onPress();
+    });
+    const text = textVon(renderer);
+    // Zeilen der Szene sind als Token da — Bestandswörter tippbar, Rest plain.
+    expect(text).toContain('สวัสดี');
+    expect(text).toContain(d('conversation.you'));
+    expect(text).toContain(d('texts.showTranslation'));
+    // Und die Fragen stehen am Ende bereit.
+    expect(text).toContain(d('texts.questionsTitle'));
+  });
+});

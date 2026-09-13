@@ -426,6 +426,18 @@ const ar = {
   "roleplay.summary": "قلت {{done}} من أسطر الخاصة، {{correct}} بثقة.",
   "roleplay.otherScene": "مشهد آخر",
   "roleplay.note": "يقرأ التطبيق الدور الآخر؛ وأنت تنتج أسطرك فقط. لعب الأدوار لا يغيّر خطة المراجعة.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "نصوص للقراءة",
+  "texts.pick": "اختر نصًّا",
+  "texts.knownOf": "{{total}} كلمة من مخزونك، بدأت {{known}}",
+  "texts.lockedBody": "مقفل — يُفتح عند بدء {{needed}} كلمة من هذا المشهد (حاليًا {{known}} من {{total}}).",
+  "texts.showTranslation": "أظهر الترجمة",
+  "texts.questionsTitle": "أسئلة الفهم",
+  "texts.questionMeaning": "أي سطر يعني هذا؟",
+  "texts.questionSpeaker": "من يقول هذا السطر؟",
+  "texts.done": "انتهى النص",
+  "texts.note": "النصوص هي المواقف الموجودة كحوارات كاملة. الكلمات القابلة للنقر تظهر معناها من المخزون المدقق.",
 } as const;
 
 export default ar;

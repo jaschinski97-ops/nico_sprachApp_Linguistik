@@ -425,6 +425,18 @@ const pt = {
   "roleplay.summary": "Disse {{done}} falas próprias, {{correct}} com confiança.",
   "roleplay.otherScene": "Outra cena",
   "roleplay.note": "A app faz o outro papel; você produz apenas as suas falas. O jogo de papéis não muda o plano de revisão.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "Textos de leitura",
+  "texts.pick": "Escolha um texto",
+  "texts.knownOf": "{{total}} palavras do teu stock, {{known}} iniciadas",
+  "texts.lockedBody": "Bloqueado — abre quando {{needed}} palavras desta cena forem iniciadas (agora {{known}} de {{total}}).",
+  "texts.showTranslation": "Mostrar tradução",
+  "texts.questionsTitle": "Perguntas de compreensão",
+  "texts.questionMeaning": "Que fala significa isto?",
+  "texts.questionSpeaker": "Quem diz esta fala?",
+  "texts.done": "Texto concluído",
+  "texts.note": "Os textos são as situações existentes como diálogos completos. As palavras tocáveis mostram o seu significado do stock verificado.",
 } as const;
 
 export default pt;

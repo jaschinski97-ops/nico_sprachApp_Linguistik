@@ -425,6 +425,18 @@ const bn = {
   "roleplay.summary": "আপনি {{done}}টি নিজের লাইন বলেছেন, {{correct}}টি নিশ্চিতভাবে।",
   "roleplay.otherScene": "অন্য দৃশ্য",
   "roleplay.note": "অ্যাপ অন্য ভূমিকা বলে; আপনি শুধু নিজের লাইন তৈরি করেন। ভূমিকা অভ্যাস পুনরাবৃত্তির পরিকল্পনা বদলায় না।",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "পঠন পাঠ",
+  "texts.pick": "একটি পাঠ বেছে নিন",
+  "texts.knownOf": "আপনার মজুদের {{total}} শব্দ, {{known}}টি শুরু",
+  "texts.lockedBody": "লক — এই দৃশ্যের {{needed}}টি শব্দ শুরু হলে খুলবে (এখন {{total}}-এর মধ্যে {{known}})।",
+  "texts.showTranslation": "অনুবাদ দেখান",
+  "texts.questionsTitle": "বোঝার প্রশ্ন",
+  "texts.questionMeaning": "কোন লাইনটি এর অর্থ?",
+  "texts.questionSpeaker": "এই লাইনটি কে বলে?",
+  "texts.done": "পাঠ শেষ",
+  "texts.note": "পাঠগুলো হলো বিদ্যমান পরিস্থিতির সম্পূর্ণ সংলাপ। ট্যাপযোগ্য শব্দ যাচাইকৃত মজুদ থেকে অর্থ দেখায়।",
 } as const;
 
 export default bn;

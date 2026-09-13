@@ -425,6 +425,18 @@ const ko = {
   "roleplay.summary": "내 대사 {{done}}개를 말했고, {{correct}}개는 자신 있었습니다.",
   "roleplay.otherScene": "다른 장면",
   "roleplay.note": "앱이 상대 역할을 말합니다. 자기 대사만 만들면 됩니다. 역할극은 복습 계획을 바꾸지 않습니다.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "읽기 지문",
+  "texts.pick": "지문을 고르세요",
+  "texts.knownOf": "내 단어 {{total}}개 중 {{known}}개 시작",
+  "texts.lockedBody": "잠김 — 이 장면의 단어 {{needed}}개를 시작하면 열립니다(현재 {{total}}개 중 {{known}}개).",
+  "texts.showTranslation": "번역 보기",
+  "texts.questionsTitle": "이해 문제",
+  "texts.questionMeaning": "어느 줄이 이 뜻인가요?",
+  "texts.questionSpeaker": "이 줄은 누가 말하나요?",
+  "texts.done": "지문 완료",
+  "texts.note": "본문은 기존 상황을 온전한 대화로 만든 것입니다. 누를 수 있는 단어는 검증된 단어장의 뜻을 보여 줍니다.",
 } as const;
 
 export default ko;

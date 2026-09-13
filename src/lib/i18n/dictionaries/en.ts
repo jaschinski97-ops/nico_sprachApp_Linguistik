@@ -512,6 +512,18 @@ const en: Partial<Record<TranslationKey, string>> = {
   'roleplay.summary': 'You spoke {{done}} own lines, {{correct}} with confidence.',
   'roleplay.otherScene': 'Another scene',
   'roleplay.note': 'The app plays the other role; you produce only your own lines. Role-play does not change your review schedule.',
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  'mode.lesestoffe': 'Reading texts',
+  'texts.pick': 'Choose a text',
+  'texts.knownOf': '{{total}} words from your stock, {{known}} started',
+  'texts.lockedBody': 'Locked — opens once {{needed}} words of this scene have been started (currently {{known}} of {{total}}).',
+  'texts.showTranslation': 'Show translation',
+  'texts.questionsTitle': 'Comprehension questions',
+  'texts.questionMeaning': 'Which line means this?',
+  'texts.questionSpeaker': 'Who says this line?',
+  'texts.done': 'Text finished',
+  'texts.note': 'The texts are the existing situations as whole dialogues. Tappable words show their meaning from the checked stock when tapped.',
 };
 
 export default en;

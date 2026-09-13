@@ -425,6 +425,18 @@ const vi = {
   "roleplay.summary": "Bạn đã nói {{done}} câu của mình, {{correct}} chắc chắn.",
   "roleplay.otherScene": "Cảnh khác",
   "roleplay.note": "Ứng dụng đóng vai kia; bạn chỉ tạo các câu của mình. Đóng vai không thay đổi lịch ôn tập.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "Bài đọc",
+  "texts.pick": "Chọn một bài đọc",
+  "texts.knownOf": "{{total}} từ của bạn, đã bắt đầu {{known}}",
+  "texts.lockedBody": "Đã khóa — mở khi {{needed}} từ của cảnh này được bắt đầu (hiện {{known}}/{{total}}).",
+  "texts.showTranslation": "Hiện bản dịch",
+  "texts.questionsTitle": "Câu hỏi hiểu bài",
+  "texts.questionMeaning": "Câu nào mang nghĩa này?",
+  "texts.questionSpeaker": "Ai nói câu này?",
+  "texts.done": "Đã xong bài đọc",
+  "texts.note": "Bài đọc là các tình huống có sẵn dưới dạng hội thoại trọn vẹn. Từ chạm được hiện nghĩa từ kho đã kiểm chứng.",
 } as const;
 
 export default vi;

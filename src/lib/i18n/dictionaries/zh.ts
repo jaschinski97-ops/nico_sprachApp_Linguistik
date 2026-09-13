@@ -425,6 +425,18 @@ const zh = {
   "roleplay.summary": "你说了 {{done}} 句自己的台词，其中 {{correct}} 句有把握。",
   "roleplay.otherScene": "换个场景",
   "roleplay.note": "应用扮演对方；你只产出自己的台词。情景对话不改变复习计划。",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "阅读短文",
+  "texts.pick": "选择一篇短文",
+  "texts.knownOf": "来自你词库的 {{total}} 个词，已开始 {{known}} 个",
+  "texts.lockedBody": "已锁定——本场景的 {{needed}} 个单词开始学习后解锁（当前 {{known}}/{{total}}）。",
+  "texts.showTranslation": "显示翻译",
+  "texts.questionsTitle": "理解题",
+  "texts.questionMeaning": "哪一句是这个意思？",
+  "texts.questionSpeaker": "这句是谁说的？",
+  "texts.done": "短文完成",
+  "texts.note": "短文由现有情境组成完整对话。可点按的词会显示已校验词库中的含义。",
 } as const;
 
 export default zh;

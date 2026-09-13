@@ -92,6 +92,7 @@ const de = {
   'mode.cards': 'Karteikarten',
   'mode.heute': 'Heutige Runde',
   'mode.sagen': 'Sag es',
+  'mode.lesestoffe': 'Lesetexte',
   'mode.rollenspiel': 'Rollenspiel',
   'mode.speaking': 'Sprechen',
   'mode.writing': 'Schreiben',
@@ -517,6 +518,19 @@ const de = {
   'sentence.questionPrompt': 'Welche ganze Aussage oder Frage hast du gehört?',
   'sentence.correct': 'Richtig.',
   'sentence.meant': 'Gemeint ist: {{answer}}',
+
+  /* ---------- Lese-/Hörtexte (reading-texts-runner, Schritt 4) ---------- */
+  'texts.pick': 'Wähle einen Text',
+  'texts.knownOf': '{{total}} Wörter aus deinem Bestand, {{known}} begonnen',
+  'texts.lockedBody':
+    'Gesperrt — frei, sobald {{needed}} Wörter dieser Szene begonnen sind (aktuell {{known}} von {{total}}).',
+  'texts.showTranslation': 'Übersetzung zeigen',
+  'texts.questionsTitle': 'Verständnisfragen',
+  'texts.questionMeaning': 'Welche Zeile bedeutet das?',
+  'texts.questionSpeaker': 'Wer sagt diese Zeile?',
+  'texts.done': 'Text beendet',
+  'texts.note':
+    'Die Texte sind die vorhandenen Situationen als ganze Dialoge. Tippbare Wörter zeigen beim Antippen ihre Bedeutung aus dem geprüften Bestand.',
 
   /* ---------- Rollenspiel (roleplay-runner, Schritt 3) ---------- */
   'roleplay.pick': 'Wähle eine Szene',

@@ -425,6 +425,18 @@ const id = {
   "roleplay.summary": "Kamu mengucapkan {{done}} baris sendiri, {{correct}} dengan yakin.",
   "roleplay.otherScene": "Adegan lain",
   "roleplay.note": "Aplikasi memainkan peran lain; kamu hanya menghasilkan barismu sendiri. Bermain peran tidak mengubah jadwal pengulangan.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "Teks bacaan",
+  "texts.pick": "Pilih sebuah teks",
+  "texts.knownOf": "{{total}} kata dari stokmu, {{known}} dimulai",
+  "texts.lockedBody": "Terkunci — terbuka setelah {{needed}} kata adegan ini dimulai (kini {{known}} dari {{total}}).",
+  "texts.showTranslation": "Tampilkan terjemahan",
+  "texts.questionsTitle": "Pertanyaan pemahaman",
+  "texts.questionMeaning": "Baris mana yang berarti ini?",
+  "texts.questionSpeaker": "Siapa yang mengatakan baris ini?",
+  "texts.done": "Teks selesai",
+  "texts.note": "Teksnya adalah situasi yang ada sebagai dialog utuh. Kata yang dapat disentuh menunjukkan maknanya dari stok terverifikasi.",
 } as const;
 
 export default id;

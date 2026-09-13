@@ -425,6 +425,18 @@ const ja = {
   "roleplay.summary": "自分のセリフを{{done}}言い、{{correct}}は自信がありました。",
   "roleplay.otherScene": "別のシーン",
   "roleplay.note": "アプリが相手役を話します。あなたは自分のセリフだけを作ります。ロールプレイは復習予定を変えません。",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "読解テキスト",
+  "texts.pick": "テキストを選ぼう",
+  "texts.knownOf": "あなたの単語 {{total}}語のうち {{known}}語を開始済み",
+  "texts.lockedBody": "ロック中 — このシーンの単語{{needed}}語を開始すると解放（現在 {{total}}語中 {{known}}語）。",
+  "texts.showTranslation": "翻訳を表示",
+  "texts.questionsTitle": "理解度クイズ",
+  "texts.questionMeaning": "どの行がこの意味ですか？",
+  "texts.questionSpeaker": "この行を言うのは誰ですか？",
+  "texts.done": "テキスト終了",
+  "texts.note": "テキストは既存の状況を丸ごと対話にしたものです。タップできる単語は確認済みの語彙から意味を表示します。",
 } as const;
 
 export default ja;

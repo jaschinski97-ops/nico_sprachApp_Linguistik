@@ -425,6 +425,18 @@ const tr = {
   "roleplay.summary": "{{done}} kendi satırını söyledin, {{correct}} emin.",
   "roleplay.otherScene": "Başka sahne",
   "roleplay.note": "Uygulama diğer rolü oynar; yalnızca kendi satırlarını kurarsın. Rol yapma tekrar planını değiştirmez.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "Okuma metinleri",
+  "texts.pick": "Bir metin seç",
+  "texts.knownOf": "Stokundan {{total}} kelime, {{known}} başlandı",
+  "texts.lockedBody": "Kilitli — bu sahnenin {{needed}} kelimesi başlandığında açılır (şu an {{total}} içinde {{known}}).",
+  "texts.showTranslation": "Çeviriyi göster",
+  "texts.questionsTitle": "Anlama soruları",
+  "texts.questionMeaning": "Hangi satır bunu ifade ediyor?",
+  "texts.questionSpeaker": "Bu satırı kim söylüyor?",
+  "texts.done": "Metin tamamlandı",
+  "texts.note": "Metinler, mevcut durumların bütün diyaloglarıdır. Dokunulabilir kelimeler anlamlarını doğrulanmış stoktan gösterir.",
 } as const;
 
 export default tr;

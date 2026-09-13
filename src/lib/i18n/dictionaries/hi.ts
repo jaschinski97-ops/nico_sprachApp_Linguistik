@@ -425,6 +425,18 @@ const hi = {
   "roleplay.summary": "आपने {{done}} अपनी पंक्तियाँ बोलीं, {{correct}} आत्मविश्वास से।",
   "roleplay.otherScene": "दूसरा दृश्य",
   "roleplay.note": "ऐप दूसरी भूमिका बोलता है; आप केवल अपनी पंक्तियाँ बनाते हैं। भूमिका अभ्यास पुनरावृत्ति योजना नहीं बदलता।",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "पठन पाठ",
+  "texts.pick": "एक पाठ चुनें",
+  "texts.knownOf": "आपके भंडार के {{total}} शब्द, {{known}} शुरू",
+  "texts.lockedBody": "बंद — इस दृश्य के {{needed}} शब्द शुरू होने पर खुलेगा (अभी {{total}} में {{known}})।",
+  "texts.showTranslation": "अनुवाद दिखाएँ",
+  "texts.questionsTitle": "बोध प्रश्न",
+  "texts.questionMeaning": "कौन-सी पंक्ति यह कहती है?",
+  "texts.questionSpeaker": "यह पंक्ति कौन कहता है?",
+  "texts.done": "पाठ समाप्त",
+  "texts.note": "पाठ मौजूदा परिस्थितियों के पूरे संवाद हैं। टैप करने योग्य शब्द जाँचे गए भंडार से अर्थ दिखाते हैं।",
 } as const;
 
 export default hi;

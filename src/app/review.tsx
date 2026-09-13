@@ -45,6 +45,7 @@ import { WordSpeakingRunner } from '@/components/word-speaking-runner';
 import { TodayRoundRunner } from '@/components/today-round-runner';
 import { ProductionRunner } from '@/components/production-runner';
 import { RoleplayRunner } from '@/components/roleplay-runner';
+import { ReadingTextsRunner } from '@/components/reading-texts-runner';
 import { ROUND_MINUTES } from '@/lib/today-round';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
@@ -333,6 +334,8 @@ function ReviewBody({
           language={pairLanguageOf(direction)}
           onExit={onExit}
         />
+      ) : mode === 'lesestoffe' ? (
+        <ReadingTextsRunner key={direction} direction={direction} onExit={onExit} />
       ) : mode === 'sagen' ? (
         <ProductionRunner key={direction} direction={direction} onExit={onExit} />
       ) : mode === 'rollenspiel' ? (

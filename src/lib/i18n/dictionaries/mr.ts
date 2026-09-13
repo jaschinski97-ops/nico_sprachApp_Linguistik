@@ -425,6 +425,18 @@ const mr = {
   "roleplay.summary": "तुम्ही {{done}} स्वतःच्या ओळी म्हणल्या, {{correct}} आत्मविश्वासाने.",
   "roleplay.otherScene": "दुसरे दृश्य",
   "roleplay.note": "अॅप दुसरी भूमिका बोलते; तुम्ही फक्त स्वतःच्या ओळी तयार करता. भूमिकाबाजी पुनरावृत्तीचा आराखडा बदलत नाही.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "वाचन मजकूर",
+  "texts.pick": "एक मजकूर निवडा",
+  "texts.knownOf": "तुमच्या साठ्यातील {{total}} शब्द, {{known}} सुरू",
+  "texts.lockedBody": "बंद — या दृश्यातील {{needed}} शब्द सुरू झाल्यावर उघडेल (सध्या {{total}} पैकी {{known}}).",
+  "texts.showTranslation": "भाषांतर दाखवा",
+  "texts.questionsTitle": "आकलन प्रश्न",
+  "texts.questionMeaning": "कोणती ओळ याचा अर्थ देते?",
+  "texts.questionSpeaker": "ही ओळ कोण म्हणते?",
+  "texts.done": "मजकूर संपला",
+  "texts.note": "मजकूर म्हणजे विद्यमान परिस्थितींचे संपूर्ण संवाद. स्पर्श करण्यायोग्य शब्द तपासलेल्या साठ्यातून अर्थ दाखवतात.",
 } as const;
 
 export default mr;

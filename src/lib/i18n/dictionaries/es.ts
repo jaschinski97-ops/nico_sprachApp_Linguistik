@@ -510,6 +510,18 @@ const es: Partial<Record<TranslationKey, string>> = {
   'roleplay.summary': 'Dijiste {{done}} líneas propias, {{correct}} con seguridad.',
   'roleplay.otherScene': 'Otra escena',
   'roleplay.note': 'La app hace el otro papel; tú produces solo tus líneas. El juego de rol no cambia tu plan de repaso.',
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  'mode.lesestoffe': 'Textos de lectura',
+  'texts.pick': 'Elige un texto',
+  'texts.knownOf': '{{total}} palabras de tu stock, {{known}} iniciadas',
+  'texts.lockedBody': 'Bloqueado — se abre cuando {{needed}} palabras de esta escena estén iniciadas (ahora {{known}} de {{total}}).',
+  'texts.showTranslation': 'Mostrar traducción',
+  'texts.questionsTitle': 'Preguntas de comprensión',
+  'texts.questionMeaning': '¿Qué línea significa esto?',
+  'texts.questionSpeaker': '¿Quién dice esta línea?',
+  'texts.done': 'Texto terminado',
+  'texts.note': 'Los textos son las situaciones existentes como diálogos completos. Las palabras tocables muestran su significado del stock comprobado.',
 };
 
 export default es;

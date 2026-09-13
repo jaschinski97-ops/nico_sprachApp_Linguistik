@@ -425,6 +425,18 @@ const te = {
   "roleplay.summary": "మీరు {{done}} స్వంత లైన్లు చెప్పారు, {{correct}} ఖచ్చితంగా.",
   "roleplay.otherScene": "వేరే సన్నివేశం",
   "roleplay.note": "యాప్ మరో పాత్ర మాట్లాడుతుంది; మీరు మీ లైన్లు మాత్రమే ఏర్పాటు చేస్తారు. పాత్ర పోషణ పునరుక్తి ప్రణాళికను మార్చదు.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "పఠన పాఠాలు",
+  "texts.pick": "ఒక పాఠాన్ని ఎంచుకోండి",
+  "texts.knownOf": "మీ నిఘంటువులో {{total}} పదాలు, {{known}} ప్రారంభించబడ్డాయి",
+  "texts.lockedBody": "లాక్ — ఈ సన్నివేశం {{needed}} పదాలు ప్రారంభించగానే తెరుచుకుంటుంది (ప్రస్తుతం {{total}}లో {{known}}).",
+  "texts.showTranslation": "అనువాదం చూపించు",
+  "texts.questionsTitle": "అవగాహన ప్రశ్నలు",
+  "texts.questionMeaning": "ఏ లైన్ దీని అర్థాన్ని ఇస్తుంది?",
+  "texts.questionSpeaker": "ఈ లైన్ ఎవరు అంటారు?",
+  "texts.done": "పాఠం పూర్తయింది",
+  "texts.note": "పాఠాలు ఉనికిలో ఉన్న సందర్భాల పూర్తి సంభాషణలు. నొక్కగల పదాలు సరిచూసిన నిఘంటువు నుండి అర్థాన్ని చూపుతాయి.",
 } as const;
 
 export default te;

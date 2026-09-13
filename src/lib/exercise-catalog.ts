@@ -28,6 +28,7 @@ export type Mode =
   | 'speaking'
   | 'sagen'
   | 'rollenspiel'
+  | 'lesestoffe'
   | 'writing'
   | 'dictation'
   | SentenceMode
@@ -84,7 +85,8 @@ export function modesForDirection(direction: PairDirection): Mode[] {
     // Die Satzübungen gehören seit AE-66 zu jeder Richtung jedes Paars.
     ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
     // Schritt 3: selbst produzieren (Sag es auf …) und Szenen sprechen.
-    ...(['sagen', 'rollenspiel'] as const),
+    // Schritt 4: die Situationen als Lese-/Hörtexte.
+    ...(['sagen', 'rollenspiel', 'lesestoffe'] as const),
     'dictation',
     ...(isDeAnchored(direction) ? (['writing'] as const) : []),
   ];
@@ -96,6 +98,7 @@ export function modeKey(mode: Mode): TranslationKey {
   if (mode === 'speaking') return 'mode.speaking';
   if (mode === 'sagen') return 'mode.sagen';
   if (mode === 'rollenspiel') return 'mode.rollenspiel';
+  if (mode === 'lesestoffe') return 'mode.lesestoffe';
   if (mode === 'writing') return 'mode.writing';
   if (mode === 'shadowing') return 'mode.shadowing';
   if (mode === 'sentenceRepeat') return 'mode.sentenceRepeat';
@@ -131,6 +134,8 @@ export function groupsForDirection(direction: PairDirection): Group[] {
   const hoeren: Mode[] = bySkill('hoeren');
   hoeren.push('sentenceListening', 'dictation');
   const lesenSchreiben: Mode[] = bySkill('lesen');
+  // Längere Texte (Schritt 4): die Situationen als Lese-/Hörtexte.
+  lesenSchreiben.push('lesestoffe');
   if (modes.includes('writing')) lesenSchreiben.push('writing');
   const sprechen: Mode[] = [];
   if (modes.includes('speaking')) sprechen.push('speaking');

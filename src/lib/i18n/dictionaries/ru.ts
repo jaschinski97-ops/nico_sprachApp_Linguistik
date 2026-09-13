@@ -425,6 +425,18 @@ const ru = {
   "roleplay.summary": "Ты произнёс {{done}} своих реплик, {{correct}} уверенно.",
   "roleplay.otherScene": "Другая сцена",
   "roleplay.note": "Приложение играет чужую роль; ты произносишь только свои реплики. Ролевая игра не меняет план повторений.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "Тексты для чтения",
+  "texts.pick": "Выбери текст",
+  "texts.knownOf": "Слов из запаса: {{total}}, начато: {{known}}",
+  "texts.lockedBody": "Закрыто — откроется, когда начато {{needed}} слов этой сцены (сейчас {{known}} из {{total}}).",
+  "texts.showTranslation": "Показать перевод",
+  "texts.questionsTitle": "Вопросы на понимание",
+  "texts.questionMeaning": "Какая реплика это значит?",
+  "texts.questionSpeaker": "Кто произносит эту реплику?",
+  "texts.done": "Текст пройден",
+  "texts.note": "Тексты — существующие ситуации как целые диалоги. Нажимаемые слова показывают значение из проверенного запаса.",
 } as const;
 
 export default ru;

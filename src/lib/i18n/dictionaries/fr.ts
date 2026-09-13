@@ -425,6 +425,18 @@ const fr = {
   "roleplay.summary": "Tu as dit {{done}} répliques personnelles, {{correct}} avec assurance.",
   "roleplay.otherScene": "Une autre scène",
   "roleplay.note": "L’app joue l’autre rôle ; tu ne produis que tes répliques. Le jeu de rôle ne change pas ton planning de révision.",
+
+  /* ---------- Lese-/Hörtexte (13.09.2026, Schritt 4) ---------- */
+  "mode.lesestoffe": "Textes de lecture",
+  "texts.pick": "Choisis un texte",
+  "texts.knownOf": "{{total}} mots de ton stock, {{known}} commencés",
+  "texts.lockedBody": "Verrouillé — s’ouvre dès que {{needed}} mots de cette scène sont commencés (actuellement {{known}} sur {{total}}).",
+  "texts.showTranslation": "Afficher la traduction",
+  "texts.questionsTitle": "Questions de compréhension",
+  "texts.questionMeaning": "Quelle réplique veut dire cela ?",
+  "texts.questionSpeaker": "Qui dit cette réplique ?",
+  "texts.done": "Texte terminé",
+  "texts.note": "Les textes sont les situations existantes en dialogues entiers. Les mots soulignés montrent leur sens du stock vérifié.",
 } as const;
 
 export default fr;
