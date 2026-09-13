@@ -26,16 +26,111 @@ const { load } = require('./domain.cjs');
 loadEnvLocal({ root });
 
 // Brückensprachen, die es gibt bzw. geben wird. Eine neue = ein Eintrag + Lauf.
+//
+// SEIT DEM 20-SPRACHEN-AUSBAU (13.09.2026): dieselben 15 Sprachen wie in
+// generate-ui-language.cjs — wer die App in seiner Heimatsprache liest, soll
+// auch Karten mit einer Vorderseite in dieser Sprache bekommen (Stufe 1,
+// Generalisierung des ar-Piloten). Datei und Exportname folgen dem Muster
+// `vocabulary-<code>.ts` / `VOCABULARY_<CODE>` (via dateiFuer/exportNameFuer
+// unten); ein Eintrag kann beides übersteuern, falls eine Datei abweicht.
 const BRUECKEN = {
   ar: {
-    datei: path.join(root, 'src', 'data', 'vocabulary-ar.ts'),
     sprachName: 'Ägyptisch-Arabisch',
     stil: 'Ägyptisches Arabisch, wie in Kairo gesprochen',
     // Prüfung der Antwort: Ein Ankerwort OHNE arabische Schrift ist ein
     // Fehlschlag (etwa eine Umschrift oder eine englische Erklärung).
     schrift: /\p{Script=Arabic}/u,
   },
+  zh: {
+    sprachName: 'Mandarin-Chinesisch',
+    stil: 'Vereinfachtes Hochchinesisch, das gewöhnliche Wort, in chinesischen Schriftzeichen',
+    schrift: /\p{Script=Han}/u,
+  },
+  hi: {
+    sprachName: 'Hindi',
+    stil: 'Standard-Hindi in Devanagari, das gewöhnliche Wort',
+    schrift: /\p{Script=Devanagari}/u,
+  },
+  fr: {
+    sprachName: 'Französisch',
+    stil: 'Gegenwärtiges Standard-Französisch, das gewöhnliche Wort',
+    schrift: /\p{Script=Latin}/u,
+    identischMitQuelle: true,
+  },
+  bn: {
+    sprachName: 'Bengalisch',
+    stil: 'Standard-Bengalisch in bengalischer Schrift, das gewöhnliche Wort',
+    schrift: /\p{Script=Bengali}/u,
+  },
+  pt: {
+    sprachName: 'Portugiesisch',
+    stil: 'Brasilianisches Portugiesisch, das gewöhnliche Wort',
+    schrift: /\p{Script=Latin}/u,
+    identischMitQuelle: true,
+  },
+  ru: {
+    sprachName: 'Russisch',
+    stil: 'Standard-Russisch in kyrillischer Schrift, das gewöhnliche Wort',
+    schrift: /\p{Script=Cyrillic}/u,
+  },
+  ur: {
+    sprachName: 'Urdu',
+    stil: 'Standard-Urdu in arabischer Schrift (Nastaliq-Lautung), das gewöhnliche Wort',
+    schrift: /\p{Script=Arabic}/u,
+  },
+  id: {
+    sprachName: 'Indonesisch',
+    stil: 'Standard-Indonesisch (Bahasa Indonesia), das gewöhnliche Wort',
+    schrift: /\p{Script=Latin}/u,
+    identischMitQuelle: true,
+  },
+  ja: {
+    sprachName: 'Japanisch',
+    stil: 'Gegenwärtiges Standard-Japanisch, das gewöhnliche Wort in Kanji (mit Kana, wo das Wort sie trägt)',
+    schrift: /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u,
+  },
+  mr: {
+    sprachName: 'Marathi',
+    stil: 'Standard-Marathi in Devanagari, das gewöhnliche Wort',
+    schrift: /\p{Script=Devanagari}/u,
+  },
+  te: {
+    sprachName: 'Telugu',
+    stil: 'Standard-Telugu in Telugu-Schrift, das gewöhnliche Wort',
+    schrift: /\p{Script=Telugu}/u,
+  },
+  tr: {
+    sprachName: 'Türkisch',
+    stil: 'Standard-Türkisch, das gewöhnliche Wort',
+    schrift: /\p{Script=Latin}/u,
+    identischMitQuelle: true,
+  },
+  ta: {
+    sprachName: 'Tamil',
+    stil: 'Standard-Tamil in tamilischer Schrift, das gewöhnliche Wort',
+    schrift: /\p{Script=Tamil}/u,
+  },
+  vi: {
+    sprachName: 'Vietnamesisch',
+    stil: 'Standard-Vietnamesisch mit voller Diakritik, das gewöhnliche Wort',
+    schrift: /\p{Script=Latin}/u,
+    identischMitQuelle: true,
+  },
+  ko: {
+    sprachName: 'Koreanisch',
+    stil: 'Standard-Koreanisch in Hangul, das gewöhnliche Wort',
+    schrift: /\p{Script=Hangul}/u,
+  },
 };
+
+/** Datei und Exportname eines Brücken-Pools — Muster `vocabulary-<code>.ts`. */
+function poolZiel(code) {
+  const ziel = BRUECKEN[code];
+  return {
+    datei: ziel.datei ?? path.join(root, 'src', 'data', `vocabulary-${code}.ts`),
+    exportName: ziel.exportName ?? `VOCABULARY_${code.toUpperCase()}`,
+  };
+}
 
 const MODELL = 'gpt-4o-mini';
 const CHAT_URL = 'https://api.openai.com/v1/chat/completions';
@@ -138,12 +233,17 @@ async function rufeOpenAI(apiKey, ziel, chunk) {
 }
 
 /** Gültiges Ankerwort: nicht-leer und in der Schrift der Brückensprache. */
-function gueltig(ziel, wert) {
+function gueltig(ziel, wert, deutsch) {
   return (
     typeof wert === 'string' &&
     wert.trim().length > 0 &&
     wert.trim().length <= 40 &&
-    ziel.schrift.test(wert)
+    ziel.schrift.test(wert) &&
+    // Lateinische Zielschriften: Der deutsche Anker ist selbst lateinisch —
+    // ein unverändert übernommenes deutsches Wort wäre keine Übersetzung.
+    (!ziel.identischMitQuelle ||
+      typeof deutsch !== 'string' ||
+      wert.trim().toLowerCase() !== deutsch.trim().toLowerCase())
   );
 }
 
@@ -161,7 +261,7 @@ async function uebersetzeChunk(apiKey, ziel, chunk) {
       if (neuUsage) usage = neuUsage;
       offene = offene.filter((begriff) => {
         const wert = antwort[begriff.id]?.term;
-        if (gueltig(ziel, wert)) {
+        if (gueltig(ziel, wert, begriff.deutsch)) {
           ergebnis[begriff.id] = wert.trim();
           return false;
         }
@@ -238,14 +338,15 @@ async function main() {
       `${eintraege.length} von ${begriffe.length} Begriffen.`,
     '',
   ].join('\n');
+  const pool = poolZiel(code);
   const inhalt =
     `${kopf}import { BridgeEntry } from './vocab-types';\n\n` +
-    `export const VOCABULARY_AR: BridgeEntry[] = [\n${zeilen}\n];\n`;
-  fs.mkdirSync(path.dirname(ziel.datei), { recursive: true });
-  fs.writeFileSync(ziel.datei, inhalt, 'utf8');
+    `export const ${pool.exportName}: BridgeEntry[] = [\n${zeilen}\n];\n`;
+  fs.mkdirSync(path.dirname(pool.datei), { recursive: true });
+  fs.writeFileSync(pool.datei, inhalt, 'utf8');
 
   console.log(
-    `Geschrieben: ${path.relative(root, ziel.datei)} — ${eintraege.length} Einträge` +
+    `Geschrieben: ${path.relative(root, pool.datei)} — ${eintraege.length} Einträge` +
       (tokensIn ? `, ~${tokensIn}+${tokensOut} Token (~$${((tokensIn / 1e6) * 0.15 + (tokensOut / 1e6) * 0.6).toFixed(4)})` : '')
   );
 }

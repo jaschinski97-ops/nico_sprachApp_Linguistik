@@ -1,5 +1,5 @@
 import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
-import { LANGUAGE_DISPLAY_NAMES, type UiLanguage } from '@/lib/i18n';
+import { languageDisplayName, type UiLanguage } from '@/lib/i18n';
 
 import {
   Direction,
@@ -186,8 +186,8 @@ export function defaultLanguage(): LanguageCode {
  * UI-Sprache kennt (`useLocale().uiLanguage`), reicht sie durch.
  */
 export function directionLabel(direction: TargetDirection, ui: UiLanguage = 'de'): string {
-  const ziel = LANGUAGE_DISPLAY_NAMES[languageOfTargetDirection(direction)][ui];
-  const deutsch = LANGUAGE_DISPLAY_NAMES.de[ui];
+  const ziel = languageDisplayName(languageOfTargetDirection(direction), ui);
+  const deutsch = languageDisplayName('de', ui);
   return direction.startsWith(`${HUB_LANGUAGE}_to_`)
     ? `${deutsch} → ${ziel}`
     : `${ziel} → ${deutsch}`;

@@ -1,15 +1,39 @@
 /**
- * Grundbegriffe der Internationalisierung (Roadmap v2, Phase 1).
+ * Die App-Sprachen (Oberfläche UND Brücke, Roadmap v2 Phase 1).
  *
- * Die App erscheint in der SYSTEMSPRACHE des Geräts — dieselbe Sprache ist
- * zugleich die künftige „Brückensprache“ des Lerners. Ein Deutscher sieht
- * Deutsch deshalb nie als eigenes Lernziel; seine Auswahl ist EN/ES/FR/TH.
+ * SEIT DEM 20-SPRACHEN-AUSBAU (13.09.2026, Nutzerwunsch: „die 20 meist-
+ * gesprochenen Sprachen der Welt“ in den SPRACHEINSTELLUNGEN): die drei
+ * geprüften Oberflächen (de Referenz, en/es) plus der ar-Pilot plus die 15
+ * KI-generierten Heimatsprachen — 20 Sprachen insgesamt, deren Wörterbücher
+ * die Pipeline (`scripts/content/generate-ui-language.cjs`) aus de.ts
+ * übersetzt. Die vier LERNsprachen (th/en/es/de als Ziele) bleiben von
+ * dieser Liste unberührt; sie ist die Frage „in welcher Sprache liest man
+ * die App“, nicht „was lernt man“.
  *
- * Bewusst EIN flacher Sprachkanon für UI und Brücke: dieselben fünf Codes.
+ * Bewusst EIN flacher Sprachkanon für UI und Brücke: dieselben zwanzig Codes.
  */
-
-/** Die Sprachen des Kerns — als UI- wie als Zielsprache. */
-export const UI_LANGUAGES = ['de', 'en', 'es', 'th', 'ar'] as const;
+export const UI_LANGUAGES = [
+  'de',
+  'en',
+  'es',
+  'th',
+  'ar',
+  'zh',
+  'hi',
+  'fr',
+  'bn',
+  'pt',
+  'ru',
+  'ur',
+  'id',
+  'ja',
+  'mr',
+  'te',
+  'tr',
+  'ta',
+  'vi',
+  'ko',
+] as const;
 
 export type UiLanguage = (typeof UI_LANGUAGES)[number];
 
@@ -33,15 +57,20 @@ function isUiLanguage(value: unknown): value is UiLanguage {
  * Kanon normiert; alles Unbekannte fällt auf die Vorgabe zurück.
  *
  * Bewusst nur der SPRACHcode, keine Region: `de-AT` und `de-CH` sind Deutsch.
- * Einzige Ausnahme: ein voller arabischer Tag (`ar-EG`, Systemsprache
- * Ägypten — der PILOT der Heimatsprachen) wird auf `'ar'` gekürzt, denn
- * `getLocales()` liefert je nach Plattform den Sprachcode ODER den vollen
- * BCP-47-Tag; beides muss dieselbe Oberfläche ergeben.
+ * SEIT DEM 20-SPRACHEN-AUSBAU ALLGEMEIN: `getLocales()` liefert je nach
+ * Plattform den Sprachcode ODER den vollen BCP-47-Tag — beides muss dieselbe
+ * Oberfläche ergeben. Deshalb fällt ein unbekannter voller Tag auf seinen
+ * Basis-Subtag zurück (`ar-EG` → `'ar'`, `pt-BR` → `'pt'`, `zh-TW` → `'zh'`);
+ * mit dem früheren ar-Einzel-Sonderfall wären Portugiesisch & Co. still
+ * auf Deutsch gefallen.
  */
 export function normalizeLanguageCode(value: unknown): UiLanguage {
   if (typeof value === 'string') {
     if (isUiLanguage(value)) return value;
-    if (/^ar(?:-|$)/i.test(value)) return 'ar';
+    // Bewusst OHNE Groß-/Kleinsonderung — derselbe Vertrag wie oben:expo-localization
+    // liefert Kleinschreibung, 'FR' bleibt ein Fremdformat.
+    const basis = value.split('-')[0];
+    if (basis && isUiLanguage(basis)) return basis;
   }
   return DEFAULT_UI_LANGUAGE;
 }

@@ -10,7 +10,7 @@ import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
-import { TranslationKey, MONTH_NAMES, useLocale } from '@/lib/i18n';
+import { TranslationKey, monthNamesFor, useLocale } from '@/lib/i18n';
 import { CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
 /**
@@ -106,7 +106,7 @@ export default function ProgressScreen() {
         <Tile label={t('tile.mastered')} value={String(stats.cardStates.mastered)} />
       </View>
 
-      <ReviewChart stats={stats} months={MONTH_NAMES[uiLanguage]} />
+      <ReviewChart stats={stats} months={monthNamesFor(uiLanguage)} />
       <CardStates stats={stats} />
 
     </ScreenScaffold>

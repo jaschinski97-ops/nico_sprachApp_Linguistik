@@ -29,6 +29,7 @@
  */
 
 import { Tone } from '@/constants/tones';
+import { UI_LANGUAGES, type UiLanguage } from '@/lib/i18n/types';
 
 /**
  * Die Drehscheibe. Steht auf einer Seite jedes Sprachpaars.
@@ -118,17 +119,31 @@ export type PairId =
   | PairsFrom<'th'>;
 
 /**
- * Die Brücke `'ar'` — PILOT der skalierbaren Oberflächensprachen
- * (Nutzerentscheidung 10.09.): Künftig kann die App-Sprache (= Brücke) auch
- * außerhalb des Ziel-Kanons liegen. `'ar'` ist bewusst KEIN `Lang` — es gibt
- * keinen arabischen Ziel-Grundstoff, nur den generierten Brücken-Pool
- * (`vocabulary-ar.ts`) —, aber wohl Richtungen ar_to_X.
+ * Brücken außerhalb des Ziel-Kanons — jede App-/Oberflächensprache, die
+ * kein `Lang` ist.
+ *
+ * SEIT DEM 20-SPRACHEN-AUSBAU (13.09.2026) DER ALLGEMEINE FALL STATT DES
+ * ar-SONDERFALLS (Pilot 10.09.): Die App gibt es in 20 Sprachen
+ * (`UI_LANGUAGES` in src/lib/i18n/types.ts), lernbar bleiben die vier
+ * Hauptsprachen. Jede OBERFLÄCHE außerhalb dieser Vier — `'ar'` und die 15
+ * neuen Heimatsprachen — bekommt ihre generierten Ankerwörter
+ * (`src/data/bridge-pools.ts`) und dieselben vier Lernziele: Karten mit
+ * Brückenwort vorn, Zielform hinten, gekoppelt über `concept`.
  */
-export const AR_BRIDGE = 'ar' as const;
-export type ArBridge = typeof AR_BRIDGE;
+export type ForeignBridge = Exclude<UiLanguage, Lang>;
 
-/** Die Richtungen der arabischen Brücke — gelernt wird jeweils X. */
-export type ArPairDirection = `ar_to_${Exclude<Lang, 'ar'>}`;
+/** Die Fremd-Brücken zur Laufzeit — dieselbe Wahrheit wie der Typ. */
+export const FOREIGN_BRIDGES: readonly ForeignBridge[] = UI_LANGUAGES.filter(
+  (ui): ui is ForeignBridge => !(SUPPORTED_TARGETS as readonly string[]).includes(ui)
+);
+
+/** Ist das eine Brücke außerhalb des Ziel-Kanons? */
+export function isForeignBridge(value: string): value is ForeignBridge {
+  return (FOREIGN_BRIDGES as readonly string[]).includes(value);
+}
+
+/** Die Richtungen einer Fremd-Brücke — gelernt wird jeweils X. */
+export type ForeignPairDirection = `${ForeignBridge}_to_${Lang}`;
 
 /** Die ID eines Paars — im selben Format wie die alten Richtungs-Strings. */
 export function pairId(pair: Pair): PairId {
@@ -228,13 +243,14 @@ export function producesTargetLanguage(direction: PairDirection): boolean {
 /**
  * Lernrichtung über **allen** zwölf Paaren des Kanons — der de-geankerte
  * Bestand (`Direction`), die sechs Kreuzrichtungen (th↔en, th↔es, en↔es) und
- * seit dem ar-Piloten die vier ar-Brücken-Richtungen (`ar_to_*`).
+ * seit dem 20-Sprachen-Ausbau die Richtungen ALLER Fremd-Brücken
+ * (`ar_to_*`, `zh_to_*`, … — `ForeignPairDirection`).
  *
  * WARUM EIN ZWEITER NAME NEBEN `PairId`: Dieselbe Zeichenketten-Union plus
- * ar — `PairId` benennt die Paare des Sprachmodells, `PairDirection` die
- * Lernrichtung einer Sitzung darüber. Zwei Namen für denselben Typ halten die
- * Aufrufstellen lesbar („welche Richtung wird gelernt“ statt „welches Paar
- * ist gemeint“) und kosten nichts.
+ * Fremd-Brücken — `PairId` benennt die Paare des Sprachmodells,
+ * `PairDirection` die Lernrichtung einer Sitzung darüber. Zwei Namen für
+ * denselben Typ halten die Aufrufstellen lesbar („welche Richtung wird
+ * gelernt“ statt „welches Paar ist gemeint“) und kosten nichts.
  *
  * WARUM `Direction` NICHT ANGEFASST WIRD: Gespeicherte Profile, Backups und
  * Kartenschlüssel tragen de-geankerte Richtungen; `Direction` bleibt deren
@@ -242,24 +258,22 @@ export function producesTargetLanguage(direction: PairDirection): boolean {
  * Lern-Reiter) arbeiten mit `PairDirection` — jeder `Direction`-Wert ist
  * zugleich ein gültiger `PairDirection`, Bestandsaufrufer ändern sich nicht.
  */
-export type PairDirection = PairId | ArPairDirection;
+export type PairDirection = PairId | ForeignPairDirection;
 
 /**
- * Die ar-Richtungen zur Laufzeit — dieselbe Wahrheit wie der Typ
- * `ArPairDirection`, als Liste für die schmale Prüfung darunter.
+ * Die Fremd-Brücken-Richtungen zur Laufzeit — dieselbe Wahrheit wie der Typ
+ * `ForeignPairDirection`, als Liste für die schmale Prüfung darunter.
  */
-const AR_PAIR_DIRECTIONS: readonly ArPairDirection[] = [
-  'ar_to_de',
-  'ar_to_en',
-  'ar_to_es',
-  'ar_to_th',
-];
+const FOREIGN_PAIR_DIRECTIONS: readonly ForeignPairDirection[] = FOREIGN_BRIDGES.flatMap(
+  (bridge) => SUPPORTED_TARGETS.map((target) => `${bridge}_to_${target}` as ForeignPairDirection)
+);
 
-/** Schmale Laufzeitprüfung, passend zum Typ `PairDirection` (ar inklusive). */
+/** Schmale Laufzeitprüfung, passend zum Typ `PairDirection`. */
 export function isPairDirection(value: unknown): value is PairDirection {
   if (isPairId(value)) return true;
   return (
-    typeof value === 'string' && (AR_PAIR_DIRECTIONS as readonly string[]).includes(value)
+    typeof value === 'string' &&
+    (FOREIGN_PAIR_DIRECTIONS as readonly string[]).includes(value)
   );
 }
 
@@ -272,16 +286,15 @@ export function isPairDirection(value: unknown): value is PairDirection {
  * wird Spanisch — der Englisch-Wortlaut auf der Vorderseite ist nur die
  * Brücke (Stufe 1: Queue über `concept` gekoppelt, siehe `review-session`).
  *
- * AR-BRÜCKE: `ar_to_X` fragt X ab — dieselbe Ziel-Regel wie bei den
+ * Fremd-BRÜCKE: `zh_to_X` fragt X ab — dieselbe Ziel-Regel wie bei den
  * Kreuzrichtungen, denn die Brücke trägt selbst keinen Stoff. Bei
- * `ar_to_de` ist das `'de'`: Einen deutschen Vokabel-Pool gibt es nicht
- * (Deutsch lebt als `german`-Feld auf den bestehenden Pools), also bleibt
- * diese Richtung bewusst ohne Kartenstoff, bis ihr eigener Grundstoff
- * gebaut ist (Stufe 2).
+ * `zh_to_de` ist das `'de'`: Einen deutschen Vokabel-Pool gibt es nicht
+ * (Deutsch lebt als `german`-Feld auf den bestehenden Pools), der Stoff
+ * kommt aus dem abgeleiteten de-Pool (siehe `review-session`).
  */
 export function pairLanguageOf(direction: PairDirection): LanguageCode {
   const [from, , to] = direction.split('_');
-  if (from === AR_BRIDGE) return to as LanguageCode;
+  if (isForeignBridge(from)) return to as LanguageCode;
   if (from === HUB_LANGUAGE) return to as LanguageCode;
   if (to === HUB_LANGUAGE) return from as LanguageCode;
   // Kreuzrichtung: die Zielseite trägt den Stoff.
@@ -295,12 +308,12 @@ export function pairLanguageOf(direction: PairDirection): LanguageCode {
  * `PairDirection`-Wert weiter an `Direction`-Verträge geht (Profil,
  * Backup, `directionLabel`), beweist dieser Test die Zuteilung statt zu
  * casten. Kreuzrichtungen fallen hier bewusst durch — sie sind Neuland
- * (Stufe 1), nicht Bestand. Genauso `ar_to_de`: Es endet zwar auf `_to_de`,
- * gehört aber zur ar-Brücke und darf nie als `Direction` in Profil- oder
+ * (Stufe 1), nicht Bestand. Genauso `zh_to_de`: Es endet zwar auf `_to_de`,
+ * gehört aber zur Fremd-Brücke und darf nie als `Direction` in Profil- oder
  * Backup-Verträge rutschen.
  */
 export function isDeAnchored(value: PairDirection): value is Direction {
-  if (value.startsWith(`${AR_BRIDGE}_to_`)) return false;
+  if (isForeignBridge(value.split('_')[0] ?? '')) return false;
   return value.startsWith(`${HUB_LANGUAGE}_to_`) || value.endsWith(`_to_${HUB_LANGUAGE}`);
 }
 

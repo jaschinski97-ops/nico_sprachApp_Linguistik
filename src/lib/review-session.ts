@@ -1,14 +1,15 @@
+import { bridgePoolFor } from '@/data/bridge-pools';
 import { VocabEntry } from '@/data/vocabulary';
 import { BridgeEntry } from '@/data/vocab-types';
-import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 import { VOCABULARY_DE } from '@/data/vocabulary-de';
 
 import { createCardState, dueCards, retrievability } from './fsrs/fsrs';
 import { Direction, FSRSCardState } from './fsrs/types';
 import { directionLabel } from './languages/registry';
 import {
-  AR_BRIDGE,
   directionsFor,
+  ForeignBridge,
+  isForeignBridge,
   Lang,
   LanguageCode,
   PairDirection,
@@ -33,16 +34,17 @@ import { DataStore, getStore } from './storage';
  * verweisen. Ohne Concept-Partner gibt es keinen Kartenstoff: Ehrlichkeit
  * geht vor Vollzahl.
  *
- * SEIT DEM AR-PILOTEN (2026-09-10) AUCH DIE BRÜCKE 'ar': Die Richtungen
- * ar_to_en/es/th koppeln gegen den GENERIERTEN Pool `VOCABULARY_AR`
- * (Ankerwörter der Oberflächensprache, siehe generate-bridge-vocab.cjs) —
- * dieselbe concept-Kopplung, nur kommt die Brückenseite nicht aus dem
- * Vokabel-Bestand, sondern aus dem Brücken-Pool. `ar_to_de` koppelt seit
- * „Füge noch Deutsch zum Generieren hinzu" (Nutzerentscheidung 10.09.) den
- * ar-Pool gegen den ABGELEITETEN de-Pool (`VOCABULARY_DE`) — die deutsche
- * Rückseite ist der `german`-Text des Ankers derselben Begriffs-ID. Die
- * übrigen X_to_de-Richtungen (th/en/es_to_de) laufen unverändert über den
- * Bestandsweg: deren Karten fragen das `german`-Feld der Pool-Einträge ab.
+ * SEIT DEM AR-PILOTEN (2026-09-10), SEIT DEM 20-SPRACHEN-AUSBAU (13.09.2026)
+ * FÜR ALLE FREMD-BRÜCKEN: Die Richtungen `ar_to_X`, `zh_to_X` & Co. koppeln
+ * gegen den generierten Brücken-Pool (Ankerwörter der Oberflächensprache,
+ * siehe generate-bridge-vocab.cjs und `src/data/bridge-pools.ts`) — dieselbe
+ * concept-Kopplung, nur kommt die Brückenseite nicht aus dem Vokabel-Bestand,
+ * sondern aus dem Brücken-Pool. `*_to_de` koppelt seit „Füge noch Deutsch zum
+ * Generieren hinzu" (Nutzerentscheidung 10.09.) gegen den ABGELEITETEN
+ * de-Pool (`VOCABULARY_DE`) — die deutsche Rückseite ist der `german`-Text
+ * des Ankers derselben Begriffs-ID. Die übrigen X_to_de-Richtungen
+ * (th/en/es_to_de) laufen unverändert über den Bestandsweg: deren Karten
+ * fragen das `german`-Feld der Pool-Einträge ab.
  */
 
 /**
@@ -74,28 +76,31 @@ export type ReviewItem = {
 
 /**
  * Die Brückenseite einer Quelle: bei th/en/es der Pool aus dem Vokabel-
- * Bestand, bei 'ar' der generierte Brücken-Pool (kein `VocabEntry` — er
- * trägt keinen Ziel-Sprachstoff).
+ * Bestand, bei einer Fremd-Brücke (ar, seit dem 20-Sprachen-Ausbau auch
+ * zh & Co.) der generierte Brücken-Pool (kein `VocabEntry` — er trägt
+ * keinen Ziel-Sprachstoff).
  */
 function brueckenPoolFuer(
   alle: VocabEntry[],
-  quelle: Lang | typeof AR_BRIDGE
+  quelle: Lang | ForeignBridge
 ): (VocabEntry | BridgeEntry)[] {
-  if (quelle === AR_BRIDGE) return VOCABULARY_AR;
+  const fremd = bridgePoolFor(quelle);
+  if (fremd) return fremd;
   return alle.filter((entry) => entry.language === quelle);
 }
 
 /**
  * Die Quelle und das Ziel einer Richtung — `parsePairId` für den Bestand
- * über dem Ziel-Kanon, die ar-Brücke wörtlich aus dem Präfix (sie ist kein
- * `Lang` und wird deshalb vom Bestands-Parser bewusst nicht erkannt).
+ * über dem Ziel-Kanon, eine Fremd-Brücke wörtlich aus dem Präfix (sie ist
+ * kein `Lang` und wird deshalb vom Bestands-Parser bewusst nicht erkannt).
  */
-function paarVon(direction: PairDirection): { source: Lang | typeof AR_BRIDGE; target: Lang } | null {
-  if (direction.startsWith(`${AR_BRIDGE}_to_`)) {
-    const ziel = direction.slice(`${AR_BRIDGE}_to_`.length);
+function paarVon(direction: PairDirection): { source: Lang | ForeignBridge; target: Lang } | null {
+  const praefix = direction.split('_to_')[0] ?? '';
+  if (isForeignBridge(praefix)) {
+    const ziel = direction.slice(praefix.length + '_to_'.length);
     const istKanon = (value: string): value is Lang =>
       (SUPPORTED_TARGETS as readonly string[]).includes(value);
-    return istKanon(ziel) ? { source: AR_BRIDGE, target: ziel } : null;
+    return istKanon(ziel) ? { source: praefix, target: ziel } : null;
   }
   return parsePairId(direction);
 }
@@ -158,31 +163,33 @@ function brueckeVon(
 }
 
 /**
- * Die arabische Brücke Richtung Deutsch: Vorderseite das ar-Ankerwort
- * (`VOCABULARY_AR`), Rückseite der deutsche Text desselben Begriffs
- * (`VOCABULARY_DE`, abgeleitet aus den `german`-Feldern des Bestands).
+ * Eine Fremd-Brücke Richtung Deutsch: Vorderseite das Ankerwort der
+ * Brücke (generierter Pool), Rückseite der deutsche Text desselben
+ * Begriffs (`VOCABULARY_DE`, abgeleitet aus den `german`-Feldern des
+ * Bestands).
  *
- * NUTZERENTSCHEIDUNG 10.09.: „Füge noch Deutsch zum Generieren hinzu" —
- * vorher blieb diese Richtung bewusst ohne Stoff, weil es keinen deutschen
- * Pool gab. Der abgeleitete Pool füllt die Kopplung ohne neuen
- * Grundstoff-Eintrag.
+ * NUTZERENTSCHEIDUNG 10.09. („Füge noch Deutsch zum Generieren hinzu"):
+ * Der abgeleitete Pool füllt die Kopplung ohne neuen Grundstoff-Eintrag —
+ * im ar-Piloten erprobt, seit dem 20-Sprachen-Ausbau für alle Brücken.
  */
-function arNachDeStoff(): VocabEntry[] {
-  const arConcepts = new Set(VOCABULARY_AR.map((entry) => entry.concept));
-  // Nur Begriffe mit arabischer Vorderseite werden Karten — sonst gäbe es
-  // Karten ohne Frageseite. (de-Pool-Einträge tragen concept stets, aber der
-  // Typ VocabEntry hält das Feld freiwillig optional.)
+function fremdNachDeStoff(bruecke: ForeignBridge): VocabEntry[] {
+  const brueckenConcepts = new Set(
+    (bridgePoolFor(bruecke) ?? []).map((entry) => entry.concept)
+  );
+  // Nur Begriffe mit Brücken-Vorderseite werden Karten — sonst gäbe es
+  // Karten ohne Frageseite. (de-Pool-Einträge tragen concept stets, aber
+  // der Typ VocabEntry hält das Feld freiwillig optional.)
   return VOCABULARY_DE.filter(
-    (entry) => entry.concept !== undefined && arConcepts.has(entry.concept)
+    (entry) => entry.concept !== undefined && brueckenConcepts.has(entry.concept)
   );
 }
 
 /**
- * Die arabische Brückenseite für einen de-Pool-Eintrag — gesucht über die
+ * Die Brückenseite für einen de-Pool-Eintrag — gesucht über die
  * `concept`-ID (die hier zugleich die Pool-ID ist).
  */
-function arBrueckeVon(concept: string): BridgeEntry | null {
-  return VOCABULARY_AR.find((entry) => entry.concept === concept) ?? null;
+function fremdBrueckeVon(bruecke: ForeignBridge, concept: string): BridgeEntry | null {
+  return (bridgePoolFor(bruecke) ?? []).find((entry) => entry.concept === concept) ?? null;
 }
 
 /**
@@ -218,13 +225,13 @@ export async function ensureCardStates(
   const sprache = pairLanguageOf(direction);
   const paar = paarVon(direction);
   const istKreuz = paar !== null && paar.source !== 'de' && paar.target !== 'de';
-  // ar_to_de läuft über den abgeleiteten de-Pool statt über den Speicher —
-  // `VOCABULARY` trägt kein Deutsch, der Stoff kommt aus den german-Feldern.
-  const istArNachDe = direction === 'ar_to_de';
-
+  // Eine Fremd-Brücke Richtung Deutsch läuft über den abgeleiteten de-Pool
+  // statt über den Speicher — `VOCABULARY` trägt kein Deutsch, der Stoff
+  // kommt aus den german-Feldern. (Inline statt Konstante: nur so narrowt
+  // `isForeignBridge` die Quelle bis in den Zweig.)
   let entries: VocabEntry[];
-  if (istArNachDe) {
-    entries = arNachDeStoff();
+  if (paar && isForeignBridge(paar.source) && paar.target === 'de') {
+    entries = fremdNachDeStoff(paar.source);
   } else if (istKreuz && paar) {
     entries = kreuzStoff(alle, brueckenPoolFuer(alle, paar.source), sprache).entries;
   } else {
@@ -274,7 +281,6 @@ export async function buildReviewQueue(
   // bleiben exakt auf ihrem alten Pfad.
   const paar = paarVon(direction);
   const istKreuz = paar !== null && paar.source !== 'de' && paar.target !== 'de';
-  const istArNachDe = direction === 'ar_to_de';
   let brueckeNachId = new Map<string, VocabEntry | BridgeEntry>();
   let brueckeNachConcept = new Map<string, VocabEntry | BridgeEntry>();
   if (istKreuz && paar) {
@@ -291,11 +297,12 @@ export async function buildReviewQueue(
     .map((card) => {
       const entry = byId.get(card.vocabId);
       if (!entry) return null;
-      // ar_to_de: die Brückenseite kommt direkt aus dem ar-Pool (gleiche
-      // Begriffs-ID) — derselbe Grundsatz wie bei den Kreuzrichtungen.
+      // Eine Fremd-Brücke Richtung Deutsch: die Brückenseite kommt direkt
+      // aus dem Brücken-Pool (gleiche Begriffs-ID) — derselbe Grundsatz wie
+      // bei den Kreuzrichtungen.
       let bridgeEntry: VocabEntry | BridgeEntry | null = null;
-      if (istArNachDe) {
-        bridgeEntry = arBrueckeVon(entry.concept ?? entry.id);
+      if (paar && isForeignBridge(paar.source) && paar.target === 'de') {
+        bridgeEntry = fremdBrueckeVon(paar.source, entry.concept ?? entry.id);
       } else if (istKreuz) {
         bridgeEntry = brueckeVon(entry, brueckeNachId, brueckeNachConcept);
       }

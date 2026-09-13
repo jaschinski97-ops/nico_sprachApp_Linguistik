@@ -6,7 +6,7 @@ import { ThemedView } from '@/components/themed-view';
 import {
   SYSTEM_LANGUAGE_SETTING,
   UI_LANGUAGES,
-  LANGUAGE_DISPLAY_NAMES,
+  languageDisplayName,
   localeTagFor,
   useLocale,
   type LanguageSetting,
@@ -127,7 +127,7 @@ export function AppLanguageSection() {
     { value: SYSTEM_LANGUAGE_SETTING, label: t('appLanguage.system') },
     ...UI_LANGUAGES.map((language) => ({
       value: language as LanguageSetting,
-      label: LANGUAGE_DISPLAY_NAMES[language][language],
+      label: languageDisplayName(language, language),
     })),
   ];
 

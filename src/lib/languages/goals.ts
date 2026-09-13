@@ -1,11 +1,13 @@
+import { bridgePoolFor } from '@/data/bridge-pools';
 import { vocabularyFor } from '@/data/vocabulary';
-import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 import { DE_CONCEPTS } from '@/data/vocabulary-de';
 
 import { languageOf } from './registry';
 import {
-  AR_BRIDGE,
+  ForeignBridge,
+  FOREIGN_BRIDGES,
   isDeAnchored,
+  isForeignBridge,
   isLanguageCode,
   Lang,
   LanguageCode,
@@ -88,19 +90,25 @@ export type Lernziel = {
  * deutsche Oberfläche wäre Stufe 2); die Brücken en/es bekommen ihr
  * Deutsch-Ziel dafür jetzt.
  *
- * AR-PILOT (10.09.): Die Brücke `'ar'` zeigt die vier Ziele Deutsch,
- * Englisch, Spanisch, Thai — in dieser Reihenfolge (de zuerst, dann en/es/th).
- * Deutsch hängt als Ziel an `ar_to_de` und koppelt seit derselbigen
- * Nutzerentscheidung gegen den abgeleiteten de-Pool (`VOCABULARY_DE`) —
- * vorher hing daran ehrlich leerer Stoff (Stufe 2). Englisch/Spanisch/Thai
- * kommen über den concept-gekoppelten Bestand sofort mit echten Karten.
+ * AR-PILOT (10.09.), SEIT DEM 20-SPRACHEN-AUSBAU (13.09.2026) ALLGEMEIN:
+ * Die Brücke `'ar'` zeigt die vier Ziele Deutsch, Englisch, Spanisch, Thai —
+ * in dieser Reihenfolge (de zuerst, dann en/es/th). Seit dem Ausbau gilt
+ * dasselbe für alle 15 neuen Oberflächensprachen (`FOREIGN_BRIDGES`): Wer
+ * die App auf Chinesisch/Hindi/Türkisch & Co. liest, sieht dieselben vier
+ * LERNsprachen, deren Karten über die generierten Brücken-Pools
+ * (`src/data/bridge-pools.ts`) eine Vorderseite in der eigenen Sprache
+ * bekommen. Deutsch hängt als Ziel an `X_to_de` und koppelt gegen den
+ * abgeleiteten de-Pool (`VOCABULARY_DE`); Englisch/Spanisch/Thai kommen
+ * über den concept-gekoppelten Bestand sofort mit echten Karten.
  */
-export function zieleFuerBruecke(bridge: Lang | typeof AR_BRIDGE): Lernziel[] {
-  // Die ar-Brücke hat eigene Richtungen (`ar_to_*`) — sie liegt außerhalb des
-  // Ziel-Kanons und kann daher nicht durch die LANGUAGE_CODES-Schleife laufen.
-  if (bridge === AR_BRIDGE) {
+export function zieleFuerBruecke(bridge: Lang | ForeignBridge): Lernziel[] {
+  // Jede Fremd-Brücke (`ar_to_*`, seit dem 20-Sprachen-Ausbau auch
+  // `zh_to_*` & Co.) liegt außerhalb des Ziel-Kanons und kann nicht durch
+  // die LANGUAGE_CODES-Schleife laufen — dieselben vier Ziele wie im
+  // ar-Piloten.
+  if (isForeignBridge(bridge)) {
     const ziel = (code: Lang): Lernziel => {
-      const direction = `ar_to_${code}` as PairDirection;
+      const direction = `${bridge}_to_${code}` as PairDirection;
       return { direction, language: pairLanguageOf(direction) };
     };
     return [ziel('de'), ziel('en'), ziel('es'), ziel('th')];
@@ -145,7 +153,10 @@ const ALLE_ZIELE: readonly Lernziel[] = [
   ...zieleFuerBruecke('th'),
   ...zieleFuerBruecke('en'),
   ...zieleFuerBruecke('es'),
-  ...zieleFuerBruecke(AR_BRIDGE),
+  // Seit dem 20-Sprachen-Ausbau: alle Fremd-Brücken mit ihren vier Zielen —
+  // der Lern-Reiter kann sie betiteln, wenn eine Sitzung über die Adresse
+  // oder die Queue erreicht wird.
+  ...FOREIGN_BRIDGES.flatMap((bridge) => zieleFuerBruecke(bridge)),
 ];
 
 /**
@@ -217,12 +228,15 @@ export function wortschatzFuerZiel(ziel: Lernziel): number {
   const zielCode = ziel.direction.slice(quelle.length + '_to_'.length);
   // ar_to_de: Ziel-Pool ist der ABGELEITETE de-Pool (`VOCABULARY_DE`) —
   // gezählt werden die ar-Anker, zu denen es einen deutschen Partner gibt.
-  if (quelle === AR_BRIDGE && zielCode === 'de') {
-    return VOCABULARY_AR.filter((entry) => DE_CONCEPTS.has(entry.concept)).length;
+  if (isForeignBridge(quelle) && zielCode === 'de') {
+    return (bridgePoolFor(quelle) ?? []).filter((entry) => DE_CONCEPTS.has(entry.concept)).length;
   }
   if (!isLanguageCode(zielCode)) return 0;
-  const brueckenPool =
-    quelle === AR_BRIDGE ? VOCABULARY_AR : isLanguageCode(quelle) ? vocabularyFor(quelle) : null;
+  const brueckenPool = isForeignBridge(quelle)
+    ? bridgePoolFor(quelle)
+    : isLanguageCode(quelle)
+      ? vocabularyFor(quelle)
+      : null;
   if (!brueckenPool) return 0;
   const brueckenIds = new Set(brueckenPool.map((entry) => entry.id));
   const brueckenConcepts = new Set(

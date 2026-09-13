@@ -12,10 +12,25 @@ import {
 import { Platform } from 'react-native';
 
 import ar from './dictionaries/ar';
+import bn from './dictionaries/bn';
 import de from './dictionaries/de';
 import en from './dictionaries/en';
 import es from './dictionaries/es';
+import fr from './dictionaries/fr';
+import hi from './dictionaries/hi';
+import id from './dictionaries/id';
+import ja from './dictionaries/ja';
+import ko from './dictionaries/ko';
+import mr from './dictionaries/mr';
+import pt from './dictionaries/pt';
+import ru from './dictionaries/ru';
+import ta from './dictionaries/ta';
+import te from './dictionaries/te';
 import th from './dictionaries/th';
+import tr from './dictionaries/tr';
+import ur from './dictionaries/ur';
+import vi from './dictionaries/vi';
+import zh from './dictionaries/zh';
 import type { TranslationKey } from './keys';
 import { detectSystemLocale } from './detect';
 import { loadLanguageSetting, saveLanguageSetting } from './prefs';
@@ -42,8 +57,10 @@ export { loadLanguageSetting, saveLanguageSetting } from './prefs';
  * lässt sie sich fest einschalten; solange nicht, gilt `'system'`.
  *
  * AUFBAU:
- *   `dictionaries`   — de (Referenz) + en/es/th/ar (Übersetzungen; ar ist
- *                       GENERIERT via scripts/content/generate-ui-language.cjs)
+ *   `dictionaries`   — de (Referenz) + 19 Übersetzungen; en/es sind geprüft,
+ *                       die übrigen GENERIERT via
+ *                       scripts/content/generate-ui-language.cjs (ar war der
+ *                       Pilot, seit 13.09.2026 sind es 20 App-Sprachen)
  *   `translate()`    — Nachschlagen mit de-Fallback, `{{name}}`-Interpolation
  *   `I18nProvider`   — lädt die Einstellung und hält sie im Context
  *   `useLocale()`    — Zugang für Screens/Komponenten; ohne Provider
@@ -52,10 +69,25 @@ export { loadLanguageSetting, saveLanguageSetting } from './prefs';
 
 export const dictionaries: Record<UiLanguage, Partial<Record<TranslationKey, string>>> = {
   ar,
+  bn,
   de,
   en,
   es,
+  fr,
+  hi,
+  id,
+  ja,
+  ko,
+  mr,
+  pt,
+  ru,
+  ta,
+  te,
   th,
+  tr,
+  ur,
+  vi,
+  zh,
 };
 
 /**
@@ -95,25 +127,89 @@ export function translate(language: UiLanguage, key: TranslationKey, params?: TP
 /**
  * Jedes Lernziel erscheint in der Sprache der Oberfläche: Ein Deutscher sieht
  * „Thai“, ein Thai sieht „ภาษาเยอรมัน“ (deutsch). Der ERSTE Index ist die
- * Lernsprache, der ZWEITE die UI-Sprache — `…names['de']['th']` ist Deutsch,
- * wie eine thailändische Oberfläche es nennt. Auf der Diagonale stehen die
- * Endonyme („español“, „français“, „ไทย“) — die sichere Selbstbezeichnung.
+ * Lernsprache, der ZWEITE die UI-Sprache.
+ *
+ * SEIT DEM 20-SPRACHEN-AUSBAU (13.09.2026) NUR NOCH DIE GEPRÜFTEN ZELLEN: Die
+ * Zeilen der vier Lernsprachen (de/en/es/th) und der ar-Pilotzeile stehen
+ * vollständig da, wo sie gebraucht werden; alle übrigen Kombinationen fallen
+ * per `languageDisplayName` auf das ENDONYM zurück — die sichere
+ * Selbstbezeichnung, die in jeder Oberfläche lesbar bleibt. 400 handgesetzte
+ * Zellen wären eine Fehlerquelle ohne Gegenwert; wer Zellen nachtragen will,
+ * erweitert die Tabelle hier zeilenweise.
  */
-export const LANGUAGE_DISPLAY_NAMES: Record<UiLanguage, Record<UiLanguage, string>> = {
+export const LANGUAGE_DISPLAY_NAMES: Partial<Record<UiLanguage, Partial<Record<UiLanguage, string>>>> = {
   ar: { ar: 'العربية', de: 'Arabisch', en: 'Arabic', es: 'árabe', th: 'ภาษาอาหรับ' },
-  de: { ar: 'الألمانية', de: 'Deutsch', en: 'German', es: 'alemán', th: 'ภาษาเยอรมัน' },
-  en: { ar: 'الإنجليزية', de: 'Englisch', en: 'English', es: 'inglés', th: 'ภาษาอังกฤษ' },
-  es: { ar: 'الإسبانية', de: 'Spanisch', en: 'Spanish', es: 'español', th: 'ภาษาสเปน' },
-  th: { ar: 'التايلاندية', de: 'Thai', en: 'Thai', es: 'tailandés', th: 'ภาษาไทย' },
+  de: {
+    ar: 'الألمانية', bn: 'জার্মান', de: 'Deutsch', en: 'German', es: 'alemán',
+    fr: 'allemand', hi: 'जर्मन', id: 'Jerman', ja: 'ドイツ語', ko: '독일어',
+    mr: 'जर्मन', pt: 'alemão', ru: 'немецкий', ta: 'ஜெர்மன்', te: 'జర్మన్',
+    th: 'ภาษาเยอรมัน', tr: 'Almanca', ur: 'جرمن', vi: 'tiếng Đức', zh: '德语',
+  },
+  en: {
+    ar: 'الإنجليزية', bn: 'ইংরেজি', de: 'Englisch', en: 'English', es: 'inglés',
+    fr: 'anglais', hi: 'अंग्रेज़ी', id: 'Inggris', ja: '英語', ko: '영어',
+    mr: 'इंग्रजी', pt: 'inglês', ru: 'английский', ta: 'ஆங்கிலம்', te: 'ఇంగ్లీష్',
+    th: 'ภาษาอังกฤษ', tr: 'İngilizce', ur: 'انگریزی', vi: 'tiếng Anh', zh: '英语',
+  },
+  es: {
+    ar: 'الإسبانية', bn: 'স্প্যানিশ', de: 'Spanisch', en: 'Spanish', es: 'español',
+    fr: 'espagnol', hi: 'स्पेनिश', id: 'Spanyol', ja: 'スペイン語', ko: '스페인어',
+    mr: 'स्पॅनिश', pt: 'espanhol', ru: 'испанский', ta: 'ஸ்பானிஷ்', te: 'స్పానిష్',
+    th: 'ภาษาสเปน', tr: 'İspanyolca', ur: 'ہسپانوی', vi: 'tiếng Tây Ban Nha', zh: '西班牙语',
+  },
+  fr: {
+    ar: 'الفرنسية', bn: 'ফরাসি', de: 'Französisch', en: 'French', es: 'francés',
+    fr: 'français', hi: 'फ़्रेंच', id: 'Prancis', ja: 'フランス語', ko: '프랑스어',
+    mr: 'फ्रेंच', pt: 'francês', ru: 'французский', ta: 'பிரெஞ்சு', te: 'ఫ్రెంచ్',
+    th: 'ภาษาฝรั่งเศส', tr: 'Fransızca', ur: 'فرانسیسی', vi: 'tiếng Pháp', zh: '法语',
+  },
+  th: {
+    ar: 'التايلاندية', bn: 'থাই', de: 'Thai', en: 'Thai', es: 'tailandés',
+    fr: 'thaï', hi: 'थाई', id: 'Thai', ja: 'タイ語', ko: '태국어',
+    mr: 'थाई', pt: 'tailandês', ru: 'тайский', ta: 'தாய்', te: 'థాయ్',
+    th: 'ภาษาไทย', tr: 'Tayca', ur: 'تھائی', vi: 'tiếng Thái', zh: '泰语',
+  },
 };
 
-/** Anzeigename einer Lernsprache in der aktuellen UI-Sprache. */
+/** Endonyme der zwanzig App-Sprachen — die Fallback- und Auswahl-Form. */
+export const LANGUAGE_ENDONYME: Record<UiLanguage, string> = {
+  ar: 'العربية',
+  bn: 'বাংলা',
+  de: 'Deutsch',
+  en: 'English',
+  es: 'español',
+  fr: 'français',
+  hi: 'हिन्दी',
+  id: 'Bahasa Indonesia',
+  ja: '日本語',
+  ko: '한국어',
+  mr: 'मराठी',
+  pt: 'português',
+  ru: 'русский',
+  ta: 'தமிழ்',
+  te: 'తెలుగు',
+  th: 'ภาษาไทย',
+  tr: 'Türkçe',
+  ur: 'اردو',
+  vi: 'Tiếng Việt',
+  zh: '中文',
+};
+
+/**
+ * Anzeigename einer Lernsprache in der aktuellen UI-Sprache — ohne Eintrag in
+ * der geprüften Matrix das Endonym (die Selbstbezeichnung, die überall geht).
+ */
 export function languageDisplayName(target: UiLanguage, ui: UiLanguage): string {
-  return LANGUAGE_DISPLAY_NAMES[target][ui];
+  return LANGUAGE_DISPLAY_NAMES[target]?.[ui] ?? LANGUAGE_ENDONYME[target];
 }
 
-/** Monatsnamen für die Screenreader-Ansagen im Fortschritts-Chart. */
-export const MONTH_NAMES: Record<UiLanguage, readonly string[]> = {
+/**
+ * Monatsnamen für die Screenreader-Ansagen im Fortschritts-Chart — geprüfte
+ * Tabellen, wo sie stehen (ar: ägyptische Namen, nicht die klassischen), und
+ * für die übrigen App-Sprachen der CLDR-Weg über `Intl`. Liest bitte NUR über
+ * `monthNamesFor`, nicht direkt aus der Tabelle.
+ */
+export const MONTH_NAMES: Partial<Record<UiLanguage, readonly string[]>> = {
   ar: [
     // Ägyptische Monatsnamen: In Ägypten sind die syro-libanesischen Namen
     // (yanaayir … disimbir) üblich, nicht die klassisch-arabischen Ordnungsnamen.
@@ -138,20 +234,62 @@ export const MONTH_NAMES: Record<UiLanguage, readonly string[]> = {
   ],
 };
 
+/** Monatsnamen eines Jahres aus der Intl-Datenbank (CLDR) — der Fallback. */
+function intlMonate(locale: string): readonly string[] {
+  const format = new Intl.DateTimeFormat(locale, { month: 'long' });
+  // Der 15. liegt sicher inmitten des Monats — keine Zeitzonen-Verschobier.
+  return Array.from({ length: 12 }, (_, monat) => format.format(new Date(2024, monat, 15)));
+}
+
+/** Monatsnamen in der UI-Sprache — Tabelle zuerst, sonst Intl. */
+export function monthNamesFor(language: UiLanguage): readonly string[] {
+  return MONTH_NAMES[language] ?? intlMonate(localeTagFor(language));
+}
+
 /** Sprachtag für Datumsformatierung (etwa `toLocaleDateString`). */
 export function localeTagFor(language: UiLanguage): string {
   switch (language) {
     case 'ar':
       // Ägypten ist die Pilot-Region der arabischen Oberfläche.
       return 'ar-EG';
+    case 'bn':
+      return 'bn-IN';
     case 'de':
       return 'de-DE';
     case 'en':
       return 'en-GB';
     case 'es':
       return 'es-ES';
+    case 'fr':
+      return 'fr-FR';
+    case 'hi':
+      return 'hi-IN';
+    case 'id':
+      return 'id-ID';
+    case 'ja':
+      return 'ja-JP';
+    case 'ko':
+      return 'ko-KR';
+    case 'mr':
+      return 'mr-IN';
+    case 'pt':
+      return 'pt-BR';
+    case 'ru':
+      return 'ru-RU';
+    case 'ta':
+      return 'ta-IN';
+    case 'te':
+      return 'te-IN';
     case 'th':
       return 'th-TH';
+    case 'tr':
+      return 'tr-TR';
+    case 'ur':
+      return 'ur-PK';
+    case 'vi':
+      return 'vi-VN';
+    case 'zh':
+      return 'zh-CN';
   }
 }
 

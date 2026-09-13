@@ -5,12 +5,12 @@ import { MemoryDataStore } from '@/lib/storage';
 import {
   FALLBACK_ALLOWED_KEYS,
   I18nProvider,
-  LANGUAGE_DISPLAY_NAMES,
-  MONTH_NAMES,
   UI_LANGUAGES,
   detectSystemLocale,
   dictionaries,
   interpolate,
+  languageDisplayName,
+  monthNamesFor,
   normalizeLanguageCode,
   normalizeLanguageSetting,
   translate,
@@ -57,8 +57,10 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
     expect(detectFrom('th')).toBe('th');
     // Die ar-Brücke (Pilot der Heimatsprachen, 10.09.).
     expect(detectFrom('ar')).toBe('ar');
-    // Französisch ist seit der Kern-4-Entscheidung kein Kanon-Code mehr.
-    expect(detectFrom('fr')).toBe('de');
+    // Seit dem 20-Sprachen-Ausbau (13.09.2026) im Kanon:
+    expect(detectFrom('fr')).toBe('fr');
+    expect(detectFrom('zh')).toBe('zh');
+    expect(detectFrom('ko')).toBe('ko');
   });
 
   it('normiert Region-Codes auf die Sprache (th-TH bleibt th, ar-EG wird ar)', () => {
@@ -70,11 +72,13 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
     mockedGetLocales.mockReturnValue([{ languageCode: 'ar', languageTag: 'ar-EG' }]);
     expect(detectSystemLocale()).toBe('ar');
     expect(normalizeLanguageCode('ar-EG')).toBe('ar');
+    // Seit dem 20-Sprachen-Ausbau allgemein: pt-BR ist Portugiesisch.
+    expect(normalizeLanguageCode('pt-BR')).toBe('pt');
   });
 
   it('fällt für unbekannte Sprachen auf Deutsch zurück', () => {
-    expect(detectFrom('pt')).toBe('de');
-    expect(detectFrom('ja')).toBe('de');
+    expect(detectFrom('it')).toBe('de'); // Italienisch: kein Teil der 20 App-Sprachen
+    expect(detectFrom('pl')).toBe('de'); // Polnisch ebenso
     expect(detectFrom(undefined)).toBe('de');
   });
 
@@ -90,7 +94,8 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
 
   it('normiert rohe Codes auch ohne Erkennung', () => {
     expect(normalizeLanguageCode('FR')).toBe('de'); // bewusst strikt: Kleinschreibung ist der Vertrag von expo-localization
-    expect(normalizeLanguageCode('fr')).toBe('de'); // Französisch: nicht mehr im Kanon → Fallback
+    expect(normalizeLanguageCode('it')).toBe('de'); // Italienisch: nicht im Kanon → Fallback
+    expect(normalizeLanguageCode('fr')).toBe('fr'); // seit dem 20-Sprachen-Ausbau im Kanon
     expect(normalizeLanguageCode(42)).toBe('de');
   });
 });
@@ -102,7 +107,7 @@ describe('Spracheinstellung — nachsichtiges Lesen', () => {
   });
 
   it('verwirft alles andere zugunsten von "system"', () => {
-    expect(normalizeLanguageSetting('pt')).toBe('system');
+    expect(normalizeLanguageSetting('it')).toBe('system'); // Italienisch: nicht im Kanon der 20
     expect(normalizeLanguageSetting(null)).toBe('system');
     expect(normalizeLanguageSetting(undefined)).toBe('system');
   });
@@ -202,17 +207,25 @@ describe('Sprachnamen und Monate', () => {
   it('gibt zu jeder Lernsprache einen Namen in jeder UI-Sprache', () => {
     for (const target of UI_LANGUAGES) {
       for (const ui of UI_LANGUAGES) {
-        expect(LANGUAGE_DISPLAY_NAMES[target][ui].length).toBeGreaterThan(0);
+        // Ohne geprüfte Zelle fällt languageDisplayName aufs Endonym zurück —
+        // der Name ist nie leer und nie undefined.
+        expect(languageDisplayName(target, ui).length).toBeGreaterThan(0);
       }
     }
     // Produktprinzip: ein Thai sieht Deutsch in thailändischer Schrift.
-    expect(LANGUAGE_DISPLAY_NAMES.de.th).toBe('ภาษาเยอรมัน');
-    expect(LANGUAGE_DISPLAY_NAMES.th.de).toBe('Thai');
+    expect(languageDisplayName('de', 'th')).toBe('ภาษาเยอรมัน');
+    expect(languageDisplayName('th', 'de')).toBe('Thai');
   });
 
-  it('liefert zwölf Monatsnamen je Sprache', () => {
+  it('fällt bei ungeprüften Zellen auf das Endonym zurück (Selbstbezeichnung geht immer)', () => {
+    // Chinesisch als Anzeige hat keine geprüfte Zeile — das Endonym muss kommen.
+    expect(languageDisplayName('zh', 'de')).toBe('中文');
+    expect(languageDisplayName('ko', 'zh')).toBe('한국어');
+  });
+
+  it('liefert zwölf Monatsnamen je Sprache (Tabelle oder Intl-Fallback)', () => {
     for (const language of UI_LANGUAGES) {
-      expect(MONTH_NAMES[language]).toHaveLength(12);
+      expect(monthNamesFor(language)).toHaveLength(12);
     }
   });
 });
