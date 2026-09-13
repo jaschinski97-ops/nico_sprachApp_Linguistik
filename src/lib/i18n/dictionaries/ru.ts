@@ -437,6 +437,16 @@ const ru = {
   "texts.questionSpeaker": "Кто произносит эту реплику?",
   "texts.done": "Текст пройден",
   "texts.note": "Тексты — существующие ситуации как целые диалоги. Нажимаемые слова показывают значение из проверенного запаса.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "Счётные слова",
+  "drill.konsonantenklasse": "Классы согласных",
+  "drill.praesensEndung": "Окончания настоящего",
+  "drill.partizip": "Третья форма",
+  "drill.prompt.zaehlerwort": "Какое счётное слово подходит к этому существительному?",
+  "drill.prompt.konsonantenklasse": "К какому классу относится этот согласный?",
+  "drill.prompt.praesensEndung": "Какое окончание получает форма?",
+  "drill.prompt.partizip": "Какая третья форма у этого глагола?",
 } as const;
 
 export default ru;

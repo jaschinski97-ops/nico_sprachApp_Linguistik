@@ -84,6 +84,10 @@ const PROMPT_KEYS: Record<DrillId, TranslationKey> = {
   polite: 'drill.prompt.polite',
   irregularPast: 'drill.prompt.irregularPast',
   serEstar: 'drill.prompt.serEstar',
+  zaehlerwort: 'drill.prompt.zaehlerwort',
+  konsonantenklasse: 'drill.prompt.konsonantenklasse',
+  praesensEndung: 'drill.prompt.praesensEndung',
+  partizip: 'drill.prompt.partizip',
 };
 
 const DIKTAT_PROMPT_KEYS: Record<'th' | 'en' | 'es', TranslationKey> = {

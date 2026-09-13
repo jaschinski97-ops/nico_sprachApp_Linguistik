@@ -437,6 +437,16 @@ const ja = {
   "texts.questionSpeaker": "この行を言うのは誰ですか？",
   "texts.done": "テキスト終了",
   "texts.note": "テキストは既存の状況を丸ごと対話にしたものです。タップできる単語は確認済みの語彙から意味を表示します。",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "助数詞",
+  "drill.konsonantenklasse": "子音のクラス",
+  "drill.praesensEndung": "現在形の語尾",
+  "drill.partizip": "第3形",
+  "drill.prompt.zaehlerwort": "この名詞にはどの助数詞が合いますか？",
+  "drill.prompt.konsonantenklasse": "この子音はどのクラスですか？",
+  "drill.prompt.praesensEndung": "この形にはどの語尾が付きますか？",
+  "drill.prompt.partizip": "この動詞の第3形はどれですか？",
 } as const;
 
 export default ja;

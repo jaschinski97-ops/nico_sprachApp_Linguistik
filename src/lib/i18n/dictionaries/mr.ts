@@ -437,6 +437,16 @@ const mr = {
   "texts.questionSpeaker": "ही ओळ कोण म्हणते?",
   "texts.done": "मजकूर संपला",
   "texts.note": "मजकूर म्हणजे विद्यमान परिस्थितींचे संपूर्ण संवाद. स्पर्श करण्यायोग्य शब्द तपासलेल्या साठ्यातून अर्थ दाखवतात.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "मोजणी शब्द",
+  "drill.konsonantenklasse": "व्यंजन वर्ग",
+  "drill.praesensEndung": "वर्तमान प्रत्यय",
+  "drill.partizip": "तिसरा रूप",
+  "drill.prompt.zaehlerwort": "या नामासाठी कोणता मोजणी शब्द योग्य?",
+  "drill.prompt.konsonantenklasse": "हा व्यंजन कोणत्या वर्गाचा आहे?",
+  "drill.prompt.praesensEndung": "या रूपाला कोणता प्रत्यय मिळतो?",
+  "drill.prompt.partizip": "या क्रियापदाचा तिसरा रूप कोणता?",
 } as const;
 
 export default mr;

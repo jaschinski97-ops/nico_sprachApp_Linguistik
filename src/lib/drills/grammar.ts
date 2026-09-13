@@ -1,5 +1,7 @@
+import { ZAEHLER_ITEMS, ZAEHLER_OPTIONEN, type ZaehlerItem } from '@/data/grammar-th-counters';
 import { POLITE_ITEMS, type PoliteItem } from '@/data/grammar-th';
 import { SER_ESTAR_ITEMS, type SerEstarItem } from '@/data/grammar-es';
+import { CONSONANT_CLASS_LABEL, THAI_CONSONANTS, type ThaiConsonant } from '@/data/thai-script';
 
 import { Random, shuffled } from './random';
 import { directionForDrill, DrillOption, DrillQuestion } from './types';
@@ -66,9 +68,53 @@ export function buildSerEstarQuestion(item: SerEstarItem): DrillQuestion {
   };
 }
 
-/** Datensatz zu einer Übung — `null` für alle übungsgebundenen Drills. */
+/* ---------- Zählwörter (de_to_th, Schritt 5) ---------- */
+
+export function buildZaehlerQuestion(item: ZaehlerItem): DrillQuestion {
+  const options: DrillOption[] = ZAEHLER_OPTIONEN.map((label) => ({ label }));
+  return {
+    id: `zaehler:${item.id}`,
+    drill: 'zaehlerwort',
+    direction: directionForDrill('zaehlerwort', 'th'),
+    vocabId: item.id,
+    visible: `${item.nomen} (${item.german})`,
+    visibleHint: `Zahl + ___ : หนึ่ง ${item.nomen}`,
+    speak: null,
+    options,
+    correctIndex: ZAEHLER_OPTIONEN.indexOf(item.answer),
+    solution: `${item.nomen} หนึ่ง ${item.answer} — ein ${item.german}`,
+    explanation: 'Das Zählwort steht zwischen Zahl und Nomen und hängt an der Wortklasse.',
+  };
+}
+
+/* ---------- Konsonantenklassen (de_to_th, Schritt 5) ---------- */
+
+const KLASSEN_OPTIONEN: DrillOption[] = (
+  ['mid', 'high', 'low'] as const
+).map((klasse) => ({ label: CONSONANT_CLASS_LABEL[klasse] }));
+
+export function buildKonsonantenklasseQuestion(konsonant: ThaiConsonant): DrillQuestion {
+  return {
+    id: `konsonantenklasse:${konsonant.symbol}`,
+    drill: 'konsonantenklasse',
+    direction: directionForDrill('konsonantenklasse', 'th'),
+    vocabId: konsonant.symbol,
+    visible: konsonant.name,
+    visibleHint: `${konsonant.meaning} · ${konsonant.nameRtgs}`,
+    speak: null,
+    options: KLASSEN_OPTIONEN,
+    correctIndex: KLASSEN_OPTIONEN.findIndex(
+      (option) => option.label === CONSONANT_CLASS_LABEL[konsonant.consonantClass]
+    ),
+    solution: `${konsonant.name} — ${CONSONANT_CLASS_LABEL[konsonant.consonantClass]}`,
+    explanation:
+      'Die Klasse ist der erste Eingang der Ton-Herleitung — wer sie kennt, kann jeden Ton aus der Schrift ableiten.',
+  };
+}
+
+/** Die drei Datensatz-Übungen der Stufe 5 mischen wie polite/serEstar. */
 export function buildGrammarSession(
-  drill: 'polite' | 'serEstar',
+  drill: 'polite' | 'serEstar' | 'zaehlerwort' | 'konsonantenklasse',
   random: Random,
   size: number
 ): { questions: DrillQuestion[]; available: number } {
@@ -78,8 +124,27 @@ export function buildGrammarSession(
       available: POLITE_ITEMS.length,
     };
   }
+  if (drill === 'serEstar') {
+    return {
+      questions: shuffled([...SER_ESTAR_ITEMS], random).slice(0, size).map(buildSerEstarQuestion),
+      available: SER_ESTAR_ITEMS.length,
+    };
+  }
+  if (drill === 'zaehlerwort') {
+    return {
+      questions: shuffled([...ZAEHLER_ITEMS], random).slice(0, size).map(buildZaehlerQuestion),
+      available: ZAEHLER_ITEMS.length,
+    };
+  }
+  // Konsonantenklasse: regelgetreu aus der quellengeprüften Schrifttabelle —
+  // veraltete/obsolete Buchstaben (ฃ/ฅ) bewusst ausgeschlossen.
+  const konsonanten = THAI_CONSONANTS.filter(
+    (k) => !k.meaning.includes('obsolete')
+  );
   return {
-    questions: shuffled([...SER_ESTAR_ITEMS], random).slice(0, size).map(buildSerEstarQuestion),
-    available: SER_ESTAR_ITEMS.length,
+    questions: shuffled(konsonanten, random)
+      .slice(0, size)
+      .map(buildKonsonantenklasseQuestion),
+    available: konsonanten.length,
   };
 }

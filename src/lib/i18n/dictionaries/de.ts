@@ -112,6 +112,10 @@ const de = {
   'drill.polite': 'Höflichkeitspartikel',
   'drill.irregularPast': 'Unregelmäßige Verben',
   'drill.serEstar': 'ser oder estar',
+  'drill.zaehlerwort': 'Zählwörter',
+  'drill.konsonantenklasse': 'Konsonantenklassen',
+  'drill.praesensEndung': 'Präsens-Endungen',
+  'drill.partizip': 'Dritte Form',
   'skill.wortschatz': 'Wortschatz',
   'skill.hoeren': 'Hören',
   // Lern-Reiter: die einheitliche Kategorie (Schreiben gehört seit dem
@@ -333,6 +337,10 @@ const de = {
   'drill.prompt.polite': 'Welche Partikel passt an das Ende?',
   'drill.prompt.irregularPast': 'Welche zweite Form gehört zu diesem Verb?',
   'drill.prompt.serEstar': 'ser oder estar?',
+  'drill.prompt.zaehlerwort': 'Welches Zählwort passt zu diesem Nomen?',
+  'drill.prompt.konsonantenklasse': 'Zu welcher Klasse gehört dieser Konsonant?',
+  'drill.prompt.praesensEndung': 'Welche Endung bekommt die Form?',
+  'drill.prompt.partizip': 'Welche dritte Form gehört zu diesem Verb?',
 
   /* ---------- Prüfungsaufgabe (exam-runner) ---------- */
   'exam.taskMultipleChoice': 'Auswahl (A/B/C)',

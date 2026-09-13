@@ -437,6 +437,16 @@ const id = {
   "texts.questionSpeaker": "Siapa yang mengatakan baris ini?",
   "texts.done": "Teks selesai",
   "texts.note": "Teksnya adalah situasi yang ada sebagai dialog utuh. Kata yang dapat disentuh menunjukkan maknanya dari stok terverifikasi.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "Kata bantu bilang",
+  "drill.konsonantenklasse": "Kelas konsonan",
+  "drill.praesensEndung": "Akhiran kini",
+  "drill.partizip": "Bentuk ketiga",
+  "drill.prompt.zaehlerwort": "Kata bantu mana yang cocok untuk kata benda ini?",
+  "drill.prompt.konsonantenklasse": "Kelas apa yang dimiliki konsonan ini?",
+  "drill.prompt.praesensEndung": "Akhiran apa yang diterima bentuk ini?",
+  "drill.prompt.partizip": "Bentuk ketiga apa yang milik kata kerja ini?",
 } as const;
 
 export default id;

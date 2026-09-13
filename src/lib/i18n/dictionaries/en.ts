@@ -524,6 +524,16 @@ const en: Partial<Record<TranslationKey, string>> = {
   'texts.questionSpeaker': 'Who says this line?',
   'texts.done': 'Text finished',
   'texts.note': 'The texts are the existing situations as whole dialogues. Tappable words show their meaning from the checked stock when tapped.',
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  'drill.zaehlerwort': 'Counters',
+  'drill.konsonantenklasse': 'Consonant classes',
+  'drill.praesensEndung': 'Present endings',
+  'drill.partizip': 'Third form',
+  'drill.prompt.zaehlerwort': 'Which counter fits this noun?',
+  'drill.prompt.konsonantenklasse': 'To which class does this consonant belong?',
+  'drill.prompt.praesensEndung': 'Which ending does the form take?',
+  'drill.prompt.partizip': 'Which third form belongs to this verb?',
 };
 
 export default en;

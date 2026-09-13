@@ -437,6 +437,16 @@ const zh = {
   "texts.questionSpeaker": "这句是谁说的？",
   "texts.done": "短文完成",
   "texts.note": "短文由现有情境组成完整对话。可点按的词会显示已校验词库中的含义。",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "量词",
+  "drill.konsonantenklasse": "辅音等级",
+  "drill.praesensEndung": "现在时词尾",
+  "drill.partizip": "第三形式",
+  "drill.prompt.zaehlerwort": "这个名词用哪个量词？",
+  "drill.prompt.konsonantenklasse": "这个辅音属于哪一类？",
+  "drill.prompt.praesensEndung": "这个形式用什么词尾？",
+  "drill.prompt.partizip": "这个动词的第三形式是什么？",
 } as const;
 
 export default zh;

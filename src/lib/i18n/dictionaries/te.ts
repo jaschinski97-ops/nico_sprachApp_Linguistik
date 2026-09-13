@@ -437,6 +437,16 @@ const te = {
   "texts.questionSpeaker": "ఈ లైన్ ఎవరు అంటారు?",
   "texts.done": "పాఠం పూర్తయింది",
   "texts.note": "పాఠాలు ఉనికిలో ఉన్న సందర్భాల పూర్తి సంభాషణలు. నొక్కగల పదాలు సరిచూసిన నిఘంటువు నుండి అర్థాన్ని చూపుతాయి.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "లెక్కింపు పదాలు",
+  "drill.konsonantenklasse": "హల్లుల తరగతులు",
+  "drill.praesensEndung": "వర్తమాన ప్రత్యయాలు",
+  "drill.partizip": "మూడవ రూపం",
+  "drill.prompt.zaehlerwort": "ఈ నామవాచకానికి ఏ లెక్కింపు పదం సరిపోతుంది?",
+  "drill.prompt.konsonantenklasse": "ఈ హల్లు ఏ తరగతికి చెందుతుంది?",
+  "drill.prompt.praesensEndung": "ఈ రూపానికి ఏ ప్రత్యయం వస్తుంది?",
+  "drill.prompt.partizip": "ఈ క్రియకు మూడవ రూపం ఏది?",
 } as const;
 
 export default te;

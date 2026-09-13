@@ -51,6 +51,11 @@ export const DRILLS = [
   'polite',
   'irregularPast',
   'serEstar',
+  /** Schritt 5 (13.09.): die Grammatik wird voll ausgebaut. */
+  'zaehlerwort',
+  'konsonantenklasse',
+  'praesensEndung',
+  'partizip',
 ] as const;
 export type DrillId = (typeof DRILLS)[number];
 
@@ -236,6 +241,50 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
       'Beide Verben bedeuten „sein“ — ser klassifiziert (Herkunft, Beruf, Eigenschaft, Zeit, ' +
       'Ort von Ereignissen), estar beschreibt Zustand und Lage. Die Regel steht nach der Antwort.',
     prompt: 'ser oder estar?',
+  },
+  zaehlerwort: {
+    id: 'zaehlerwort',
+    side: 'toTarget',
+    feature: 'th',
+    skill: 'grammatik',
+    label: 'Zählwörter',
+    description:
+      'Thai zählt mit einem Zählwort zwischen Zahl und Nomen — und das Zählwort hängt an der ' +
+      'Wortklasse: คน Menschen, ตัว Tiere, เล่ม Bücher, แก้ว Gläser, หลัง Häuser.',
+    prompt: 'Welches Zählwort passt zu diesem Nomen?',
+  },
+  konsonantenklasse: {
+    id: 'konsonantenklasse',
+    side: 'toTarget',
+    feature: 'th',
+    skill: 'grammatik',
+    label: 'Konsonantenklassen',
+    description:
+      'Mittel-, Hoch- oder Tiefklasse? Die Klasse jedes der 44 Konsonanten ist der erste ' +
+      'Eingang der Ton-Herleitung — die Übung nutzt dieselbe quellengeprüfte Schrifttabelle.',
+    prompt: 'Zu welcher Klasse gehört dieser Konsonant?',
+  },
+  praesensEndung: {
+    id: 'praesensEndung',
+    side: 'toTarget',
+    feature: 'es',
+    skill: 'grammatik',
+    label: 'Präsens-Endungen',
+    description:
+      'Die Endung folgt im Präsens der Konjugationsklasse (-ar, -er, -ir) und der Person — ' +
+      'eine ableitbare Regel, geübt an den regelmäßigen Verben des Grundstocks.',
+    prompt: 'Welche Endung bekommt die Form?',
+  },
+  partizip: {
+    id: 'partizip',
+    side: 'toTarget',
+    feature: 'en',
+    skill: 'grammatik',
+    label: 'Dritte Form',
+    description:
+      'Die dritte Form (Past Participle) braucht jede zusammengesetzte Zeit — have gone, ' +
+      'was eaten. Bei unregelmäßigen Verben folgt sie keiner Regel und gehört zum Wort.',
+    prompt: 'Welche dritte Form gehört zu diesem Verb?',
   },
 };
 

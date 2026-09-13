@@ -437,6 +437,16 @@ const ur = {
   "texts.questionSpeaker": "یہ سطر کون کہتا ہے؟",
   "texts.done": "متن مکمل",
   "texts.note": "متن موجودہ صورتحال کے مکمل مکالمے ہیں۔ قابلِ لمس الفاظ جانچے گئے ذخیرے سے معنی دکھاتے ہیں۔",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "گنتی کے الفاظ",
+  "drill.konsonantenklasse": "حروفِ صحیح کی کلاسیں",
+  "drill.praesensEndung": "مضارع کے لاحقے",
+  "drill.partizip": "تیسرا شکل",
+  "drill.prompt.zaehlerwort": "اس اسم کے لیے کون سا گنتی کا لفظ موزوں ہے؟",
+  "drill.prompt.konsonantenklasse": "یہ حرفِ صحیح کس کلاس سے ہے؟",
+  "drill.prompt.praesensEndung": "اس شکل کو کون سا لاحقہ ملتا ہے؟",
+  "drill.prompt.partizip": "اس فعل کی تیسری شکل کون سی ہے؟",
 } as const;
 
 export default ur;

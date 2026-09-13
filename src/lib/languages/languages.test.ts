@@ -166,13 +166,13 @@ describe('Das Merkmal als einhängbarer Baustein (Pflicht 3)', () => {
   it('gibt jeder Sprache genau die Übungen ihres eigenen Merkmals', () => {
     // Seit Phase 18 hat jede Sprache eine Hoer- UND eine Leseuebung ihres
     // Merkmals - vorher fehlte den beiden neuen Sprachen das Hoeren.
-    expect(featureRuntime('th').drills).toEqual(['tone', 'toneRule', 'polite']);
-    expect(featureRuntime('es').drills).toEqual(['stressHear', 'stressRule', 'serEstar']);
-    expect(featureRuntime('en').drills).toEqual(['soundSpelling', 'spelling', 'irregularPast']);
+    expect(featureRuntime('th').drills).toEqual(['tone', 'toneRule', 'polite', 'zaehlerwort', 'konsonantenklasse']);
+    expect(featureRuntime('es').drills).toEqual(['stressHear', 'stressRule', 'serEstar', 'praesensEndung']);
+    expect(featureRuntime('en').drills).toEqual(['soundSpelling', 'spelling', 'irregularPast', 'partizip']);
     // Und keine Übung wandert in eine fremde Sprache.
-    expect(drillsForDirectionViaFeature('de_to_es')).toEqual(['stressHear', 'stressRule', 'serEstar']);
-    expect(drillsForDirectionViaFeature('de_to_en')).toEqual(['soundSpelling', 'spelling', 'irregularPast']);
-    expect(drillsForDirectionViaFeature('de_to_th')).toEqual(['tone', 'toneRule', 'polite']);
+    expect(drillsForDirectionViaFeature('de_to_es')).toEqual(['stressHear', 'stressRule', 'serEstar', 'praesensEndung']);
+    expect(drillsForDirectionViaFeature('de_to_en')).toEqual(['soundSpelling', 'spelling', 'irregularPast', 'partizip']);
+    expect(drillsForDirectionViaFeature('de_to_th')).toEqual(['tone', 'toneRule', 'polite', 'zaehlerwort', 'konsonantenklasse']);
   });
 
   it('zeichnet spanische Silben mit der Betonung aus, englische mit der Lautschrift', () => {
@@ -193,7 +193,7 @@ describe('Das Merkmal als einhängbarer Baustein (Pflicht 3)', () => {
   });
 
   it('lässt die Thai-Übungen dort, wo sie hingehören', () => {
-    expect(drillsForDirection('de_to_th')).toEqual(['tone', 'toneRule', 'polite']);
+    expect(drillsForDirection('de_to_th')).toEqual(['tone', 'toneRule', 'polite', 'zaehlerwort', 'konsonantenklasse']);
   });
 });
 

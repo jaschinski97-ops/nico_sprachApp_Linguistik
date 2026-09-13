@@ -437,6 +437,16 @@ const vi = {
   "texts.questionSpeaker": "Ai nói câu này?",
   "texts.done": "Đã xong bài đọc",
   "texts.note": "Bài đọc là các tình huống có sẵn dưới dạng hội thoại trọn vẹn. Từ chạm được hiện nghĩa từ kho đã kiểm chứng.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "Đơn vị đếm",
+  "drill.konsonantenklasse": "Hạng phụ âm",
+  "drill.praesensEndung": "Hậu tố hiện tại",
+  "drill.partizip": "Dạng thứ ba",
+  "drill.prompt.zaehlerwort": "Đơn vị đếm nào hợp với danh từ này?",
+  "drill.prompt.konsonantenklasse": "Phụ âm này thuộc hạng nào?",
+  "drill.prompt.praesensEndung": "Dạng này nhận hậu tố nào?",
+  "drill.prompt.partizip": "Dạng thứ ba của động từ này là gì?",
 } as const;
 
 export default vi;

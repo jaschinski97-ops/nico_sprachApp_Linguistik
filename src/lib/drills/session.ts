@@ -10,6 +10,8 @@ import {
   buildArticleQuestion,
   buildDeutschLesenQuestion,
   buildIrregularPastQuestion,
+  buildPartizipQuestion,
+  buildPraesensEndungQuestion,
   buildSoundSpellingQuestion,
   buildSpellingQuestion,
   buildStressHearQuestion,
@@ -20,6 +22,8 @@ import {
   canBuildArticleQuestion,
   canBuildDeutschLesenQuestion,
   canBuildIrregularPastQuestion,
+  canBuildPartizipQuestion,
+  canBuildPraesensEndungQuestion,
   canBuildSoundSpellingQuestion,
   canBuildSpellingQuestion,
   canBuildStressHearQuestion,
@@ -107,8 +111,14 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildStressHearQuestion(entry);
     case 'soundSpelling':
       return canBuildSoundSpellingQuestion(entry);
+    case 'praesensEndung':
+      return canBuildPraesensEndungQuestion(entry);
+    case 'partizip':
+      return canBuildPartizipQuestion(entry);
     case 'polite':
     case 'serEstar':
+    case 'zaehlerwort':
+    case 'konsonantenklasse':
       // Datensatz-Übungen ohne Vokabelstoff — ihre Sitzung entsteht im
       // Zweig darüber aus `data/grammar-*` und erreicht diese Stelle nie.
       return false;
@@ -142,8 +152,14 @@ function buildQuestion(
       return buildStressHearQuestion(entry);
     case 'soundSpelling':
       return buildSoundSpellingQuestion(entry);
+    case 'praesensEndung':
+      return buildPraesensEndungQuestion(entry, pool, random);
+    case 'partizip':
+      return buildPartizipQuestion(entry, pool, random);
     case 'polite':
     case 'serEstar':
+    case 'zaehlerwort':
+    case 'konsonantenklasse':
       // Siehe canBuild — hier nie erreicht.
       throw new Error(`"${drill}" wird aus dem Grammatik-Datensatz zusammengestellt.`);
   }
@@ -162,12 +178,17 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
   const size = options.size ?? DRILL_SESSION_SIZE;
   const random = seededRandom(options.seed ?? now);
 
-  // GRAMMATIK-KLEINSTÜBUNGEN (Höflichkeitspartikel, ser/estar) haben keine
-  // FSRS-Karten — ihre Sitzung wird rein aus dem Datensatz gemischt. Vor
-  // allem: KEIN `ensureCardStates`, denn das legt als Seiteneffekt Karten
-  // an, und eine Partikel-Übung darf keinen Kartenschlüssel erzeugen, den
-  // kein Kartenstoff je bewertet.
-  if (drill === 'polite' || drill === 'serEstar') {
+  // GRAMMATIK-KLEINSTÜBUNGEN (Höflichkeitspartikel, ser/estar, Zählwörter,
+  // Konsonantenklassen) haben keine FSRS-Karten — ihre Sitzung wird rein
+  // aus dem Datensatz gemischt. Vor allem: KEIN `ensureCardStates`, denn
+  // das legt als Seiteneffekt Karten an, und eine Partikel-Übung darf
+  // keinen Kartenschlüssel erzeugen, den kein Kartenstoff je bewertet.
+  if (
+    drill === 'polite' ||
+    drill === 'serEstar' ||
+    drill === 'zaehlerwort' ||
+    drill === 'konsonantenklasse'
+  ) {
     const { questions, available } = buildGrammarSession(drill, random, size);
     return { drill, questions, available };
   }

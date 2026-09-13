@@ -48,6 +48,10 @@ export const DRILL_KEYS: Record<DrillId, TranslationKey> = {
   polite: 'drill.polite',
   irregularPast: 'drill.irregularPast',
   serEstar: 'drill.serEstar',
+  zaehlerwort: 'drill.zaehlerwort',
+  konsonantenklasse: 'drill.konsonantenklasse',
+  praesensEndung: 'drill.praesensEndung',
+  partizip: 'drill.partizip',
 };
 
 /**

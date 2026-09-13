@@ -437,6 +437,16 @@ const ta = {
   "texts.questionSpeaker": "இந்த வரியை யார் சொல்கிறார்?",
   "texts.done": "பாடம் முடிந்தது",
   "texts.note": "பாடங்கள் ஏற்கனவே உள்ள சூழ்நிலைகளின் முழு உரையாடல்கள். தட்டக்கூடிய சொற்கள் சரிபார்க்கப்பட்ட சொற்களஞ்சியத்தில் பொருளைக் காட்டுகின்றன.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "எண்ணும் சொற்கள்",
+  "drill.konsonantenklasse": "மெய் வகுப்புகள்",
+  "drill.praesensEndung": "நிகழ்கால விகுதிகள்",
+  "drill.partizip": "மூன்றாம் வடிவம்",
+  "drill.prompt.zaehlerwort": "இந்தப் பெயர்ச்சொல்லுக்கு எந்த எண்ணும் சொல் பொருத்தம்?",
+  "drill.prompt.konsonantenklasse": "இந்த மெய் எந்த வகுப்பைச் சேர்ந்தது?",
+  "drill.prompt.praesensEndung": "இந்த வடிவத்திற்கு எந்த விகுதி?",
+  "drill.prompt.partizip": "இந்த வினைச்சொல்லின் மூன்றாம் வடிவம் எது?",
 } as const;
 
 export default ta;

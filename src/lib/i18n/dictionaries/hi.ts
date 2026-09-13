@@ -437,6 +437,16 @@ const hi = {
   "texts.questionSpeaker": "यह पंक्ति कौन कहता है?",
   "texts.done": "पाठ समाप्त",
   "texts.note": "पाठ मौजूदा परिस्थितियों के पूरे संवाद हैं। टैप करने योग्य शब्द जाँचे गए भंडार से अर्थ दिखाते हैं।",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "गणक शब्द",
+  "drill.konsonantenklasse": "व्यंजन वर्ग",
+  "drill.praesensEndung": "वर्तमान प्रत्यय",
+  "drill.partizip": "तीसरा रूप",
+  "drill.prompt.zaehlerwort": "इस संज्ञा के लिए कौन-सा गणक शब्द सही है?",
+  "drill.prompt.konsonantenklasse": "यह व्यंजन किस वर्ग का है?",
+  "drill.prompt.praesensEndung": "इस रूप को कौन-सा प्रत्यय मिलता है?",
+  "drill.prompt.partizip": "इस क्रिया का तीसरा रूप कौन-सा है?",
 } as const;
 
 export default hi;

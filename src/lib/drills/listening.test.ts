@@ -129,11 +129,11 @@ describe('Die Fertigkeiten sind vollständig zugeordnet', () => {
     // Kategorien-Gleichstand verlangt in jeder Kategorie eine Übung.
     for (const language of ['th', 'es', 'en'] as const) {
       const eigene = DRILLS.filter((drill) => DRILL_META[drill].feature === language);
-      expect(eigene.map((drill) => DRILL_META[drill].skill).sort()).toEqual([
-        'grammatik',
-        'hoeren',
-        'lesen',
-      ]);
+      // Mehrere Grammatikübungen je Sprache sind seit Schritt 5 gewollt —
+      // geprüft wird, dass JEDER der drei Skills mindestens einmal vorkommt.
+      expect(new Set(eigene.map((drill) => DRILL_META[drill].skill))).toEqual(
+        new Set(['grammatik', 'hoeren', 'lesen'])
+      );
     }
   });
 });

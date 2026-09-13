@@ -437,6 +437,16 @@ const tr = {
   "texts.questionSpeaker": "Bu satırı kim söylüyor?",
   "texts.done": "Metin tamamlandı",
   "texts.note": "Metinler, mevcut durumların bütün diyaloglarıdır. Dokunulabilir kelimeler anlamlarını doğrulanmış stoktan gösterir.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "Sayaç sözcükler",
+  "drill.konsonantenklasse": "Ünsüz sınıfları",
+  "drill.praesensEndung": "Geniş zaman ekleri",
+  "drill.partizip": "Üçüncü hâl",
+  "drill.prompt.zaehlerwort": "Bu isme hangi sayaç uyar?",
+  "drill.prompt.konsonantenklasse": "Bu ünsüz hangi sınıfa aittir?",
+  "drill.prompt.praesensEndung": "Form hangi eki alır?",
+  "drill.prompt.partizip": "Bu fiile hangi üçüncü hâl aittir?",
 } as const;
 
 export default tr;

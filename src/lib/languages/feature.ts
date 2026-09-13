@@ -65,7 +65,7 @@ const THAI_RUNTIME: LanguageFeatureRuntime = {
   // war die Kategorie den deutschen Zielen vorbehalten, und der Paritäts-
   // Test durfte Thai dort leer lassen. ครับ/ค่ะ ist die erste, ehrlich aus
   // geprüftem Satzstoff baubare thai-Grammatikübung.
-  drills: ['tone', 'toneRule', 'polite'],
+  drills: ['tone', 'toneRule', 'polite', 'zaehlerwort', 'konsonantenklasse'],
 };
 
 /**
@@ -82,7 +82,7 @@ const SPANISH_RUNTIME: LanguageFeatureRuntime = {
     if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
     return [{ roman: entry.romanization || entry.term }];
   },
-  drills: ['stressHear', 'stressRule', 'serEstar'],
+  drills: ['stressHear', 'stressRule', 'serEstar', 'praesensEndung'],
 };
 
 /**
@@ -94,7 +94,7 @@ const SPANISH_RUNTIME: LanguageFeatureRuntime = {
  */
 const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
   annotate: (entry) => [{ roman: entry.ipa ?? entry.romanization ?? entry.term }],
-  drills: ['soundSpelling', 'spelling', 'irregularPast'],
+  drills: ['soundSpelling', 'spelling', 'irregularPast', 'partizip'],
 };
 
 /**

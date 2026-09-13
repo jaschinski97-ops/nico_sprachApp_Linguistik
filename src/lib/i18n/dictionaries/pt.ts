@@ -437,6 +437,16 @@ const pt = {
   "texts.questionSpeaker": "Quem diz esta fala?",
   "texts.done": "Texto concluído",
   "texts.note": "Os textos são as situações existentes como diálogos completos. As palavras tocáveis mostram o seu significado do stock verificado.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "Classificadores",
+  "drill.konsonantenklasse": "Classes de consoantes",
+  "drill.praesensEndung": "Terminações do presente",
+  "drill.partizip": "Terceira forma",
+  "drill.prompt.zaehlerwort": "Que classificador cabe a este substantivo?",
+  "drill.prompt.konsonantenklasse": "A que classe pertenece esta consoante?",
+  "drill.prompt.praesensEndung": "Que terminação recebe a forma?",
+  "drill.prompt.partizip": "Que terceira forma pertence a este verbo?",
 } as const;
 
 export default pt;

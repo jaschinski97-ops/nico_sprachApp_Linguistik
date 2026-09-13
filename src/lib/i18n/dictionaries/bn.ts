@@ -437,6 +437,16 @@ const bn = {
   "texts.questionSpeaker": "এই লাইনটি কে বলে?",
   "texts.done": "পাঠ শেষ",
   "texts.note": "পাঠগুলো হলো বিদ্যমান পরিস্থিতির সম্পূর্ণ সংলাপ। ট্যাপযোগ্য শব্দ যাচাইকৃত মজুদ থেকে অর্থ দেখায়।",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "গণনা শব্দ",
+  "drill.konsonantenklasse": "ব্যঞ্জন শ্রেণি",
+  "drill.praesensEndung": "বর্তমান প্রত্যয়",
+  "drill.partizip": "তৃতীয় রূপ",
+  "drill.prompt.zaehlerwort": "এই বিশেষ্যের জন্য কোন গণনা শব্দ মানানসই?",
+  "drill.prompt.konsonantenklasse": "এই ব্যঞ্জনটি কোন শ্রেণির?",
+  "drill.prompt.praesensEndung": "এই রূপটি কোন প্রত্যয় পায়?",
+  "drill.prompt.partizip": "এই ক্রিয়ার তৃতীয় রূপ কোনটি?",
 } as const;
 
 export default bn;

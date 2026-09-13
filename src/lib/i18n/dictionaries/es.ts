@@ -522,6 +522,16 @@ const es: Partial<Record<TranslationKey, string>> = {
   'texts.questionSpeaker': '¿Quién dice esta línea?',
   'texts.done': 'Texto terminado',
   'texts.note': 'Los textos son las situaciones existentes como diálogos completos. Las palabras tocables muestran su significado del stock comprobado.',
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  'drill.zaehlerwort': 'Clasificadores',
+  'drill.konsonantenklasse': 'Clases de consonantes',
+  'drill.praesensEndung': 'Terminaciones de presente',
+  'drill.partizip': 'Tercera forma',
+  'drill.prompt.zaehlerwort': '¿Qué clasificador encaja con este sustantivo?',
+  'drill.prompt.konsonantenklasse': '¿A qué clase pertenece esta consonante?',
+  'drill.prompt.praesensEndung': '¿Qué terminación recibe la forma?',
+  'drill.prompt.partizip': '¿Qué tercera forma pertenece a este verbo?',
 };
 
 export default es;

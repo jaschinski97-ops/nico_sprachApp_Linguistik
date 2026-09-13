@@ -502,6 +502,16 @@ const th: Partial<Record<TranslationKey, string>> = {
   'texts.questionSpeaker': 'ใครพูดบรรทัดนี้?',
   'texts.done': 'บทอ่านจบแล้ว',
   'texts.note': 'บทอ่านคือสถานการณ์ที่มีอยู่ในรูปบทสนทนาเต็ม คำที่แตะได้จะแสดงความหมายจากคลังคำที่ตรวจสอบแล้ว',
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  'drill.zaehlerwort': 'ลักษณนาม',
+  'drill.konsonantenklasse': 'อักษรสามหมู่',
+  'drill.praesensEndung': 'คำลงท้ายปัจจุบันกาล',
+  'drill.partizip': 'รูปที่สาม',
+  'drill.prompt.zaehlerwort': 'ลักษณนามใดเหมาะกับคำนามนี้?',
+  'drill.prompt.konsonantenklasse': 'พยัญชนะนี้อยู่หมู่ใด?',
+  'drill.prompt.praesensEndung': 'รูปนี้ใช้คำลงท้ายใด?',
+  'drill.prompt.partizip': 'รูปที่สามของกริยานี้คือรูปใด?',
 };
 
 export default th;

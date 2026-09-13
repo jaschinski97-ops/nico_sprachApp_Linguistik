@@ -30,6 +30,10 @@ const DRILL_LABEL_KEYS: Record<DrillId, TranslationKey> = {
   polite: 'drill.polite',
   irregularPast: 'drill.irregularPast',
   serEstar: 'drill.serEstar',
+  zaehlerwort: 'drill.zaehlerwort',
+  konsonantenklasse: 'drill.konsonantenklasse',
+  praesensEndung: 'drill.praesensEndung',
+  partizip: 'drill.partizip',
 };
 
 const DRILL_PROMPT_KEYS: Record<DrillId, TranslationKey> = {
@@ -46,6 +50,10 @@ const DRILL_PROMPT_KEYS: Record<DrillId, TranslationKey> = {
   polite: 'drill.prompt.polite',
   irregularPast: 'drill.prompt.irregularPast',
   serEstar: 'drill.prompt.serEstar',
+  zaehlerwort: 'drill.prompt.zaehlerwort',
+  konsonantenklasse: 'drill.prompt.konsonantenklasse',
+  praesensEndung: 'drill.prompt.praesensEndung',
+  partizip: 'drill.prompt.partizip',
 };
 
 /**

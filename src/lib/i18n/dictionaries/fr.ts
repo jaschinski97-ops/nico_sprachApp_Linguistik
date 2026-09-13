@@ -437,6 +437,16 @@ const fr = {
   "texts.questionSpeaker": "Qui dit cette réplique ?",
   "texts.done": "Texte terminé",
   "texts.note": "Les textes sont les situations existantes en dialogues entiers. Les mots soulignés montrent leur sens du stock vérifié.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "Classificateurs",
+  "drill.konsonantenklasse": "Classes de consonnes",
+  "drill.praesensEndung": "Terminaisons du présent",
+  "drill.partizip": "Troisième forme",
+  "drill.prompt.zaehlerwort": "Quel classificateur convient à ce nom ?",
+  "drill.prompt.konsonantenklasse": "À quelle classe cette consonne appartient-elle ?",
+  "drill.prompt.praesensEndung": "Quelle terminaison prend la forme ?",
+  "drill.prompt.partizip": "Quelle troisième forme appartient à ce verbe ?",
 } as const;
 
 export default fr;

@@ -438,6 +438,16 @@ const ar = {
   "texts.questionSpeaker": "من يقول هذا السطر؟",
   "texts.done": "انتهى النص",
   "texts.note": "النصوص هي المواقف الموجودة كحوارات كاملة. الكلمات القابلة للنقر تظهر معناها من المخزون المدقق.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "كلمات العدّ",
+  "drill.konsonantenklasse": "فئات الحروف الساكنة",
+  "drill.praesensEndung": "لواحق المضارع",
+  "drill.partizip": "الصورة الثالثة",
+  "drill.prompt.zaehlerwort": "أي كلمة عدّ تناسب هذا الاسم؟",
+  "drill.prompt.konsonantenklasse": "إلى أي فئة ينتمي هذا الحرف الساكن؟",
+  "drill.prompt.praesensEndung": "أي لاحقة تأخذ هذه الصورة؟",
+  "drill.prompt.partizip": "ما الصورة الثالثة لهذا الفعل؟",
 } as const;
 
 export default ar;

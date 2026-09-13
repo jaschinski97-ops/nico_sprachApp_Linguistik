@@ -417,6 +417,133 @@ export function buildIrregularPastQuestion(
   };
 }
 
+/* ---------- Präsens-Endungen (de_to_es, Schritt 5) ---------- */
+
+/**
+ * Regelmäßige Präsensformen aus der KONJUGATIONSKLASSE abgeleitet.
+ *
+ * Die Endungstabelle (-ar/-er/-ir × 5 Personen) ist eine geschlossene,
+ * regelhafte Menge — dieselbe epistemische Stufe wie die spanische
+ * Betonungsregel. Geübt wird die Ableitung: Person + Infinitiv → Endung.
+ * Ablenker sind echte Endungen ANDERER Klassen — hablar → -amos gegen
+ -emos/-imos ist genau die Verwechslung zwischen den Klassen.
+ */
+const PERSONEN = ['yo', 'tú', 'él/ella', 'nosotros', 'ellos/ellas'] as const;
+
+const ENDUNGEN: Record<'ar' | 'er' | 'ir', string[]> = {
+  ar: ['o', 'as', 'a', 'amos', 'an'],
+  er: ['o', 'es', 'e', 'emos', 'en'],
+  ir: ['o', 'es', 'e', 'imos', 'en'],
+};
+
+export function canBuildPraesensEndungQuestion(entry: VocabEntry): boolean {
+  if (entry.language !== 'es') return false;
+  const verb = entry.spanishVerb;
+  if (!verb || verb.irregular) return false;
+  return Boolean(verb.conjugation && entry.term.endsWith(verb.conjugation));
+}
+
+export function buildPraesensEndungQuestion(
+  entry: VocabEntry,
+  pool: VocabEntry[],
+  random: Random
+): DrillQuestion {
+  const verb = entry.spanishVerb;
+  if (!verb) throw new Error(`"${entry.id}" ist kein spanisches Verb.`);
+  const klasse = verb.conjugation;
+  if (!klasse) throw new Error(`"${entry.id}" hat keine Konjugationsklasse.`);
+  const personIndex = Math.floor(random() * PERSONEN.length) % PERSONEN.length;
+  const richtig = ENDUNGEN[klasse][personIndex];
+  const stamm = entry.term.slice(0, entry.term.length - klasse.length);
+
+  const fremd = shuffled(
+    (['ar', 'er', 'ir'] as const)
+      .filter((k) => k !== klasse)
+      .flatMap((k) => ENDUNGEN[k])
+      .filter((endung) => endung !== richtig),
+    random
+  ).slice(0, 3);
+  const optionenListe = shuffled([richtig, ...fremd], random);
+
+  const parts = [
+    `${entry.term} → ${stamm}${richtig}`,
+    `Klasse: -${klasse}`,
+  ];
+  if (entry.note) parts.push(entry.note);
+
+  return {
+    id: `praesensEndung:${entry.id}:${personIndex}`,
+    drill: 'praesensEndung',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    visible: `${PERSONEN[personIndex]} · ${entry.term}`,
+    visibleHint: entry.german,
+    speak: null,
+    options: optionenListe.map((label) => ({ label })),
+    correctIndex: optionenListe.findIndex((label) => label === richtig),
+    solution: `${PERSONEN[personIndex]} ${stamm}${richtig}`,
+    explanation: parts.join(' · '),
+  };
+}
+
+/* ---------- Dritte Form (de_to_en, Schritt 5) ---------- */
+
+/**
+ * Das Past Participle unregelmäßiger englischer Verben — die Form, die
+ * zusammengesetzte Zeitformen (Present Perfect, Passiv) brauchen. Gleiche
+ * Bauart wie `irregularPast`, zweite Spalte desselben geprüften Eintrags.
+ */
+export function canBuildPartizipQuestion(entry: VocabEntry): boolean {
+  return (
+    entry.language === 'en' &&
+    Boolean(entry.englishVerb?.irregular && entry.englishVerb.participle)
+  );
+}
+
+export function buildPartizipQuestion(
+  entry: VocabEntry,
+  pool: VocabEntry[],
+  random: Random
+): DrillQuestion {
+  const verb = entry.englishVerb;
+  if (!verb?.participle) {
+    throw new Error(`"${entry.id}" hat keine dritte Form.`);
+  }
+
+  const correct = verb.participle;
+  const distractors = shuffled(
+    pool
+      .filter((other) => other.id !== entry.id && other.englishVerb?.irregular)
+      .map((other) => other.englishVerb!.participle)
+      .filter((form): form is string => Boolean(form) && form !== correct),
+    random
+  ).slice(0, 3);
+  if (distractors.length < 3) {
+    throw new Error(`"${entry.id}" hat keinen Ablenker-Bestand.`);
+  }
+
+  const options = shuffled([correct, ...distractors], random).map((label) => ({ label }));
+  const parts = [
+    `${entry.term} — ${verb.past} — ${correct}`,
+    verb.irregular ? 'unregelmäßig' : 'regelmäßig',
+  ];
+  if (entry.note) parts.push(entry.note);
+
+  return {
+    id: `partizip:${entry.id}`,
+    drill: 'partizip',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    visible: entry.term,
+    visibleHint: entry.german,
+    speak: null,
+    options,
+    correctIndex: options.findIndex((option) => option.label === correct),
+    solution: `have ${correct}`,
+    explanation: parts.join(' · '),
+  };
+}
+
 /* ---------- Betonung herleiten (de_to_es) ---------- */
 
 /**

@@ -437,6 +437,16 @@ const ko = {
   "texts.questionSpeaker": "이 줄은 누가 말하나요?",
   "texts.done": "지문 완료",
   "texts.note": "본문은 기존 상황을 온전한 대화로 만든 것입니다. 누를 수 있는 단어는 검증된 단어장의 뜻을 보여 줍니다.",
+
+  /* ---------- Grammatik-Ausbau (13.09.2026, Schritt 5) ---------- */
+  "drill.zaehlerwort": "수분사",
+  "drill.konsonantenklasse": "자음 클래스",
+  "drill.praesensEndung": "현재형 어미",
+  "drill.partizip": "세 번째 형태",
+  "drill.prompt.zaehlerwort": "이 명사에는 어떤 수분사가 맞나요?",
+  "drill.prompt.konsonantenklasse": "이 자음은 어느 클래스에 속하나요?",
+  "drill.prompt.praesensEndung": "이 형태에는 어떤 어미가 붙나요?",
+  "drill.prompt.partizip": "이 동사의 세 번째 형태는 무엇인가요?",
 } as const;
 
 export default ko;
