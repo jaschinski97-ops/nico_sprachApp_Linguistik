@@ -40,6 +40,17 @@ export const DRILLS = [
   'stressHear',
   /** Phase 18: Wort hoeren und die richtige Schreibung waehlen (Englisch). */
   'soundSpelling',
+  /**
+   * Lern-Reiter-Ausbau 13.09.2026, Stufe „Gleichstand“: jede lernbare
+   * Sprache bekommt in JEDER Kategorie mindestens eine Übung. Neu:
+   * Deutsch liest (Wort gelesen, Bedeutung gewählt), und Thai/Englisch/
+   * Spanisch bekommen je eine Grammatikübung — die deutschen haben die
+   * Kategorie bisher allein belegt.
+   */
+  'deutschLesen',
+  'polite',
+  'irregularPast',
+  'serEstar',
 ] as const;
 export type DrillId = (typeof DRILLS)[number];
 
@@ -181,6 +192,50 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
       'Wort anhören und aus Wörtern mit demselben Schriftstück das richtige heraushören — ' +
       'though, through, thought und enough klingen verschieden, obwohl sie gleich aussehen.',
     prompt: 'Welches Wort hörst du?',
+  },
+  deutschLesen: {
+    id: 'deutschLesen',
+    side: 'toHub',
+    feature: null,
+    skill: 'lesen',
+    label: 'Wort lesen',
+    description:
+      'Das deutsche Wort lesen und die richtige Bedeutung wählen. Lesen kommt vor dem ' +
+      'Sprechen — wer geschriebene Wörter wiedererkennt, hat einen Anker, an dem er Gehörtes festmacht.',
+    prompt: 'Was bedeutet dieses Wort?',
+  },
+  polite: {
+    id: 'polite',
+    side: 'toTarget',
+    feature: 'th',
+    skill: 'grammatik',
+    label: 'Höflichkeitspartikel',
+    description:
+      'ครับ oder ค่ะ? Die Partikel am Satzende hängt am Geschlecht des Sprechers, nicht am ' +
+      'Inhalt des Satzes. Alle Sätze stammen wörtlich aus dem quellengeprüften Grundstock.',
+    prompt: 'Welche Partikel passt an das Ende?',
+  },
+  irregularPast: {
+    id: 'irregularPast',
+    side: 'toTarget',
+    feature: 'en',
+    skill: 'grammatik',
+    label: 'Unregelmäßige Verben',
+    description:
+      'Die zweite Form unregelmäßiger Verben. Sie folgt keiner Regel und gehört — wie der ' +
+      'Artikel im Deutschen — zum Wort dazu. Alle Formen stammen aus dem geprüften Grundstock.',
+    prompt: 'Welche zweite Form gehört zu diesem Verb?',
+  },
+  serEstar: {
+    id: 'serEstar',
+    side: 'toTarget',
+    feature: 'es',
+    skill: 'grammatik',
+    label: 'ser oder estar',
+    description:
+      'Beide Verben bedeuten „sein“ — ser klassifiziert (Herkunft, Beruf, Eigenschaft, Zeit, ' +
+      'Ort von Ereignissen), estar beschreibt Zustand und Lage. Die Regel steht nach der Antwort.',
+    prompt: 'ser oder estar?',
   },
 };
 

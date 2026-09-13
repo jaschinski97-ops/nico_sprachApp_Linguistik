@@ -98,7 +98,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'skill.lesen': 'อ่าน',
   'skill.sprechen': 'พูด',
   'skill.schreiben': 'เขียน',
-  'skill.grammatik': 'ไวยากรณ์เยอรมัน',
+  'skill.grammatik': 'ไวยากรณ์',
   'cards.loadFailedTitle': 'โหลดชุดฝึกไม่สำเร็จ',
   'cards.assembleFailed': 'ประชุดไม่สำเร็จ: {{message}}',
   'cards.assembling': 'กำลังประชุดฝึก …',
@@ -431,6 +431,22 @@ const th: Partial<Record<TranslationKey, string>> = {
   'diagnostics.loading': 'กำลังโหลด …',
 
   /* ---------- การ์ดเจนเนอเรเตอร์ (generator-card, ดีบัก) ---------- */
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  'drill.deutschLesen': 'อ่านคำ',
+  'drill.polite': 'คำลงท้ายสุภาพ',
+  'drill.irregularPast': 'คำกริยาอปกติ',
+  'drill.serEstar': 'ser หรือ estar',
+  'drill.prompt.deutschLesen': 'คำนี้มีความหมายว่าอะไร?',
+  'drill.prompt.polite': 'คำลงท้ายแบบใดเหมาะสม?',
+  'drill.prompt.irregularPast': 'รูปที่สองของคำกริยานี้คือรูปใด?',
+  'drill.prompt.serEstar': 'ser หรือ estar?',
+  'skill.lesenSchreiben': 'การอ่านและการเขียน',
+  'wordSpeaking.noneFor': 'ยังไม่มีคำสำหรับ {{language}}',
+  'wordSpeaking.prompt': 'ฟังแล้วพูดตาม — {{language}}:',
+  'wordSpeaking.note': 'ฟังตัวอย่างแล้วพูดตามออกเสียงดัง แบบฝึกหัดนี้ไม่วัดและไม่ให้คะแนน — และไม่เปลี่ยนแผนทบทวนของคุณ',
+  'wordSpeaking.summary': 'พูดตามแล้ว {{count}} คำ',
+  'wordSpeaking.noScore': 'ไม่มีคะแนน ไม่มีการเปลี่ยนแผนทบทวน',
+  'wordSpeaking.progress': 'คำที่ {{index}} จาก {{total}}',
 };
 
 export default th;

@@ -79,7 +79,7 @@ const ur = {
   "skill.lesen": "پڑھنا",
   "skill.sprechen": "بولنا",
   "skill.schreiben": "لکھنا",
-  "skill.grammatik": "جرمن گرامر",
+  "skill.grammatik": "گرامر",
   "cards.loadFailedTitle": "اجلاس لوڈ نہیں ہو سکا",
   "cards.assembleFailed": "اجلاس ترتیب نہیں دیا جا سکا: {{message}}",
   "cards.assembling": "اجلاس ترتیب دیا جا رہا ہے …",
@@ -365,6 +365,23 @@ const ur = {
   "diagnostics.row": "{{stored}} ذخیرہ میں · {{shipped}} بھیجا گیا · {{verified}} ماخذ کی جانچ کی گئی",
   "diagnostics.backends": "ڈیٹا اسٹوریج: {{data}} · امیج اسٹوریج: {{images}} · کلپ اسٹوریج: {{clips}}",
   "diagnostics.loading": "لوڈ ہو رہا ہے …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "لفظ پڑھنا",
+  "drill.polite": "ادب کے الفاظ",
+  "drill.irregularPast": "بے قاعدہ فعل",
+  "drill.serEstar": "ser یا estar",
+  "drill.prompt.deutschLesen": "اس لفظ کا مطلب کیا ہے؟",
+  "drill.prompt.polite": "آخر میں کون سا لفظ موزوں ہے؟",
+  "drill.prompt.irregularPast": "اس فعل کی دوسری شکل کون سی ہے؟",
+  "drill.prompt.serEstar": "ser یا estar؟",
+  "skill.lesenSchreiben": "پڑھنا اور لکھنا",
+  "wordSpeaking.noneFor": "{{language}} کے لیے ابھی کوئی الفاظ موجود نہیں",
+  "wordSpeaking.prompt": "سنیں اور دہرائیں — {{language}}:",
+  "wordSpeaking.note": "نمونہ سنیں اور بلند آواز میں دہرائیں۔ یہ مشق کچھ نہیں ناپتی اور نہ جانچتی — آپ کے اعادے کے منصوبے میں کوئی تبدیلی بھی نہیں۔",
+  "wordSpeaking.summary": "{{count}} الفاظ دہرائے گئے۔",
+  "wordSpeaking.noScore": "کوئی نمبر نہیں، اعادے کے منصوبے میں کوئی تبدیلی نہیں۔",
+  "wordSpeaking.progress": "لفظ {{index}}/{{total}}",
 } as const;
 
 export default ur;

@@ -79,7 +79,7 @@ const tr = {
   "skill.lesen": "Okuma",
   "skill.sprechen": "Konuşma",
   "skill.schreiben": "Yazma",
-  "skill.grammatik": "Almanca Dilbilgisi",
+  "skill.grammatik": "Dil bilgisi",
   "cards.loadFailedTitle": "Oturum yüklenemedi",
   "cards.assembleFailed": "Birleştirilemedi: {{message}}",
   "cards.assembling": "Oturum birleştiriliyor …",
@@ -365,6 +365,23 @@ const tr = {
   "diagnostics.row": "{{stored}} depoda · {{shipped}} teslim edildi · {{verified}} kaynak kontrolü yapıldı",
   "diagnostics.backends": "Veri deposu: {{data}} · Görüntü deposu: {{images}} · Klip deposu: {{clips}}",
   "diagnostics.loading": "Yükleniyor …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "Kelime okuma",
+  "drill.polite": "Nezaket ekleri",
+  "drill.irregularPast": "Düzensiz fiiller",
+  "drill.serEstar": "ser mi estar mi",
+  "drill.prompt.deutschLesen": "Bu kelime ne anlama geliyor?",
+  "drill.prompt.polite": "Sona hangi ek uyar?",
+  "drill.prompt.irregularPast": "Bu fiilin ikinci hali hangisidir?",
+  "drill.prompt.serEstar": "ser mi estar mi?",
+  "skill.lesenSchreiben": "Okuma ve yazma",
+  "wordSpeaking.noneFor": "{{language}} için henüz kelime malzemesi yok",
+  "wordSpeaking.prompt": "Dinle ve tekrar et — {{language}}:",
+  "wordSpeaking.note": "Modeli dinle ve yüksek sesle tekrarla. Bu alıştırma hiçbir şeyi ölçmez ve değerlendirmez — tekrar planını da değiştirmez.",
+  "wordSpeaking.summary": "{{count}} kelime tekrar edildi.",
+  "wordSpeaking.noScore": "Puan yok, tekrar planı değişmedi.",
+  "wordSpeaking.progress": "Kelime {{index}}/{{total}}",
 } as const;
 
 export default tr;

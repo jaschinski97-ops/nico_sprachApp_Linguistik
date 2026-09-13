@@ -16,7 +16,6 @@ import { ThemedView } from '@/components/themed-view';
 import { WritingRunner } from '@/components/writing-runner';
 import { Spacing, ThemeColor } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import { Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
 import {
@@ -35,6 +34,14 @@ import {
 import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
 import { rateCard } from '@/lib/repository';
 import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
+import {
+  groupsForDirection,
+  modeKey,
+  modeLabel,
+  modesForDirection,
+  type Mode,
+} from '@/lib/exercise-catalog';
+import { WordSpeakingRunner } from '@/components/word-speaking-runner';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
@@ -63,26 +70,6 @@ const RATING_COLORS: Record<Rating, { bg: ThemeColor; text: ThemeColor }> = {
   4: { bg: 'rateEasyBg', text: 'rateEasyText' },
 };
 
-/** Die Wort-Sprechübung und die Auswahlübungen als Übersetzungsschlüssel. */
-const DRILL_KEYS: Record<DrillId, TranslationKey> = {
-  tone: 'drill.tone',
-  toneRule: 'drill.toneRule',
-  article: 'drill.article',
-  verbForms: 'drill.verbForms',
-  stressRule: 'drill.stressRule',
-  spelling: 'drill.spelling',
-  stressHear: 'drill.stressHear',
-  soundSpelling: 'drill.soundSpelling',
-};
-
-/** Fehlertext eines gescheiterten Ladevorgangs — wie im Fortschritts-Reiter. */
-function messageOf(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
-}
-
-/** Karteikarten oder eine der richtungseigenen Übungen. */
-type Mode = 'cards' | DrillId | 'speaking' | 'writing' | 'dictation' | SentenceMode;
-
 /**
  * Ist das eine Richtung, die es wirklich gibt?
  *
@@ -93,6 +80,11 @@ type Mode = 'cards' | DrillId | 'speaking' | 'writing' | 'dictation' | SentenceM
  * types`), damit Profil, Auswahl und Screens dieselbe Schranke lesen.
  */
 
+/** Fehlertext eines gescheiterten Ladevorgangs — wie im Fortschritts-Reiter. */
+function messageOf(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}
+
 function parseMode(value: unknown, direction: PairDirection): Mode {
   // SEIT AE-66 ÜBER DIE MODESLISTE STATT EINZELNER LITERALE: `?mode=shadowing`
   // ist für jede Richtung gültig oder fällt auf Karteikarten zurück — auch ein
@@ -102,106 +94,6 @@ function parseMode(value: unknown, direction: PairDirection): Mode {
   return typeof value === 'string' && modes.includes(value) ? (value as Mode) : 'cards';
 }
 
-/**
- * Die Übungsliste einer Richtung.
- *
- * SEIT STUFE 1 ÜBER `pairLanguageOf`: Kreuzrichtungen erben die Übungsstoffe
- * ihrer ZIELsprache — `en_to_es` bekommt die Betonungsübungen, `es_to_th` die
- * Ton-Übungen; die deutschen Grammatikübungen bleiben an `_to_de` gebunden
- * (`drillsForDirection`). Das Diktat bleibt in jeder Liste: Sein Stoff ist
- * je Sprache geregelt, und der Runner zeigt für Sprachen ohne Stoff den
- * ehrlichen Leerzustand.
- *
- * FREIES SCHREIBEN BLEIBT DE-GEANKERT: Die Schreibaufgabe fragt den
- * deutschen Bestand ab (`lib/writing/prompt` zeigt das deutsche Stichwort
- * bzw. die deutsche Zielform). Für Kreuzrichtungen wäre der „Anker“ das
- * falsche Brückenwort — statt falscher Aufgaben bleibt die Übung draußen,
- * bis die Schreib-Schicht Brückenanker kennt (Stufe 2).
- */
-function modesForDirection(direction: PairDirection): Mode[] {
-  const language = pairLanguageOf(direction);
-  return [
-    'cards',
-    ...drillsForDirection(direction),
-    // Die Wort-Sprechübung misst Tonhöhenkonturen gegen geprüfte Silbentöne
-    // und ist deshalb an Thai gebunden (AE-48) — aber seit AE-66 in BEIDEN
-    // Richtungen des Thai-Paares, denn Thai aussprechen wird in beiden
-    // geübt. Für andere Sprachen fällt sie weg, bis ein vergleichbares
-    // Messverfahren gebaut ist.
-    ...(language === 'th' ? (['speaking'] as const) : []),
-    // Die Satzübungen gehören seit AE-66 zu jeder Richtung jedes Paars. Welche
-    // Sprache tatsächlich Satzstoff hat, entscheidet allein die Registry in
-    // `data/sentence-tasks.ts`; eine Sprache ohne geprüfte Sätze zeigt einen
-    // ehrlichen Hinweis statt erfundenem Stoff.
-    ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
-    // Das Diktat (Roadmap v2, Phase 1) gehört zu jeder Richtung: Der Runner
-    // holt sich Stoff, Bewertung und Karte selbst und zeigt für Sprachen
-    // ohne Diktatstoff einen ehrlichen Leerzustand.
-    'dictation',
-    // Freies Schreiben nur im de-geankerten Bestand (siehe oben) — bisher in
-    // BEIDEN Richtungen, anders als die Auswahlübungen (Phase 14).
-    ...(isDeAnchored(direction) ? (['writing'] as const) : []),
-  ];
-}
-
-function modeKey(mode: Mode): TranslationKey {
-  if (mode === 'cards') return 'mode.cards';
-  if (mode === 'speaking') return 'mode.speaking';
-  if (mode === 'writing') return 'mode.writing';
-  if (mode === 'shadowing') return 'mode.shadowing';
-  if (mode === 'sentenceRepeat') return 'mode.sentenceRepeat';
-  if (mode === 'sentenceListening') return 'mode.sentenceListening';
-  if (mode === 'dictation') return 'mode.dictation';
-  return DRILL_KEYS[mode];
-}
-
-/** Beschriftung eines Übungsmodus in der aktuellen UI-Sprache. */
-function modeLabel(mode: Mode, t: (key: TranslationKey) => string): string {
-  return t(modeKey(mode));
-}
-
-/**
- * Die Übungen nach Fertigkeit gruppiert (Phase 18).
- *
- * VORHER WAR ES EINE FLACHE REIHE, und die sagte nicht, dass „Töne hören",
- * „Ton herleiten", „Artikel" und „Schreiben" vier verschiedene Dinge üben.
- * Gruppiert sieht man auf einen Blick, was eine Richtung abdeckt — Hören,
- * Lesen, Sprechen, Schreiben, dazu Wortschatz und deutsche Grammatik.
- *
- * Die Reihenfolge ist fest und für alle Sprachen dieselbe: Wer von Thai auf
- * Spanisch wechselt, sucht „Hören" nicht an einer neuen Stelle.
- */
-type Group = { label: TranslationKey; modes: Mode[] };
-
-function groupsForDirection(direction: PairDirection): Group[] {
-  const modes = modesForDirection(direction);
-  const drills = modes.filter((mode): mode is DrillId => mode in DRILL_META);
-  const bySkill = (skill: 'hoeren' | 'lesen' | 'grammatik') =>
-    drills.filter((drill) => DRILL_META[drill].skill === skill);
-
-  const groups: Group[] = [{ label: 'skill.wortschatz', modes: ['cards'] }];
-  const hoeren: Mode[] = bySkill('hoeren');
-  hoeren.push('sentenceListening', 'dictation');
-  groups.push({ label: 'skill.hoeren', modes: hoeren });
-  const lesen = bySkill('lesen');
-  if (lesen.length > 0) groups.push({ label: 'skill.lesen', modes: lesen });
-  // „Sprechen" enthält die Wort-Übung nur bei Thai (AE-48); die Satzübungen
-  // gehören seit AE-66 zu jeder Sprache — mit oder ohne Wort-Übung davor.
-  const sprechen: Mode[] = [];
-  if (modes.includes('speaking')) sprechen.push('speaking');
-  sprechen.push('shadowing', 'sentenceRepeat');
-  groups.push({ label: 'skill.sprechen', modes: sprechen });
-  if (modes.includes('writing')) groups.push({ label: 'skill.schreiben', modes: ['writing'] });
-  const grammatik = bySkill('grammatik');
-  if (grammatik.length > 0) groups.push({ label: 'skill.grammatik', modes: grammatik });
-  return groups;
-}
-
-/**
- * Rückweg zur Übersicht (Nutzerwunsch 13.09.): Der Lern-Reiter ist ein Tab,
- * aber ein sichtbarer Rückschritt über dem Titel ist der ehrlichere Gegenpart
- * zum „Lernen"-Knopf der Übersicht, der hierher führt.
- */
 function ZurueckZurUebersicht() {
   const { t } = useLocale();
   const theme = useTheme();
@@ -423,10 +315,14 @@ function ReviewBody({
           onExit={onExit}
         />
       ) : mode === 'speaking' ? (
-        <SpeakingRunner
-          key={`${direction}:speaking`}
-          onExit={onExit}
-        />
+        // Thai: die gemessene Tonkontur-Übung (AE-48). Englisch/Spanisch:
+        // Nachsprechen mit Musterlösung und ehrlicher Selbst-Einschätzung —
+        // eine Kontur-Messung gibt es dort nicht, und behauptet wird keine.
+        pairLanguageOf(direction) === 'th' ? (
+          <SpeakingRunner key={`${direction}:speaking`} onExit={onExit} />
+        ) : (
+          <WordSpeakingRunner key={`${direction}:speaking`} direction={direction} onExit={onExit} />
+        )
       ) : (
         <DrillRunner
           drill={mode}

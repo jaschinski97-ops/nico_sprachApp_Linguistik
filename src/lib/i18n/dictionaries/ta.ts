@@ -79,7 +79,7 @@ const ta = {
   "skill.lesen": "படிக்கவும்",
   "skill.sprechen": "பேசுங்கள்",
   "skill.schreiben": "எழுதுங்கள்",
-  "skill.grammatik": "ஜெர்மன் இலக்கணம்",
+  "skill.grammatik": "இலக்கணம்",
   "cards.loadFailedTitle": "அமைப்பு ஏற்ற முடியவில்லை",
   "cards.assembleFailed": "ஒருங்கிணைக்க முடியவில்லை: {{message}}",
   "cards.assembling": "அமைப்பு நடைபெற்று வருகிறது ...",
@@ -365,6 +365,23 @@ const ta = {
   "diagnostics.row": "{{stored}} சேமிக்கப்பட்டது · {{shipped}} அனுப்பப்பட்டது · {{verified}} ஆதாரமாக உறுதிப்படுத்தப்பட்டது",
   "diagnostics.backends": "தரவியல்: {{data}} · படம் சேமிப்பு: {{images}} · கிளிப் சேமிப்பு: {{clips}}",
   "diagnostics.loading": "ஏற்றுகிறது …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "சொல் வாசிப்பு",
+  "drill.polite": "மரியாதை இடைச்சொல்",
+  "drill.irregularPast": "ஒழுங்கற்ற வினைச்சொற்கள்",
+  "drill.serEstar": "ser அல்லது estar",
+  "drill.prompt.deutschLesen": "இந்த சொல்லின் பொருள் என்ன?",
+  "drill.prompt.polite": "இறுதியில் எந்த இடைச்சொல் பொருத்தம்?",
+  "drill.prompt.irregularPast": "இந்த வினைச்சொல்லின் இரண்டாம் வடிவம் எது?",
+  "drill.prompt.serEstar": "ser அல்லது estar?",
+  "skill.lesenSchreiben": "வாசிப்பு & எழுத்து",
+  "wordSpeaking.noneFor": "{{language}}-க்கு இன்னும் சொற்கள் இல்லை",
+  "wordSpeaking.prompt": "கேட்டு ஒத்திகை பாருங்கள் — {{language}}:",
+  "wordSpeaking.note": "மாதிரியைக் கேட்டு சத்தமாகப் படியுங்கள். இந்தப் பயிற்சி எதையும் அளக்கவோ மதிப்பிடவோ செய்யாது — உங்கள் மறுபார்வைத் திட்டத்தையும் மாற்றாது.",
+  "wordSpeaking.summary": "{{count}} சொற்கள் ஒத்திகை செய்யப்பட்டன.",
+  "wordSpeaking.noScore": "மதிப்பெண் இல்லை, மறுபார்வைத் திட்டத்தில் மாற்றம் இல்லை.",
+  "wordSpeaking.progress": "சொல் {{index}}/{{total}}",
 } as const;
 
 export default ta;

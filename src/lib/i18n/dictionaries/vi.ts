@@ -79,7 +79,7 @@ const vi = {
   "skill.lesen": "Đọc",
   "skill.sprechen": "Nói",
   "skill.schreiben": "Viết",
-  "skill.grammatik": "Ngữ pháp tiếng Đức",
+  "skill.grammatik": "Ngữ pháp",
   "cards.loadFailedTitle": "Không thể tải phiên",
   "cards.assembleFailed": "Không thể lắp ráp: {{message}}",
   "cards.assembling": "Đang lắp ráp phiên …",
@@ -365,6 +365,23 @@ const vi = {
   "diagnostics.row": "{{stored}} trong bộ nhớ · {{shipped}} đã giao · {{verified}} đã kiểm tra nguồn",
   "diagnostics.backends": "Kho dữ liệu: {{data}} · Lưu hình: {{images}} · Lưu clip: {{clips}}",
   "diagnostics.loading": "Đang tải …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "Đọc từ",
+  "drill.polite": "Trợ từ lịch sự",
+  "drill.irregularPast": "Động từ bất quy tắc",
+  "drill.serEstar": "ser hay estar",
+  "drill.prompt.deutschLesen": "Từ này nghĩa là gì?",
+  "drill.prompt.polite": "Trợ từ nào phù hợp ở cuối?",
+  "drill.prompt.irregularPast": "Dạng thứ hai của động từ này là gì?",
+  "drill.prompt.serEstar": "ser hay estar?",
+  "skill.lesenSchreiben": "Đọc & viết",
+  "wordSpeaking.noneFor": "Chưa có từ vựng cho {{language}}",
+  "wordSpeaking.prompt": "Nghe và nhắc lại — {{language}}:",
+  "wordSpeaking.note": "Nghe mẫu rồi nhắc lại to rõ. Bài tập này không đo lường và không chấm điểm — cũng không thay đổi lịch ôn tập của bạn.",
+  "wordSpeaking.summary": "Đã nhắc lại {{count}} từ.",
+  "wordSpeaking.noScore": "Không có điểm, không thay đổi lịch ôn tập.",
+  "wordSpeaking.progress": "Từ {{index}}/{{total}}",
 } as const;
 
 export default vi;

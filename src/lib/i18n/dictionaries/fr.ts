@@ -79,7 +79,7 @@ const fr = {
   "skill.lesen": "Lecture",
   "skill.sprechen": "Parole",
   "skill.schreiben": "Écriture",
-  "skill.grammatik": "Grammaire allemande",
+  "skill.grammatik": "Grammaire",
   "cards.loadFailedTitle": "La session n'a pas pu être chargée",
   "cards.assembleFailed": "Impossible de rassembler : {{message}}",
   "cards.assembling": "Session en cours de préparation …",
@@ -365,6 +365,23 @@ const fr = {
   "diagnostics.row": "{{stored}} en mémoire · {{shipped}} expédié · {{verified}} vérifié",
   "diagnostics.backends": "Stockage des données : {{data}} · Stockage des images : {{images}} · Stockage des clips : {{clips}}",
   "diagnostics.loading": "Chargement …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "Lecture de mots",
+  "drill.polite": "Particules de politesse",
+  "drill.irregularPast": "Verbes irréguliers",
+  "drill.serEstar": "ser ou estar",
+  "drill.prompt.deutschLesen": "Que signifie ce mot ?",
+  "drill.prompt.polite": "Quelle particule convient à la fin ?",
+  "drill.prompt.irregularPast": "Quelle est la deuxième forme de ce verbe ?",
+  "drill.prompt.serEstar": "ser ou estar ?",
+  "skill.lesenSchreiben": "Lecture et écriture",
+  "wordSpeaking.noneFor": "Pas encore de matériel de mots pour {{language}}",
+  "wordSpeaking.prompt": "Écoute et répète — {{language}} :",
+  "wordSpeaking.note": "Écoute le modèle et répète-le à voix haute. Cet exercice ne mesure rien et ne juge rien — il ne change pas non plus ton planning de révision.",
+  "wordSpeaking.summary": "{{count}} mots répétés.",
+  "wordSpeaking.noScore": "Aucun score, aucun changement du planning de révision.",
+  "wordSpeaking.progress": "Mot {{index}} sur {{total}}",
 } as const;
 
 export default fr;

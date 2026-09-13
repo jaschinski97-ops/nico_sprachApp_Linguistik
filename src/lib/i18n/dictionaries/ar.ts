@@ -80,7 +80,7 @@ const ar = {
   "skill.lesen": "القراءة",
   "skill.sprechen": "التحدث",
   "skill.schreiben": "الكتابة",
-  "skill.grammatik": "القواعد الألمانية",
+  "skill.grammatik": "القواعد",
   "cards.loadFailedTitle": "لم يتم تحميل الجلسة",
   "cards.assembleFailed": "لم يتم التجميع: {{message}}",
   "cards.assembling": "يتم تجميع الجلسة ...",
@@ -366,6 +366,23 @@ const ar = {
   "diagnostics.row": "{{stored}} في الذاكرة · {{shipped}} تم الشحن · {{verified}} تم التحقق من المصادر",
   "diagnostics.backends": "مخزن البيانات: {{data}} · تخزين الصور: {{images}} · تخزين المقاطع: {{clips}}",
   "diagnostics.loading": "جارٍ التحميل …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "قراءة الكلمات",
+  "drill.polite": "أدوات التأدب",
+  "drill.irregularPast": "الأفعال الشاذة",
+  "drill.serEstar": "ser أم estar",
+  "drill.prompt.deutschLesen": "ما معنى هذه الكلمة؟",
+  "drill.prompt.polite": "أي أداة تأدب تناسب النهاية؟",
+  "drill.prompt.irregularPast": "ما الصورة الثانية لهذا الفعل؟",
+  "drill.prompt.serEstar": "ser أم estar؟",
+  "skill.lesenSchreiben": "القراءة والكتابة",
+  "wordSpeaking.noneFor": "لا توجد كلمات بعد للغة {{language}}",
+  "wordSpeaking.prompt": "اسمع وردّد — {{language}}:",
+  "wordSpeaking.note": "اسمع النموذج ثم ردّد بصوت مسموع. هذا التمرين لا يقيس شيئًا ولا يقيّم شيئًا — ولا يغيّر خطة مراجعتك.",
+  "wordSpeaking.summary": "تم تكرار {{count}} كلمة.",
+  "wordSpeaking.noScore": "بدون درجات، وبدون تغيير في خطة المراجعة.",
+  "wordSpeaking.progress": "الكلمة {{index}} من {{total}}",
 } as const;
 
 export default ar;

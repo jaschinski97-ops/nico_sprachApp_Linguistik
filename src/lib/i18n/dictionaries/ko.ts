@@ -79,7 +79,7 @@ const ko = {
   "skill.lesen": "읽기",
   "skill.sprechen": "말하기",
   "skill.schreiben": "쓰기",
-  "skill.grammatik": "독일어 문법",
+  "skill.grammatik": "문법",
   "cards.loadFailedTitle": "세션을 불러올 수 없습니다",
   "cards.assembleFailed": "구성할 수 없습니다: {{message}}",
   "cards.assembling": "세션 구성 중 …",
@@ -365,6 +365,23 @@ const ko = {
   "diagnostics.row": "{{stored}} 저장됨 · {{shipped}} 배송됨 · {{verified}} 검증됨",
   "diagnostics.backends": "데이터 저장소: {{data}} · 이미지 저장소: {{images}} · 클립 저장소: {{clips}}",
   "diagnostics.loading": "로딩 중 …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "단어 읽기",
+  "drill.polite": "정중한 어미",
+  "drill.irregularPast": "불규칙 동사",
+  "drill.serEstar": "ser 아니면 estar",
+  "drill.prompt.deutschLesen": "이 단어는 무슨 뜻인가요?",
+  "drill.prompt.polite": "끝에 어울리는 어미는 무엇인가요?",
+  "drill.prompt.irregularPast": "이 동사의 두 번째 형태는 무엇인가요?",
+  "drill.prompt.serEstar": "ser입니까, 아니면 estar입니까?",
+  "skill.lesenSchreiben": "읽기와 쓰기",
+  "wordSpeaking.noneFor": "{{language}} 단어 재료가 아직 없습니다",
+  "wordSpeaking.prompt": "듣고 따라 말하기 — {{language}}:",
+  "wordSpeaking.note": "모범을 듣고 소리 내어 따라 말하세요. 이 연습은 측정하지도 평가하지도 않으며 — 복습 계획도 바꾸지 않습니다.",
+  "wordSpeaking.summary": "{{count}}개 단어를 따라 말했습니다.",
+  "wordSpeaking.noScore": "점수 없음, 복습 계획 변경 없음.",
+  "wordSpeaking.progress": "단어 {{index}}/{{total}}",
 } as const;
 
 export default ko;

@@ -96,7 +96,7 @@ const es: Partial<Record<TranslationKey, string>> = {
   'skill.lesen': 'Leer',
   'skill.sprechen': 'Hablar',
   'skill.schreiben': 'Escribir',
-  'skill.grammatik': 'Gramática alemana',
+  'skill.grammatik': 'Gramática',
   'cards.loadFailedTitle': 'No se pudo cargar la sesión',
   'cards.assembleFailed': 'No se pudo componer: {{message}}',
   'cards.assembling': 'Componiendo la sesión …',
@@ -451,6 +451,22 @@ const es: Partial<Record<TranslationKey, string>> = {
   'diagnostics.loading': 'Cargando …',
 
   /* ---------- Tarjeta de generador (generator-card, depuración) ---------- */
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  'drill.deutschLesen': 'Lectura de palabras',
+  'drill.polite': 'Partículas de cortesía',
+  'drill.irregularPast': 'Verbos irregulares',
+  'drill.serEstar': 'ser o estar',
+  'drill.prompt.deutschLesen': '¿Qué significa esta palabra?',
+  'drill.prompt.polite': '¿Qué partícula va al final?',
+  'drill.prompt.irregularPast': '¿Cuál es la segunda forma de este verbo?',
+  'drill.prompt.serEstar': '¿ser o estar?',
+  'skill.lesenSchreiben': 'Leer y escribir',
+  'wordSpeaking.noneFor': 'Sin material de palabras para {{language}}',
+  'wordSpeaking.prompt': 'Escucha y repite — {{language}}:',
+  'wordSpeaking.note': 'Escucha el modelo y repítelo en voz alta. Este ejercicio no mide ni evalúa nada — tampoco cambia tu plan de repaso.',
+  'wordSpeaking.summary': '{{count}} palabras repetidas.',
+  'wordSpeaking.noScore': 'Sin puntos ni cambios en el plan de repaso.',
+  'wordSpeaking.progress': 'Palabra {{index}} de {{total}}',
 };
 
 export default es;

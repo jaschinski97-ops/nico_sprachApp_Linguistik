@@ -104,12 +104,20 @@ const de = {
   'drill.spelling': 'Gleiche Schreibung, anderer Laut',
   'drill.stressHear': 'Betonung hören',
   'drill.soundSpelling': 'Wort hören',
+  'drill.deutschLesen': 'Wort lesen',
+  'drill.polite': 'Höflichkeitspartikel',
+  'drill.irregularPast': 'Unregelmäßige Verben',
+  'drill.serEstar': 'ser oder estar',
   'skill.wortschatz': 'Wortschatz',
   'skill.hoeren': 'Hören',
+  // Lern-Reiter: die einheitliche Kategorie (Schreiben gehört seit dem
+  // Umbau dazu). Die zwei getrennten Keys hierunter nutzt die Prüfung
+  // (Goethe-Prüfungsteile) und bleiben deshalb bestehen.
+  'skill.lesenSchreiben': 'Lesen & Schreiben',
   'skill.lesen': 'Lesen',
-  'skill.sprechen': 'Sprechen',
   'skill.schreiben': 'Schreiben',
-  'skill.grammatik': 'Deutsche Grammatik',
+  'skill.sprechen': 'Sprechen',
+  'skill.grammatik': 'Grammatik',
   'cards.loadFailedTitle': 'Sitzung konnte nicht geladen werden',
   'cards.assembleFailed': 'Konnte nicht zusammengestellt werden: {{message}}',
   'cards.assembling': 'Sitzung wird zusammengestellt …',
@@ -281,6 +289,10 @@ const de = {
   'drill.prompt.spelling': 'Wie klingt dieses Schriftstück hier?',
   'drill.prompt.stressHear': 'Welche Silbe hörst du betont?',
   'drill.prompt.soundSpelling': 'Welches Wort hörst du?',
+  'drill.prompt.deutschLesen': 'Was bedeutet dieses Wort?',
+  'drill.prompt.polite': 'Welche Partikel passt an das Ende?',
+  'drill.prompt.irregularPast': 'Welche zweite Form gehört zu diesem Verb?',
+  'drill.prompt.serEstar': 'ser oder estar?',
 
   /* ---------- Prüfungsaufgabe (exam-runner) ---------- */
   'exam.taskMultipleChoice': 'Auswahl (A/B/C)',
@@ -372,6 +384,15 @@ const de = {
     'Bewertete stimmhafte Strecke: {{duration}} ms · Aufnahme: {{seconds}} s{{limit}}',
   'speaking.autoStopped': ' · automatisch gestoppt',
   'speaking.limitationsTitle': 'Was diese Rückmeldung nicht bewertet',
+
+  /* ---------- Wort-Nachsprechen (word-speaking-runner, en/es) ---------- */
+  'wordSpeaking.noneFor': 'Kein Wortmaterial für {{language}}',
+  'wordSpeaking.prompt': 'Hör zu und sprich nach — {{language}}:',
+  'wordSpeaking.note':
+    'Hör die Musterlösung und sprich laut nach. Diese Übung misst nichts und bewertet nichts — sie verändert auch den Wiederholungsplan nicht.',
+  'wordSpeaking.summary': '{{count}} Wörter nachgesprochen.',
+  'wordSpeaking.noScore': 'Keine Punktzahl, keine Änderung am Wiederholungsplan.',
+  'wordSpeaking.progress': 'Wort {{index}} von {{total}}',
 
   /* ---------- Diktat (dictation-runner) ---------- */
   'dictation.promptTh': 'Schreib den Satz auf, den du hörst — mit Tonzeichen.',

@@ -298,6 +298,125 @@ export function buildVerbFormQuestion(
   };
 }
 
+/* ---------- Wort lesen (X_to_de — Deutsch als Ziel) ---------- */
+
+/**
+ * Das deutsche Wort GELESEN verstehen: Wort sichtbar, Bedeutung wählen.
+ *
+ * WARUM DIESE ÜBUNG: Der Kategorien-Gleichstand (Lern-Reiter-Ausbau
+ * 13.09.) verlangt für das Deutsch-Ziel auch Lesestoff — vorher gab es
+ * dort nur Hören (Diktat), Schreiben und Grammatik. Geübt wird
+ * Form-Wiedererkennen: die Schreibung steht da, die Bedeutung kommt aus
+ * dem Gedächtnis. Die falschen Antworten sind echte Wörter derselben
+ * Sprache — dieselbe Regel wie bei allen Ablenkern.
+ *
+ * Bewusst KEIN Hinweis und KEIN Audio: Das Zielwort wäre die Lösung, und
+ * die Aussprache des richtigen Begriffs würde beim Raten mithelfen.
+ */
+export function canBuildDeutschLesenQuestion(entry: VocabEntry): boolean {
+  return entry.german.trim().length > 0 && entry.term.trim().length > 0;
+}
+
+export function buildDeutschLesenQuestion(
+  entry: VocabEntry,
+  pool: VocabEntry[],
+  random: Random
+): DrillQuestion {
+  const visible = entry.german.split(',')[0].trim();
+  const correct = entry.term;
+  const foreign = shuffled(
+    pool
+      .filter((other) => other.id !== entry.id)
+      .map((other) => other.term)
+      .filter((term) => term !== correct),
+    random
+  ).slice(0, 3);
+
+  const options = shuffled([correct, ...foreign], random).map((label) => ({ label }));
+  if (options.length < 4) {
+    throw new Error(`"${entry.id}" hat keinen Ablenker-Bestand — Pool zu klein.`);
+  }
+
+  const parts = [`${entry.term} · ${entry.romanization}`, entry.german];
+  if (entry.note) parts.push(entry.note);
+
+  return {
+    id: `deutschLesen:${entry.id}`,
+    drill: 'deutschLesen',
+    direction: toHub(entry),
+    vocabId: entry.id,
+    visible,
+    visibleHint: null,
+    speak: null,
+    options,
+    correctIndex: options.findIndex((option) => option.label === correct),
+    solution: `${visible} — ${correct}`,
+    explanation: parts.join(' · '),
+  };
+}
+
+/* ---------- Unregelmäßige Verben (de_to_en) ---------- */
+
+/**
+ * Die zweite Form UNREGELMÄSSIGER englischer Verben.
+ *
+ * Nur `irregular: true`-Einträge: Für regelmäßige Verben ist „-ed anhängen"
+ * eine ableitbare Regel — die gehört in eine eigene Herleitungsübung (wie
+ * die Betonungsregel), nicht in eine Liste Übung. Die Formen stehen
+ * quellengeprüft am Eintrag (`englishVerb.past`), nichts wird rekonstruiert.
+ * Die Ablenker sind echte zweite Formen anderer unregelmäßiger Verben —
+ * go/went gegen eat/ate ist genau die Verwechslung, die im Englischen
+ * passiert.
+ */
+export function canBuildIrregularPastQuestion(entry: VocabEntry): boolean {
+  return entry.language === 'en' && Boolean(entry.englishVerb?.irregular && entry.englishVerb.past);
+}
+
+export function buildIrregularPastQuestion(
+  entry: VocabEntry,
+  pool: VocabEntry[],
+  random: Random
+): DrillQuestion {
+  const verb = entry.englishVerb;
+  if (!verb?.past) {
+    throw new Error(`"${entry.id}" hat keine zweite Form — keine unregelmäßige Übung möglich.`);
+  }
+
+  const correct = verb.past;
+  const distractors = shuffled(
+    pool
+      .filter((other) => other.id !== entry.id && other.englishVerb?.irregular)
+      .map((other) => other.englishVerb!.past)
+      .filter((form) => form !== correct),
+    random
+  ).slice(0, 3);
+  if (distractors.length < 3) {
+    throw new Error(`"${entry.id}" hat keinen Ablenker-Bestand — zu wenige unregelmäßige Verben.`);
+  }
+
+  const options = shuffled([correct, ...distractors], random).map((label) => ({ label }));
+  const parts = [
+    `${entry.term} — ${correct} — ${verb.participle}`,
+    verb.irregular ? 'unregelmäßig' : 'regelmäßig',
+  ];
+  if (entry.ipa) parts.push(`/${entry.ipa}/`);
+  if (entry.note) parts.push(entry.note);
+
+  return {
+    id: `irregularPast:${entry.id}`,
+    drill: 'irregularPast',
+    direction: toTarget(entry),
+    vocabId: entry.id,
+    visible: entry.term,
+    visibleHint: entry.german,
+    speak: null,
+    options,
+    correctIndex: options.findIndex((option) => option.label === correct),
+    solution: `${entry.term} → ${correct}`,
+    explanation: parts.join(' · '),
+  };
+}
+
 /* ---------- Betonung herleiten (de_to_es) ---------- */
 
 /**

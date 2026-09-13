@@ -79,7 +79,7 @@ const hi = {
   "skill.lesen": "पढ़ना",
   "skill.sprechen": "बोलना",
   "skill.schreiben": "लिखना",
-  "skill.grammatik": "जर्मन व्याकरण",
+  "skill.grammatik": "व्याकरण",
   "cards.loadFailedTitle": "सत्र लोड नहीं हो सका",
   "cards.assembleFailed": "संगठित नहीं किया जा सका: {{message}}",
   "cards.assembling": "सत्र संगठित किया जा रहा है …",
@@ -365,6 +365,23 @@ const hi = {
   "diagnostics.row": "{{stored}} संग्रहित · {{shipped}} वितरित · {{verified}} स्रोत सत्यापित",
   "diagnostics.backends": "डेटा भंडार: {{data}} · छवि भंडार: {{images}} · क्लिप भंडार: {{clips}}",
   "diagnostics.loading": "लोड हो रहा है …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "शब्द पढ़ना",
+  "drill.polite": "विनम्रता के शब्द",
+  "drill.irregularPast": "अनियमित क्रियाएँ",
+  "drill.serEstar": "ser या estar",
+  "drill.prompt.deutschLesen": "इस शब्द का अर्थ क्या है?",
+  "drill.prompt.polite": "अंत में कौन-सा शब्द उचित है?",
+  "drill.prompt.irregularPast": "इस क्रिया का दूसरा रूप कौन-सा है?",
+  "drill.prompt.serEstar": "ser या estar?",
+  "skill.lesenSchreiben": "पढ़ना और लिखना",
+  "wordSpeaking.noneFor": "{{language}} के लिए अभी कोई शब्द सामग्री नहीं",
+  "wordSpeaking.prompt": "सुनें और दोहराएँ — {{language}}:",
+  "wordSpeaking.note": "उदाहरण सुनें और ऊँची आवाज़ में दोहराएँ। यह अभ्यास कुछ नापता और आँकता नहीं है — आपकी पुनरावृत्ति योजना भी नहीं बदलती।",
+  "wordSpeaking.summary": "{{count}} शब्द दोहराए गए।",
+  "wordSpeaking.noScore": "कोई अंक नहीं, पुनरावृत्ति योजना में कोई बदलाव नहीं।",
+  "wordSpeaking.progress": "शब्द {{index}}/{{total}}",
 } as const;
 
 export default hi;

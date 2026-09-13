@@ -79,7 +79,7 @@ const ja = {
   "skill.lesen": "読む",
   "skill.sprechen": "話す",
   "skill.schreiben": "書く",
-  "skill.grammatik": "ドイツ語文法",
+  "skill.grammatik": "文法",
   "cards.loadFailedTitle": "セッションを読み込めませんでした",
   "cards.assembleFailed": "組み立てに失敗しました: {{message}}",
   "cards.assembling": "セッションを組み立てています…",
@@ -365,6 +365,23 @@ const ja = {
   "diagnostics.row": "{{stored}} 保存済み · {{shipped}} 出荷済み · {{verified}} 検証済み",
   "diagnostics.backends": "データストレージ: {{data}} · 画像ストレージ: {{images}} · クリップストレージ: {{clips}}",
   "diagnostics.loading": "読み込み中 …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "単語を読む",
+  "drill.polite": "丁寧な助詞",
+  "drill.irregularPast": "不規則動詞",
+  "drill.serEstar": "ser か estar か",
+  "drill.prompt.deutschLesen": "この単語はどういう意味ですか？",
+  "drill.prompt.polite": "語尾に合う助詞はどれですか？",
+  "drill.prompt.irregularPast": "この動詞の第二形はどれですか？",
+  "drill.prompt.serEstar": "ser ですか、estar ですか？",
+  "skill.lesenSchreiben": "読む・書く",
+  "wordSpeaking.noneFor": "{{language}}の単語素材はまだありません",
+  "wordSpeaking.prompt": "聞いて発音しよう — {{language}}：",
+  "wordSpeaking.note": "お手本を聞いて、声に出して繰り返しましょう。この練習は測定も評価も行いません — 復習の予定も変わりません。",
+  "wordSpeaking.summary": "{{count}}語を読み上げました。",
+  "wordSpeaking.noScore": "得点なし、復習予定の変更なし。",
+  "wordSpeaking.progress": "単語 {{index}} / {{total}}",
 } as const;
 
 export default ja;

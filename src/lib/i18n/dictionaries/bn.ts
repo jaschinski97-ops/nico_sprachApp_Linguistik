@@ -79,7 +79,7 @@ const bn = {
   "skill.lesen": "পড়া",
   "skill.sprechen": "কথা বলা",
   "skill.schreiben": "লেখা",
-  "skill.grammatik": "জার্মান ব্যাকরণ",
+  "skill.grammatik": "ব্যাকরণ",
   "cards.loadFailedTitle": "সেশন লোড করা যায়নি",
   "cards.assembleFailed": "জমা দেওয়া যায়নি: {{message}}",
   "cards.assembling": "সেশন তৈরি হচ্ছে …",
@@ -365,6 +365,23 @@ const bn = {
   "diagnostics.row": "{{stored}} সংরক্ষিত · {{shipped}} বিতরণ করা · {{verified}} উৎস যাচাইকৃত",
   "diagnostics.backends": "ডেটা স্টোর: {{data}} · ছবি স্টোরেজ: {{images}} · ক্লিপ স্টোরেজ: {{clips}}",
   "diagnostics.loading": "লোড হচ্ছে …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "শব্দ পড়া",
+  "drill.polite": "ভদ্রতা সূচক শব্দ",
+  "drill.irregularPast": "অনিয়মিত ক্রিয়া",
+  "drill.serEstar": "ser নাকি estar",
+  "drill.prompt.deutschLesen": "এই শব্দের অর্থ কী?",
+  "drill.prompt.polite": "শেষে কোন শব্দটি মানানসই?",
+  "drill.prompt.irregularPast": "এই ক্রিয়ার দ্বিতীয় রূপ কোনটি?",
+  "drill.prompt.serEstar": "ser নাকি estar?",
+  "skill.lesenSchreiben": "পড়া ও লেখা",
+  "wordSpeaking.noneFor": "{{language}}-এর জন্য এখনও কোনো শব্দ নেই",
+  "wordSpeaking.prompt": "শুনুন ও অনুসরণ করুন — {{language}}:",
+  "wordSpeaking.note": "নমুনা শুনুন এবং উচ্চস্বরে পড়ুন। এই অনুশীলন কিছু মাপে না বা মূল্যায়ন করে না — আপনার পুনরাবৃত্তির পরিকল্পনাও বদলায় না।",
+  "wordSpeaking.summary": "{{count}}টি শব্দ পড়া হয়েছে।",
+  "wordSpeaking.noScore": "কোনো নম্বর নেই, পুনরাবৃত্তির পরিকল্পনা অপরিবর্তিত।",
+  "wordSpeaking.progress": "শব্দ {{index}}/{{total}}",
 } as const;
 
 export default bn;

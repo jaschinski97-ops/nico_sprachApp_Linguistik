@@ -123,11 +123,17 @@ describe('Die Fertigkeiten sind vollständig zugeordnet', () => {
     }
   });
 
-  it('gibt jeder Zielsprache eine Hör- und eine Leseübung', () => {
-    // Der Punkt dieser Phase: Vorher hatte nur Thai beides.
+  it('gibt jeder Zielsprache eine Hör-, eine Lese- und eine Grammatikübung', () => {
+    // Der Punkt dieser Phase: Vorher hatte nur Thai beides. Seit dem
+    // Lern-Reiter-Ausbau (13.09.) hat jede Sprache auch Grammatik — der
+    // Kategorien-Gleichstand verlangt in jeder Kategorie eine Übung.
     for (const language of ['th', 'es', 'en'] as const) {
       const eigene = DRILLS.filter((drill) => DRILL_META[drill].feature === language);
-      expect(eigene.map((drill) => DRILL_META[drill].skill).sort()).toEqual(['hoeren', 'lesen']);
+      expect(eigene.map((drill) => DRILL_META[drill].skill).sort()).toEqual([
+        'grammatik',
+        'hoeren',
+        'lesen',
+      ]);
     }
   });
 });

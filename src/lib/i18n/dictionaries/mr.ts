@@ -79,7 +79,7 @@ const mr = {
   "skill.lesen": "वाचन",
   "skill.sprechen": "बोलणे",
   "skill.schreiben": "लेखन",
-  "skill.grammatik": "जर्मन व्याकरण",
+  "skill.grammatik": "व्याकरण",
   "cards.loadFailedTitle": "सत्र लोड करण्यात अयशस्वी",
   "cards.assembleFailed": "एकत्र करण्यात अयशस्वी: {{message}}",
   "cards.assembling": "सत्र एकत्रित केले जात आहे …",
@@ -365,6 +365,23 @@ const mr = {
   "diagnostics.row": "{{stored}} संग्रहित · {{shipped}} वितरित · {{verified}} स्रोत पडताळले",
   "diagnostics.backends": "डेटा संग्रह: {{data}} · चित्र संग्रह: {{images}} · क्लिप संग्रह: {{clips}}",
   "diagnostics.loading": "लोड करत आहे …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "शब्द वाचन",
+  "drill.polite": "शिष्टाचार शब्द",
+  "drill.irregularPast": "अनियमित क्रियापदे",
+  "drill.serEstar": "ser की estar",
+  "drill.prompt.deutschLesen": "या शब्दाचा अर्थ काय?",
+  "drill.prompt.polite": "शेवटी कोणता शब्द योग्य?",
+  "drill.prompt.irregularPast": "या क्रियापदाचा दुसरा रूप कोणता?",
+  "drill.prompt.serEstar": "ser की estar?",
+  "skill.lesenSchreiben": "वाचन आणि लेखन",
+  "wordSpeaking.noneFor": "{{language}} साठी अजून शब्दसामग्री नाही",
+  "wordSpeaking.prompt": "ऐका आणि पुन्हा म्हणा — {{language}}:",
+  "wordSpeaking.note": "नमुना ऐका आणि मोठ्याने पुन्हा म्हणा. हा सराव काहीही मोजत नाही किंवा मूल्यमापन करत नाही — पुनरावृत्तीचा आराखडाही बदलत नाही.",
+  "wordSpeaking.summary": "{{count}} शब्द म्हटले.",
+  "wordSpeaking.noScore": "गुण नाहीत, पुनरावृत्तीच्या आराखड्यात बदल नाही.",
+  "wordSpeaking.progress": "शब्द {{index}}/{{total}}",
 } as const;
 
 export default mr;

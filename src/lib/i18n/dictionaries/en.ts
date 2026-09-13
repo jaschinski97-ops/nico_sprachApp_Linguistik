@@ -97,7 +97,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'skill.lesen': 'Reading',
   'skill.sprechen': 'Speaking',
   'skill.schreiben': 'Writing',
-  'skill.grammatik': 'German grammar',
+  'skill.grammatik': 'Grammar',
   'cards.loadFailedTitle': 'Session could not be loaded',
   'cards.assembleFailed': 'Could not be assembled: {{message}}',
   'cards.assembling': 'Assembling session …',
@@ -453,6 +453,22 @@ const en: Partial<Record<TranslationKey, string>> = {
   'diagnostics.loading': 'Loading …',
 
   /* ---------- Generator card (generator-card, debug) ---------- */
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  'drill.deutschLesen': 'Word reading',
+  'drill.polite': 'Polite particles',
+  'drill.irregularPast': 'Irregular verbs',
+  'drill.serEstar': 'ser or estar',
+  'drill.prompt.deutschLesen': 'What does this word mean?',
+  'drill.prompt.polite': 'Which particle fits at the end?',
+  'drill.prompt.irregularPast': 'Which second form belongs to this verb?',
+  'drill.prompt.serEstar': 'ser or estar?',
+  'skill.lesenSchreiben': 'Reading & writing',
+  'wordSpeaking.noneFor': 'No word material for {{language}}',
+  'wordSpeaking.prompt': 'Listen and repeat — {{language}}:',
+  'wordSpeaking.note': 'Listen to the model and speak it out loud. This exercise measures nothing and judges nothing — it does not change your review schedule either.',
+  'wordSpeaking.summary': '{{count}} words spoken aloud.',
+  'wordSpeaking.noScore': 'No score, no change to your review schedule.',
+  'wordSpeaking.progress': 'Word {{index}} of {{total}}',
 };
 
 export default en;

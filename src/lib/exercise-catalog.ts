@@ -1,0 +1,133 @@
+import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
+import type { SentenceMode } from '@/lib/speaking/sentence-session';
+import type { TranslationKey } from '@/lib/i18n';
+import { isDeAnchored, pairLanguageOf, type PairDirection } from '@/lib/languages/types';
+
+/**
+ * Der Übungskatalog des Lern-Reiters (Lern-Reiter-Ausbau 13.09.2026).
+ *
+ * WAS JETZT ANDERS IST: Vorher gruppierte jede Richtung ihre Übungen selbst,
+ * und Gruppen erschienen nur, wenn sie gefüllt waren — Deutsch hatte kein
+ * Lesen, Thai/Englisch/Spanisch keine Grammatik, Englisch/Spanisch keine
+ * Sprech-Übung. Jetzt gibt es ÜBERALL dieselben fünf Kategorien in
+ * derselben Reihenfolge:
+ *
+ *   Wortschatz · Hören · Lesen & Schreiben · Sprechen · Grammatik
+ *
+ * Die Reihenfolge ist fest: Wer von Thai auf Spanisch wechselt, sucht
+ * „Hören“ nicht an einer neuen Stelle. Und die Struktur ist TESTBAR: Der
+ * Paritäts-Test (`exercise-catalog.test.ts`) fährt alle Richtungen durch
+ * und verlangt für jede genau diese fünf Gruppen, jede mit mindestens
+ * einer Übung — „Schreiben“ gehört seit dem Umbau zu „Lesen & Schreiben“.
+ */
+
+/** Karteikarten oder eine der richtungseigenen Übungen. */
+export type Mode = 'cards' | DrillId | 'speaking' | 'writing' | 'dictation' | SentenceMode;
+
+/** Die Wort-Sprechübung und die Auswahlübungen als Übersetzungsschlüssel. */
+export const DRILL_KEYS: Record<DrillId, TranslationKey> = {
+  tone: 'drill.tone',
+  toneRule: 'drill.toneRule',
+  article: 'drill.article',
+  verbForms: 'drill.verbForms',
+  stressRule: 'drill.stressRule',
+  spelling: 'drill.spelling',
+  stressHear: 'drill.stressHear',
+  soundSpelling: 'drill.soundSpelling',
+  deutschLesen: 'drill.deutschLesen',
+  polite: 'drill.polite',
+  irregularPast: 'drill.irregularPast',
+  serEstar: 'drill.serEstar',
+};
+
+/**
+ * Die Übungsliste einer Richtung.
+ *
+ * SEIT STUFE 1 ÜBER `pairLanguageOf`: Kreuzrichtungen erben die Übungsstoffe
+ * ihrer ZIELsprache — `en_to_es` bekommt die Betonungsübungen, `es_to_th` die
+ * Ton-Übungen; die deutschen Grammatikübungen bleiben an `_to_de` gebunden
+ * (`drillsForDirection`). Das Diktat bleibt in jeder Liste: Sein Stoff ist
+ * je Sprache geregelt, und der Runner zeigt für Sprachen ohne Stoff den
+ * ehrlichen Leerzustand.
+ *
+ * SPRECHEN IN JEDER LERNSPRACHE (13.09.): Die Wortkontur-Messung bleibt an
+ * Thai gebunden (AE-48) — für Englisch und Spanisch läuft die Übung als
+ * Nachsprechen mit Musterlösung und ehrlicher Selbst-Einschätzung
+ * (`word-speaking-runner`), für Deutsch ist „Sprechen“ mit Shadowing und
+ * Satzübungen abgedeckt, weil es dort keine eigenständige Wort-Übung gibt.
+ *
+ * FREIES SCHREIBEN BLEIBT DE-GEANKERT: Die Schreibaufgabe fragt den
+ * deutschen Bestand ab (`lib/writing/prompt`). Für Kreuzrichtungen wäre der
+ * „Anker“ das falsche Brückenwort — statt falscher Aufgaben bleibt die
+ * Übung draußen.
+ */
+export function modesForDirection(direction: PairDirection): Mode[] {
+  const language = pairLanguageOf(direction);
+  return [
+    'cards',
+    ...drillsForDirection(direction),
+    // Die Wort-Sprechübung misst bei Thai die Tonhöhenkontur gegen geprüfte
+    // Silbentöne (AE-48); Englisch/Spanisch bekommen dieselbe Übung ohne
+    // Messung (Nachsprechen + Selbst-Einschätzung).
+    ...(language === 'th' || language === 'en' || language === 'es'
+      ? (['speaking'] as const)
+      : []),
+    // Die Satzübungen gehören seit AE-66 zu jeder Richtung jedes Paars.
+    ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
+    'dictation',
+    ...(isDeAnchored(direction) ? (['writing'] as const) : []),
+  ];
+}
+
+export function modeKey(mode: Mode): TranslationKey {
+  if (mode === 'cards') return 'mode.cards';
+  if (mode === 'speaking') return 'mode.speaking';
+  if (mode === 'writing') return 'mode.writing';
+  if (mode === 'shadowing') return 'mode.shadowing';
+  if (mode === 'sentenceRepeat') return 'mode.sentenceRepeat';
+  if (mode === 'sentenceListening') return 'mode.sentenceListening';
+  if (mode === 'dictation') return 'mode.dictation';
+  return DRILL_KEYS[mode];
+}
+
+/** Beschriftung eines Übungsmodus in der aktuellen UI-Sprache. */
+export function modeLabel(
+  mode: Mode,
+  t: (key: TranslationKey) => string
+): string {
+  return t(modeKey(mode));
+}
+
+export type Group = { label: TranslationKey; modes: Mode[] };
+
+/**
+ * Die fünf Kategorien, für JEDE Richtung, in fester Reihenfolge.
+ *
+ * „Schreiben“ steht seit dem Umbau in „Lesen & Schreiben“ (die zwei
+ * Seiten einer Schrift-Fertigkeit), nicht mehr als eigene Gruppe hinter
+ * „Sprechen“ — die alte Gruppe existierte nur für Deutsch und verhieß
+ * den anderen Sprachen eine Lücke, die keine war.
+ */
+export function groupsForDirection(direction: PairDirection): Group[] {
+  const modes = modesForDirection(direction);
+  const drills = modes.filter((mode): mode is DrillId => mode in DRILL_META);
+  const bySkill = (skill: 'hoeren' | 'lesen' | 'grammatik') =>
+    drills.filter((drill) => DRILL_META[drill].skill === skill);
+
+  const hoeren: Mode[] = bySkill('hoeren');
+  hoeren.push('sentenceListening', 'dictation');
+  const lesenSchreiben: Mode[] = bySkill('lesen');
+  if (modes.includes('writing')) lesenSchreiben.push('writing');
+  const sprechen: Mode[] = [];
+  if (modes.includes('speaking')) sprechen.push('speaking');
+  sprechen.push('shadowing', 'sentenceRepeat');
+  const grammatik = bySkill('grammatik');
+
+  return [
+    { label: 'skill.wortschatz', modes: ['cards'] },
+    { label: 'skill.hoeren', modes: hoeren },
+    { label: 'skill.lesenSchreiben', modes: lesenSchreiben },
+    { label: 'skill.sprechen', modes: sprechen },
+    { label: 'skill.grammatik', modes: grammatik },
+  ];
+}

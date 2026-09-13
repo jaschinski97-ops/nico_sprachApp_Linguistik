@@ -61,7 +61,11 @@ const THAI_RUNTIME: LanguageFeatureRuntime = {
     if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
     return [{ roman: entry.romanization, tone: entry.tone }];
   },
-  drills: ['tone', 'toneRule'],
+  // Seit dem Lern-Reiter-Ausbau (13.09.) auch eine GRAMMATIK-Übung: Vorher
+  // war die Kategorie den deutschen Zielen vorbehalten, und der Paritäts-
+  // Test durfte Thai dort leer lassen. ครับ/ค่ะ ist die erste, ehrlich aus
+  // geprüftem Satzstoff baubare thai-Grammatikübung.
+  drills: ['tone', 'toneRule', 'polite'],
 };
 
 /**
@@ -78,7 +82,7 @@ const SPANISH_RUNTIME: LanguageFeatureRuntime = {
     if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
     return [{ roman: entry.romanization || entry.term }];
   },
-  drills: ['stressHear', 'stressRule'],
+  drills: ['stressHear', 'stressRule', 'serEstar'],
 };
 
 /**
@@ -90,7 +94,7 @@ const SPANISH_RUNTIME: LanguageFeatureRuntime = {
  */
 const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
   annotate: (entry) => [{ roman: entry.ipa ?? entry.romanization ?? entry.term }],
-  drills: ['soundSpelling', 'spelling'],
+  drills: ['soundSpelling', 'spelling', 'irregularPast'],
 };
 
 /**
@@ -140,7 +144,11 @@ export function featureFor(entry: VocabEntry): LanguageFeatureRuntime {
  * Regeln (`_to_de`) bleiben beim Bestand.
  */
 export function drillsForDirectionViaFeature(direction: PairDirection): DrillId[] {
-  if (direction.endsWith('_to_de')) return ['article', 'verbForms'];
+  // „X → Deutsch“ liest seit dem Lern-Reiter-Ausbau (13.09.) auch: Das
+  // deutsche Wort steht sichtbar, die Bedeutung wird gewählt. Vorher hatte
+  // das Deutsch-Ziel in der Kategorie Lesen nichts — der Paritäts-Test
+  // verlangt jetzt in jeder Kategorie mindestens eine Übung.
+  if (direction.endsWith('_to_de')) return ['article', 'verbForms', 'deutschLesen'];
   // pairLanguageOf liefert die ZIELsprache (en_to_es → 'es', ar_to_th → 'th')
   // und für de-geankerte Richtungen exakt das Bestandsverhalten. Die Brücke
   // 'ar' darf hier nie ankommen — die Registry kennt sie nicht.

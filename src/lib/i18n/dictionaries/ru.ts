@@ -79,7 +79,7 @@ const ru = {
   "skill.lesen": "Чтение",
   "skill.sprechen": "Говорение",
   "skill.schreiben": "Письмо",
-  "skill.grammatik": "Немецкая грамматика",
+  "skill.grammatik": "Грамматика",
   "cards.loadFailedTitle": "Не удалось загрузить сессию",
   "cards.assembleFailed": "Не удалось собрать: {{message}}",
   "cards.assembling": "Сессия собирается …",
@@ -365,6 +365,23 @@ const ru = {
   "diagnostics.row": "{{stored}} в памяти · {{shipped}} доставлено · {{verified}} проверено по источникам",
   "diagnostics.backends": "Хранилище данных: {{data}} · Хранилище изображений: {{images}} · Хранилище клипов: {{clips}}",
   "diagnostics.loading": "Загрузка …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "Чтение слов",
+  "drill.polite": "Вежливые частицы",
+  "drill.irregularPast": "Неправильные глаголы",
+  "drill.serEstar": "ser или estar",
+  "drill.prompt.deutschLesen": "Что значит это слово?",
+  "drill.prompt.polite": "Какая частица подходит в конец?",
+  "drill.prompt.irregularPast": "Какая вторая форма у этого глагола?",
+  "drill.prompt.serEstar": "ser или estar?",
+  "skill.lesenSchreiben": "Чтение и письмо",
+  "wordSpeaking.noneFor": "Пока нет слов для {{language}}",
+  "wordSpeaking.prompt": "Слушай и повторяй — {{language}}:",
+  "wordSpeaking.note": "Слушай образец и повторяй вслух. Это упражнение ничего не измеряет и не оценивает — и не меняет план повторений.",
+  "wordSpeaking.summary": "Повторено слов: {{count}}.",
+  "wordSpeaking.noScore": "Без оценок и без изменений плана повторений.",
+  "wordSpeaking.progress": "Слово {{index}} из {{total}}",
 } as const;
 
 export default ru;

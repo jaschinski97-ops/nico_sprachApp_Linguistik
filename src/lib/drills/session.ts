@@ -8,6 +8,8 @@ import { DataStore, getStore } from './../storage';
 
 import {
   buildArticleQuestion,
+  buildDeutschLesenQuestion,
+  buildIrregularPastQuestion,
   buildSoundSpellingQuestion,
   buildSpellingQuestion,
   buildStressHearQuestion,
@@ -16,6 +18,8 @@ import {
   buildToneRuleQuestion,
   buildVerbFormQuestion,
   canBuildArticleQuestion,
+  canBuildDeutschLesenQuestion,
+  canBuildIrregularPastQuestion,
   canBuildSoundSpellingQuestion,
   canBuildSpellingQuestion,
   canBuildStressHearQuestion,
@@ -26,6 +30,7 @@ import {
 } from './questions';
 import { Random, seededRandom, shuffled } from './random';
 import { directionForDrill, DrillAnswer, DrillId, DrillQuestion } from './types';
+import { buildGrammarSession } from './grammar';
 
 /**
  * Eine Übungssitzung zusammenstellen.
@@ -90,6 +95,10 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildArticleQuestion(entry);
     case 'verbForms':
       return canBuildVerbFormQuestion(entry);
+    case 'deutschLesen':
+      return canBuildDeutschLesenQuestion(entry);
+    case 'irregularPast':
+      return canBuildIrregularPastQuestion(entry);
     case 'stressRule':
       return canBuildStressQuestion(entry);
     case 'spelling':
@@ -98,6 +107,11 @@ function canBuild(drill: DrillId, entry: VocabEntry): boolean {
       return canBuildStressHearQuestion(entry);
     case 'soundSpelling':
       return canBuildSoundSpellingQuestion(entry);
+    case 'polite':
+    case 'serEstar':
+      // Datensatz-Übungen ohne Vokabelstoff — ihre Sitzung entsteht im
+      // Zweig darüber aus `data/grammar-*` und erreicht diese Stelle nie.
+      return false;
   }
 }
 
@@ -116,6 +130,10 @@ function buildQuestion(
       return buildArticleQuestion(entry);
     case 'verbForms':
       return buildVerbFormQuestion(entry, pool, random);
+    case 'deutschLesen':
+      return buildDeutschLesenQuestion(entry, pool, random);
+    case 'irregularPast':
+      return buildIrregularPastQuestion(entry, pool, random);
     case 'stressRule':
       return buildStressQuestion(entry);
     case 'spelling':
@@ -124,6 +142,10 @@ function buildQuestion(
       return buildStressHearQuestion(entry);
     case 'soundSpelling':
       return buildSoundSpellingQuestion(entry);
+    case 'polite':
+    case 'serEstar':
+      // Siehe canBuild — hier nie erreicht.
+      throw new Error(`"${drill}" wird aus dem Grammatik-Datensatz zusammengestellt.`);
   }
 }
 
@@ -139,6 +161,16 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
   const now = options.now ?? Date.now();
   const size = options.size ?? DRILL_SESSION_SIZE;
   const random = seededRandom(options.seed ?? now);
+
+  // GRAMMATIK-KLEINSTÜBUNGEN (Höflichkeitspartikel, ser/estar) haben keine
+  // FSRS-Karten — ihre Sitzung wird rein aus dem Datensatz gemischt. Vor
+  // allem: KEIN `ensureCardStates`, denn das legt als Seiteneffekt Karten
+  // an, und eine Partikel-Übung darf keinen Kartenschlüssel erzeugen, den
+  // kein Kartenstoff je bewertet.
+  if (drill === 'polite' || drill === 'serEstar') {
+    const { questions, available } = buildGrammarSession(drill, random, size);
+    return { drill, questions, available };
+  }
 
   const db = options.store ?? (await getStore());
   const { entries, cards } = await ensureCardStates(direction, db, now);

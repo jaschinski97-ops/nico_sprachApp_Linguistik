@@ -79,7 +79,7 @@ const te = {
   "skill.lesen": "చదవడం",
   "skill.sprechen": "మాట్లాడడం",
   "skill.schreiben": "రాయడం",
-  "skill.grammatik": "జర్మన్ వ్యాకరణం",
+  "skill.grammatik": "వ్యాకరణం",
   "cards.loadFailedTitle": "సమావేశం లోడ్ చేయడం సాధ్యం కాలేదు",
   "cards.assembleFailed": "సంయోజనంలో విఫలమైంది: {{message}}",
   "cards.assembling": "సమావేశం రూపొందించబడుతోంది ...",
@@ -365,6 +365,23 @@ const te = {
   "diagnostics.row": "{{stored}} నిల్వలో · {{shipped}} పంపిణీ చేయబడింది · {{verified}} మూలాల పరిశీలన",
   "diagnostics.backends": "డేటా నిల్వ: {{data}} · చిత్ర నిల్వ: {{images}} · క్లిప్ నిల్వ: {{clips}}",
   "diagnostics.loading": "లోడ్ చేస్తున్నది …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "పదం చదవడం",
+  "drill.polite": "మర్యాద కణాలు",
+  "drill.irregularPast": "క్రమరహిత క్రియలు",
+  "drill.serEstar": "ser లేదా estar",
+  "drill.prompt.deutschLesen": "ఈ పదం అర్థం ఏమిటి?",
+  "drill.prompt.polite": "చివరలో ఏ కణం సరిపోతుంది?",
+  "drill.prompt.irregularPast": "ఈ క్రియ యొక్క రెండవ రూపం ఏది?",
+  "drill.prompt.serEstar": "ser లేదా estar?",
+  "skill.lesenSchreiben": "చదవడం & రాయడం",
+  "wordSpeaking.noneFor": "{{language}} కు ఇంకా పద సామగ్రి లేదు",
+  "wordSpeaking.prompt": "విని చెప్పండి — {{language}}:",
+  "wordSpeaking.note": "మోడల్ విని బిగ్గరగా చెప్పండి. ఈ వ్యాయామం ఏమీ కొలవదు, ఏమీ నిర్ణయించదు — మీ పునరుక్తి ప్రణాళికను కూడా మార్చదు.",
+  "wordSpeaking.summary": "{{count}} పదాలు చెప్పబడ్డాయి.",
+  "wordSpeaking.noScore": "స్కోరు లేదు, పునరుక్తి ప్రణాళిక మార్పు లేదు.",
+  "wordSpeaking.progress": "పదం {{index}}/{{total}}",
 } as const;
 
 export default te;

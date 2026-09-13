@@ -79,7 +79,7 @@ const zh = {
   "skill.lesen": "阅读",
   "skill.sprechen": "口语",
   "skill.schreiben": "写作",
-  "skill.grammatik": "德语语法",
+  "skill.grammatik": "语法",
   "cards.loadFailedTitle": "无法加载会话",
   "cards.assembleFailed": "无法组装：{{message}}",
   "cards.assembling": "正在组装会话 …",
@@ -365,6 +365,23 @@ const zh = {
   "diagnostics.row": "{{stored}} 已存储 · {{shipped}} 已发货 · {{verified}} 已核实",
   "diagnostics.backends": "数据存储: {{data}} · 图片存储: {{images}} · 剪辑存储: {{clips}}",
   "diagnostics.loading": "加载中 …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "单词认读",
+  "drill.polite": "礼貌助词",
+  "drill.irregularPast": "不规则动词",
+  "drill.serEstar": "ser 还是 estar",
+  "drill.prompt.deutschLesen": "这个单词是什么意思？",
+  "drill.prompt.polite": "句末该用哪个助词？",
+  "drill.prompt.irregularPast": "这个动词的第二种形式是什么？",
+  "drill.prompt.serEstar": "用 ser 还是 estar？",
+  "skill.lesenSchreiben": "读与写",
+  "wordSpeaking.noneFor": "还没有 {{language}} 的单词材料",
+  "wordSpeaking.prompt": "听一听，跟着读 — {{language}}：",
+  "wordSpeaking.note": "听示范并大声跟读。这个练习不作测量，也不作评价——同样不改变你的复习计划。",
+  "wordSpeaking.summary": "已跟读 {{count}} 个单词。",
+  "wordSpeaking.noScore": "没有分数，也不改变复习计划。",
+  "wordSpeaking.progress": "第 {{index}} 个，共 {{total}} 个单词",
 } as const;
 
 export default zh;

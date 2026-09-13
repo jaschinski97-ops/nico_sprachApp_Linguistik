@@ -232,7 +232,7 @@ describe('Schema-Stichproben über die Sprachgrenzen (Runde 2)', () => {
 describe('Die bestehenden Übungstypen greifen (Pflicht 4)', () => {
   it('gibt jedem „X → Deutsch" die deutschen Grammatikübungen', () => {
     for (const code of LANGUAGE_CODES) {
-      expect(drillsForDirection(`${code}_to_de`)).toEqual(['article', 'verbForms']);
+      expect(drillsForDirection(`${code}_to_de`)).toEqual(['article', 'verbForms', 'deutschLesen']);
     }
   });
 

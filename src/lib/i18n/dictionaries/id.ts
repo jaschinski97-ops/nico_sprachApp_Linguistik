@@ -79,7 +79,7 @@ const id = {
   "skill.lesen": "Membaca",
   "skill.sprechen": "Berbicara",
   "skill.schreiben": "Menulis",
-  "skill.grammatik": "Tata bahasa Jerman",
+  "skill.grammatik": "Tata bahasa",
   "cards.loadFailedTitle": "Sesi tidak dapat dimuat",
   "cards.assembleFailed": "Tidak dapat disusun: {{message}}",
   "cards.assembling": "Sesi sedang disusun …",
@@ -365,6 +365,23 @@ const id = {
   "diagnostics.row": "{{stored}} di penyimpanan · {{shipped}} dikirim · {{verified}} diverifikasi",
   "diagnostics.backends": "Penyimpanan data: {{data}} · Penyimpanan gambar: {{images}} · Penyimpanan klip: {{clips}}",
   "diagnostics.loading": "Memuat …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "Membaca kata",
+  "drill.polite": "Partikel kesantunan",
+  "drill.irregularPast": "Kata kerja tidak beraturan",
+  "drill.serEstar": "ser atau estar",
+  "drill.prompt.deutschLesen": "Apa arti kata ini?",
+  "drill.prompt.polite": "Partikel mana yang cocok di akhir?",
+  "drill.prompt.irregularPast": "Bentuk kedua apa yang cocok untuk kata kerja ini?",
+  "drill.prompt.serEstar": "ser atau estar?",
+  "skill.lesenSchreiben": "Membaca & menulis",
+  "wordSpeaking.noneFor": "Belum ada materi kata untuk {{language}}",
+  "wordSpeaking.prompt": "Dengarkan dan tirukan — {{language}}:",
+  "wordSpeaking.note": "Dengarkan contohnya lalu ucapkan dengan suara keras. Latihan ini tidak mengukur dan tidak menilai apa pun — dan tidak mengubah jadwal pengulanganmu.",
+  "wordSpeaking.summary": "{{count}} kata diucapkan.",
+  "wordSpeaking.noScore": "Tanpa skor, tanpa perubahan jadwal pengulangan.",
+  "wordSpeaking.progress": "Kata {{index}} dari {{total}}",
 } as const;
 
 export default id;

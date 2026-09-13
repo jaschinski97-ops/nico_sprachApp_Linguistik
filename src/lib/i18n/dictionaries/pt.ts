@@ -79,7 +79,7 @@ const pt = {
   "skill.lesen": "Ler",
   "skill.sprechen": "Falar",
   "skill.schreiben": "Escrever",
-  "skill.grammatik": "Gramática Alemã",
+  "skill.grammatik": "Gramática",
   "cards.loadFailedTitle": "Sessão não pôde ser carregada",
   "cards.assembleFailed": "Não foi possível montar: {{message}}",
   "cards.assembling": "Montando sessão …",
@@ -365,6 +365,23 @@ const pt = {
   "diagnostics.row": "{{stored}} armazenados · {{shipped}} enviados · {{verified}} verificados",
   "diagnostics.backends": "Armazenamento de dados: {{data}} · Armazenamento de imagens: {{images}} · Armazenamento de clipes: {{clips}}",
   "diagnostics.loading": "Carregando …",
+
+  /* ---------- Lern-Reiter-Ausbau 13.09.2026 (Kategorien, Wort-Nachsprechen) ---------- */
+  "drill.deutschLesen": "Leitura de palavras",
+  "drill.polite": "Partículas de polidez",
+  "drill.irregularPast": "Verbos irregulares",
+  "drill.serEstar": "ser ou estar",
+  "drill.prompt.deutschLesen": "O que significa esta palavra?",
+  "drill.prompt.polite": "Que partícula cabe no fim?",
+  "drill.prompt.irregularPast": "Qual é a segunda forma deste verbo?",
+  "drill.prompt.serEstar": "ser ou estar?",
+  "skill.lesenSchreiben": "Leitura e escrita",
+  "wordSpeaking.noneFor": "Ainda sem material de palavras para {{language}}",
+  "wordSpeaking.prompt": "Ouça e repita — {{language}}:",
+  "wordSpeaking.note": "Ouça o modelo e repita em voz alta. Este exercício não mede nem avalia nada — e também não muda o seu plano de revisão.",
+  "wordSpeaking.summary": "{{count}} palavras repetidas.",
+  "wordSpeaking.noScore": "Sem pontos, sem alteração do plano de revisão.",
+  "wordSpeaking.progress": "Palavra {{index}} de {{total}}",
 } as const;
 
 export default pt;
