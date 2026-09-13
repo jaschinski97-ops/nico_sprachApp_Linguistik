@@ -34,10 +34,10 @@ const th: Partial<Record<TranslationKey, string>> = {
   'home.vocabCount': 'คำศัพท์ {{count}} คำ',
 
   'picker.chooseA11y': 'เลือกภาษา',
-  'picker.goalDeutschDetail': 'คำศัพท์ {{count}} คำ (ไทย→เยอรมัน)',
   // เป้าหมายการเรียนภาษาสะพาน: ส่วน „จาก X“ — เรียนภาษาสะพานจากภาษาอื่น (goals.ts, vonSprache)
   'goal.fromSource': 'จาก{{language}}',
-  'goal.deutschDescription': 'คำศัพท์เยอรมันจากภาษาไทย — ฝึกไวยากรณ์เยอรมัน (คำนำหน้านาม รูปกริยา) ไปด้วย',
+  // เป้าหมายภาษาเยอรมัน: ทำไมคลังคำจึงต่างจาก th/en/es
+  'goal.deutschDescription': 'เป้าหมายคือภาษาเยอรมัน — ฝึกไวยากรณ์เยอรมัน (คำนำหน้านาม รูปกริยา) ไปด้วย',
 
   'dashboard.cta': 'ฝึก{{direction}}',
 

@@ -25,9 +25,9 @@ const ar = {
   "home.sectionLanguages": "اللغات",
   "home.vocabCount": "{{count}} كلمة",
   "picker.chooseA11y": "اختر اللغة",
-  "picker.goalDeutschDetail": "{{count}} كلمة من التايلاندية للألمانية",
   "goal.fromSource": "من {{language}}",
-  "goal.deutschDescription": "كلمات من التايلاندية للألمانية — القواعد الألمانية (المقالات، الأشكال الأساسية) هتتدرب عليها.",
+  // هدف الألمانية: لماذا يختلف مخزونها عن th/en/es
+  "goal.deutschDescription": "الألمانية هدف تعلّم — وتُتدرَّب أيضًا على القواعد الألمانية (أدوات التعريف، أشكال الفعل).",
   "dashboard.cta": "{{direction}} تمرين",
   "legend.toneTitle": "ألوان النغمة",
   "legend.toneBody": "خمسة نغمات تايلاندية. في الكلمات متعددة المقاطع، كل مقطع له نغمة خاصة به — الألوان موجودة جنب التهجئة، مقطع بمقطع.",

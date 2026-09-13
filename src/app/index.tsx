@@ -4,17 +4,17 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useDirectionSummariesForLanguages } from '@/components/direction-dashboard';
 import { FeatureLegend } from '@/components/feature-legend';
+import { LanguageHero } from '@/components/language-hero';
 import { LanguagePicker } from '@/components/language-picker';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
-import { ToneHero } from '@/components/tone-hero';
 
 import { Spacing } from '@/constants/theme';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
-import { zieleFuerBruecke, zielFuerDirection } from '@/lib/languages/goals';
+import { zieleFuerBruecke, zielFuerDirection, goalLanguage } from '@/lib/languages/goals';
 import { languageOf } from '@/lib/languages/registry';
 import {
   isDeAnchored,
@@ -122,7 +122,10 @@ export default function DashboardScreen() {
 
   return (
     <ScreenScaffold title={t('tabs.overview')} subtitle={t('home.subtitle')}>
-      <ToneHero />
+      {/* Der Gruß folgt dem GEWÄHLTEN Ziel: Die gelehrte Sprache des aktiven
+          Lernziels entscheidet, welcher Gruß hier steht (Nutzerwunsch
+          13.09.) — Thai zeigt die Töne, Deutsch den deutschen Gruß. */}
+      <LanguageHero language={goalLanguage(aktivesZiel)} />
 
       <Link href="/review" asChild>
         {/* accessible: Knopf und Badge sind eine Handlung — der Screenreader

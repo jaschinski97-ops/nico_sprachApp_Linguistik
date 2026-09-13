@@ -40,11 +40,11 @@ const de = {
 
   /* ---------- Sprachauswahl (language-picker) ---------- */
   'picker.chooseA11y': 'Sprache wählen',
-  'picker.goalDeutschDetail': '{{count}} Wörter von Thai auf Deutsch',
   // Brücken-Lernziel: der „(von X)“-Anteil — die Brücke selbst von einer
   // anderen Sprache gelernt (goals.ts, vonSprache).
   'goal.fromSource': 'von {{language}}',
-  'goal.deutschDescription': 'Wörter von Thai auf Deutsch — die deutsche Grammatik (Artikel, Stammformen) wird mitgeübt.',
+  // Deutsch-Ziel: warum der Bestand ein anderer ist als bei th/en/es.
+  'goal.deutschDescription': 'Deutsch als Lernziel — die deutsche Grammatik (Artikel, Stammformen) wird mitgeübt.',
 
   /* ---------- Fällig-Badges der Lernziel-Zeilen (language-picker) ---------- */
   'dashboard.cta': '{{direction}} üben',

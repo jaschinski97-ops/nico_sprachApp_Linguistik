@@ -16,7 +16,6 @@ import {
 } from '@/lib/languages/goals';
 import { languageOf } from '@/lib/languages/registry';
 import {
-  isDeAnchored,
   LanguageCode,
   PairDirection,
 } from '@/lib/languages/types';
@@ -174,12 +173,7 @@ export function LanguagePicker({
               ) : null}
 
               <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
-                {gelehrteSprache === 'de' && isDeAnchored(ziel.direction)
-                  ? // Ehrlich, woher der Bestand kommt: Deutsch hat keinen eigenen
-                    // Grundstoff, die Richtung fragt den Pool der Paarsprache auf
-                    // Deutsch ab.
-                    t('picker.goalDeutschDetail', { count: wortschatz })
-                  : t('home.vocabCount', { count: wortschatz })}
+                {t('home.vocabCount', { count: wortschatz })}
               </ThemedText>
 
               {/* Badge nur, wenn die Zahl wirklich geladen ist — niemals geraten. */}

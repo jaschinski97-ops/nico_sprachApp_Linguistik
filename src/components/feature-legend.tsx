@@ -58,8 +58,8 @@ type StressRow = {
   stressedIndex: number;
 };
 
-/** Die drei Betonungsregeln als Übersetzungsschlüssel. */
-const STRESS_RULE_KEYS = {
+/** Die drei Betonungsregeln als Übersetzungsschlüssel (auch der Hero nutzt sie). */
+export const STRESS_RULE_KEYS = {
   penultimate: { label: 'legend.stressRulePenultimate', detail: 'legend.stressDetailPenultimate' },
   final: { label: 'legend.stressRuleFinal', detail: 'legend.stressDetailFinal' },
   acute: { label: 'legend.stressRuleAcute', detail: 'legend.stressDetailAcute' },

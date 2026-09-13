@@ -32,11 +32,11 @@ const en: Partial<Record<TranslationKey, string>> = {
   'home.vocabCount': '{{count}} words',
 
   'picker.chooseA11y': 'Choose language',
-  'picker.goalDeutschDetail': '{{count}} words, from Thai into German',
   // Bridge-learning goal: the „(from X)“ part — learning the bridge itself
   // from another language (goals.ts, vonSprache).
   'goal.fromSource': 'from {{language}}',
-  'goal.deutschDescription': 'German words, from Thai into German — grammar (articles, verb forms) is practised along the way.',
+  // German goal: why its stock differs from th/en/es.
+  'goal.deutschDescription': 'German as a learning goal — German grammar (articles, verb forms) is practised along the way.',
 
   'dashboard.cta': 'Practise {{direction}}',
 
