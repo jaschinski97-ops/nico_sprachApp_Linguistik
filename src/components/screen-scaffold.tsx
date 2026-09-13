@@ -10,6 +10,12 @@ import { useTheme } from '@/hooks/use-theme';
 type Props = {
   title: string;
   subtitle?: string;
+  /**
+   * Kleine Aktion über dem Titel (z. B. „← Zur Übersicht" im Lern-Reiter).
+   * Eigener Zeilenanfang statt Position im Titel: Sie bleibt lesbar, ohne
+   * dass Screens ihre Überschrift dafür umbauen müssen.
+   */
+  headerAction?: ReactNode;
   children?: ReactNode;
 };
 
@@ -22,7 +28,7 @@ type Props = {
  * Web-Build ist sonst die Fläche unter dem Inhalt transparent, und im
  * Dunkelmodus stand die helle Überschrift auf dem weißen Browser-Canvas.
  */
-export function ScreenScaffold({ title, subtitle, children }: Props) {
+export function ScreenScaffold({ title, subtitle, headerAction, children }: Props) {
   const theme = useTheme();
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]} edges={['top', 'left', 'right']}>
@@ -31,6 +37,7 @@ export function ScreenScaffold({ title, subtitle, children }: Props) {
         showsVerticalScrollIndicator={false}>
         <View style={styles.column}>
           <View style={styles.header}>
+            {headerAction}
             <ThemedText type="subtitle">{title}</ThemedText>
             {subtitle ? (
               <ThemedText type="small" themeColor="textSecondary">

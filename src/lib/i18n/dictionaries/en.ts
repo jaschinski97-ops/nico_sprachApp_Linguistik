@@ -72,6 +72,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'flashcard.plural': 'Plural: {{plural}}',
 
   'review.subtitle': 'Learning direction',
+  'review.backToOverview': 'Back to overview',
   'review.loadingProfile': 'Loading learning profile …',
   'review.pickSubtitle': 'Which language would you like to practise?',
   'review.switch': '← Switch language or direction',

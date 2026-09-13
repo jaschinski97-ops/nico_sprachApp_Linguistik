@@ -1,4 +1,4 @@
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -45,6 +45,7 @@ import { migrateStore } from '@/lib/storage/migration';
 export default function DashboardScreen() {
   const { language, profile, chooseLanguage } = useLearnerLanguage();
   const { t, systemLanguage, languageName, uiLanguage } = useLocale();
+  const router = useRouter();
   const theme = useTheme();
   // SEIT STUFE 1 FOLGT DIE ZIELLISTE DER BRÜCKE (App-/Oberflächensprache):
   // Brücke Deutsch sieht die vier Bestandsziele, Brücken th/en/es ihre
@@ -81,11 +82,11 @@ export default function DashboardScreen() {
   /**
    * Lernziel gewählt: Paarsprache UND Richtung in einem. Reihenfolge ist
    * Bedeutung — `setLanguage` wirft den gemerkten Stand bewusst weg (Geste
-   * „von vorn“), erst danach darf die neue Richtung als Lesezeichen
+   * „von vorn”), erst danach darf die neue Richtung als Lesezeichen
    * (`review` spot) geschrieben werden — bei Kreuzzielen verzichtet das
    * Schreiben bewusst darauf, das Profil trägt nur de-geankerte Stände.
-   * Fehler werden geschluckt; navigiert wird wie bisher nicht hier, sondern
-   * über den CTA.
+   * Fehler werden geschluckt; navigiert wird über den CTA oben oder den
+   * „Lernen”-Knopf der Zeile.
    */
   const chooseGoal = useCallback(
     (direction: PairDirection) => {
@@ -97,6 +98,20 @@ export default function DashboardScreen() {
         .catch(() => {});
     },
     [chooseLanguage]
+  );
+
+  /**
+   * Direkter Einstieg aus einer Ziel-Zeile (Nutzerwunsch 13.09.): wählt wie
+   * die Zeile selbst und öffnet den Lern-Reiter SOFORT mit der Richtung als
+   * Adresse — der Screen liest den Parameter vor dem Profil und wartet nicht
+   * auf das (asynchrone) Profil-Schreiben.
+   */
+  const startGoal = useCallback(
+    (direction: PairDirection) => {
+      chooseGoal(direction);
+      router.push(`/review?direction=${direction}`);
+    },
+    [chooseGoal, router]
   );
 
   useEffect(() => {
@@ -147,6 +162,7 @@ export default function DashboardScreen() {
           selected={language}
           selectedDirection={selectedDirection}
           onSelect={chooseGoal}
+          onStart={startGoal}
           due={due.summaries}
         />
       </View>

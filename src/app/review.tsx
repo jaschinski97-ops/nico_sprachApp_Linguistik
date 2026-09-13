@@ -1,4 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -196,6 +197,28 @@ function groupsForDirection(direction: PairDirection): Group[] {
   return groups;
 }
 
+/**
+ * Rückweg zur Übersicht (Nutzerwunsch 13.09.): Der Lern-Reiter ist ein Tab,
+ * aber ein sichtbarer Rückschritt über dem Titel ist der ehrlichere Gegenpart
+ * zum „Lernen"-Knopf der Übersicht, der hierher führt.
+ */
+function ZurueckZurUebersicht() {
+  const { t } = useLocale();
+  const theme = useTheme();
+  return (
+    <Link href="/" asChild>
+      <Pressable
+        accessibilityRole="link"
+        style={({ pressed }) => [styles.backLink, pressed && styles.backPressed]}>
+        <Ionicons name="arrow-back" size={15} color={theme.textSecondary} />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('review.backToOverview')}
+        </ThemedText>
+      </Pressable>
+    </Link>
+  );
+}
+
 export default function ReviewScreen() {
   const { t } = useLocale();
   const params = useLocalSearchParams<{ direction?: string; mode?: string; waehlen?: string }>();
@@ -249,7 +272,7 @@ export default function ReviewScreen() {
 
   if (profileError) {
     return (
-      <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.subtitle')}>
+      <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.subtitle')} headerAction={<ZurueckZurUebersicht />}>
         <ThemedText type="small" themeColor="textSecondary">
           {t('common.loadFailed', { message: profileError })}
         </ThemedText>
@@ -259,7 +282,7 @@ export default function ReviewScreen() {
 
   if (!profile) {
     return (
-      <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.subtitle')}>
+      <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.subtitle')} headerAction={<ZurueckZurUebersicht />}>
         <ThemedText type="small" themeColor="textSecondary">
           {t('review.loadingProfile')}
         </ThemedText>
@@ -325,7 +348,8 @@ export default function ReviewScreen() {
  *
  * WARUM EIN EFFEKT UND NICHT DER KNOPFDRUCK: Man kommt auf drei Wegen hierher
  * — über die Übungsleiste, über eine Zielwahl in der Auswahl (auch die
- * Übersicht setzt nur Sprache und Richtung, navigiert tut der CTA) und über
+ * Übersicht wählt Sprache und Richtung; der „Lernen"-Knopf ihrer Zeilen
+ * navigiert mit der Richtung als Adresse direkt hierher) und über
  * eine Adresse mit `?direction=`. Am Knopf zu merken hätte nur den ersten Weg
  * erwischt; im Web-Build fiel genau das auf. Der Effekt hängt an dem, was
  * wirklich offen ist, und trifft damit alle drei.
@@ -361,6 +385,7 @@ function ReviewBody({
   return (
     <ScreenScaffold
       title={t('tabs.learn')}
+      headerAction={<ZurueckZurUebersicht />}
       subtitle={
         ziel
           ? languageName(goalLanguage(ziel))
@@ -439,7 +464,7 @@ function DirectionPicker({
   // (en_to_de/es_to_de), bleibt keine Zeile hervorgehoben.
   const aktuell = profile.review?.direction ?? null;
   return (
-    <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.pickSubtitle')}>
+    <ScreenScaffold title={t('tabs.learn')} subtitle={t('review.pickSubtitle')} headerAction={<ZurueckZurUebersicht />}>
       <View role="radiogroup" accessibilityLabel={t('picker.chooseA11y')}>
         {zieleFuerBruecke(uiLanguage).map((ziel: Lernziel) => {
           const name = languageName(goalLanguage(ziel));
@@ -742,6 +767,17 @@ const styles = StyleSheet.create({
   tapTarget: {
     minHeight: 44,
     justifyContent: 'center',
+  },
+  /** Rückweg zur Übersicht — dezente Zeile über dem Titel, volle Tipphöhe. */
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    minHeight: 44,
+    alignSelf: 'flex-start',
+  },
+  backPressed: {
+    opacity: 0.7,
   },
   goalRow: {
     flexDirection: 'row',

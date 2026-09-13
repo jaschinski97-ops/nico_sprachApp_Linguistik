@@ -58,18 +58,28 @@ function featureKey(code: LanguageCode): TranslationKey {
  *
  * Bauart wie bisher (UI-Review 2026-09-09): aktives Ziel als abgerundete
  * Fläche, die übrigen als offene Zeilen mit Trennlinie.
+ *
+ * SEIT NUTZERWUNSCH 13.09. MIT DIREKTEM EINSTIEG: Jede Zeile trägt rechts
+ * einen „Lernen"-Knopf (`onStart`) — er wählt das Ziel UND öffnet den
+ * Lern-Reiter. Zeile und Knopf sind bewusst geschwisterliche Druckflächen
+ * statt verschachtelter: So bleibt in der Barrierefreiheit-radio und Knopf
+ * zwei getrennte Handlungen, und der Treffer landet garantiert auf dem
+ * inneren Element.
  */
 export function LanguagePicker({
   selected,
   selectedDirection,
   onSelect,
+  onStart,
   due,
 }: {
   selected: LanguageCode;
   /** Gemerkte Richtung des Profils — entscheidet mit, WELCHES Ziel der Paarsprache aktiv ist. */
   selectedDirection: PairDirection | null;
-  /** Wählt ein Ziel; die Richtung trägt Sprache und Lesezeichen zugleich. Navigation passiert bewusst NICHT hier. */
+  /** Wählt ein Ziel; die Richtung trägt Sprache und Lesezeichen zugleich. */
   onSelect: (direction: PairDirection) => void;
+  /** Wählt das Ziel und steigt direkt in die Sitzung des Lern-Reiters ein. */
+  onStart: (direction: PairDirection) => void;
   /** Geladene Fälligkeitszahlen der Brücke; `null`, solange nichts geladen ist. */
   due: readonly DirectionSummary[] | null;
 }) {
@@ -106,80 +116,99 @@ export function LanguagePicker({
         const showHairline = index > 0 && !active && !previousActive;
 
         return (
-          <Pressable
+          <View
             key={ziel.direction}
-            onPress={() => onSelect(ziel.direction)}
-            accessibilityRole="radio"
-            accessibilityLabel={
-              [
-                t('dashboard.cta', { direction: name }),
-                fällig !== undefined ? t('home.dueBadge', { count: fällig }) : null,
-                t('home.vocabCount', { count: wortschatz }),
-                ziel.vonSprache !== undefined
-                  ? t('goal.fromSource', { language: languageName(ziel.vonSprache) })
-                  : null,
-                gelehrteSprache !== 'de' ? languageOf(gelehrteSprache).challenge : null,
-                gelehrteSprache !== 'de' ? t(featureKey(gelehrteSprache)) : null,
-              ]
-                .filter((part): part is string => part !== null)
-                .join(' — ')
-            }
-            aria-checked={active}
-            style={({ pressed }) => [
+            style={[
               styles.row,
               active && { backgroundColor: theme.backgroundElement },
               showHairline && { borderTopWidth: 1, borderColor: theme.decorGrey },
-              pressed && styles.pressed,
             ]}>
-            <ThemedText type="default" style={[styles.name, styles.shrink]}>
-              {name}
-            </ThemedText>
-            {/* Brücken-Lernziel: die Quellsprache nennen. Sonst wie bisher —
-                bei Deutsch fallen Name und Endonym in eines zusammen. */}
-            {ziel.vonSprache !== undefined ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
-                {t('goal.fromSource', { language: languageName(ziel.vonSprache) })}
+            <Pressable
+              onPress={() => onSelect(ziel.direction)}
+              accessibilityRole="radio"
+              accessibilityLabel={
+                [
+                  t('dashboard.cta', { direction: name }),
+                  fällig !== undefined ? t('home.dueBadge', { count: fällig }) : null,
+                  t('home.vocabCount', { count: wortschatz }),
+                  ziel.vonSprache !== undefined
+                    ? t('goal.fromSource', { language: languageName(ziel.vonSprache) })
+                    : null,
+                  gelehrteSprache !== 'de' ? languageOf(gelehrteSprache).challenge : null,
+                  gelehrteSprache !== 'de' ? t(featureKey(gelehrteSprache)) : null,
+                ]
+                  .filter((part): part is string => part !== null)
+                  .join(' — ')
+              }
+              aria-checked={active}
+              style={({ pressed }) => [styles.lead, pressed && styles.pressed]}>
+              <ThemedText type="default" style={[styles.name, styles.shrink]}>
+                {name}
               </ThemedText>
-            ) : endonym !== name ? (
-              <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
-                {endonym}
-              </ThemedText>
-            ) : null}
-
-            {/* Tonpunkte nur, wenn das Ziel Thai PRODUZIERT — das Merkmal
-                hängt an der hervorgebrachten Sprache, nicht an der Paar-
-                Sprache: th_to_de produziert Deutsch, also keine Punkte;
-                en_to_th produziert Thai, also Punkte. */}
-            {gelehrteSprache === 'th' ? (
-              <View
-                style={styles.dots}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                pointerEvents="none">
-                {TONE_KEYS.map((tone) => (
-                  <View key={tone} style={[styles.dot, { backgroundColor: toneColor(tone) }]} />
-                ))}
-              </View>
-            ) : null}
-
-            <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
-              {gelehrteSprache === 'de' && isDeAnchored(ziel.direction)
-                ? // Ehrlich, woher der Bestand kommt: Deutsch hat keinen eigenen
-                  // Grundstoff, die Richtung fragt den Pool der Paarsprache auf
-                  // Deutsch ab.
-                  t('picker.goalDeutschDetail', { count: wortschatz })
-                : t('home.vocabCount', { count: wortschatz })}
-            </ThemedText>
-
-            {/* Badge nur, wenn die Zahl wirklich geladen ist — niemals geraten. */}
-            {fällig !== undefined ? (
-              <ThemedView type="accent" style={styles.badge}>
-                <ThemedText type="smallBold" themeColor="accentText">
-                  {t('home.dueBadge', { count: fällig })}
+              {/* Brücken-Lernziel: die Quellsprache nennen. Sonst wie bisher —
+                  bei Deutsch fallen Name und Endonym in eines zusammen. */}
+              {ziel.vonSprache !== undefined ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
+                  {t('goal.fromSource', { language: languageName(ziel.vonSprache) })}
                 </ThemedText>
-              </ThemedView>
-            ) : null}
-          </Pressable>
+              ) : endonym !== name ? (
+                <ThemedText type="small" themeColor="textSecondary" style={styles.shrink}>
+                  {endonym}
+                </ThemedText>
+              ) : null}
+
+              {/* Tonpunkte nur, wenn das Ziel Thai PRODUZIERT — das Merkmal
+                  hängt an der hervorgebrachten Sprache, nicht an der Paar-
+                  Sprache: th_to_de produziert Deutsch, also keine Punkte;
+                  en_to_th produziert Thai, also Punkte. */}
+              {gelehrteSprache === 'th' ? (
+                <View
+                  style={styles.dots}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  pointerEvents="none">
+                  {TONE_KEYS.map((tone) => (
+                    <View key={tone} style={[styles.dot, { backgroundColor: toneColor(tone) }]} />
+                  ))}
+                </View>
+              ) : null}
+
+              <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
+                {gelehrteSprache === 'de' && isDeAnchored(ziel.direction)
+                  ? // Ehrlich, woher der Bestand kommt: Deutsch hat keinen eigenen
+                    // Grundstoff, die Richtung fragt den Pool der Paarsprache auf
+                    // Deutsch ab.
+                    t('picker.goalDeutschDetail', { count: wortschatz })
+                  : t('home.vocabCount', { count: wortschatz })}
+              </ThemedText>
+
+              {/* Badge nur, wenn die Zahl wirklich geladen ist — niemals geraten. */}
+              {fällig !== undefined ? (
+                <ThemedView type="accent" style={styles.badge}>
+                  <ThemedText type="smallBold" themeColor="accentText">
+                    {t('home.dueBadge', { count: fällig })}
+                  </ThemedText>
+                </ThemedView>
+              ) : null}
+            </Pressable>
+
+            {/* Direkter Einstieg (Nutzerwunsch 13.09.): wählt dieses Ziel und
+                öffnet den Lern-Reiter — die Übersicht muss der CTA oben nicht
+                mehr zwischengeschaltet sein. */}
+            <Pressable
+              onPress={() => onStart(ziel.direction)}
+              accessibilityRole="button"
+              accessibilityLabel={`${t('tabs.learn')}: ${name}`}
+              style={({ pressed }) => [
+                styles.startPill,
+                { borderColor: theme.decorGrey },
+                pressed && styles.pressed,
+              ]}>
+              <ThemedText type="smallBold" themeColor="text">
+                {t('tabs.learn')}
+              </ThemedText>
+            </Pressable>
+          </View>
         );
       })}
     </View>
@@ -193,8 +222,25 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     minHeight: 44,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
     borderRadius: 14,
+  },
+  /** Die Auswahl-Fläche: füllt die Zeile links vom „Lernen"-Knopf. */
+  lead: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 44,
+    paddingVertical: Spacing.two,
+  },
+  /** Direkter Einstieg in die Sitzung — gleiche Zielhöhe wie die Zeile. */
+  startPill: {
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.three,
+    borderWidth: 1,
+    borderRadius: 999,
   },
   shrink: {
     flexShrink: 1,

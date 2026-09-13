@@ -55,6 +55,7 @@ const ar = {
   "flashcard.listenExampleA11y": "استمع لجملة مثال",
   "flashcard.plural": "جمع: {{plural}}",
   "review.subtitle": "اتجاه التعلم",
+  "review.backToOverview": "العودة إلى نظرة عامة",
   "review.loadingProfile": "جارٍ تحميل ملف التعلم ...",
   "review.pickSubtitle": "أي لغة تريد أن تتدرب عليها؟",
   "review.switch": "← تغيير اللغة أو الاتجاه",

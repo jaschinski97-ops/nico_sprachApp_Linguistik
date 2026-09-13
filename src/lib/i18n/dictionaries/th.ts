@@ -73,6 +73,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'flashcard.plural': 'พหูพจน์: {{plural}}',
 
   'review.subtitle': 'ทางการเรียน',
+  'review.backToOverview': 'กลับไปที่ภาพรวม',
   'review.loadingProfile': 'กำลังโหลดโปรไฟล์ …',
   'review.pickSubtitle': 'อยากฝึกภาษาไหน?',
   'review.switch': '← เปลี่ยนภาษาหรือทางเรียน',

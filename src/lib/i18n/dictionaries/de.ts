@@ -84,6 +84,7 @@ const de = {
 
   /* ---------- Lernen (review.tsx) ---------- */
   'review.subtitle': 'Lernrichtung',
+  'review.backToOverview': 'Zur Übersicht',
   'review.loadingProfile': 'Lade Lernprofil …',
   'review.pickSubtitle': 'Welche Sprache möchtest du üben?',
   'review.switch': '← Sprache oder Richtung wechseln',
