@@ -400,6 +400,31 @@ const zh = {
   "round.skippedNote": "已跳过的部分：{{areas}}。",
   "round.note": "卡片和通过听写的任务已推进复习计划。其余任务只练习、不打分——与单项练习一致。",
   "round.shadowNote": "听句子并跟着说——不用麦克风，不作测量。在这一轮里，跟读本身就算数，不打分。",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "说出来",
+  "mode.rollenspiel": "情景对话",
+  "production.title": "用{{language}}说出来",
+  "production.prompt": "这个用{{language}}怎么说？请自己組出句子。",
+  "production.loadFailedTitle": "无法加载口语任务",
+  "production.done": "本轮完成",
+  "production.doneNote": "你的回答已计入复习计划——与卡片和听写是同一批卡片。",
+  "production.inputA11y": "输入你的回答",
+  "production.speakA11y": "说出你的回答",
+  "production.listening": "正在听……",
+  "production.selfRate": "听示范并自评",
+  "production.selfRatingTitle": "这个回答有多大把握？",
+  "production.accentHint": "正确——准确写法是：{{target}}",
+  "production.note": "输入的回答按宽容方式判分：大小写和标点不计；声调与重音符号仅作提示。",
+  "roleplay.pick": "选择一个场景",
+  "roleplay.random": "随机场景",
+  "roleplay.yourTurn": "轮到你了：",
+  "roleplay.progress": "第 {{index}} 句，共 {{total}} 句",
+  "roleplay.score": "自己的台词：{{done}} · 有把握：{{correct}}",
+  "roleplay.done": "场景结束",
+  "roleplay.summary": "你说了 {{done}} 句自己的台词，其中 {{correct}} 句有把握。",
+  "roleplay.otherScene": "换个场景",
+  "roleplay.note": "应用扮演对方；你只产出自己的台词。情景对话不改变复习计划。",
 } as const;
 
 export default zh;

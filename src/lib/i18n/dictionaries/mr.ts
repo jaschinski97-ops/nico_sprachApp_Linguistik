@@ -400,6 +400,31 @@ const mr = {
   "round.skippedNote": "वगळलेले विभाग: {{areas}}.",
   "round.note": "फ्लॅशकार्ड्स आणि उत्तीर्ण श्रुतलेखांनी पुनरावृत्तीचा आराखडा पुढे नेला. बाकी कामे गुणांशिवाय सराव करतात — वैयक्तिक सरावाप्रमाणे.",
   "round.shadowNote": "वाक्य ऐका आणि सोबत म्हणा — मायक्रोफोनशिवाय, मोजमापशिवाय. फेरीत म्हणणे महत्त्वाचे, गुण नाहीत.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "म्हणा",
+  "mode.rollenspiel": "भूमिकाबाजी",
+  "production.title": "{{language}} मध्ये म्हणा",
+  "production.prompt": "हे {{language}} मध्ये कसे म्हणतात? स्वतः रूप बनवा.",
+  "production.loadFailedTitle": "बोलण्याचे कार्य लोड करता आले नाही",
+  "production.done": "फेरी संपली",
+  "production.doneNote": "तुमची उत्तरे पुनरावृत्तीच्या आराखड्यात गेली — फ्लॅशकार्ड आणि श्रुतलेखाप्रमाणेच कार्ड्स.",
+  "production.inputA11y": "उत्तर टाइप करा",
+  "production.speakA11y": "उत्तर म्हणा",
+  "production.listening": "ऐकत आहे …",
+  "production.selfRate": "नमुना ऐका आणि स्वतःचे मूल्यमापन करा",
+  "production.selfRatingTitle": "उत्तर किती खात्रीशीर होते?",
+  "production.accentHint": "बरोबर — अचूक शुद्धलेखन: {{target}}",
+  "production.note": "टाइप केलेली उत्तरे सहिष्णुपणे तपासली जातात — कॅपिटल आणि विरामचिन्हे मोजली जात नाहीत; टोन इशारा म्हणून दिसतात.",
+  "roleplay.pick": "एक दृश्य निवडा",
+  "roleplay.random": "यादृच्छिक दृश्य",
+  "roleplay.yourTurn": "तुझी पाळी:",
+  "roleplay.progress": "ओळ {{index}}/{{total}}",
+  "roleplay.score": "स्वतःच्या ओळी: {{done}} · आत्मविश्वासू: {{correct}}",
+  "roleplay.done": "दृश्य संपले",
+  "roleplay.summary": "तुम्ही {{done}} स्वतःच्या ओळी म्हणल्या, {{correct}} आत्मविश्वासाने.",
+  "roleplay.otherScene": "दुसरे दृश्य",
+  "roleplay.note": "अॅप दुसरी भूमिका बोलते; तुम्ही फक्त स्वतःच्या ओळी तयार करता. भूमिकाबाजी पुनरावृत्तीचा आराखडा बदलत नाही.",
 } as const;
 
 export default mr;

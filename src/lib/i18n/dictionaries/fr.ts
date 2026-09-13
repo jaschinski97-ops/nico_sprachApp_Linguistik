@@ -400,6 +400,31 @@ const fr = {
   "round.skippedNote": "Parties passées : {{areas}}.",
   "round.note": "Les cartes et les dictées réussies ont fait avancer ton planning de révision. Les autres tâches s’entraînent sans score — comme dans les exercices individuels.",
   "round.shadowNote": "Écoute la phrase et dis-la en même temps — sans micro ni mesure. Dans la séance, compte le fait de parler en même temps, pas la note.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "Dis-le",
+  "mode.rollenspiel": "Jeu de rôle",
+  "production.title": "Dis-le en {{language}}",
+  "production.prompt": "Comment dit-on cela en {{language}} ? Formule la réponse toi-même.",
+  "production.loadFailedTitle": "Impossible de charger la tâche de production",
+  "production.done": "Série terminée",
+  "production.doneNote": "Tes réponses sont entrées dans ton planning de révision — les mêmes cartes que les fiches et les dictées.",
+  "production.inputA11y": "Écris ta réponse",
+  "production.speakA11y": "Dis ta réponse",
+  "production.listening": "J’écoute …",
+  "production.selfRate": "Écoute le modèle et évalue-toi",
+  "production.selfRatingTitle": "À quel point la réponse était-elle sûre ?",
+  "production.accentHint": "Correct — l’orthographe exacte est : {{target}}",
+  "production.note": "Les réponses écrites sont vérifiées avec tolérance : majuscules et ponctuation ne comptent pas ; accents et tons apparaissent comme rappel.",
+  "roleplay.pick": "Choisis une scène",
+  "roleplay.random": "Scène au hasard",
+  "roleplay.yourTurn": "À toi :",
+  "roleplay.progress": "Réplique {{index}} sur {{total}}",
+  "roleplay.score": "Répliques personnelles : {{done}} · sûres : {{correct}}",
+  "roleplay.done": "Scène terminée",
+  "roleplay.summary": "Tu as dit {{done}} répliques personnelles, {{correct}} avec assurance.",
+  "roleplay.otherScene": "Une autre scène",
+  "roleplay.note": "L’app joue l’autre rôle ; tu ne produis que tes répliques. Le jeu de rôle ne change pas ton planning de révision.",
 } as const;
 
 export default fr;

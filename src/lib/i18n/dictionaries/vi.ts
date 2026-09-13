@@ -400,6 +400,31 @@ const vi = {
   "round.skippedNote": "Phần đã bỏ qua: {{areas}}.",
   "round.note": "Thẻ và bài chính tả đạt đã cập nhật lịch ôn tập của bạn. Các nhiệm vụ khác luyện không chấm điểm — như trong các bài tập riêng.",
   "round.shadowNote": "Nghe câu và nói theo — không micro, không đo lường. Trong vòng này, quan trọng là bạn nói theo, không phải điểm số.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "Nói thử",
+  "mode.rollenspiel": "Đóng vai",
+  "production.title": "Nói bằng {{language}}",
+  "production.prompt": "Nói điều này bằng {{language}} thế nào? Hãy tự tạo câu.",
+  "production.loadFailedTitle": "Không thể tải nhiệm vụ nói",
+  "production.done": "Đã xong vòng",
+  "production.doneNote": "Câu trả lời của bạn đã vào lịch ôn tập — cùng thẻ với thẻ ghi nhớ và chính tả.",
+  "production.inputA11y": "Nhập câu trả lời",
+  "production.speakA11y": "Nói câu trả lời",
+  "production.listening": "Tôi đang nghe …",
+  "production.selfRate": "Nghe mẫu và tự đánh giá",
+  "production.selfRatingTitle": "Câu trả lời chắc chắn đến mức nào?",
+  "production.accentHint": "Đúng — chính tả chính xác là: {{target}}",
+  "production.note": "Câu trả lời gõ được kiểm tra khoan dung: chữ hoa và dấu câu không tính; dấu phụ và thanh điệu hiện như lời nhắc.",
+  "roleplay.pick": "Chọn một cảnh",
+  "roleplay.random": "Cảnh ngẫu nhiên",
+  "roleplay.yourTurn": "Đến lượt bạn:",
+  "roleplay.progress": "Câu {{index}}/{{total}}",
+  "roleplay.score": "Câu của bạn: {{done}} · chắc chắn: {{correct}}",
+  "roleplay.done": "Cảnh đã xong",
+  "roleplay.summary": "Bạn đã nói {{done}} câu của mình, {{correct}} chắc chắn.",
+  "roleplay.otherScene": "Cảnh khác",
+  "roleplay.note": "Ứng dụng đóng vai kia; bạn chỉ tạo các câu của mình. Đóng vai không thay đổi lịch ôn tập.",
 } as const;
 
 export default vi;

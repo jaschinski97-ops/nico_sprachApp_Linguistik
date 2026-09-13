@@ -400,6 +400,31 @@ const ja = {
   "round.skippedNote": "スキップしたセクション：{{areas}}。",
   "round.note": "カードと合格したディクテーションは復習予定を進めました。その他の課題は採点なしの練習です — 個別練習と同じ。",
   "round.shadowNote": "文を聞いて一緒に発音しましょう — マイクなし、測定なし。ラウンドでは採点ではなく、発音すること自体が大事。",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "言ってみよう",
+  "mode.rollenspiel": "ロールプレイ",
+  "production.title": "{{language}}で言ってみよう",
+  "production.prompt": "これは{{language}}でなんと言いますか？自分で形を作りましょう。",
+  "production.loadFailedTitle": "スピーキング課題を読み込めませんでした",
+  "production.done": "ラウンド終了",
+  "production.doneNote": "あなたの答えは復習予定に入りました — カードとディクテーションと同じカードです。",
+  "production.inputA11y": "答えを入力",
+  "production.speakA11y": "答えを話す",
+  "production.listening": "聞いています …",
+  "production.selfRate": "お手本を聞いて自分で評価",
+  "production.selfRatingTitle": "答えにはどれだけ自信がありましたか？",
+  "production.accentHint": "正しい — 正確なつづりは：{{target}}",
+  "production.note": "入力した答えは寛容に採点されます — 大文字と句読点は問わず、アクセントや声調はヒントとして表示。",
+  "roleplay.pick": "シーンを選ぼう",
+  "roleplay.random": "ランダムなシーン",
+  "roleplay.yourTurn": "あなたの番です：",
+  "roleplay.progress": "{{index}} / {{total}}行目",
+  "roleplay.score": "自分のセリフ：{{done}} · 自信あり：{{correct}}",
+  "roleplay.done": "シーン終了",
+  "roleplay.summary": "自分のセリフを{{done}}言い、{{correct}}は自信がありました。",
+  "roleplay.otherScene": "別のシーン",
+  "roleplay.note": "アプリが相手役を話します。あなたは自分のセリフだけを作ります。ロールプレイは復習予定を変えません。",
 } as const;
 
 export default ja;

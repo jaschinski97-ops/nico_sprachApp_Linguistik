@@ -465,6 +465,31 @@ const th: Partial<Record<TranslationKey, string>> = {
   'round.skippedNote': 'ส่วนที่ข้าม: {{areas}}',
   'round.note': 'การ์ดและการเขียนตามคำบอกที่ผ่านได้ปรับปรุงแผนทบทวนของคุณ งานอื่นฝึกโดยไม่ให้คะแนน — เหมือนแบบฝึกหัดเดี่ยว',
   'round.shadowNote': 'ฟังประโยคแล้วพูดตาม — ไม่ใช้ไมโครโฟน ไม่มีการวัด ในรอบนี้การพูดตามสำคัญกว่าคะแนน',
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  'mode.sagen': 'พูดดู',
+  'mode.rollenspiel': 'สวมบทบาท',
+  'production.title': 'พูดเป็น{{language}}',
+  'production.prompt': 'สิ่งนี้พูดเป็น{{language}}ว่าอะไร? สร้างรูปประโยคเอง',
+  'production.loadFailedTitle': 'โหลดงานการพูดไม่สำเร็จ',
+  'production.done': 'รอบจบแล้ว',
+  'production.doneNote': 'คำตอบของคุณเข้าสู่แผนทบทวนแล้ว — เป็นการ์ดชุดเดียวกับการ์ดและการเขียนตามคำบอก',
+  'production.inputA11y': 'พิมพ์คำตอบ',
+  'production.speakA11y': 'พูดคำตอบ',
+  'production.listening': 'กำลังฟัง …',
+  'production.selfRate': 'ฟังตัวอย่างแล้วประเมินตัวเอง',
+  'production.selfRatingTitle': 'คำตอบมั่นใจแค่ไหน?',
+  'production.accentHint': 'ถูกต้อง — สะกดที่ถูกต้องคือ: {{target}}',
+  'production.note': 'คำตอบที่พิมพ์ถูกตรวจอย่างยืดหยุ่น — ตัวพิมพ์ใหญ่และเครื่องหมายวรรคตอนไม่นับ วรรณยุกต์แสดงเป็นคำเตือน',
+  'roleplay.pick': 'เลือกฉาก',
+  'roleplay.random': 'ฉากสุ่ม',
+  'roleplay.yourTurn': 'ตาคุณแล้ว:',
+  'roleplay.progress': 'บรรทัดที่ {{index}} จาก {{total}}',
+  'roleplay.score': 'บรรทัดของคุณ: {{done}} · มั่นใจ: {{correct}}',
+  'roleplay.done': 'ฉากจบแล้ว',
+  'roleplay.summary': 'คุณพูดบรรทัดของตัวเอง {{done}} บรรทัด มั่นใจ {{correct}} บรรทัด',
+  'roleplay.otherScene': 'ฉากอื่น',
+  'roleplay.note': 'แอปพูดฝ่ายตรงข้าม คุณสร้างเฉพาะบรรทัดของตัวเอง การสวมบทบาทไม่เปลี่ยนแผนทบทวน',
 };
 
 export default th;

@@ -400,6 +400,31 @@ const bn = {
   "round.skippedNote": "এড়িয়ে যাওয়া অংশ: {{areas}}।",
   "round.note": "ফ্ল্যাশকার্ড ও পাস করা শ্রুতিলেখ আপনার পুনরাবৃত্তির পরিকল্পনা এগিয়েছে। বাকি কাজগুলো নম্বর ছাড়া অনুশীলন — আলাদা অনুশীলনের মতোই।",
   "round.shadowNote": "বাক্য শুনুন ও সাথে বলুন — মাইক্রোফোন ছাড়া, মাপ ছাড়া। রাউন্ডে গুরুত্ব হলো বলা, নম্বর নয়।",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "বলুন",
+  "mode.rollenspiel": "ভূমিকা অভ্যাস",
+  "production.title": "{{language}}-এ বলুন",
+  "production.prompt": "এটি {{language}}-এ কীভাবে বলে? নিজে রূপটি তৈরি করুন।",
+  "production.loadFailedTitle": "বলার কাজটি লোড করা যায়নি",
+  "production.done": "রাউন্ড শেষ",
+  "production.doneNote": "আপনার উত্তর পুনরাবৃত্তির পরিকল্পনায় ঢুকেছে — ফ্ল্যাশকার্ড ও শ্রুতিলেখের একই কার্ড।",
+  "production.inputA11y": "উত্তর লিখুন",
+  "production.speakA11y": "উত্তর বলুন",
+  "production.listening": "শুনছি …",
+  "production.selfRate": "নমুনা শুনুন ও নিজেকে মূল্যায়ন করুন",
+  "production.selfRatingTitle": "উত্তরটি কতটা নিশ্চিত ছিল?",
+  "production.accentHint": "সঠিক — সঠিক বানান: {{target}}",
+  "production.note": "লেখা উত্তর সহনশীলভাবে যাচাই হয় — বড় হাতের অক্ষর ও যতচিহ্ন গণনা হয় না; স্বরচিহ্ন ইঙ্গিত হিসেবে দেখা যায়।",
+  "roleplay.pick": "একটি দৃশ্য বেছে নিন",
+  "roleplay.random": "এলোমেলো দৃশ্য",
+  "roleplay.yourTurn": "আপনার পালা:",
+  "roleplay.progress": "লাইন {{index}}/{{total}}",
+  "roleplay.score": "নিজের লাইন: {{done}} · নিশ্চিত: {{correct}}",
+  "roleplay.done": "দৃশ্য শেষ",
+  "roleplay.summary": "আপনি {{done}}টি নিজের লাইন বলেছেন, {{correct}}টি নিশ্চিতভাবে।",
+  "roleplay.otherScene": "অন্য দৃশ্য",
+  "roleplay.note": "অ্যাপ অন্য ভূমিকা বলে; আপনি শুধু নিজের লাইন তৈরি করেন। ভূমিকা অভ্যাস পুনরাবৃত্তির পরিকল্পনা বদলায় না।",
 } as const;
 
 export default bn;

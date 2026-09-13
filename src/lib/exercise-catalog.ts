@@ -21,11 +21,13 @@ import { isDeAnchored, pairLanguageOf, type PairDirection } from '@/lib/language
  * einer Übung — „Schreiben“ gehört seit dem Umbau zu „Lesen & Schreiben“.
  */
 
-/** Karteikarten oder eine der richtungseigenen Übungen — plus die gemischte „Heutige Runde“ als Sammelmodus. */
+/** Karteikarten oder eine der richtungseigenen Übungen — plus „Heutige Runde“ als Sammelmodus. */
 export type Mode =
   | 'cards'
   | DrillId
   | 'speaking'
+  | 'sagen'
+  | 'rollenspiel'
   | 'writing'
   | 'dictation'
   | SentenceMode
@@ -81,6 +83,8 @@ export function modesForDirection(direction: PairDirection): Mode[] {
       : []),
     // Die Satzübungen gehören seit AE-66 zu jeder Richtung jedes Paars.
     ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
+    // Schritt 3: selbst produzieren (Sag es auf …) und Szenen sprechen.
+    ...(['sagen', 'rollenspiel'] as const),
     'dictation',
     ...(isDeAnchored(direction) ? (['writing'] as const) : []),
   ];
@@ -90,6 +94,8 @@ export function modeKey(mode: Mode): TranslationKey {
   if (mode === 'cards') return 'mode.cards';
   if (mode === 'heute') return 'mode.heute';
   if (mode === 'speaking') return 'mode.speaking';
+  if (mode === 'sagen') return 'mode.sagen';
+  if (mode === 'rollenspiel') return 'mode.rollenspiel';
   if (mode === 'writing') return 'mode.writing';
   if (mode === 'shadowing') return 'mode.shadowing';
   if (mode === 'sentenceRepeat') return 'mode.sentenceRepeat';
@@ -128,7 +134,10 @@ export function groupsForDirection(direction: PairDirection): Group[] {
   if (modes.includes('writing')) lesenSchreiben.push('writing');
   const sprechen: Mode[] = [];
   if (modes.includes('speaking')) sprechen.push('speaking');
-  sprechen.push('shadowing', 'sentenceRepeat');
+  // „Sag es auf …“ und das Rollenspiel gehören zu jeder Richtung (Schritt 3):
+  // Sag es produziert Wörter/Sätze aus dem eigenen Stoff, das Rollenspiel
+  // spielt Szenen der Richtung.
+  sprechen.push('sagen', 'shadowing', 'sentenceRepeat', 'rollenspiel');
   const grammatik = bySkill('grammatik');
 
   return [

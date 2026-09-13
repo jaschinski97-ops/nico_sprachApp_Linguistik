@@ -43,6 +43,8 @@ import {
 } from '@/lib/exercise-catalog';
 import { WordSpeakingRunner } from '@/components/word-speaking-runner';
 import { TodayRoundRunner } from '@/components/today-round-runner';
+import { ProductionRunner } from '@/components/production-runner';
+import { RoleplayRunner } from '@/components/roleplay-runner';
 import { ROUND_MINUTES } from '@/lib/today-round';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
@@ -331,6 +333,10 @@ function ReviewBody({
           language={pairLanguageOf(direction)}
           onExit={onExit}
         />
+      ) : mode === 'sagen' ? (
+        <ProductionRunner key={direction} direction={direction} onExit={onExit} />
+      ) : mode === 'rollenspiel' ? (
+        <RoleplayRunner key={direction} direction={direction} onExit={onExit} />
       ) : mode === 'speaking' ? (
         // Thai: die gemessene Tonkontur-Übung (AE-48). Englisch/Spanisch:
         // Nachsprechen mit Musterlösung und ehrlicher Selbst-Einschätzung —

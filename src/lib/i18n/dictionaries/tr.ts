@@ -400,6 +400,31 @@ const tr = {
   "round.skippedNote": "Atlanan bölümler: {{areas}}.",
   "round.note": "Kartlar ve geçilen dikteler tekrar planını ilerletti. Diğer görevler puansız alıştırma yapar — tekil alıştırmalarda olduğu gibi.",
   "round.shadowNote": "Cümleyi dinle ve birlikte söyle — mikrofonsuz ve ölçümsüz. Turda birlikte söylemek sayılır, puan değil.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "Söyle",
+  "mode.rollenspiel": "Rol yapma",
+  "production.title": "{{language}} olarak söyle",
+  "production.prompt": "Bu {{language}} nasıl denir? Formu kendin kur.",
+  "production.loadFailedTitle": "Konuşma görevi yüklenemedi",
+  "production.done": "Tur tamamlandı",
+  "production.doneNote": "Yanıtların tekrar planına işlendi — kartlar ve dikte ile aynı kartlar.",
+  "production.inputA11y": "Yanıtını yaz",
+  "production.speakA11y": "Yanıtını söyle",
+  "production.listening": "Dinliyorum …",
+  "production.selfRate": "Modeli dinle ve kendini değerlendir",
+  "production.selfRatingTitle": "Yanıt ne kadar güvenliydi?",
+  "production.accentHint": "Doğru — tam yazımı: {{target}}",
+  "production.note": "Yazılı yanıtlar toleranslı denetlenir: büyük harf ve noktalama sayılmaz; aksanlar ve tonlar hatırlatma olarak görünür.",
+  "roleplay.pick": "Bir sahne seç",
+  "roleplay.random": "Rastgele sahne",
+  "roleplay.yourTurn": "Sıra sende:",
+  "roleplay.progress": "Satır {{index}}/{{total}}",
+  "roleplay.score": "Kendi satırların: {{done}} · emin: {{correct}}",
+  "roleplay.done": "Sahne tamamlandı",
+  "roleplay.summary": "{{done}} kendi satırını söyledin, {{correct}} emin.",
+  "roleplay.otherScene": "Başka sahne",
+  "roleplay.note": "Uygulama diğer rolü oynar; yalnızca kendi satırlarını kurarsın. Rol yapma tekrar planını değiştirmez.",
 } as const;
 
 export default tr;

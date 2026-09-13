@@ -400,6 +400,31 @@ const ko = {
   "round.skippedNote": "건너뛴 구간: {{areas}}.",
   "round.note": "카드와 통과한 받아쓰기는 복습 계획을 진행했습니다. 나머지 과제는 점수 없이 연습합니다 — 개별 연습과 동일합니다.",
   "round.shadowNote": "문장을 듣고 함께 말하세요 — 마이크 없이, 측정 없이. 라운드에서는 점수가 아니라 따라 말하는 것이 중요합니다.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "말해 보기",
+  "mode.rollenspiel": "역할극",
+  "production.title": "{{language}}로 말해 보세요",
+  "production.prompt": "이것을 {{language}}로 어떻게 말하나요? 직접 형태를 만들어 보세요.",
+  "production.loadFailedTitle": "말하기 과제를 불러올 수 없습니다",
+  "production.done": "라운드 완료",
+  "production.doneNote": "답변이 복습 계획에 반영되었습니다 — 카드와 받아쓰기와 같은 카드입니다.",
+  "production.inputA11y": "답변 입력",
+  "production.speakA11y": "답변 말하기",
+  "production.listening": "듣고 있습니다 …",
+  "production.selfRate": "모범을 듣고 스스로 평가",
+  "production.selfRatingTitle": "답변에 얼마나 자신이 있었나요?",
+  "production.accentHint": "정답 — 정확한 표기: {{target}}",
+  "production.note": "입력한 답은 관대하게 채점됩니다 — 대소문자와 문장부호는 계산하지 않고, 악센트·성조는 힌트로 표시됩니다.",
+  "roleplay.pick": "장면을 고르세요",
+  "roleplay.random": "무작위 장면",
+  "roleplay.yourTurn": "당신 차례입니다:",
+  "roleplay.progress": "{{total}}줄 중 {{index}}줄",
+  "roleplay.score": "내 대사: {{done}} · 자신 있음: {{correct}}",
+  "roleplay.done": "장면 완료",
+  "roleplay.summary": "내 대사 {{done}}개를 말했고, {{correct}}개는 자신 있었습니다.",
+  "roleplay.otherScene": "다른 장면",
+  "roleplay.note": "앱이 상대 역할을 말합니다. 자기 대사만 만들면 됩니다. 역할극은 복습 계획을 바꾸지 않습니다.",
 } as const;
 
 export default ko;

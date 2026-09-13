@@ -400,6 +400,31 @@ const id = {
   "round.skippedNote": "Bagian yang dilewati: {{areas}}.",
   "round.note": "Kartu dan dikte yang lulus telah memajukan jadwal pengulanganmu. Tugas lain berlatih tanpa skor — sama seperti latihan individual.",
   "round.shadowNote": "Dengarkan kalimat dan ucapkan bersamaan — tanpa mikrofon dan tanpa pengukuran. Dalam sesi ini yang dihitung adalah ikut mengucapkan, bukan nilainya.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "Ucapkan",
+  "mode.rollenspiel": "Bermain peran",
+  "production.title": "Ucapkan dalam {{language}}",
+  "production.prompt": "Bagaimana mengatakan ini dalam {{language}}? Susun bentuknya sendiri.",
+  "production.loadFailedTitle": "Tugas berbicara tidak dapat dimuat",
+  "production.done": "Ronde selesai",
+  "production.doneNote": "Jawabanmu masuk ke jadwal pengulanganmu — kartu yang sama seperti kartu dan dikte.",
+  "production.inputA11y": "Tulis jawabanmu",
+  "production.speakA11y": "Ucapkan jawabanmu",
+  "production.listening": "Saya mendengarkan …",
+  "production.selfRate": "Dengarkan contohnya dan nilai dirimu",
+  "production.selfRatingTitle": "Seberapa yakin jawaban itu?",
+  "production.accentHint": "Benar — ejaan tepatnya: {{target}}",
+  "production.note": "Jawaban tertulis diperiksa dengan toleransi: kapital dan tanda baca tidak dihitung; aksen dan nada muncul sebagai pengingat.",
+  "roleplay.pick": "Pilih sebuah adegan",
+  "roleplay.random": "Adegan acak",
+  "roleplay.yourTurn": "Giliranmu:",
+  "roleplay.progress": "Baris {{index}} dari {{total}}",
+  "roleplay.score": "Baris sendiri: {{done}} · yakin: {{correct}}",
+  "roleplay.done": "Adegan selesai",
+  "roleplay.summary": "Kamu mengucapkan {{done}} baris sendiri, {{correct}} dengan yakin.",
+  "roleplay.otherScene": "Adegan lain",
+  "roleplay.note": "Aplikasi memainkan peran lain; kamu hanya menghasilkan barismu sendiri. Bermain peran tidak mengubah jadwal pengulangan.",
 } as const;
 
 export default id;

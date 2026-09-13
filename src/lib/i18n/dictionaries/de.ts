@@ -91,6 +91,8 @@ const de = {
   'review.switchA11y': 'Sprache oder Lernrichtung wechseln',
   'mode.cards': 'Karteikarten',
   'mode.heute': 'Heutige Runde',
+  'mode.sagen': 'Sag es',
+  'mode.rollenspiel': 'Rollenspiel',
   'mode.speaking': 'Sprechen',
   'mode.writing': 'Schreiben',
   'mode.shadowing': 'Shadowing',
@@ -135,6 +137,23 @@ const de = {
   'rating.a11y': 'Bewertung {{label}}',
   'card.reveal': 'Aufdecken',
   'card.revealA11y': 'Antwort aufdecken',
+
+  /* ---------- Sag es auf … (production-runner, Schritt 3) ---------- */
+  'production.title': 'Sag es auf {{language}}',
+  'production.prompt': 'Wie sagt man das auf {{language}}? Bilde die Form selbst.',
+  'production.loadFailedTitle': 'Sag-es-Übung konnte nicht geladen werden',
+  'production.done': 'Runde beendet',
+  'production.doneNote':
+    'Deine Antworten sind in den Wiederholungsplan eingeflossen — dieselben Karten wie bei Karteikarten und Diktat.',
+  'production.inputA11y': 'Antwort eingeben',
+  'production.speakA11y': 'Antwort sprechen',
+  'production.listening': 'Ich höre zu …',
+  'production.selfRate': 'Musterlösung anhören und selbst bewerten',
+  'production.selfRatingTitle': 'Wie sicher war die Antwort?',
+  'production.accentHint': 'Richtig — die genaue Schreibung ist: {{target}}',
+  'production.note':
+    'Getippt wird tolerant geprüft: Groß-/Kleinschreibung und Satzzeichen zählen nicht, Akzente und Tonzeichen stehen als Hinweis in der Rückmeldung.',
+
 
   /* ---------- Heutige Runde (today-round-runner) ---------- */
   'round.cta': '▶ Heutige Runde · ~{{minutes}} Min',
@@ -498,6 +517,18 @@ const de = {
   'sentence.questionPrompt': 'Welche ganze Aussage oder Frage hast du gehört?',
   'sentence.correct': 'Richtig.',
   'sentence.meant': 'Gemeint ist: {{answer}}',
+
+  /* ---------- Rollenspiel (roleplay-runner, Schritt 3) ---------- */
+  'roleplay.pick': 'Wähle eine Szene',
+  'roleplay.random': 'Zufällige Szene',
+  'roleplay.yourTurn': 'Du bist dran:',
+  'roleplay.progress': 'Zeile {{index}} von {{total}}',
+  'roleplay.score': 'Eigene Zeilen: {{done}} · sicher: {{correct}}',
+  'roleplay.done': 'Szene beendet',
+  'roleplay.summary': '{{done}} eigene Zeilen gesprochen, davon {{correct}} sicher.',
+  'roleplay.otherScene': 'Andere Szene',
+  'roleplay.note':
+    'Die Gegenseite spricht die Szene; du produzierst nur deine Zeilen. Das Rollenspiel schreibt den Wiederholungsplan nicht fort.',
 
   /* ---------- Diagnose (diagnostics-card) ---------- */
   'diagnostics.title': 'Diagnose',

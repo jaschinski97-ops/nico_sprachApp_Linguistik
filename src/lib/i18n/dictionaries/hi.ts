@@ -400,6 +400,31 @@ const hi = {
   "round.skippedNote": "छोड़े गए खंड: {{areas}}।",
   "round.note": "फ्लैशकार्ड और पास हुए श्रुतलेख ने आपकी पुनरावृत्ति योजना आगे बढ़ाई। बाकी कार्य बिना अंक के अभ्यास करते हैं — व्यक्तिगत अभ्यासों की तरह।",
   "round.shadowNote": "वाक्य सुनें और साथ बोलें — बिना माइक, बिना माप। राउंड में साथ बोलना ही गिनता है, अंक नहीं।",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "बोलें",
+  "mode.rollenspiel": "भूमिका अभ्यास",
+  "production.title": "इसे {{language}} में बोलें",
+  "production.prompt": "यह {{language}} में कैसे कहते हैं? रूप स्वयं बनाएँ।",
+  "production.loadFailedTitle": "बोलने का कार्य लोड नहीं हो सका",
+  "production.done": "राउंड समाप्त",
+  "production.doneNote": "आपके उत्तर आपकी पुनरावृत्ति योजना में चले गए — फ्लैशकार्ड और श्रुतलेख वाले ही कार्ड।",
+  "production.inputA11y": "उत्तर लिखें",
+  "production.speakA11y": "उत्तर बोलें",
+  "production.listening": "सुन रहा हूँ …",
+  "production.selfRate": "उदाहरण सुनें और स्वयं आँकें",
+  "production.selfRatingTitle": "उत्तर कितना सही था?",
+  "production.accentHint": "सही — सटीक वर्तनी है: {{target}}",
+  "production.note": "लिखे उत्तर उदारता से जाँचे जाते हैं — बड़े अक्षर और विराम चिह्न नहीं गिने जाते; स्वर चिह्न संकेत के रूप में दिखते हैं।",
+  "roleplay.pick": "एक दृश्य चुनें",
+  "roleplay.random": "यादृच्छिक दृश्य",
+  "roleplay.yourTurn": "आपकी बारी:",
+  "roleplay.progress": "पंक्ति {{index}}/{{total}}",
+  "roleplay.score": "अपनी पंक्तियाँ: {{done}} · आत्मविश्वास: {{correct}}",
+  "roleplay.done": "दृश्य समाप्त",
+  "roleplay.summary": "आपने {{done}} अपनी पंक्तियाँ बोलीं, {{correct}} आत्मविश्वास से।",
+  "roleplay.otherScene": "दूसरा दृश्य",
+  "roleplay.note": "ऐप दूसरी भूमिका बोलता है; आप केवल अपनी पंक्तियाँ बनाते हैं। भूमिका अभ्यास पुनरावृत्ति योजना नहीं बदलता।",
 } as const;
 
 export default hi;

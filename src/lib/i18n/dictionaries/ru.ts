@@ -400,6 +400,31 @@ const ru = {
   "round.skippedNote": "Пропущенные блоки: {{areas}}.",
   "round.note": "Карточки и пройденные диктанты продвинули план повторений. Остальные задания тренируют без оценки — как в отдельных упражнениях.",
   "round.shadowNote": "Слушай фразу и произноси вместе с ней — без микрофона и без измерений. В раунде важно само проговаривание, а не оценка.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "Скажи это",
+  "mode.rollenspiel": "Ролевая игра",
+  "production.title": "Скажи это на {{language}}",
+  "production.prompt": "Как это сказать на {{language}}? Составь форму сам.",
+  "production.loadFailedTitle": "Не удалось загрузить задание",
+  "production.done": "Раунд завершён",
+  "production.doneNote": "Твои ответы вошли в план повторений — те же карточки, что и у карточек и диктантов.",
+  "production.inputA11y": "Введи свой ответ",
+  "production.speakA11y": "Произнеси ответ",
+  "production.listening": "Слушаю …",
+  "production.selfRate": "Послушай образец и оцени себя",
+  "production.selfRatingTitle": "Насколько уверенным был ответ?",
+  "production.accentHint": "Верно — точное написание: {{target}}",
+  "production.note": "Написанные ответы проверяются терпимо: регистр и знаки не считаются; акценты и тоны показываются как напоминание.",
+  "roleplay.pick": "Выбери сцену",
+  "roleplay.random": "Случайная сцена",
+  "roleplay.yourTurn": "Твоя очередь:",
+  "roleplay.progress": "Реплика {{index}} из {{total}}",
+  "roleplay.score": "Своих реплик: {{done}} · уверенных: {{correct}}",
+  "roleplay.done": "Сцена завершена",
+  "roleplay.summary": "Ты произнёс {{done}} своих реплик, {{correct}} уверенно.",
+  "roleplay.otherScene": "Другая сцена",
+  "roleplay.note": "Приложение играет чужую роль; ты произносишь только свои реплики. Ролевая игра не меняет план повторений.",
 } as const;
 
 export default ru;

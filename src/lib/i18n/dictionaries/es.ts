@@ -485,6 +485,31 @@ const es: Partial<Record<TranslationKey, string>> = {
   'round.skippedNote': 'Bloques saltados: {{areas}}.',
   'round.note': 'Las tarjetas y los dictados aprobados avanzaron tu plan de repaso. Las demás tareas practican sin puntuación — igual que en los ejercicios individuales.',
   'round.shadowNote': 'Escucha la frase y repítela — sin micrófono ni medición. En la ronda cuenta que la digas, no que te puntúen.',
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  'mode.sagen': 'Dilo',
+  'mode.rollenspiel': 'Juego de rol',
+  'production.title': 'Dilo en {{language}}',
+  'production.prompt': '¿Cómo se dice esto en {{language}}? Forma la expresión tú mismo.',
+  'production.loadFailedTitle': 'No se pudo cargar la tarea de habla',
+  'production.done': 'Ronda terminada',
+  'production.doneNote': 'Tus respuestas entraron en tu plan de repaso — las mismas tarjetas que las fichas y los dictados.',
+  'production.inputA11y': 'Escribe tu respuesta',
+  'production.speakA11y': 'Di tu respuesta',
+  'production.listening': 'Estoy escuchando …',
+  'production.selfRate': 'Escucha el modelo y evalúate',
+  'production.selfRatingTitle': '¿Cuán segura fue la respuesta?',
+  'production.accentHint': 'Correcto — la ortografía exacta es: {{target}}',
+  'production.note': 'Las respuestas escritas se revisan con tolerancia: mayúsculas y puntuación no cuentan; acentos y tonos aparecen como recordatorio.',
+  'roleplay.pick': 'Elige una escena',
+  'roleplay.random': 'Escena al azar',
+  'roleplay.yourTurn': 'Tu turno:',
+  'roleplay.progress': 'Línea {{index}} de {{total}}',
+  'roleplay.score': 'Líneas propias: {{done}} · seguras: {{correct}}',
+  'roleplay.done': 'Escena terminada',
+  'roleplay.summary': 'Dijiste {{done}} líneas propias, {{correct}} con seguridad.',
+  'roleplay.otherScene': 'Otra escena',
+  'roleplay.note': 'La app hace el otro papel; tú produces solo tus líneas. El juego de rol no cambia tu plan de repaso.',
 };
 
 export default es;

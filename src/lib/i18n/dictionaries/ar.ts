@@ -401,6 +401,31 @@ const ar = {
   "round.skippedNote": "الأقسام التي تم تخطيها: {{areas}}.",
   "round.note": "البطاقات والإملاء الناجح قدّمت خطة مراجعتك. المهام الأخرى تتدرب بلا درجات — مثل التمارين الفردية.",
   "round.shadowNote": "اسمع الجملة وقلها معًا — بلا ميكروفون وبلا قياس. في الجولة يُحسب أن تنطق، لا الدرجات.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "قلها",
+  "mode.rollenspiel": "لعب الأدوار",
+  "production.title": "قلها بـ {{language}}",
+  "production.prompt": "كيف يقال هذا بـ {{language}}؟ كوّن الصورة بنفسك.",
+  "production.loadFailedTitle": "تعذّر تحميل مهمة التحدث",
+  "production.done": "انتهت الجولة",
+  "production.doneNote": "دخلت إجاباتك خطة مراجعتك — البطاقات نفسها كبطاقات الاسترجاع والإملاء.",
+  "production.inputA11y": "اكتب إجابتك",
+  "production.speakA11y": "قل إجابتك",
+  "production.listening": "أستمع …",
+  "production.selfRate": "اسمع النموذج وقّم نفسك",
+  "production.selfRatingTitle": "ما مدى ثقة الإجابة؟",
+  "production.accentHint": "صحيح — الكتابة الدقيقة: {{target}}",
+  "production.note": "تُفحص الإجابات المكتوبة بتسامح — الأحرف الكبيرة وعلامات الترقيم لا تُحتسب؛ العلامات الصوتية تظهر كتذكير.",
+  "roleplay.pick": "اختر مشهدًا",
+  "roleplay.random": "مشهد عشوائي",
+  "roleplay.yourTurn": "دورك:",
+  "roleplay.progress": "السطر {{index}} من {{total}}",
+  "roleplay.score": "أسطر خاصة: {{done}} · واثق: {{correct}}",
+  "roleplay.done": "انتهى المشهد",
+  "roleplay.summary": "قلت {{done}} من أسطر الخاصة، {{correct}} بثقة.",
+  "roleplay.otherScene": "مشهد آخر",
+  "roleplay.note": "يقرأ التطبيق الدور الآخر؛ وأنت تنتج أسطرك فقط. لعب الأدوار لا يغيّر خطة المراجعة.",
 } as const;
 
 export default ar;

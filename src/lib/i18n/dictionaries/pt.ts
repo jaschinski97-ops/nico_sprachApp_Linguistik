@@ -400,6 +400,31 @@ const pt = {
   "round.skippedNote": "Blocos saltados: {{areas}}.",
   "round.note": "Os cartões e os ditados aprovados avançaram o seu plano de revisão. As demais tarefas praticam sem pontuação — como nos exercícios individuais.",
   "round.shadowNote": "Ouça a frase e fale junto — sem microfone nem medição. Na rodada conta falar junto, não a pontuação.",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "Diz isso",
+  "mode.rollenspiel": "Jogo de papéis",
+  "production.title": "Diz isso em {{language}}",
+  "production.prompt": "Como se diz isto em {{language}}? Construa a forma você mesmo.",
+  "production.loadFailedTitle": "Não foi possível carregar a tarefa de fala",
+  "production.done": "Rodada concluída",
+  "production.doneNote": "As suas respostas entraram no plano de revisão — os mesmos cartões dos cartões e dos ditados.",
+  "production.inputA11y": "Escreva a sua resposta",
+  "production.speakA11y": "Diga a sua resposta",
+  "production.listening": "Estou a ouvir …",
+  "production.selfRate": "Ouça o modelo e avalie-se",
+  "production.selfRatingTitle": "Quão segura foi a resposta?",
+  "production.accentHint": "Correto — a ortografia exata é: {{target}}",
+  "production.note": "As respostas escritas são verificadas com tolerância: maiúsculas e pontuação não contam; acentos e tons aparecem como lembrete.",
+  "roleplay.pick": "Escolha uma cena",
+  "roleplay.random": "Cena ao acaso",
+  "roleplay.yourTurn": "A sua vez:",
+  "roleplay.progress": "Fala {{index}} de {{total}}",
+  "roleplay.score": "Falas próprias: {{done}} · seguras: {{correct}}",
+  "roleplay.done": "Cena concluída",
+  "roleplay.summary": "Disse {{done}} falas próprias, {{correct}} com confiança.",
+  "roleplay.otherScene": "Outra cena",
+  "roleplay.note": "A app faz o outro papel; você produz apenas as suas falas. O jogo de papéis não muda o plano de revisão.",
 } as const;
 
 export default pt;

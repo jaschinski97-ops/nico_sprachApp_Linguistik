@@ -487,6 +487,31 @@ const en: Partial<Record<TranslationKey, string>> = {
   'round.skippedNote': 'Skipped sections: {{areas}}.',
   'round.note': 'Flashcards and passed dictations advanced your review schedule. The other tasks practise without scoring — same as in the individual exercises.',
   'round.shadowNote': 'Listen to the sentence and speak along — no microphone, no measurement. In the round it counts that you speak along, not that you are scored.',
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  'mode.sagen': 'Say it',
+  'mode.rollenspiel': 'Role-play',
+  'production.title': 'Say it in {{language}}',
+  'production.prompt': 'How do you say this in {{language}}? Build the form yourself.',
+  'production.loadFailedTitle': 'The speaking task could not be loaded',
+  'production.done': 'Round finished',
+  'production.doneNote': 'Your answers went into your review schedule — the same cards as flashcards and dictation.',
+  'production.inputA11y': 'Enter your answer',
+  'production.speakA11y': 'Speak your answer',
+  'production.listening': 'I’m listening …',
+  'production.selfRate': 'Hear the model and rate yourself',
+  'production.selfRatingTitle': 'How confident was the answer?',
+  'production.accentHint': 'Correct — the exact spelling is: {{target}}',
+  'production.note': 'Typed answers are checked tolerantly: capitalisation and punctuation do not count; accents and tone marks appear as a reminder.',
+  'roleplay.pick': 'Choose a scene',
+  'roleplay.random': 'Random scene',
+  'roleplay.yourTurn': 'Your turn:',
+  'roleplay.progress': 'Line {{index}} of {{total}}',
+  'roleplay.score': 'Own lines: {{done}} · confident: {{correct}}',
+  'roleplay.done': 'Scene finished',
+  'roleplay.summary': 'You spoke {{done}} own lines, {{correct}} with confidence.',
+  'roleplay.otherScene': 'Another scene',
+  'roleplay.note': 'The app plays the other role; you produce only your own lines. Role-play does not change your review schedule.',
 };
 
 export default en;

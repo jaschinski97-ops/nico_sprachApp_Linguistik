@@ -400,6 +400,31 @@ const ur = {
   "round.skippedNote": "چھوڑے گئے حصے: {{areas}}۔",
   "round.note": "فلیش کارڈز اور کامیاب املا نے آپ کے اعادے کا منصوبہ آگے بڑھایا۔ باقی کام بغیر نمبر کے مشق کرتے ہیں — جیسے انفرادی مشقیں۔",
   "round.shadowNote": "جملہ سنیں اور ساتھ بولیں — بغیر مائیک، بغیر پیمائش۔ راؤنڈ میں بولنا اہم ہے، نمبر نہیں۔",
+
+  /* ---------- Sag es + Rollenspiel (13.09.2026, Schritt 3) ---------- */
+  "mode.sagen": "کہیں",
+  "mode.rollenspiel": "کردار ادا کرنا",
+  "production.title": "اسے {{language}} میں کہیں",
+  "production.prompt": "یہ {{language}} میں کیسے کہتے ہیں؟ شکل خود بنائیں۔",
+  "production.loadFailedTitle": "بولنے کا کام لوڈ نہیں ہو سکا",
+  "production.done": "راؤنڈ مکمل",
+  "production.doneNote": "آپ کے جوابات آپ کے اعادے کے منصوبے میں شامل ہو گئے — فلیش کارڈز اور املا جیسے ہی کارڈز۔",
+  "production.inputA11y": "جواب درج کریں",
+  "production.speakA11y": "جواب بولیں",
+  "production.listening": "سن رہا ہوں …",
+  "production.selfRate": "نمونہ سنیں اور خود کو جانچیں",
+  "production.selfRatingTitle": "جواب کتنا یقینی تھا؟",
+  "production.accentHint": "درست — درست ہجے: {{target}}",
+  "production.note": "لکھے گئے جوابات برداشت سے جانچے جاتے ہیں — بڑے حروف اور رموزِ استعمال شمار نہیں؛ آواز کے نشان بطور اشارہ ظاہر ہوتے ہیں۔",
+  "roleplay.pick": "ایک منظر منتخب کریں",
+  "roleplay.random": "بے ترتیب منظر",
+  "roleplay.yourTurn": "آپ کی باری:",
+  "roleplay.progress": "سطر {{index}}/{{total}}",
+  "roleplay.score": "اپنے سطریں: {{done}} · یقینی: {{correct}}",
+  "roleplay.done": "منظر مکمل",
+  "roleplay.summary": "آپ نے {{done}} اپنے سطریں کہیں، {{correct}} یقینی طور پر۔",
+  "roleplay.otherScene": "دوسرا منظر",
+  "roleplay.note": "ایپ دوسرا کردار بولتی ہے؛ آپ صرف اپنے سطریں بناتے ہیں۔ کردار ادا کرنا اعادے کے منصوبے کو نہیں بدلتا۔",
 } as const;
 
 export default ur;
