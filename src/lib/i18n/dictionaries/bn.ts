@@ -382,6 +382,24 @@ const bn = {
   "wordSpeaking.summary": "{{count}}টি শব্দ পড়া হয়েছে।",
   "wordSpeaking.noScore": "কোনো নম্বর নেই, পুনরাবৃত্তির পরিকল্পনা অপরিবর্তিত।",
   "wordSpeaking.progress": "শব্দ {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "আজকের রাউন্ড",
+  "round.cta": "▶ আজকের রাউন্ড · ~{{minutes}} মিনিট",
+  "round.ctaA11y": "আজকের রাউন্ড শুরু করুন — মিশ্র অনুশীলন, প্রায় {{minutes}} মিনিট",
+  "round.assembling": "রাউন্ড তৈরি হচ্ছে …",
+  "round.loadFailedTitle": "রাউন্ড তৈরি করা যায়নি",
+  "round.segment": "অংশ {{index}}/{{total}}",
+  "round.satz": "বাক্য তৈরি করুন",
+  "round.satzPrompt": "কোন বাক্যটি এটি বলে? লক্ষ্য ভাষায় বেছে নিন।",
+  "round.skip": "অংশ এড়িয়ে যান",
+  "round.skipA11y": "এই অংশ এড়িয়ে যান",
+  "round.emptySkip": "এই ডিভাইসে এই অংশের উপকরণ নেই — এড়িয়ে গেছে।",
+  "round.done": "আজকের রাউন্ড শেষ",
+  "round.summary": "{{segments}}টি অংশে {{items}}টি কাজ।",
+  "round.skippedNote": "এড়িয়ে যাওয়া অংশ: {{areas}}।",
+  "round.note": "ফ্ল্যাশকার্ড ও পাস করা শ্রুতিলেখ আপনার পুনরাবৃত্তির পরিকল্পনা এগিয়েছে। বাকি কাজগুলো নম্বর ছাড়া অনুশীলন — আলাদা অনুশীলনের মতোই।",
+  "round.shadowNote": "বাক্য শুনুন ও সাথে বলুন — মাইক্রোফোন ছাড়া, মাপ ছাড়া। রাউন্ডে গুরুত্ব হলো বলা, নম্বর নয়।",
 } as const;
 
 export default bn;

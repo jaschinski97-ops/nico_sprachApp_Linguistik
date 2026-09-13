@@ -90,6 +90,7 @@ const de = {
   'review.switch': '← Sprache oder Richtung wechseln',
   'review.switchA11y': 'Sprache oder Lernrichtung wechseln',
   'mode.cards': 'Karteikarten',
+  'mode.heute': 'Heutige Runde',
   'mode.speaking': 'Sprechen',
   'mode.writing': 'Schreiben',
   'mode.shadowing': 'Shadowing',
@@ -134,6 +135,25 @@ const de = {
   'rating.a11y': 'Bewertung {{label}}',
   'card.reveal': 'Aufdecken',
   'card.revealA11y': 'Antwort aufdecken',
+
+  /* ---------- Heutige Runde (today-round-runner) ---------- */
+  'round.cta': '▶ Heutige Runde · ~{{minutes}} Min',
+  'round.ctaA11y': 'Heutige Runde starten — gemischtes Üben, etwa {{minutes}} Minuten',
+  'round.assembling': 'Runde wird zusammengestellt …',
+  'round.loadFailedTitle': 'Runde konnte nicht zusammengestellt werden',
+  'round.segment': 'Abschnitt {{index}} von {{total}}',
+  'round.satz': 'Satz bilden',
+  'round.satzPrompt': 'Welcher Satz heißt das? Wähle die Zielsprache.',
+  'round.skip': 'Bereich überspringen',
+  'round.skipA11y': 'Diesen Bereich überspringen',
+  'round.emptySkip': 'Kein Stoff für diesen Bereich auf diesem Gerät — übersprungen.',
+  'round.done': 'Heutige Runde beendet',
+  'round.summary': '{{items}} Aufgaben über {{segments}} Bereiche.',
+  'round.skippedNote': 'Übersprungene Bereiche: {{areas}}.',
+  'round.note':
+    'Karteikarten und bestandene Diktate haben den Wiederholungsplan fortgeschrieben. Die übrigen Aufgaben üben ohne Bewertung — wie in den Einzelübungen.',
+  'round.shadowNote':
+    'Satz anhören und mitsprechen — ohne Mikrofon und ohne Messung. In der Runde zählt das Mitsprechen, nicht die Bewertung.',
 
   /* ---------- Gespräch (conversation.tsx) ---------- */
   'conversation.subtitle': 'Vorproduzierte Sprachsituationen',

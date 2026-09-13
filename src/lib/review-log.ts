@@ -48,6 +48,14 @@ export type ReviewDayLog = {
    */
   drills?: number;
   drillsCorrect?: number;
+  /**
+   * Beantwortete Aufgaben **je Art** (Heutige Runde, 13.09.2026) — die
+   * Fehlerquote der letzten Tage steuert, welcher Bereich in der gemischten
+   * Runde mehr Anteil bekommt (`lib/today-round.ts`). Schlüssel sind
+   * Aufgaben-Arten (`drill`-IDs, `'dictation'`, …); Werte der laufende
+   * Zähler. Optional: alte Tagesdokumente haben das Feld nicht.
+   */
+  byDrill?: Partial<Record<string, { total: number; correct: number }>>;
 };
 
 /**
@@ -143,11 +151,16 @@ export async function recordReviewInTransaction(
  * `direction` steht bewusst NICHT in `byDirection`: dieses Feld zählt
  * Wiederholungen, und die Übung ist keine. Die Richtung ist der Aufgabe
  * ohnehin anzusehen — es gibt je Richtung eigene Übungstypen.
+ *
+ * `art` (optional, seit der Heutigen Runde): welche Aufgaben-Art beantwortet
+ * wurde (Drill-ID, `'dictation'`, …). Ohne `art` landet die Aufgabe nur in
+ * den Summenzählern — alte Aufrufer verhalten sich unverändert weiter.
  */
 export async function recordDrill(
   correct: boolean,
   at: number,
-  store?: DataStore
+  store?: DataStore,
+  art?: string
 ): Promise<ReviewDayLog> {
   const db = store ?? (await getStore());
   const date = dayKey(at);
@@ -157,6 +170,12 @@ export async function recordDrill(
 
     entry.drills = (entry.drills ?? 0) + 1;
     entry.drillsCorrect = (entry.drillsCorrect ?? 0) + (correct ? 1 : 0);
+    if (art) {
+      const bis = entry.byDrill?.[art] ?? { total: 0, correct: 0 };
+      const byDrill = entry.byDrill ?? {};
+      byDrill[art] = { total: bis.total + 1, correct: bis.correct + (correct ? 1 : 0) };
+      entry.byDrill = byDrill;
+    }
 
     await db.put('reviewLog', date, entry);
     return entry;

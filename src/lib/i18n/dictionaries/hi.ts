@@ -382,6 +382,24 @@ const hi = {
   "wordSpeaking.summary": "{{count}} शब्द दोहराए गए।",
   "wordSpeaking.noScore": "कोई अंक नहीं, पुनरावृत्ति योजना में कोई बदलाव नहीं।",
   "wordSpeaking.progress": "शब्द {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "आज का राउंड",
+  "round.cta": "▶ आज का राउंड · ~{{minutes}} मिनट",
+  "round.ctaA11y": "आज का राउंड शुरू करें — मिश्रित अभ्यास, लगभग {{minutes}} मिनट",
+  "round.assembling": "राउंड तैयार हो रहा है …",
+  "round.loadFailedTitle": "राउंड तैयार नहीं हो सका",
+  "round.segment": "खंड {{index}}/{{total}}",
+  "round.satz": "वाक्य बनाएँ",
+  "round.satzPrompt": "कौन-सा वाक्य यह कहता है? लक्षित भाषा में चुनें।",
+  "round.skip": "खंड छोड़ें",
+  "round.skipA11y": "यह खंड छोड़ें",
+  "round.emptySkip": "इस डिवाइस पर इस खंड की सामग्री नहीं है — छोड़ा गया।",
+  "round.done": "आज का राउंड समाप्त",
+  "round.summary": "{{segments}} खंडों में {{items}} कार्य।",
+  "round.skippedNote": "छोड़े गए खंड: {{areas}}।",
+  "round.note": "फ्लैशकार्ड और पास हुए श्रुतलेख ने आपकी पुनरावृत्ति योजना आगे बढ़ाई। बाकी कार्य बिना अंक के अभ्यास करते हैं — व्यक्तिगत अभ्यासों की तरह।",
+  "round.shadowNote": "वाक्य सुनें और साथ बोलें — बिना माइक, बिना माप। राउंड में साथ बोलना ही गिनता है, अंक नहीं।",
 } as const;
 
 export default hi;

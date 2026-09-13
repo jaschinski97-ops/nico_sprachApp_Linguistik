@@ -469,6 +469,24 @@ const en: Partial<Record<TranslationKey, string>> = {
   'wordSpeaking.summary': '{{count}} words spoken aloud.',
   'wordSpeaking.noScore': 'No score, no change to your review schedule.',
   'wordSpeaking.progress': 'Word {{index}} of {{total}}',
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  'mode.heute': 'Today’s round',
+  'round.cta': '▶ Today’s round · ~{{minutes}} min',
+  'round.ctaA11y': 'Start today’s round — mixed practice, about {{minutes}} minutes',
+  'round.assembling': 'Assembling the round …',
+  'round.loadFailedTitle': 'The round could not be assembled',
+  'round.segment': 'Section {{index}} of {{total}}',
+  'round.satz': 'Build the sentence',
+  'round.satzPrompt': 'Which sentence says this? Choose in the target language.',
+  'round.skip': 'Skip section',
+  'round.skipA11y': 'Skip this section',
+  'round.emptySkip': 'No material for this section on this device — skipped.',
+  'round.done': 'Today’s round finished',
+  'round.summary': '{{items}} tasks across {{segments}} sections.',
+  'round.skippedNote': 'Skipped sections: {{areas}}.',
+  'round.note': 'Flashcards and passed dictations advanced your review schedule. The other tasks practise without scoring — same as in the individual exercises.',
+  'round.shadowNote': 'Listen to the sentence and speak along — no microphone, no measurement. In the round it counts that you speak along, not that you are scored.',
 };
 
 export default en;

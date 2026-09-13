@@ -382,6 +382,24 @@ const fr = {
   "wordSpeaking.summary": "{{count}} mots répétés.",
   "wordSpeaking.noScore": "Aucun score, aucun changement du planning de révision.",
   "wordSpeaking.progress": "Mot {{index}} sur {{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "Séance du jour",
+  "round.cta": "▶ Séance du jour · ~{{minutes}} min",
+  "round.ctaA11y": "Lancer la séance du jour — entraînement mixte, environ {{minutes}} minutes",
+  "round.assembling": "Préparation de la séance …",
+  "round.loadFailedTitle": "Impossible de préparer la séance",
+  "round.segment": "Partie {{index}} sur {{total}}",
+  "round.satz": "Construire la phrase",
+  "round.satzPrompt": "Quelle phrase dit cela ? Choisis dans la langue cible.",
+  "round.skip": "Passer la partie",
+  "round.skipA11y": "Passer cette partie",
+  "round.emptySkip": "Pas de matériel pour cette partie sur cet appareil — passée.",
+  "round.done": "Séance du jour terminée",
+  "round.summary": "{{items}} tâches réparties sur {{segments}} parties.",
+  "round.skippedNote": "Parties passées : {{areas}}.",
+  "round.note": "Les cartes et les dictées réussies ont fait avancer ton planning de révision. Les autres tâches s’entraînent sans score — comme dans les exercices individuels.",
+  "round.shadowNote": "Écoute la phrase et dis-la en même temps — sans micro ni mesure. Dans la séance, compte le fait de parler en même temps, pas la note.",
 } as const;
 
 export default fr;

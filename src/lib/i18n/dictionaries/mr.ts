@@ -382,6 +382,24 @@ const mr = {
   "wordSpeaking.summary": "{{count}} शब्द म्हटले.",
   "wordSpeaking.noScore": "गुण नाहीत, पुनरावृत्तीच्या आराखड्यात बदल नाही.",
   "wordSpeaking.progress": "शब्द {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "आजची फेरी",
+  "round.cta": "▶ आजची फेरी · ~{{minutes}} मिनिटे",
+  "round.ctaA11y": "आजची फेरी सुरू करा — मिश्र सराव, सुमारे {{minutes}} मिनिटे",
+  "round.assembling": "फेरी तयार होत आहे …",
+  "round.loadFailedTitle": "फेरी तयार करता आली नाही",
+  "round.segment": "विभाग {{index}}/{{total}}",
+  "round.satz": "वाक्य बनवा",
+  "round.satzPrompt": "कोणते वाक्य हे म्हणते? लक्ष्य भाषेत निवडा.",
+  "round.skip": "विभाग वगळा",
+  "round.skipA11y": "हा विभाग वगळा",
+  "round.emptySkip": "या डिव्हाइसवर या विभागासाठी सामग्री नाही — वगळले.",
+  "round.done": "आजची फेरी संपली",
+  "round.summary": "{{segments}} विभागांत {{items}} कार्ये.",
+  "round.skippedNote": "वगळलेले विभाग: {{areas}}.",
+  "round.note": "फ्लॅशकार्ड्स आणि उत्तीर्ण श्रुतलेखांनी पुनरावृत्तीचा आराखडा पुढे नेला. बाकी कामे गुणांशिवाय सराव करतात — वैयक्तिक सरावाप्रमाणे.",
+  "round.shadowNote": "वाक्य ऐका आणि सोबत म्हणा — मायक्रोफोनशिवाय, मोजमापशिवाय. फेरीत म्हणणे महत्त्वाचे, गुण नाहीत.",
 } as const;
 
 export default mr;

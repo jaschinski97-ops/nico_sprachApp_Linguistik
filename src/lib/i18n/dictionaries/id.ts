@@ -382,6 +382,24 @@ const id = {
   "wordSpeaking.summary": "{{count}} kata diucapkan.",
   "wordSpeaking.noScore": "Tanpa skor, tanpa perubahan jadwal pengulangan.",
   "wordSpeaking.progress": "Kata {{index}} dari {{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "Sesi hari ini",
+  "round.cta": "▶ Sesi hari ini · ±{{minutes}} mnt",
+  "round.ctaA11y": "Mulai sesi hari ini — latihan campur, sekitar {{minutes}} menit",
+  "round.assembling": "Menyusun sesi …",
+  "round.loadFailedTitle": "Sesi tidak dapat disusun",
+  "round.segment": "Bagian {{index}} dari {{total}}",
+  "round.satz": "Bentuk kalimat",
+  "round.satzPrompt": "Kalimat mana yang mengatakan ini? Pilih dalam bahasa sasaran.",
+  "round.skip": "Lewati bagian",
+  "round.skipA11y": "Lewati bagian ini",
+  "round.emptySkip": "Tidak ada materi untuk bagian ini di perangkat ini — dilewati.",
+  "round.done": "Sesi hari ini selesai",
+  "round.summary": "{{items}} tugas dalam {{segments}} bagian.",
+  "round.skippedNote": "Bagian yang dilewati: {{areas}}.",
+  "round.note": "Kartu dan dikte yang lulus telah memajukan jadwal pengulanganmu. Tugas lain berlatih tanpa skor — sama seperti latihan individual.",
+  "round.shadowNote": "Dengarkan kalimat dan ucapkan bersamaan — tanpa mikrofon dan tanpa pengukuran. Dalam sesi ini yang dihitung adalah ikut mengucapkan, bukan nilainya.",
 } as const;
 
 export default id;

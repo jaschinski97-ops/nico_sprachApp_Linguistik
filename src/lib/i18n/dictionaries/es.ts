@@ -467,6 +467,24 @@ const es: Partial<Record<TranslationKey, string>> = {
   'wordSpeaking.summary': '{{count}} palabras repetidas.',
   'wordSpeaking.noScore': 'Sin puntos ni cambios en el plan de repaso.',
   'wordSpeaking.progress': 'Palabra {{index}} de {{total}}',
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  'mode.heute': 'Ronda de hoy',
+  'round.cta': '▶ Ronda de hoy · ~{{minutes}} min',
+  'round.ctaA11y': 'Iniciar la ronda de hoy — práctica mixta, unos {{minutes}} minutos',
+  'round.assembling': 'Preparando la ronda …',
+  'round.loadFailedTitle': 'No se pudo preparar la ronda',
+  'round.segment': 'Bloque {{index}} de {{total}}',
+  'round.satz': 'Formar la frase',
+  'round.satzPrompt': '¿Qué frase dice esto? Elige en el idioma meta.',
+  'round.skip': 'Saltar bloque',
+  'round.skipA11y': 'Saltar este bloque',
+  'round.emptySkip': 'Sin material para este bloque en este dispositivo — se saltó.',
+  'round.done': 'Ronda de hoy terminada',
+  'round.summary': '{{items}} tareas en {{segments}} bloques.',
+  'round.skippedNote': 'Bloques saltados: {{areas}}.',
+  'round.note': 'Las tarjetas y los dictados aprobados avanzaron tu plan de repaso. Las demás tareas practican sin puntuación — igual que en los ejercicios individuales.',
+  'round.shadowNote': 'Escucha la frase y repítela — sin micrófono ni medición. En la ronda cuenta que la digas, no que te puntúen.',
 };
 
 export default es;

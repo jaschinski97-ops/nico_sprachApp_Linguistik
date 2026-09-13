@@ -447,6 +447,24 @@ const th: Partial<Record<TranslationKey, string>> = {
   'wordSpeaking.summary': 'พูดตามแล้ว {{count}} คำ',
   'wordSpeaking.noScore': 'ไม่มีคะแนน ไม่มีการเปลี่ยนแผนทบทวน',
   'wordSpeaking.progress': 'คำที่ {{index}} จาก {{total}}',
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  'mode.heute': 'รอบวันนี้',
+  'round.cta': '▶ รอบวันนี้ · ~{{minutes}} นาที',
+  'round.ctaA11y': 'เริ่มรอบวันนี้ — ฝึกแบบผสม ประมาณ {{minutes}} นาที',
+  'round.assembling': 'กำลังจัดรอบ …',
+  'round.loadFailedTitle': 'จัดรอบไม่สำเร็จ',
+  'round.segment': 'ส่วนที่ {{index}} จาก {{total}}',
+  'round.satz': 'ประกอบประโยค',
+  'round.satzPrompt': 'ประโยคใดมีความหมายนี้? เลือกเป็นภาษาเป้าหมาย',
+  'round.skip': 'ข้ามส่วนนี้',
+  'round.skipA11y': 'ข้ามส่วนนี้',
+  'round.emptySkip': 'ไม่มีเนื้อหาสำหรับส่วนนี้บนอุปกรณ์นี้ — ข้ามแล้ว',
+  'round.done': 'รอบวันนี้จบแล้ว',
+  'round.summary': 'งาน {{items}} ชิ้นใน {{segments}} ส่วน',
+  'round.skippedNote': 'ส่วนที่ข้าม: {{areas}}',
+  'round.note': 'การ์ดและการเขียนตามคำบอกที่ผ่านได้ปรับปรุงแผนทบทวนของคุณ งานอื่นฝึกโดยไม่ให้คะแนน — เหมือนแบบฝึกหัดเดี่ยว',
+  'round.shadowNote': 'ฟังประโยคแล้วพูดตาม — ไม่ใช้ไมโครโฟน ไม่มีการวัด ในรอบนี้การพูดตามสำคัญกว่าคะแนน',
 };
 
 export default th;

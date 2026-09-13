@@ -42,6 +42,8 @@ import {
   type Mode,
 } from '@/lib/exercise-catalog';
 import { WordSpeakingRunner } from '@/components/word-speaking-runner';
+import { TodayRoundRunner } from '@/components/today-round-runner';
+import { ROUND_MINUTES } from '@/lib/today-round';
 
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
@@ -89,8 +91,9 @@ function parseMode(value: unknown, direction: PairDirection): Mode {
   // SEIT AE-66 ÜBER DIE MODESLISTE STATT EINZELNER LITERALE: `?mode=shadowing`
   // ist für jede Richtung gültig oder fällt auf Karteikarten zurück — auch ein
   // gemerkter Modus einer alten Richtung kann nie einen ungültigen Zustand
-  // ergeben.
-  const modes: string[] = modesForDirection(direction);
+  // ergeben. 'heute' (Heutige Runde, Schritt 2) ist kein richtungseigener
+  // Modus, sondern als Sammelmodus überall gültig.
+  const modes: string[] = [...modesForDirection(direction), 'heute'];
   return typeof value === 'string' && modes.includes(value) ? (value as Mode) : 'cards';
 }
 
@@ -263,7 +266,10 @@ function ReviewBody({
 }) {
   const { t, languageName, uiLanguage } = useLocale();
   useEffect(() => {
-    onRemember(direction, mode);
+    // Die Heutige Runde ist ein Sammelmodus ohne gemerkten Stand — als
+    // Lesezeichen bleibt die Karteikarten-Sitzung, sonst stünde man beim
+    // nächsten Öffnen mitten in einer abgebrochenen Runde.
+    onRemember(direction, mode === 'heute' ? 'cards' : mode);
     // `onRemember` ist bewusst nicht in der Liste: Es schreibt das Profil und
     // erzeugt dadurch eine neue Identitaet - mit ihm liefe der Effekt endlos.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -285,11 +291,22 @@ function ReviewBody({
             ? directionLabel(direction, uiLanguage)
             : direction
       }>
-      <ModeBar direction={direction} mode={mode} onPick={(picked) => onOpen(direction, picked)} />
+      {mode === 'heute' ? (
+        <TodayRoundRunner key={direction} direction={direction} onExit={onExit} />
+      ) : (
+        <>
+          {/* Der Hauptknopf der Runde bleibt unter den Übungen sichtbar —
+              nur nicht, während die Runde selbst läuft. */}
+          <HeutigeRundeKnopf onPress={() => onOpen(direction, 'heute')} />
+          <ModeBar
+            direction={direction}
+            mode={mode}
+            onPick={(picked) => onOpen(direction, picked)}
+          />
 
-      <DirectionBar onSwitch={onSwitch} />
+          <DirectionBar onSwitch={onSwitch} />
 
-      {mode === 'cards' ? (
+          {mode === 'cards' ? (
         <CardSession direction={direction} key={direction} />
       ) : mode === 'writing' ? (
         // Freies Schreiben ist de-geankert (siehe `modesForDirection`); der
@@ -331,11 +348,31 @@ function ReviewBody({
           onExit={onExit}
         />
       )}
+          </>
+      )}
 
       {/* Die Merkmal-Legende (Tonfarben etc.) ist hier bewusst ENTFERNT
           (Nutzerentscheidung 10.09.): Die Töne stehen bereits farbig an der
           Umschrift jeder Karte — der Extra-Kasten wiederholte sie nur. */}
     </ScreenScaffold>
+  );
+}
+
+/**
+ * Der Hauptknopf der Heutigen Runde (Schritt 2, 13.09.): gemischtes Üben —
+ * fällige Karten, Hören, Satz bilden, Diktat, Shadowing in ~10 Minuten. Er
+ * steht ÜBER der Übungsleiste, weil die Mischung der empfohlene Weg ist;
+ * die Einzelübungen bleiben darunter voll erreichbar.
+ */
+function HeutigeRundeKnopf({ onPress }: { onPress: () => void }) {
+  const { t } = useLocale();
+  return (
+    <ThemedButton
+      label={t('round.cta', { minutes: ROUND_MINUTES })}
+      accessibilityLabel={t('round.ctaA11y', { minutes: ROUND_MINUTES })}
+      onPress={onPress}
+      variant="primary"
+    />
   );
 }
 

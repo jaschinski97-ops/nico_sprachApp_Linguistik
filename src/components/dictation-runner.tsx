@@ -30,6 +30,7 @@ import { type Rating } from '@/lib/fsrs/types';
 import { type LanguageCode } from '@/lib/languages/types';
 import { languageOf } from '@/lib/languages/registry';
 import { loadOrCreateCardState, rateCard } from '@/lib/repository';
+import { recordDrill } from '@/lib/review-log';
 import { resolveClipUri } from '@/lib/clips/lookup';
 import { useLocale, type TranslationKey } from '@/lib/i18n';
 import { ratingExplanation } from '@/lib/writing';
@@ -214,6 +215,9 @@ export function DictationRunner({
       const next = scoreDictation(draft, task.text, config);
       setScore(next);
       setResults((previous) => [...previous, next]);
+      // Die Fehlerquote des Diktats steuert die Gewichtung der Heutigen
+      // Runde — protokolliert unabhängig vom Kartenschreiben.
+      await recordDrill(next.passed, Date.now(), undefined, 'dictation').catch(() => {});
       if (next.passed) {
         // ratingForScore liefert bei `passed` immer 2 oder 3 — nie null.
         const rating = ratingForScore(next)!;

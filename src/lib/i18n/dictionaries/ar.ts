@@ -383,6 +383,24 @@ const ar = {
   "wordSpeaking.summary": "تم تكرار {{count}} كلمة.",
   "wordSpeaking.noScore": "بدون درجات، وبدون تغيير في خطة المراجعة.",
   "wordSpeaking.progress": "الكلمة {{index}} من {{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "جولة اليوم",
+  "round.cta": "▶ جولة اليوم · ~{{minutes}} دقيقة",
+  "round.ctaA11y": "ابدأ جولة اليوم — تدريب مختلط، حوالي {{minutes}} دقيقة",
+  "round.assembling": "يجري إعداد الجولة …",
+  "round.loadFailedTitle": "تعذّر إعداد الجولة",
+  "round.segment": "القسم {{index}} من {{total}}",
+  "round.satz": "تكوين الجملة",
+  "round.satzPrompt": "أي جملة تعني هذا؟ اختر باللغة الهدف.",
+  "round.skip": "تخطَّ القسم",
+  "round.skipA11y": "تخطَّ هذا القسم",
+  "round.emptySkip": "لا يوجد محتوى لهذا القسم على هذا الجهاز — تم التخطي.",
+  "round.done": "انتهت جولة اليوم",
+  "round.summary": "{{items}} مهمة عبر {{segments}} أقسام.",
+  "round.skippedNote": "الأقسام التي تم تخطيها: {{areas}}.",
+  "round.note": "البطاقات والإملاء الناجح قدّمت خطة مراجعتك. المهام الأخرى تتدرب بلا درجات — مثل التمارين الفردية.",
+  "round.shadowNote": "اسمع الجملة وقلها معًا — بلا ميكروفون وبلا قياس. في الجولة يُحسب أن تنطق، لا الدرجات.",
 } as const;
 
 export default ar;

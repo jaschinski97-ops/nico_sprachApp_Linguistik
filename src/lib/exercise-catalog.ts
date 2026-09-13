@@ -21,8 +21,15 @@ import { isDeAnchored, pairLanguageOf, type PairDirection } from '@/lib/language
  * einer Übung — „Schreiben“ gehört seit dem Umbau zu „Lesen & Schreiben“.
  */
 
-/** Karteikarten oder eine der richtungseigenen Übungen. */
-export type Mode = 'cards' | DrillId | 'speaking' | 'writing' | 'dictation' | SentenceMode;
+/** Karteikarten oder eine der richtungseigenen Übungen — plus die gemischte „Heutige Runde“ als Sammelmodus. */
+export type Mode =
+  | 'cards'
+  | DrillId
+  | 'speaking'
+  | 'writing'
+  | 'dictation'
+  | SentenceMode
+  | 'heute';
 
 /** Die Wort-Sprechübung und die Auswahlübungen als Übersetzungsschlüssel. */
 export const DRILL_KEYS: Record<DrillId, TranslationKey> = {
@@ -81,6 +88,7 @@ export function modesForDirection(direction: PairDirection): Mode[] {
 
 export function modeKey(mode: Mode): TranslationKey {
   if (mode === 'cards') return 'mode.cards';
+  if (mode === 'heute') return 'mode.heute';
   if (mode === 'speaking') return 'mode.speaking';
   if (mode === 'writing') return 'mode.writing';
   if (mode === 'shadowing') return 'mode.shadowing';

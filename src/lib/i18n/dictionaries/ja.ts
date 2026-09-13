@@ -382,6 +382,24 @@ const ja = {
   "wordSpeaking.summary": "{{count}}語を読み上げました。",
   "wordSpeaking.noScore": "得点なし、復習予定の変更なし。",
   "wordSpeaking.progress": "単語 {{index}} / {{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "今日のラウンド",
+  "round.cta": "▶ 今日のラウンド · 約{{minutes}}分",
+  "round.ctaA11y": "今日のラウンドを開始 — ミックス練習、約{{minutes}}分",
+  "round.assembling": "ラウンドを準備しています …",
+  "round.loadFailedTitle": "ラウンドを準備できませんでした",
+  "round.segment": "セクション {{index}} / {{total}}",
+  "round.satz": "文を作る",
+  "round.satzPrompt": "どの文がこの意味ですか？目標言語で選んでください。",
+  "round.skip": "セクションをスキップ",
+  "round.skipA11y": "このセクションをスキップ",
+  "round.emptySkip": "この端末にはこのセクションの素材がありません — スキップしました。",
+  "round.done": "今日のラウンド終了",
+  "round.summary": "{{segments}}セクションで{{items}}問。",
+  "round.skippedNote": "スキップしたセクション：{{areas}}。",
+  "round.note": "カードと合格したディクテーションは復習予定を進めました。その他の課題は採点なしの練習です — 個別練習と同じ。",
+  "round.shadowNote": "文を聞いて一緒に発音しましょう — マイクなし、測定なし。ラウンドでは採点ではなく、発音すること自体が大事。",
 } as const;
 
 export default ja;

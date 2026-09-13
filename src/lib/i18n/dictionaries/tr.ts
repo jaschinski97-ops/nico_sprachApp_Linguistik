@@ -382,6 +382,24 @@ const tr = {
   "wordSpeaking.summary": "{{count}} kelime tekrar edildi.",
   "wordSpeaking.noScore": "Puan yok, tekrar planı değişmedi.",
   "wordSpeaking.progress": "Kelime {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "Bugünün turu",
+  "round.cta": "▶ Bugünün turu · ~{{minutes}} dk",
+  "round.ctaA11y": "Bugünün turunu başlat — karışık alıştırma, yaklaşık {{minutes}} dakika",
+  "round.assembling": "Tur hazırlanıyor …",
+  "round.loadFailedTitle": "Tur hazırlanamadı",
+  "round.segment": "Bölüm {{index}}/{{total}}",
+  "round.satz": "Cümle kur",
+  "round.satzPrompt": "Hangi cümle bunu söylüyor? Hedef dilde seçin.",
+  "round.skip": "Bölümü atla",
+  "round.skipA11y": "Bu bölümü atla",
+  "round.emptySkip": "Bu cihazda bu bölüm için malzeme yok — atlandı.",
+  "round.done": "Bugünün turu tamamlandı",
+  "round.summary": "{{segments}} bölümde {{items}} görev.",
+  "round.skippedNote": "Atlanan bölümler: {{areas}}.",
+  "round.note": "Kartlar ve geçilen dikteler tekrar planını ilerletti. Diğer görevler puansız alıştırma yapar — tekil alıştırmalarda olduğu gibi.",
+  "round.shadowNote": "Cümleyi dinle ve birlikte söyle — mikrofonsuz ve ölçümsüz. Turda birlikte söylemek sayılır, puan değil.",
 } as const;
 
 export default tr;

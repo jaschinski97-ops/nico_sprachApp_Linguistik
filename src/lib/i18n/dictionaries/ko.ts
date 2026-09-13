@@ -382,6 +382,24 @@ const ko = {
   "wordSpeaking.summary": "{{count}}개 단어를 따라 말했습니다.",
   "wordSpeaking.noScore": "점수 없음, 복습 계획 변경 없음.",
   "wordSpeaking.progress": "단어 {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "오늘의 라운드",
+  "round.cta": "▶ 오늘의 라운드 · 약 {{minutes}}분",
+  "round.ctaA11y": "오늘의 라운드 시작 — 섞어서 연습, 약 {{minutes}}분",
+  "round.assembling": "라운드를 준비하는 중 …",
+  "round.loadFailedTitle": "라운드를 준비할 수 없습니다",
+  "round.segment": "구간 {{index}}/{{total}}",
+  "round.satz": "문장 만들기",
+  "round.satzPrompt": "어느 문장이 이 뜻인가요? 목표 언어로 고르세요.",
+  "round.skip": "구간 건너뛰기",
+  "round.skipA11y": "이 구간 건너뛰기",
+  "round.emptySkip": "이 기기에는 이 구간의 자료가 없습니다 — 건너뛰었습니다.",
+  "round.done": "오늘의 라운드 완료",
+  "round.summary": "{{segments}}개 구간에서 {{items}}개 과제.",
+  "round.skippedNote": "건너뛴 구간: {{areas}}.",
+  "round.note": "카드와 통과한 받아쓰기는 복습 계획을 진행했습니다. 나머지 과제는 점수 없이 연습합니다 — 개별 연습과 동일합니다.",
+  "round.shadowNote": "문장을 듣고 함께 말하세요 — 마이크 없이, 측정 없이. 라운드에서는 점수가 아니라 따라 말하는 것이 중요합니다.",
 } as const;
 
 export default ko;

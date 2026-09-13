@@ -382,6 +382,24 @@ const vi = {
   "wordSpeaking.summary": "Đã nhắc lại {{count}} từ.",
   "wordSpeaking.noScore": "Không có điểm, không thay đổi lịch ôn tập.",
   "wordSpeaking.progress": "Từ {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "Vòng hôm nay",
+  "round.cta": "▶ Vòng hôm nay · ~{{minutes}} phút",
+  "round.ctaA11y": "Bắt đầu vòng hôm nay — luyện trộn, khoảng {{minutes}} phút",
+  "round.assembling": "Đang tạo vòng …",
+  "round.loadFailedTitle": "Không thể tạo vòng",
+  "round.segment": "Phần {{index}}/{{total}}",
+  "round.satz": "Lập câu",
+  "round.satzPrompt": "Câu nào nói điều này? Chọn bằng ngôn ngữ đang học.",
+  "round.skip": "Bỏ qua phần",
+  "round.skipA11y": "Bỏ qua phần này",
+  "round.emptySkip": "Không có nội dung cho phần này trên thiết bị này — đã bỏ qua.",
+  "round.done": "Vòng hôm nay đã xong",
+  "round.summary": "{{items}} nhiệm vụ qua {{segments}} phần.",
+  "round.skippedNote": "Phần đã bỏ qua: {{areas}}.",
+  "round.note": "Thẻ và bài chính tả đạt đã cập nhật lịch ôn tập của bạn. Các nhiệm vụ khác luyện không chấm điểm — như trong các bài tập riêng.",
+  "round.shadowNote": "Nghe câu và nói theo — không micro, không đo lường. Trong vòng này, quan trọng là bạn nói theo, không phải điểm số.",
 } as const;
 
 export default vi;

@@ -382,6 +382,24 @@ const ur = {
   "wordSpeaking.summary": "{{count}} الفاظ دہرائے گئے۔",
   "wordSpeaking.noScore": "کوئی نمبر نہیں، اعادے کے منصوبے میں کوئی تبدیلی نہیں۔",
   "wordSpeaking.progress": "لفظ {{index}}/{{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "آج کا راؤنڈ",
+  "round.cta": "▶ آج کا راؤنڈ · ~{{minutes}} منٹ",
+  "round.ctaA11y": "آج کا راؤنڈ شروع کریں — مخلوط مشق، تقریباً {{minutes}} منٹ",
+  "round.assembling": "راؤنڈ تیار ہو رہا ہے …",
+  "round.loadFailedTitle": "راؤنڈ تیار نہیں ہو سکا",
+  "round.segment": "حصہ {{index}}/{{total}}",
+  "round.satz": "جملہ بنائیں",
+  "round.satzPrompt": "کون سا جملہ یہ کہتا ہے؟ ہدف زبان میں منتخب کریں۔",
+  "round.skip": "حصہ چھوڑیں",
+  "round.skipA11y": "یہ حصہ چھوڑیں",
+  "round.emptySkip": "اس ڈیوائس پر اس حصے کا مواد موجود نہیں — چھوڑ دیا گیا۔",
+  "round.done": "آج کا راؤنڈ مکمل",
+  "round.summary": "{{segments}} حصوں میں {{items}} کام۔",
+  "round.skippedNote": "چھوڑے گئے حصے: {{areas}}۔",
+  "round.note": "فلیش کارڈز اور کامیاب املا نے آپ کے اعادے کا منصوبہ آگے بڑھایا۔ باقی کام بغیر نمبر کے مشق کرتے ہیں — جیسے انفرادی مشقیں۔",
+  "round.shadowNote": "جملہ سنیں اور ساتھ بولیں — بغیر مائیک، بغیر پیمائش۔ راؤنڈ میں بولنا اہم ہے، نمبر نہیں۔",
 } as const;
 
 export default ur;

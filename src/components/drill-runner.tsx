@@ -131,7 +131,7 @@ export function DrillRunner({
       const correct = optionIndex === question.correctIndex;
       setChosen(optionIndex);
       setAnswers((previous) => [...previous, { question, chosenIndex: optionIndex, correct }]);
-      await recordDrill(correct, Date.now()).catch(() => {
+      await recordDrill(correct, Date.now(), undefined, drill).catch(() => {
         // Ein fehlgeschlagener Protokolleintrag darf die Uebung nicht stoppen.
       });
     },

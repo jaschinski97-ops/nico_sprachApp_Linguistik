@@ -382,6 +382,24 @@ const zh = {
   "wordSpeaking.summary": "已跟读 {{count}} 个单词。",
   "wordSpeaking.noScore": "没有分数，也不改变复习计划。",
   "wordSpeaking.progress": "第 {{index}} 个，共 {{total}} 个单词",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "今日一轮",
+  "round.cta": "▶ 今日一轮 · 约 {{minutes}} 分钟",
+  "round.ctaA11y": "开始今日一轮——混合练习，约 {{minutes}} 分钟",
+  "round.assembling": "正在生成本轮 …",
+  "round.loadFailedTitle": "无法生成本轮",
+  "round.segment": "第 {{index}} 段，共 {{total}} 段",
+  "round.satz": "造句",
+  "round.satzPrompt": "哪个句子说的是这个意思？请选出目标语言句子。",
+  "round.skip": "跳过本段",
+  "round.skipA11y": "跳过这一段",
+  "round.emptySkip": "此设备上没有这一段的内容——已跳过。",
+  "round.done": "今日一轮完成",
+  "round.summary": "共 {{items}} 道题，覆盖 {{segments}} 个部分。",
+  "round.skippedNote": "已跳过的部分：{{areas}}。",
+  "round.note": "卡片和通过听写的任务已推进复习计划。其余任务只练习、不打分——与单项练习一致。",
+  "round.shadowNote": "听句子并跟着说——不用麦克风，不作测量。在这一轮里，跟读本身就算数，不打分。",
 } as const;
 
 export default zh;

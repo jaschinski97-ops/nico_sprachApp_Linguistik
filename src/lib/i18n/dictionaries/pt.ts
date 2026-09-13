@@ -382,6 +382,24 @@ const pt = {
   "wordSpeaking.summary": "{{count}} palavras repetidas.",
   "wordSpeaking.noScore": "Sem pontos, sem alteração do plano de revisão.",
   "wordSpeaking.progress": "Palavra {{index}} de {{total}}",
+
+  /* ---------- Heutige Runde (13.09.2026, Schritt 2) ---------- */
+  "mode.heute": "Rodada de hoje",
+  "round.cta": "▶ Rodada de hoje · ~{{minutes}} min",
+  "round.ctaA11y": "Iniciar a rodada de hoje — prática mista, cerca de {{minutes}} minutos",
+  "round.assembling": "A preparar a rodada …",
+  "round.loadFailedTitle": "Não foi possível preparar a rodada",
+  "round.segment": "Bloco {{index}} de {{total}}",
+  "round.satz": "Construir a frase",
+  "round.satzPrompt": "Que frase diz isto? Escolha no idioma-alvo.",
+  "round.skip": "Saltar bloco",
+  "round.skipA11y": "Saltar este bloco",
+  "round.emptySkip": "Sem material para este bloco neste aparelho — saltado.",
+  "round.done": "Rodada de hoje concluída",
+  "round.summary": "{{items}} tarefas em {{segments}} blocos.",
+  "round.skippedNote": "Blocos saltados: {{areas}}.",
+  "round.note": "Os cartões e os ditados aprovados avançaram o seu plano de revisão. As demais tarefas praticam sem pontuação — como nos exercícios individuais.",
+  "round.shadowNote": "Ouça a frase e fale junto — sem microfone nem medição. Na rodada conta falar junto, não a pontuação.",
 } as const;
 
 export default pt;
