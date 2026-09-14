@@ -69,7 +69,12 @@ export async function seedVocabulary(
 
 export async function loadVocabulary(store?: DataStore): Promise<VocabEntry[]> {
   const db = store ?? (await getStore());
-  return db.getAll<VocabEntry>('vocab');
+  const lokale = await db.getAll<VocabEntry>('vocab');
+  // Phase 2, Schritt 4: KI-erzeugter Wortschatz läuft über catalog.json und
+  // kommt gebündelt ÜBER den Store — dieselbe Regel wie bei den Prüfungen.
+  // (Gebündelt ist hier der Katalog-Bestand der Art 'vocabulary'; der
+  // mitgelieferte Grundstock oben ist Teil des Seeds.)
+  return preferBundled('vocabulary', lokale);
 }
 
 export async function loadVocabEntry(

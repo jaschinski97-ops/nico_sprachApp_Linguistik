@@ -5,6 +5,8 @@ import { SettingsRow } from '@/components/settings-row';
 import { ThemedButton } from '@/components/themed-button';
 import { ContentReport } from './content-report';
 import { ExamManualCard } from './exam-manual-card';
+import { VocabZieleCard } from './vocab-ziele-card';
+import { durchschnittsAnteil } from '@/lib/content/wortschatz-anteil';
 import { estimateRunCost } from './run-cost';
 import { exportDrafts, studioRequest, type StudioState } from './content-client';
 import { fahreKette, planChain, type ChainStep } from './chain-run';
@@ -37,6 +39,7 @@ import { VocabEntry } from '@/data/vocab-types';
 import { directionLabel, LANGUAGE_ORDER, LANGUAGE_LABELS } from '@/lib/languages/registry';
 import { Lang } from '@/lib/languages/types';
 import { loadProfile } from '@/lib/profile';
+import { loadVocabulary } from '@/lib/repository';
 import { HELPER_AUDIO_PROVIDER, ProviderId } from '@/lib/providers/types';
 import {
   defaultSettings,
@@ -274,6 +277,7 @@ export default function ContentStudio() {
   const [situations, setSituations] = useState<number | null>(null);
   const [storedSituations, setStoredSituations] = useState<ConversationSituation[]>([]);
   const [situationsByDirection, setSituationsByDirection] = useState<SituationDirectionCounts | null>(null);
+  const [wortschatzAnteil, setWortschatzAnteil] = useState<number | null>(null);
   const [clips, setClips] = useState<{ count: number; bytes: number } | null>(null);
   const [clipsByLanguage, setClipsByLanguage] = useState<ClipLanguageCounts | null>(null);
   const [clipBackend, setClipBackend] = useState<string | null>(null);
@@ -300,7 +304,12 @@ export default function ContentStudio() {
     setSituations(count);
     setSituationsByDirection(nachRichtung);
     // Die Clip-Umfaenge haengen an den gespeicherten Situationen.
-    setStoredSituations(await loadSituations());
+    const dialoge = await loadSituations();
+    setStoredSituations(dialoge);
+    // Phase 2, Schritt 4: der bekannte Wortschatz-Anteil der Dialoge
+    // (deutsche Seite) — die Anzeige für die ~95-%-Regel.
+    const vocab = await loadVocabulary();
+    setWortschatzAnteil(durchschnittsAnteil(dialoge, vocab));
   }, []);
 
   const refreshClips = useCallback(async () => {
@@ -374,6 +383,12 @@ export default function ContentStudio() {
         setStoredExams(modules); setExams({ total, generated }); setClips({ count, bytes });
         setClipsByLanguage(clipsNachSprache); setImagesByLanguage(bilderNachSprache);
         setSituationsByDirection(situationenNachRichtung); setExamsByLevel(pruefungenNachStufe);
+      }).then(async () => {
+        if (cancelled) return;
+        // Phase 2, Schritt 4: der bekannte Wortschatz-Anteil auch beim
+        // ersten Laden — nicht erst nach „Aktualisieren“.
+        const [dialoge, vocab] = await Promise.all([loadSituations(), loadVocabulary()]);
+        if (!cancelled) setWortschatzAnteil(durchschnittsAnteil(dialoge, vocab));
       }).catch(() => { if (!cancelled) setExportMessage('Der gespeicherte Bestand konnte nicht geladen werden. Bitte Studio erneut öffnen.'); });
     getAudioBlobStore().then(() => setClipBackend(getActiveAudioBlobBackend()));
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
@@ -585,17 +600,7 @@ export default function ContentStudio() {
           Erzeugung (Schritt 4 baut sie aus); Dialoge laufen wie bisher. */}
       {section === 'text' ? (
       <>
-        <ThemedView type="backgroundElement" style={styles.panel}>
-          <ThemedText type="smallBold">Wortschatz</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">Vorhanden: {POOL_ZAEHLER}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Erzeugung mit festlegbarer Zielgröße je Sprache (250 / 500 / 1.000 /
-            2.000 oder freie Zahl) folgt im nächsten Ausbauschritt — dann nur
-            die fehlenden Wörter, nach Häufigkeit sortiert, in Paketen mit
-            Thema und Stufe; die Brücken-Pools der 20 App-Sprachen ziehen
-            passend nach.
-          </ThemedText>
-        </ThemedView>
+        <VocabZieleCard onFinished={() => setReportRevision((v) => v + 1)} />
       <GeneratorCard
         managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Sprachsituationen"
@@ -603,7 +608,7 @@ export default function ContentStudio() {
         group="situations"
         choice={generators.situations}
         onChoiceChange={(change) => changeGenerator('situations', change)}
-        statusLine={`Im Speicher: ${situations === null ? '…' : `${situations} Situationen`}`}
+        statusLine={`Im Speicher: ${situations === null ? '…' : `${situations} Situationen`}${wortschatzAnteil !== null ? ` · bekannter Wortschatz-Anteil (deutsch): ${(wortschatzAnteil * 100).toFixed(0)} %` : ''}`}
         counts={richtungsZaehler(situationsByDirection)}
         runOptions={SITUATION_RUNS}
         onStart={startSituations}

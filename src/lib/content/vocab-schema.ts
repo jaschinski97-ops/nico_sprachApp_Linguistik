@@ -1,0 +1,136 @@
+import { LANGUAGE_CODES, type LanguageCode } from '../languages/types';
+import type { VocabEntry } from '@/data/vocab-types';
+
+/**
+ * Vokabel-Schema und regelbasierte Basisprüfung (Phase 2, Schritt 4/5).
+ *
+ * WAS HIER PASSIERT: KI-erzeugter Wortschatz läuft als neue Katalog-Art
+ * `vocabulary` über Stage UND catalog.json — derselbe Weg wie Clips und
+ * Situationen. Die Prüfung ist zweistufig:
+ *
+ *   • `isValidVocabEntry` — der harte Vertrag (Schema, Pflichtfelder,
+ *     Schrift der Zielsprache). Wer hier fällt, wird nicht gespeichert.
+ *   • `pruefeVocabDoc` — die regelbasierte Prüfung des Laufs (Schrift,
+ *     Pflichtfelder, Länge, Kennzeichnung). Grün und `sourceVerified`
+ *     heißt „geprüft"; grün ohne Quellprüfung bleibt ehrlich „ungeprüft".
+ *
+ * DUPLIKATE (Schritt 6): `vocabSchluessel` normalisiert einen Begriff je
+ * Sprache (Thai: NFC ohne Zwischenraum; Latein: Kleinbuchstaben, ohne
+ * Satzzeichen, deutscher Artikel gestrichen) — gleiche Schlüssel sind
+ * Duplikate, egal wie sie geschrieben wurden.
+ */
+
+const DATASPRACHEN = [...LANGUAGE_CODES, 'de'] as const;
+
+const PARTS: readonly string[] = [
+  'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'numeral',
+  'particle', 'interjection', 'preposition', 'conjunction',
+];
+
+export function istThaiSchrift(text: string): boolean {
+  return /[\u0E01-\u0E5B]/.test(text);
+}
+
+/** Normalisierter Duplikat-Schlüssel eines Begriffs (je Sprache). */
+export function vocabSchluessel(term: string, language: string): string {
+  let basis = term.normalize('NFC').trim();
+  if (language === 'th') {
+    basis = basis.replace(/\s+/g, '');
+  } else {
+    basis = basis.toLowerCase().replace(/[\p{P}\p{S}]/gu, '').replace(/\s+/g, ' ').trim();
+    if (language === 'de') {
+      // Artikel gehört zum Wort, macht es aber nicht einzigartig.
+      basis = basis.replace(/^(der|die|das|ein|eine)\s+/i, '');
+    }
+  }
+  return `${language}:${basis}`;
+}
+
+export function isValidVocabEntry(value: unknown): value is VocabEntry {
+  if (typeof value !== 'object' || value === null) return false;
+  const d = value as Record<string, unknown>;
+  if (typeof d.id !== 'string' || !/^[a-zA-Z0-9_-]{1,120}$/.test(d.id)) return false;
+  // 'de' ist zulässig: der abgeleitete de-Pool trägt language 'de'.
+  if (typeof d.language !== 'string' || !(DATASPRACHEN as readonly string[]).includes(d.language)) return false;
+  if (typeof d.term !== 'string' || !d.term.trim()) return false;
+  if (typeof d.german !== 'string' || !d.german.trim()) return false;
+  if (typeof d.romanization !== 'string' || !d.romanization.trim()) return false;
+  if (typeof d.partOfSpeech !== 'string' || !PARTS.includes(d.partOfSpeech)) return false;
+  if (typeof d.register !== 'string' || !['neutral', 'formal', 'informal'].includes(d.register)) return false;
+  if (typeof d.isConcrete !== 'boolean') return false;
+  if (typeof d.sourceVerified !== 'boolean') return false;
+  if (!Array.isArray(d.syllables)) return false;
+  if (!d.sourceVerified && typeof d.verificationNote !== 'string') {
+    // Nicht quellengeprüfte Einträge MÜSSEN sagen, woher sie kommen.
+    return false;
+  }
+  if (d.concept !== undefined && typeof d.concept !== 'string') return false;
+  // Beispiel: ganz oder gar nicht.
+  const beispiel = [d.exampleTerm, d.exampleRoman, d.exampleGerman].filter((f) => f !== undefined);
+  if (beispiel.length > 0 && beispiel.some((f) => typeof f !== 'string' || !f.trim())) return false;
+  // Sprach-Extras, wenn vorhanden, müssen die richtigen Formen haben.
+  const sprache = String(d.language);
+  if (sprache === 'de' && d.germanNoun !== undefined) {
+    const n = d.germanNoun as Record<string, unknown>;
+    if (typeof n !== 'object' || !['der', 'die', 'das'].includes(String(n.article))) return false;
+    if (typeof n.plural !== 'string') return false;
+  }
+  if (sprache === 'de' && d.germanVerb !== undefined && typeof d.germanVerb !== 'object') return false;
+  if (sprache === 'es' && d.spanishNoun !== undefined && typeof d.spanishNoun !== 'object') return false;
+  if (sprache === 'es' && d.spanishVerb !== undefined) {
+    const v = d.spanishVerb as Record<string, unknown>;
+    if (typeof v !== 'object' || !['ar', 'er', 'ir'].includes(String(v.conjugation))) return false;
+    if (typeof v.irregular !== 'boolean') return false;
+  }
+  if (sprache === 'en' && d.englishVerb !== undefined && typeof d.englishVerb !== 'object') return false;
+  return true;
+}
+
+export type VocabPruefung = { ok: boolean; fehler: string[] };
+
+/** Regelbasierte Prüfung eines Dokuments — die Basis unter der KI-Kreuzprüfung. */
+export function pruefeVocabDoc(doc: VocabEntry): VocabPruefung {
+  const fehler: string[] = [];
+  // Als string: der de-Pool trägt zur Laufzeit language 'de', der Typ kennt
+  // es (noch) nicht — die Regelprüfung darf das nicht verschweigen.
+  const language: string = doc.language;
+
+  // Schrift passt zur Sprache.
+  if (language === 'th' && !istThaiSchrift(doc.term)) {
+    fehler.push('Thai-Begriff ohne thailändische Schrift.');
+  }
+  if (language !== 'th' && istThaiSchrift(doc.term)) {
+    fehler.push('Nicht-Thai-Begriff enthält thailändische Schrift.');
+  }
+
+  // Längen in vernünftigen Grenzen.
+  if (doc.term.length > 80) fehler.push('Begriff ungewöhnlich lang (> 80 Zeichen).');
+  if (doc.german.length > 120) fehler.push('Deutsche Bedeutung ungewöhnlich lang (> 120 Zeichen).');
+  if (doc.exampleTerm && doc.exampleTerm.length > 200) fehler.push('Beispielsatz ungewöhnlich lang.');
+
+  // Sprachliche Pflicht-Merkmale je Stufe der App-Übungen:
+  if (language === 'th') {
+    if (!doc.syllables || doc.syllables.length === 0) fehler.push('Thai ohne Silbenauszeichnung (Ton kann nicht geprüft/gezeigt werden).');
+    else if (doc.syllables.some((s) => !s.tone)) fehler.push('Thai-Silben ohne Ton.');
+  }
+  if (language === 'es' && doc.partOfSpeech === 'noun' && !doc.spanishNoun) {
+    fehler.push('Spanisches Substantiv ohne Genus/Artikel.');
+  }
+  if (language === 'de' && doc.partOfSpeech === 'noun' && !doc.germanNoun) {
+    fehler.push('Deutsches Substantiv ohne Artikel/Plural.');
+  }
+  if (language === 'en' && !doc.ipa && !doc.romanization) {
+    fehler.push('Englischer Begriff ohne Lautschrift.');
+  }
+  if (language === 'de' && istThaiSchrift(doc.german)) fehler.push('Deutsche Bedeutung enthält Thai-Schrift.');
+
+  // Kennzeichnung: KI-Wörter sind nie quellengeprüft.
+  if (!doc.sourceVerified && !doc.verificationNote) {
+    fehler.push('Ohne Quellprüfung fehlt der Kennzeichnungs-Hinweis.');
+  }
+  if (doc.sourceVerified && !doc.source) {
+    fehler.push('Quellengeprüft ohne Quellenangabe.');
+  }
+
+  return { ok: fehler.length === 0, fehler };
+}

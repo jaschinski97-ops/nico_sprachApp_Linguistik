@@ -7,6 +7,7 @@ const exec = promisify(execFile);
 const ffmpeg = require('ffmpeg-static');
 const domain = require('./domain.cjs');
 const { isValidSituation } = domain.load('src/lib/conversation/types');
+const { isValidVocabEntry, pruefeVocabDoc } = domain.load('src/lib/content/vocab-schema');
 const { isValidExamModule } = domain.load('src/lib/exam/types');
 const { isValidAudioClip, clipIdFor } = domain.load('src/lib/clips/types');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
@@ -15,7 +16,7 @@ const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
 const { decodeAudio, decodeImage } = require('./media.cjs');
 const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
 
-const KINDS = ['situations', 'images', 'audio', 'exam'];
+const KINDS = ['situations', 'images', 'audio', 'exam', 'vocabulary'];
 // TEST-BUDGET (08.09.2026): 256 MiB, damit der vollstaendige Audio-Bedarf
 // (~185 MiB Inhalt) fuer Testbuilds ausgeliefert werden kann. Seit der
 // Paket-Architektur (docs/ROADMAP-v2-sprachplattform.md) gibt es das alte
@@ -57,6 +58,9 @@ function assertDocument(kind, doc) {
   const valid = kind === 'situations' ? isValidSituation(doc) && ['A1','A2'].includes(doc.level) && ['greeting','market','restaurant','travel'].includes(doc.topic) && Number.isFinite(doc.generatedAt) && typeof doc.modelUsed === 'string' :
     kind === 'exam' ? isValidExamModule(doc) && ['generated', 'manual'].includes(doc.source) :
     kind === 'audio' ? isValidAudioClip(doc) && doc.id === clipIdFor(doc.language, doc.text) && ['vocab','example','turn'].includes(doc.kind) && ['gemini','chatgpt'].includes(doc.provider) && typeof doc.voice === 'string' && typeof doc.model === 'string' && Number.isFinite(doc.generatedAt) :
+    // Phase 2, Schritt 4: Wortschatz als Inhaltsart — derselbe Weg über
+    // Stage und catalog.json. 'de' ist gültig (abgeleiteter de-Pool).
+    kind === 'vocabulary' ? isValidVocabEntry(doc) :
     doc.id === doc.vocabId && VOCABULARY.some((word) => word.id === doc.id && word.isConcrete) && ['png','jpeg','webp'].includes(doc.format) && typeof doc.prompt === 'string' && typeof doc.model === 'string' && Number.isFinite(doc.generatedAt);
   if (!valid) throw Error(`Inhalt verletzt den ${kind}-Vertrag: ${doc.id}`);
   // Export content documents only. Preferences, keys, learner records and
@@ -66,6 +70,7 @@ function assertDocument(kind, doc) {
     images: 'id vocabId format byteSize blobKey prompt model generatedAt',
     audio: 'id language text kind sourceId format byteSize durationMs blobKey provider model voice generatedAt synthetic',
     exam: 'id certificate level skill direction title instruction stimulus minutes source generatedAt modelUsed taskType items production',
+    vocabulary: 'id language concept term romanization syllables ipa ipaAccent ipaSyllables german germanNoun germanVerb germanAdjective spanishNoun spanishVerb englishVerb englishSpelling translations partOfSpeech register isConcrete exampleTerm exampleRoman exampleGerman sourceVerified source verificationNote note',
   }[kind].split(' ');
   if (Object.keys(doc).some((key) => !fields.includes(key))) throw Error('Unbekannte Metadatenfelder; Export verweigert.');
 }
@@ -233,6 +238,19 @@ class ContentPipeline {
       check.tone = checkThaiTone(entry.document, decodeAudio(file), 24000);
       if (['failed', 'unchecked'].includes(check.tone.status)) check.status = check.tone.status;
     } else if (entry.kind === 'images') decodeImage(file);
+    else if (entry.kind === 'vocabulary') {
+      // Phase 2, Schritt 4: regelbasierte Basisprüfung (Schema hat
+      // assertDocument schon geprüft; hier Schrift/Pflichtmerkmale/Länge).
+      check.scope = 'schema-language';
+      const regeln = pruefeVocabDoc(entry.document);
+      if (!regeln.ok) {
+        check.status = 'failed';
+        check.reason = regeln.fehler.join(' | ');
+      } else if (!entry.document.sourceVerified) {
+        check.status = 'unchecked';
+        check.reason = entry.document.verificationNote || 'KI-Erzeugung ohne Quellprüfung.';
+      }
+    }
     if (check.status === 'unchecked') check.label = 'ungeprüft';
     if (check.status === 'failed') check.label = 'aussortiert';
     return check;

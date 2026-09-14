@@ -26,7 +26,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
       assertDocument(entry.kind, entry.document);
       if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
       seen.add(keyOf(entry));
-      if (entry.review || !isDeliverableEntry(entry) || !entry.check.checkedAt || entry.check.scope !== 'schema-integrity-decode' ||
+      if (entry.review || !isDeliverableEntry(entry) || !entry.check.checkedAt || !['schema-integrity-decode', 'schema-language'].includes(entry.check.scope) ||
           entry.check.label !== (entry.check.status === 'unchecked' ? 'ungeprüft' : 'automatisch geprüft')) throw Error('Automatische Prüfung fehlt.');
       const media = entry.kind === 'audio' || entry.kind === 'images';
       if (media && !entry.asset) throw Error('Mediendatei fehlt.');
