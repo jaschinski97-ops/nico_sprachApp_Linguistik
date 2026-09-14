@@ -1,7 +1,6 @@
-import type { ExamModule } from '../exam/types';
 import type { VocabEntry } from '@/data/vocab-types';
 
-import { gegenStueck, parseUrteil, pruefeExamKreuz, pruefeVocabKreuz } from './kreuzpruefung';
+import { gegenStueck, parseUrteil, pruefeVocabKreuz } from './kreuzpruefung';
 
 const vocab = {
   id: 'ki-th-abc12345',
@@ -106,19 +105,3 @@ describe('prüfeVocabKreuz — die Fallback-Regel', () => {
     expect(resultat.urteile.length).toBe(1);
   });
 });
-
-describe('prüfeExamKreuz', () => {
-  it('prüft ein übersetztes Modul', async () => {
-    const modul = { ...BUILTIN } as unknown as ExamModule;
-    const resultat = await pruefeExamKreuz(
-      modul, 'gemini', keyImmer(),
-      () => client('{"urteil":"bestehen","gruende":[]}') as never
-    );
-    expect(resultat.geprueft).toBe(true);
-  });
-});
-
-const BUILTIN = {
-  id: 'x', level: 'A1', skill: 'lesen', taskType: 'multipleChoice',
-  items: [{ prompt: 'p', options: ['a', 'b'], correctIndex: 0, explanation: 'e' }],
-};

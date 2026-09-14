@@ -4,7 +4,6 @@ import { ApiKeysCard } from '@/components/api-keys-card';
 import { SettingsRow } from '@/components/settings-row';
 import { ThemedButton } from '@/components/themed-button';
 import { ContentReport } from './content-report';
-import { ExamManualCard } from './exam-manual-card';
 import { VocabZieleCard } from './vocab-ziele-card';
 import { durchschnittsAnteil } from '@/lib/content/wortschatz-anteil';
 import { findeDuplikat } from '@/lib/content/aehnlichkeit';
@@ -257,21 +256,12 @@ function richtungsZaehler(counts: SituationDirectionCounts | null): CountItem[] 
   }));
 }
 
-function pruefZaehler(counts: ExamLevelCounts | null): CountItem[] {
-  return EXAM_LEVELS.map((stufe) => ({
-    key: stufe,
-    label: stufe,
-    count: counts ? counts[stufe].total : null,
-    detail: counts ? `${counts[stufe].generated} erzeugt` : undefined,
-  }));
-}
-
 export default function ContentStudio() {
   // Phase 2, Schritt 2: „Inhalte erzeugen“ hat drei Unterreiter (Text /
   // Audio / Bilder); die Generator-Karten bleiben, die Navigation darüber
   // gruppiert neu. 'exam' entfällt ab Schritt 3 (Generator wird entfernt).
   const [section, setSection] = useState<
-    'home' | 'keys' | 'reports' | 'text' | 'audio' | 'bilder' | 'pruefungen' | GeneratorGroupId
+    'home' | 'keys' | 'reports' | 'text' | 'audio' | 'bilder' | GeneratorGroupId
   >('home');
   /** Warnung des Audio-Reiters: ungeprüfte Einträge im Live-Bericht. */
   const [audioWarnung, setAudioWarnung] = useState('');
@@ -614,9 +604,12 @@ export default function ContentStudio() {
             ).join(' · ')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
-            Prüfungsaufgaben: {exams === null ? '…' : `${exams.total} gesamt, davon ${exams.generated} erzeugt`}
+            {/* Stufen-Totals statt „davon erzeugt": Seit dem Generator- und
+                Manuell-Aus gibt es keine andere Herkunft mehr — alle Module
+                sind mitgeliefert, und die alte Zählung zeigte überall 0. */}
+            Prüfungsaufgaben: {exams === null ? '…' : `${exams.total} gesamt`}
             {examsByLevel ? ` · ${EXAM_LEVELS.map((stufe) =>
-              `${stufe} ${examsByLevel[stufe].total} (${examsByLevel[stufe].generated})`
+              `${stufe} ${examsByLevel[stufe].total}`
             ).join(' · ')}` : ''}
           </ThemedText>
         </ThemedView>
@@ -638,12 +631,10 @@ export default function ContentStudio() {
         <ThemedText type="smallBold">Verwaltung</ThemedText>
         <View style={{ borderRadius: 16, overflow: 'hidden', gap: 1 }}>
           <SettingsRow title="Anbieter & Schlüssel" detail="Zugänge zentral verwalten" icon="key-outline" onPress={() => setSection('keys')} />
-          <SettingsRow title="Prüfungen (manuell)" detail="DE-Prüfungen pflegen und übertragen" icon="ribbon-outline" onPress={() => setSection('pruefungen')} />
           <SettingsRow title="Prüfberichte & Diagnose" detail="Qualität und gespeicherte Inhalte" icon="pulse-outline" onPress={() => setSection('reports')} />
         </View>
       </> : null}
       {section === 'keys' ? <ApiKeysCard /> : null}
-      {section === 'pruefungen' ? <ExamManualCard onSaved={() => setReportRevision((v) => v + 1)} /> : null}
       {section === 'reports' ? <><ContentReport revision={reportRevision} /><DiagnosticsCard /></> : null}
       {exportMessage ? <ThemedText accessibilityLiveRegion="polite" type="small">{exportMessage}</ThemedText> : null}
       {/* Phase 2, Schritt 2: Unterreiter „Text, Wörter & Inhalte“ — die

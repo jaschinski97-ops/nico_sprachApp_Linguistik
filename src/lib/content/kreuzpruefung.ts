@@ -1,7 +1,6 @@
 import { type TextClient } from '../providers/types';
 import type { ProviderId } from '../providers/types';
 import type { Provider } from '@/lib/api-key';
-import type { ExamModule } from '../exam/types';
 import type { VocabEntry } from '@/data/vocab-types';
 
 /**
@@ -53,21 +52,6 @@ export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe: string): string
     '',
     'Eintrag:',
     JSON.stringify(eintrag, null, 2),
-    '',
-    URTEILS_FORMAT,
-  ].join('\n');
-}
-
-/** Prüfprompt für ein 1:1-übersetztes Prüfungsmodul. */
-export function baueExamPruefPrompt(modul: ExamModule): string {
-  return [
-    'Prüfe dieses übersetzte Prüfungsmodul (Goethe-Format) kritisch:',
-    '- Ist die Übersetzung der Aufgaben korrekt und natürlich?',
-    '- Passt die Aufgabe inhaltlich zu ihren Antworten (jede Lösung erreichbar)?',
-    '- Ist die Stufe angemessen eingehalten?',
-    '',
-    'Modul:',
-    JSON.stringify(modul, null, 2),
     '',
     URTEILS_FORMAT,
   ].join('\n');
@@ -144,24 +128,6 @@ export async function pruefeVocabKreuz(
     kreuz: !selbstpruefung,
     urteile: beide,
     gruende: [],
-  };
-}
-
-/** Übersetztes Prüfungsmodul kreuzprüfen (Schritt-5-Prüfung der Übertragung). */
-export async function pruefeExamKreuz(
-  modul: ExamModule,
-  erzeuger: ProviderId,
-  hatSchluessel: (anbieter: ProviderId) => boolean,
-  clientFuer: (anbieter: ProviderId) => TextClient
-): Promise<KreuzResultat> {
-  const { anbieter, selbstpruefung } = gegenStueck(erzeuger, hatSchluessel);
-  const prompt = baueExamPruefPrompt(modul);
-  const erst = await einmal(clientFuer(anbieter), prompt);
-  return {
-    geprueft: erst.bestanden,
-    kreuz: !selbstpruefung,
-    urteile: [erst],
-    gruende: erst.gruende,
   };
 }
 

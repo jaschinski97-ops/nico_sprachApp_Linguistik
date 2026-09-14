@@ -307,6 +307,13 @@ function ReviewBody({
             onPick={(picked) => onOpen(direction, picked)}
           />
 
+          {/* Eigenständiger Punkt „Prüfung“ — NUR beim Lernziel Deutsch
+              (Nutzerplan 14.09.: erst Deutsch zum Laufen bringen, die
+              Erweiterung auf die anderen Ziele folgt von Hand). */}
+          {ziel && goalLanguage(ziel) === 'de' ? (
+            <PruefungsEinstieg direction={direction} />
+          ) : null}
+
           <DirectionBar onSwitch={onSwitch} />
 
           {mode === 'cards' ? (
@@ -517,6 +524,36 @@ function ModeBar({
         );
       })}
     </View>
+  );
+}
+
+/**
+ * Eigenständiger Punkt „Prüfung“ im Lern-Reiter (14.09.): Der frühere
+ * Haupt-Tab ist beim Deutsch-Lernziel hierher gewandert — die mitgelieferten
+ * Aufgaben folgen dem Goethe-Format. Die Richtung reist als Parameter mit,
+ * damit der Prüfungs-Screen nur die Aufgaben DIESER Lernrichtung zeigt.
+ */
+function PruefungsEinstieg({ direction }: { direction: PairDirection }) {
+  const { t } = useLocale();
+  const colors = useTheme();
+  return (
+    <Link href={{ pathname: '/exam', params: { direction } }} asChild>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('tabs.exam')}
+        style={({ pressed }) => pressed && styles.pressed}>
+        <ThemedView type="backgroundElement" style={styles.examRow}>
+          <Ionicons name="ribbon-outline" size={20} color={colors.textSecondary} />
+          <View style={styles.examTexte}>
+            <ThemedText type="default">{t('tabs.exam')}</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              {t('exam.subtitle')}
+            </ThemedText>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </ThemedView>
+      </Pressable>
+    </Link>
   );
 }
 
@@ -785,6 +822,19 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.two,
     borderWidth: 1,
     borderColor: 'transparent',
+  },
+  examRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    minHeight: 44,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: Spacing.three,
+  },
+  examTexte: {
+    flex: 1,
+    gap: Spacing.half,
   },
   directionBar: {
     flexDirection: 'row',

@@ -35,8 +35,8 @@ import {
 const SETTINGS_KEY = 'generators';
 
 // Phase 2, Schritt 3: 'exam' ist aus den Generator-Gruppen gefallen —
-// der Prüfungsaufgaben-Generator ist entfernt, Prüfungen werden manuell
-// gepflegt (content/exam/manual/ + JSON-Import im Studio).
+// der Prüfungsaufgaben-Generator ist entfernt, die Prüfungen sind
+// mitgeliefert (src/data/exam-modules.ts).
 export const GENERATOR_GROUPS = ['situations', 'images', 'audio'] as const;
 export type GeneratorGroupId = (typeof GENERATOR_GROUPS)[number];
 

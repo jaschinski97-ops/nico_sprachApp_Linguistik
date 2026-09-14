@@ -52,15 +52,6 @@ export default function AppTabs() {
         }}
       />
       <Tabs.Screen
-        name="exam"
-        options={{
-          title: t('tabs.exam'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="ribbon" color={color} size={size} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="progress"
         options={{
           title: t('tabs.progress'),
@@ -74,9 +65,12 @@ export default function AppTabs() {
           tabBarIcon: ({ color, size }) => <Ionicons name="settings" color={color} size={size} />,
         }}
       />
-      {/* Untergeordnete Einstellungs-Bereiche: navigierbar, aber bewusst ohne
-          eigenen Tab (href: null) — sie sind Ziel von Zeilen auf der
-          Einstellungsseite, keine Hauptziele der App. */}
+      {/* Untergeordnete Bereiche: navigierbar, aber bewusst ohne eigenen Tab
+          (href: null) — sie sind Ziel von Zeilen in anderen Reitern, keine
+          Hauptziele der App. Die Prüfung gehört zum Deutsch-Lernziel und wird
+          als eigener Punkt im Lern-Reiter erreicht; „Prüfung üben“ ist für
+          die anderen Ziele kein Angebot. */}
+      <Tabs.Screen name="exam" options={{ href: null }} />
       <Tabs.Screen name="settings/about" options={{ href: null }} />
       <Tabs.Screen name="settings/studio" options={{ href: null }} />
     </Tabs>

@@ -397,7 +397,7 @@ describe('Speicherung und Uebersicht', () => {
 /*
  * Phase 2, Schritt 3 (14.09.2026): Die Describes zu planExamModules,
  * buildExamPrompt, parseExamModule und runExamBatch sind mit dem
- * Prüfungsaufgaben-Generator entfernt worden — neue Aufgaben entstehen nur
- * noch manuell (JSON-Import, content/exam/manual/) bzw. durch die 1:1-
- * Übertragung einer gepflegten deutschen Prüfung.
+ * Prüfungsaufgaben-Generator entfernt worden — der Bestand ist rein
+ * mitgeliefert (BUILTIN_EXAM_MODULES). Auch der manuelle JSON-Import
+ * (content/exam/manual/, 1:1-Übertragung) ist seit 14.09. entfernt.
  */

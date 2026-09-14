@@ -67,7 +67,6 @@
     "pack:build": "node scripts/content/build-pack.cjs --lang th",
     "test:pack-build": "node --test scripts/content/build-pack.test.cjs",
     "test:pipeline-report": "node --test scripts/content/pipeline-report.test.cjs",
-    "exam:manual": "node scripts/content/exam-manual.cjs merge",
     "eas-build-post-install": "node scripts/content/eas-gate.cjs",
     "verify:production": "node scripts/content/verify-production.cjs",
     "content:measure-tones": "node scripts/content/measure-tones.cjs scripts/content/fixtures/tones/index.json",

@@ -454,13 +454,11 @@ type ExamModuleBase = {
   /** Richtwert aus der Zertifikatsstruktur, auf diese eine Aufgabe skaliert. */
   minutes: number;
   /**
-   * Phase 2, Schritt 3: der Prüfungsaufgaben-GENERATOR ist entfernt. Module
-   * entstehen entweder mitgeliefert ('builtin') oder MANUELL gepflegt
-   * ('manual', JSON-Import im Studio) — die KI wirkt nur noch als 1:1-
-   * Übersetzer einer gepflegten deutschen Prüfung, und ihr Ergebnis wird
-   * ebenso manuell übernommen. 'generated' bleibt lesbar für Altbestände.
+   * Herkunft des Moduls: recherchiert-mitgeliefert ('builtin') oder
+   * KI-erzeugt ('generated' — bleibt lesbar für Altbestände; der Generator
+   * und der manuelle Studio-JSON-Import sind entfernt).
    */
-  source: 'builtin' | 'generated' | 'manual';
+  source: 'builtin' | 'generated';
   generatedAt?: number;
   modelUsed?: string;
 };

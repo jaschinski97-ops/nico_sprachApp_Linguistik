@@ -22,7 +22,6 @@ const LINKS = [
   { name: 'home', href: '/', icon: 'home' },
   { name: 'review', href: '/review', icon: 'layers' },
   { name: 'conversation', href: '/conversation', icon: 'chatbubbles' },
-  { name: 'exam', href: '/exam', icon: 'ribbon' },
   { name: 'progress', href: '/progress', icon: 'stats-chart' },
   { name: 'settings', href: '/settings', icon: 'settings' },
 ] as const;
@@ -32,7 +31,6 @@ const LINK_LABELS: Record<(typeof LINKS)[number]['name'], TranslationKey> = {
   home: 'tabs.overview',
   review: 'tabs.learn',
   conversation: 'tabs.conversation',
-  exam: 'tabs.exam',
   progress: 'tabs.progress',
   settings: 'tabs.settings',
 };
@@ -73,13 +71,17 @@ export default function AppTabs() {
     </TabTrigger>
   ));
 
-  // Untergeordnete Einstellungs-Bereiche (settings/about, settings/studio):
-  // Der UI-Tabs registriert NUR Routen mit Trigger (common.js
+  // Untergeordnete Bereiche (settings/about, settings/studio, exam): Der
+  // UI-Tabs registriert NUR Routen mit Trigger (common.js
   // triggersToScreens baut die Screens aus den Triggern) — ohne Trigger hier
-  // fällt /settings/about auf die Übersicht zurück. Sie hängen unsichtbar in
-  // der Leiste und werden nur per router.push erreicht.
+  // fiele /settings/about oder /exam auf die Übersicht zurück. Sie hängen
+  // unsichtbar in der Leiste und werden nur per router.push erreicht (die
+  // Prüfung aus dem Lern-Reiter, beim Deutsch-Lernziel).
   const versteckteTrigger = (
     <>
+      <TabTrigger name="exam" href="/exam" asChild>
+        <View style={styles.hidden} />
+      </TabTrigger>
       <TabTrigger name="settings/about" href="/settings/about" asChild>
         <View style={styles.hidden} />
       </TabTrigger>

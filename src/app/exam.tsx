@@ -1,4 +1,5 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
@@ -17,6 +18,7 @@ import {
   ExamSkill,
   EXAM_LEVELS,
 } from '@/lib/exam/types';
+import { isPairDirection } from '@/lib/languages/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
 
 /**
@@ -45,12 +47,34 @@ function messageOf(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
+/** Rückweg in den Lern-Reiter — die Prüfung ist dort ein eigenständiger Punkt
+ *  beim Deutsch-Lernziel, kein Haupt-Tab mehr (14.09.). */
+function ZurueckZumLernen() {
+  const { t } = useLocale();
+  const colors = useTheme();
+  return (
+    <Link href="/review" asChild>
+      <Pressable
+        accessibilityRole="link"
+        style={({ pressed }) => [styles.backLink, pressed && styles.backPressed]}>
+        <Ionicons name="arrow-back" size={15} color={colors.textSecondary} />
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('tabs.learn')}
+        </ThemedText>
+      </Pressable>
+    </Link>
+  );
+}
+
 export default function ExamScreen() {
   const { t } = useLocale();
-  const params = useLocalSearchParams<{ level?: string; module?: string }>();
+  const params = useLocalSearchParams<{ level?: string; module?: string; direction?: string }>();
   const router = useRouter();
 
   const level: ExamLevel = isLevel(params.level) ? params.level : 'A1';
+  // Die Richtung reist vom Lern-Reiter-Einstieg mit: Der Screen zeigt nur die
+  // Aufgaben DIESER Lernrichtung (de_to_th gehört zum Thai-Ziel, nicht hier).
+  const direction = isPairDirection(params.direction) ? params.direction : undefined;
   const theme = useTheme();
 
   const [overview, setOverview] = useState<ExamOverview[] | null>(null);
@@ -65,7 +89,7 @@ export default function ExamScreen() {
   useEffect(() => {
     let cancelled = false;
     setOverviewError(null);
-    loadExamOverview(level)
+    loadExamOverview(level, undefined, direction)
       .then((result) => {
         if (!cancelled) setOverview(result);
       })
@@ -75,7 +99,7 @@ export default function ExamScreen() {
     return () => {
       cancelled = true;
     };
-  }, [level]);
+  }, [level, direction]);
 
   useEffect(() => {
     let cancelled = false;
@@ -98,7 +122,7 @@ export default function ExamScreen() {
 
   if (params.module && moduleError) {
     return (
-      <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitleModule')}>
+      <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitleModule')} headerAction={<ZurueckZumLernen />}>
         <ThemedView type="backgroundElement" style={styles.card}>
           <ThemedText type="smallBold">{t('exam.moduleLoadFailed')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -111,7 +135,7 @@ export default function ExamScreen() {
 
   if (params.module && module) {
     return (
-      <ScreenScaffold title={t('tabs.exam')} subtitle={module.title}>
+      <ScreenScaffold title={t('tabs.exam')} subtitle={module.title} headerAction={<ZurueckZumLernen />}>
         <ExamRunner
           module={module}
           key={module.id}
@@ -137,7 +161,7 @@ export default function ExamScreen() {
   ];
 
   return (
-    <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitle')}>
+    <ScreenScaffold title={t('tabs.exam')} subtitle={t('exam.subtitle')} headerAction={<ZurueckZumLernen />}>
       <View style={styles.levelBar}>
         {EXAM_LEVELS.map((candidate) => (
           <Pressable
@@ -301,6 +325,17 @@ export default function ExamScreen() {
 }
 
 const styles = StyleSheet.create({
+  /** Rückweg zum Lern-Reiter — dezente Zeile über dem Titel, volle Tipphöhe. */
+  backLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    minHeight: 44,
+    alignSelf: 'flex-start',
+  },
+  backPressed: {
+    opacity: 0.7,
+  },
   levelBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
