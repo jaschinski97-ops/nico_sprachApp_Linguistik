@@ -207,10 +207,14 @@ export function GeneratorCard({
   const [chainStep, setChainStep] = useState<{ index: number; total: number; label: string } | null>(
     null
   );
+  /** Phase 2, Schritt 2: „Alle Sprachen“ als Teil der Sprachwahl gewählt. */
+  const [alleSprachen, setAlleSprachen] = useState(false);
 
   useEffect(() => { onRunningChange?.(running); }, [running, onRunningChange]);
 
   const cancelRef = useRef(false);
+  /** Letzter Progress-Stand — für die Ergebnis-Zeile nach dem Lauf. */
+
   const startingRef = useRef(false);
   const confirmation = useRef<((accepted: boolean) => void) | null>(null);
   const [estimate, setEstimate] = useState<RunEstimate | null>(null);
@@ -268,6 +272,9 @@ export function GeneratorCard({
     if (startingRef.current) return;
     startingRef.current = true;
     setNotice(null);
+    // Phase 2, Schritt 2: „Alle Sprachen“ in der Sprachwahl schaltet denselben
+    // Kettenlauf frei wie der frühere separate Knopf — eine Auswahl, ein Start.
+    const kette = mitKette || alleSprachen;
     const apiKey = managedKeys ? (await loadApiKey(provider)) || '' : key.trim() || (await loadApiKey(provider)) || '';
     // Der Helper (needsKey: false) zieht seinen Schlüssel serverseitig aus
     // der Umgebung — ihm fehlt einer hier nicht.
@@ -288,8 +295,8 @@ export function GeneratorCard({
         // „Alle Sprachen“/„Alle Richtungen“/„Alle Levels“: die Schritte der
         // Kette gehen an den Studio-Start, der für ALLE Schritte gemeinsam
         // plant, die Vorschau summiert und genau einmal bestätigen lässt.
-        chain: mitKette ? allRun?.steps : undefined,
-        onChainStep: mitKette ? setChainStep : undefined,
+        chain: kette ? allRun?.steps : undefined,
+        onChainStep: kette ? setChainStep : undefined,
         apiKey,
         provider,
         // Leeres Feld heisst „nimm den Vorschlag" - kein Grund fuer eine
@@ -313,7 +320,7 @@ export function GeneratorCard({
       setChainStep(null);
       await onFinished();
     }
-  }, [managedKeys, key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished, maxNew, allRun]);
+  }, [managedKeys, key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished, maxNew, allRun, alleSprachen]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
@@ -375,16 +382,28 @@ export function GeneratorCard({
               <Button
                 key={code}
                 label={label}
-                onPress={() => onLanguageChange(code)}
-                selected={language === code}
+                onPress={() => { setAlleSprachen(false); onLanguageChange(code); }}
+                selected={!alleSprachen && language === code}
                 disabled={running}
               />
             ))}
+            {/* Phase 2, Schritt 2: „Alle Sprachen“ gehört IN die Sprachwahl —
+                Auswahl hier heißt: der Start-Knopf fährt die Kette über alle
+                vier Sprachen mit EINER gemeinsamen Vorschau und EINER
+                Bestätigung. */}
+            {allRun ? (
+              <Button
+                label="Alle"
+                onPress={() => setAlleSprachen(true)}
+                selected={alleSprachen}
+                disabled={running}
+              />
+            ) : null}
           </ChoiceRow>
           <ThemedText type="small" themeColor="textSecondary">
-            Erzeugt wird immer für genau eine Sprache. Was schon erzeugt wurde,
-            bleibt liegen — ein zweiter Lauf für eine andere Sprache nimmt
-            nichts weg.
+            {alleSprachen
+              ? 'Alle Sprachen in Kette (Thai → Englisch → Spanisch → Deutsch). Was schon erzeugt wurde, bleibt liegen — der Lauf nimmt nichts weg.'
+              : 'Erzeugt wird immer für genau eine Sprache. Was schon erzeugt wurde, bleibt liegen — ein zweiter Lauf für eine andere Sprache nimmt nichts weg.'}
           </ThemedText>
         </View>
       ) : null}
@@ -587,10 +606,17 @@ export function GeneratorCard({
           <Button label="Anhalten" onPress={stop} />
         ) : (
           <>
-            <Button label="Start" onPress={() => start(false)} />
-            {/* Nur im Leerlauf: Ein Kettenlauf darf nie neben einem anderen
+            <Button
+              label={alleSprachen && allRun ? `${allRun.label} erzeugen` : 'Start'}
+              onPress={() => start(false)}
+            />
+            {/* Der Kettenlauf läuft über die Sprachwahl („Alle“). Nur Karten
+                ohne Sprachzeile — Richtungen, Stufen — behalten den Knopf hier.
+                Nur im Leerlauf: Ein Kettenlauf darf nie neben einem anderen
                 Lauf stehen — „Anhalten“ bricht die ganze Kette ab. */}
-            {allRun ? <Button label={allRun.label} onPress={() => start(true)} /> : null}
+            {allRun && !(language && onLanguageChange) ? (
+              <Button label={allRun.label} onPress={() => start(true)} />
+            ) : null}
           </>
         )}
       </View>
@@ -619,6 +645,17 @@ export function GeneratorCard({
       ) : null}
 
       {progress ? <ProgressPanel progress={progress} /> : null}
+
+      {/* Phase 2, Schritt 2: das Ende-Ergebnis — verarbeitet, geprüft,
+          aussortiert. Der progress-State bleibt nach dem Lauf stehen, die
+          Zeile erscheint also genau einmal pro beendetem Lauf. Duplikate
+          verworfen kommt mit dem Duplikat-Schutz als eigenes Feld dazu. */}
+      {!running && progress && (progress.done || progress.cancelled) ? (
+        <ThemedText type="smallBold" accessibilityLiveRegion="polite">
+          {`Ergebnis: ${progress.processed} von ${progress.total} verarbeitet${progress.cancelled ? ' (angehalten)' : ''}.`}
+          {tonZusammenfassung(progress)}
+        </ThemedText>
+      ) : null}
 
       {progress && progress.errors.length > 0 ? (
         <>
@@ -659,6 +696,19 @@ export function GeneratorCard({
       ) : null}
     </ThemedView>
   );
+}
+
+/**
+ * Die Ton-Zeile des Ende-Ergebnis — nur Clip-Läufe reichen `tone` im
+ * Progress mit; alle anderen Übungen haben keine automatische Messung.
+ */
+function tonZusammenfassung(progress: BatchProgress): string {
+  const tone = (progress as BatchProgress & {
+    tone?: { passed: number; failed: number; other: number };
+  }).tone;
+  return tone
+    ? ` Tonprüfung: ${tone.passed} geprüft · ${tone.failed} aussortiert · ${tone.other} ungeprüft.`
+    : '';
 }
 
 function ProgressPanel({ progress }: { progress: BatchProgress }) {

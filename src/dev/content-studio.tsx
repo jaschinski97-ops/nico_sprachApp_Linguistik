@@ -5,7 +5,7 @@ import { SettingsRow } from '@/components/settings-row';
 import { ThemedButton } from '@/components/themed-button';
 import { ContentReport } from './content-report';
 import { estimateRunCost } from './run-cost';
-import { exportDrafts, studioRequest } from './content-client';
+import { exportDrafts, studioRequest, type StudioState } from './content-client';
 import { fahreKette, planChain, type ChainStep } from './chain-run';
 import { planDeliveryAudio } from '@/lib/content/audio-plan';
 import { previewAudioDelivery } from '@/lib/content/delivery-preview';
@@ -158,12 +158,16 @@ function clipRunOptions(
   exams: ExamModule[] = []
 ): { options: RunOption[]; specsFor: (optionId: string) => AudioClipSpec[] } {
   const plans: Record<string, AudioClipSpec[]> = {
-    delivery: planDeliveryAudio(storedSituations, exams),
-    test: planClipTestRun(poolFuer(language)),
-    vocab: planClips({ vocabulary: poolFuer(language) }),
+    // Phase 2, Schritt 2: die drei Haupt-Buttons — Wörter, Sätze, Dialoge —
+    // sauber getrennt (Schritt 7: erst Wörter und Kernsätze als Clips, die
+    // Dialog-Turns laufen standardmäßig über die Laufzeit-Stimme).
+    words: planClips({ vocabulary: poolFuer(language), includeExamples: false }),
+    sentences: planClips({ vocabulary: poolFuer(language), includeWords: false }),
     // Gespraechszuege gibt es bisher nur auf Thai (AE-48); sie haengen an den
     // gespeicherten Situationen und nicht an dieser Wahl.
     turns: planClips({ includeWords: false, includeExamples: false, situations: storedSituations }),
+    test: planClipTestRun(poolFuer(language)),
+    delivery: planDeliveryAudio(storedSituations, exams),
     all: planClips({ vocabulary: poolFuer(language), situations: storedSituations }),
   };
   const size = (specs: AudioClipSpec[]) => {
@@ -171,24 +175,21 @@ function clipRunOptions(
     return bytes === null ? '' : ` · geschätzt ${formatBytes(bytes)}`;
   };
   const options: RunOption[] = [
-    { id: 'test', label: 'Probelauf', hint: `${plans.test.length} Clips — fünf Vokabeln samt Beispielsatz${size(plans.test)}` },
-    { id: 'delivery', label: 'Auslieferung: alle Sprachen und Deutsch', hint: `${plans.delivery.length} Clips — Wörter, Beispiele, Dialoge und Hörtexte der Prüfungen${size(plans.delivery)}` },
-    {
-      id: 'vocab',
-      label: 'Alle Vokabeln',
-      hint: `${plans.vocab.length} Clips (${LANGUAGE_LABELS[language]}) — jedes Wort und, wo es eines gibt, der Beispielsatz${size(plans.vocab)}`,
-    },
+    { id: 'words', label: 'Wörter', hint: `${plans.words.length} Clips (${LANGUAGE_LABELS[language]}) — jedes Wort einzeln${size(plans.words)}` },
+    { id: 'sentences', label: 'Sätze', hint: `${plans.sentences.length} Clips — die Beispielsätze der Vokabeln als Kernsätze${size(plans.sentences)}` },
     {
       id: 'turns',
-      label: 'Gesprächszüge',
+      label: 'Dialoge',
       hint:
         plans.turns.length === 0
-          ? 'Keine gespeicherten Sprachsituationen — erst oben Dialoge erzeugen.'
+          ? 'Keine gespeicherten Sprachsituationen — erst im Text-Reiter Dialoge erzeugen.'
           : `${plans.turns.length} Clips — jeder Thai-Zug der ${storedSituations.length} gespeicherten Situationen, gleiche Sätze nur einmal${size(plans.turns)}`,
     },
+    { id: 'test', label: 'Probelauf', hint: `${plans.test.length} Clips — fünf Vokabeln samt Beispielsatz${size(plans.test)}` },
+    { id: 'delivery', label: 'Auslieferung: alle Sprachen und Deutsch', hint: `${plans.delivery.length} Clips — Wörter, Beispiele, Dialoge und Hörtexte der Prüfungen${size(plans.delivery)}` },
     { id: 'all', label: 'Alles', hint: `${plans.all.length} Clips${size(plans.all)} — kostet echtes Geld und dauert` },
   ];
-  return { options, specsFor: (optionId) => plans[optionId] ?? plans.test };
+  return { options, specsFor: (optionId) => plans[optionId] ?? plans.words };
 }
 
 // ---------------------------------------------------------------------------
@@ -277,7 +278,14 @@ function pruefZaehler(counts: ExamLevelCounts | null): CountItem[] {
 }
 
 export default function ContentStudio() {
-  const [section, setSection] = useState<'home' | 'keys' | 'reports' | GeneratorGroupId>('home');
+  // Phase 2, Schritt 2: „Inhalte erzeugen“ hat drei Unterreiter (Text /
+  // Audio / Bilder); die Generator-Karten bleiben, die Navigation darüber
+  // gruppiert neu. 'exam' entfällt ab Schritt 3 (Generator wird entfernt).
+  const [section, setSection] = useState<
+    'home' | 'keys' | 'reports' | 'text' | 'audio' | 'bilder' | GeneratorGroupId
+  >('home');
+  /** Warnung des Audio-Reiters: ungeprüfte Einträge im Live-Bericht. */
+  const [audioWarnung, setAudioWarnung] = useState('');
   const [running, setRunning] = useState(false);
   const [reportRevision, setReportRevision] = useState(0);
   const [exportMessage, setExportMessage] = useState('');
@@ -345,6 +353,31 @@ export default function ContentStudio() {
   const refreshStock = useCallback(async () => {
     await Promise.all([refreshSituations(), refreshClips(), refreshImages(), refreshExams()]);
   }, [refreshSituations, refreshClips, refreshImages, refreshExams]);
+
+  // Phase 2, Schritt 2: die Reihenfolge-Warnung — Audio für Texte erzeugen,
+  // die noch nicht geprüft sind, verschwendet Geld. Der Live-Bericht (Schritt
+  // 1) zählt die ungeprüften Einträge; die Zahl steht oben im Audio-Reiter.
+  useEffect(() => {
+    if (section !== 'audio') return;
+    let cancelled = false;
+    studioRequest<StudioState>('/state')
+      .then((state) => {
+        if (cancelled) return;
+        const ungeprueft = state.report.entries.filter((entry) => entry.status === 'unchecked');
+        const thai = ungeprueft.filter((entry) => entry.language === 'th').length;
+        setAudioWarnung(
+          ungeprueft.length === 0
+            ? ''
+            : `⚠ ${ungeprueft.length} Einträge im Prüfbericht sind ungeprüft${thai ? ` (davon ${thai} Thai-Clips)` : ''}. Empfohlene Reihenfolge: Wortschatz → Dialoge → Audio — erst Texte prüfen, dann vertonen.`
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setAudioWarnung('');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [section, reportRevision]);
 
   useEffect(() => {
     let cancelled = false;
@@ -570,11 +603,18 @@ export default function ContentStudio() {
         </ThemedView>
         <ThemedText type="small" themeColor="textSecondary">Was möchtest du verwalten?</ThemedText>
         <ThemedText type="smallBold">Inhalte erzeugen</ThemedText>
+        {/* Phase 2, Schritt 2: der Reihenfolge-Hinweis gehört ÜBER die
+            Erzeugung — Wortschatz zuerst, Bilder zuletzt. */}
+        <ThemedText type="small" themeColor="textSecondary">
+          Empfohlene Reihenfolge: Wortschatz → Dialoge → Audio → Bilder. Audio
+          und Bilder setzen voraus, dass ihre Texte schon stehen und geprüft
+          sind — der Audio-Reiter warnt, wenn der Prüfbericht noch Ungeprüftes
+          zählt.
+        </ThemedText>
         <View style={{ borderRadius: 16, overflow: 'hidden', gap: 1 }}>
-          <SettingsRow title="Bilder" detail="Vokabelbilder erstellen" icon="image-outline" onPress={() => setSection('images')} />
+          <SettingsRow title="Text, Wörter & Inhalte" detail="Wortschatz und Dialoge erzeugen" icon="document-text-outline" onPress={() => setSection('text')} />
           <SettingsRow title="Audio" detail="Wörter, Sätze und Dialoge vertonen" icon="volume-medium-outline" onPress={() => setSection('audio')} />
-          <SettingsRow title="Dialoge" detail="Sprachsituationen erstellen" icon="chatbubbles-outline" onPress={() => setSection('situations')} />
-          <SettingsRow title="Prüfungsaufgaben" detail="Lese- und Höraufgaben erstellen" icon="ribbon-outline" onPress={() => setSection('exam')} />
+          <SettingsRow title="Bilder" detail="Vokabelbilder erstellen" icon="image-outline" onPress={() => setSection('bilder')} />
         </View>
         <ThemedText type="smallBold">Verwaltung</ThemedText>
         <View style={{ borderRadius: 16, overflow: 'hidden', gap: 1 }}>
@@ -585,7 +625,22 @@ export default function ContentStudio() {
       {section === 'keys' ? <ApiKeysCard /> : null}
       {section === 'reports' ? <><ContentReport revision={reportRevision} /><DiagnosticsCard /></> : null}
       {exportMessage ? <ThemedText accessibilityLiveRegion="polite" type="small">{exportMessage}</ThemedText> : null}
-      {section === 'situations' ? (
+      {/* Phase 2, Schritt 2: Unterreiter „Text, Wörter & Inhalte“ — die
+          Wortschatz-Karte zeigt den Bestand und den Weg zur Zielgrößen-
+          Erzeugung (Schritt 4 baut sie aus); Dialoge laufen wie bisher. */}
+      {section === 'text' ? (
+      <>
+        <ThemedView type="backgroundElement" style={styles.panel}>
+          <ThemedText type="smallBold">Wortschatz</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">Vorhanden: {POOL_ZAEHLER}</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            Erzeugung mit festlegbarer Zielgröße je Sprache (250 / 500 / 1.000 /
+            2.000 oder freie Zahl) folgt im nächsten Ausbauschritt — dann nur
+            die fehlenden Wörter, nach Häufigkeit sortiert, in Paketen mit
+            Thema und Stufe; die Brücken-Pools der 20 App-Sprachen ziehen
+            passend nach.
+          </ThemedText>
+        </ThemedView>
       <GeneratorCard
         managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Sprachsituationen"
@@ -605,9 +660,10 @@ export default function ContentStudio() {
         onFinished={refreshStock}
         allRun={{ label: 'Alle Richtungen', steps: ALLE_RICHTUNGEN }}
       />
+      </>
       ) : null}
 
-      {section === 'images' ? (
+      {section === 'bilder' ? (
       <GeneratorCard
         managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Bilder"
@@ -650,6 +706,12 @@ export default function ContentStudio() {
       ) : null}
 
       {section === 'audio' ? (
+      <>
+        {audioWarnung ? (
+          <ThemedView type="backgroundSelected" style={styles.panel}>
+            <ThemedText type="small">{audioWarnung}</ThemedText>
+          </ThemedView>
+        ) : null}
       <GeneratorCard
         managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Hörclips"
@@ -669,6 +731,7 @@ export default function ContentStudio() {
         onFinished={refreshStock}
         allRun={{ label: 'Alle Sprachen', steps: ALLE_SPRACHEN }}
       />
+      </>
       ) : null}
 
     </View>

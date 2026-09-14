@@ -65,7 +65,11 @@ test('„Alle Sprachen“ übergibt die Kette, zeigt den Schritt und bestätigt 
     if (!button) throw Error('Missing button ' + label);
     button.props.onPress();
   };
-  await act(async () => { press('Alle Sprachen'); });
+  // Phase 2, Schritt 2: „Alle Sprachen“ ist Teil der Sprachwahl — erst der
+  // Auswahlknopf „Alle“, dann startet der Haupt-Knopf (jetzt als
+  // „Alle Sprachen erzeugen“ beschriftet) die Kette.
+  await act(async () => { press('Alle'); });
+  await act(async () => { press('Alle Sprachen erzeugen'); });
   // Während der Kette läuft: kein zweiter Start, keine zweite „Alle“-Wahl.
   expect(JSON.stringify(tree.toJSON())).toContain('Anhalten');
   expect(tree.root.findAllByType(Button).find(node => node.props.label === 'Alle Sprachen'))
