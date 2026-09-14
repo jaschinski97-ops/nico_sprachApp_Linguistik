@@ -237,7 +237,18 @@ class ContentPipeline {
     if (entry.kind === 'audio') {
       check.tone = checkThaiTone(entry.document, decodeAudio(file), 24000);
       if (['failed', 'unchecked'].includes(check.tone.status)) check.status = check.tone.status;
-    } else if (entry.kind === 'images') decodeImage(file);
+    } else if (entry.kind === 'images') {
+      decodeImage(file);
+      // Phase 2, Schritt 7: Regelpruefung „kein Text im Bild" — der
+      // GENERIERTE Prompt muss die Negativ-Regel tragen (buildImagePrompt
+      // haengt sie an). Das ist die maschinenpruefbare Teilmenge; ob das
+      // Bild zum Wort passt, bleibt der Vorschau-Blick der lernenden Person.
+      const prompt = String(entry.document.prompt ?? '');
+      if (!prompt.includes('no text')) {
+        check.status = 'unchecked';
+        check.reason = 'Prompt ohne „no text“-Regel — das Bild ist nicht als textfrei gebaut.';
+      }
+    }
     else if (entry.kind === 'vocabulary') {
       // Phase 2, Schritt 4: regelbasierte Basisprüfung (Schema hat
       // assertDocument schon geprüft; hier Schrift/Pflichtmerkmale/Länge).

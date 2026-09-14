@@ -28,6 +28,7 @@ import { runClipBatch, missingClipSpecs } from '@/lib/clips/batch';
 import { getActiveAudioBlobBackend, getAudioBlobStore } from '@/lib/clips/blob-store';
 import { createClipGenerationClient } from '@/lib/clips/generator';
 import { estimateClipBytes, formatBytes, planClips, planClipTestRun } from '@/lib/clips/plan';
+import { voicesFor } from '@/data/tts-voices';
 import { AudioClipSpec } from '@/lib/clips/types';
 import { runGenerationBatch, missingSpecs } from '@/lib/conversation/batch';
 import { ConversationSituation } from '@/lib/conversation/types';
@@ -542,20 +543,43 @@ export default function ContentStudio() {
       );
       if (!await confirmRun({ ...estimateRunCost('audio', provider, model, all),
         delivery: previewAudioDelivery(all) })) return;
+      // Phase 2, Schritt 7: mehrere Stimmen pro Sprache ABWECHSELND — die
+      // Clips werden rundum auf die Stimmen des Anbieters verteilt (die
+      // gewählte Stimme startet die Rotation). Fällt eine Stimme aus, hören
+      // Lernende nicht denselben Klang für den ganzen Bestand.
+      const stimmen = voicesFor(provider).map((stimme) => stimme.name);
+      const reihenfolge = (voice?.trim() ? [voice.trim(), ...stimmen.filter((n) => n !== voice.trim())] : stimmen);
       await fahreKette(steps, all.length, { onChainStep, onProgress, shouldCancel },
-        (missing, onStepProgress) => runClipBatch({
-          specs: missing,
-          client: createClipGenerationClient(provider, apiKey, model, voice),
-          onProgress: onStepProgress,
-          shouldCancel,
-          // Gemessen am 2026-09-06 (Gratis-Tarif): 10 Requests/Minute — daher
-          // 6500 ms. Mit aktivierter Abrechnung (AE-68) heben sich die Limits
-          // deutlich; 1200 ms liegen mit ~50/min sicher darunter und halten
-          // einen Auslieferungslauf von Stunden auf Minuten.
-          // Der Helper begrenzt sich selbst auf 30 Aufrufe/Minute — 2200 ms
-          // bleiben mit Pause auch bei kurzzeitiger Frame-Verzögerung darunter.
-          delayMs: provider === 'gemini' ? 1200 : provider === 'chatgpt-helper' ? 2200 : 600,
-        }));
+        async (missing, onStepProgress) => {
+          if (reihenfolge.length <= 1) {
+            await runClipBatch({
+              specs: missing,
+              client: createClipGenerationClient(provider, apiKey, model, voice ?? ''),
+              onProgress: onStepProgress,
+              shouldCancel,
+              delayMs: provider === 'gemini' ? 1200 : provider === 'chatgpt-helper' ? 2200 : 600,
+            });
+            return;
+          }
+          const laeufe: Promise<void>[] = [];
+          for (let index = 0; index < reihenfolge.length; index++) {
+            const anteil = missing.filter((_, j) => j % reihenfolge.length === index);
+            if (anteil.length === 0) continue;
+            laeufe.push(
+              runClipBatch({
+                specs: anteil,
+                client: createClipGenerationClient(provider, apiKey, model, reihenfolge[index]),
+                onProgress: onStepProgress,
+                shouldCancel,
+                delayMs: provider === 'gemini' ? 1200 : provider === 'chatgpt-helper' ? 2200 : 600,
+              }).then(() => {
+                // Kleine Pause zwischen den Stimmen-Blöcken — dieselbe
+                // Ratenlimit-Rücksicht wie innerhalb der Läufe.
+              })
+            );
+          }
+          await Promise.all(laeufe);
+        });
       await exportDrafts(setExportMessage);
       setReportRevision(value => value + 1);
     },
@@ -654,7 +678,7 @@ export default function ContentStudio() {
       <GeneratorCard
         managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Bilder"
-        description="Ein Bild je konkreter Vokabel. Abstrakte Wörter erhalten kein Bild."
+        description="Ein Bild je konkreter Vokabel — vorhandene werden übersprungen. Prüfung: dekodierbar und prompt-konform (ohne Text im Bild gebaut); ob das Bild zum Wort passt, prüfst du in der Vorschau."
         group="images"
         choice={generators.images}
         onChoiceChange={(change) => changeGenerator('images', change)}
@@ -682,7 +706,7 @@ export default function ContentStudio() {
       <GeneratorCard
         managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Hörclips"
-        description="Synthetische Hörclips für Wörter, Sätze und Dialoge. Thai-Töne werden automatisch geprüft; das ersetzt keinen Hörtest."
+        description="Erst Wörter und Kernsätze vertonen — Dialog-Turns laufen standardmäßig über die Laufzeit-Stimme. Stimmen wechseln im Lauf abwechselnd durch; Thai-Töne werden automatisch geprüft (ungeprüft/aussortiert sieht du im Prüfbericht)."
         language={mediaLanguage}
         onLanguageChange={setMediaLanguage}
         group="audio"
