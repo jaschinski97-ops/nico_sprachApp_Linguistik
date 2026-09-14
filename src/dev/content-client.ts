@@ -5,11 +5,43 @@ import { isContentDeveloper } from '@/lib/content/developer';
 import type { ContentCatalog, ContentEntry } from '@/lib/content/types';
 
 export const STUDIO_URL = 'http://127.0.0.1:8082';
+/** Ein Berichtseintrag des Live-Berichts (Phase 2, Schritt 1): Check plus
+ *  die Anzeige- und Aktionsfelder, die die Pipeline aus Stage ∪ Katalog
+ *  ableitet. */
+export type ReportEntry = ContentEntry['check'] & {
+  kind: string;
+  id: string;
+  text?: string;
+  language?: string;
+  sourceId?: string;
+  clipKind?: string;
+  asset?: string;
+  digest?: string;
+  /** Grund der Prüfung (Tonwiderrspruch, fehlende Messung …). */
+  reason?: string;
+};
 export type StudioState = {
   stage: ContentCatalog;
   shipped: ContentCatalog;
-  report: { limitations?: string; entries: (ContentEntry['check'] & { kind: string; id: string; text?: string })[] };
+  report: { limitations?: string; entries: ReportEntry[] };
 };
+/**
+ * Löscht einen Inhalt: `where: 'stage'` nimmt einen Entwurf aus dem Stage,
+ * `where: 'catalog'` löscht einen ausgelieferten Eintrag aus Katalog
+ * (inkl. Stage-Zwilling und verwaistem Asset). `true`, wenn etwas entfernt
+ * wurde.
+ */
+export async function deleteContent(
+  kind: string,
+  id: string,
+  where: 'stage' | 'catalog'
+): Promise<boolean> {
+  const removed = await studioRequest<boolean>(
+    where === 'stage' ? '/stage/delete' : '/catalog/delete',
+    { kind, id }
+  );
+  return removed === true;
+}
 export async function studioRequest<T>(path: string, data?: unknown): Promise<T> {
   if (!isContentDeveloper()) throw new Error('Inhaltsstudio nur lokal im Entwicklerbetrieb.');
   let response: Response;

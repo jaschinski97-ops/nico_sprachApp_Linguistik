@@ -202,9 +202,12 @@ function clipRunOptions(
  * deutsche Pool steht dort bewusst NICHT: Er ist abgeleitet (aus den
  * `german`-Feldern dieses Bestands), kein zweiter eingetragener Grundstock.
  */
-const POOL_ZAEHLER = LANGUAGE_ORDER.map(
-  (code) => `${LANGUAGE_LABELS[code]} ${vocabularyFor(code).length}`
-).join(' · ');
+const POOL_ZAEHLER =
+  LANGUAGE_ORDER.map((code) => `${LANGUAGE_LABELS[code]} ${vocabularyFor(code).length}`).join(' · ') +
+  // Deutsch hat keinen eigenen Grundstoff — der Pool ist abgeleitet (siehe
+  // vocabulary-de.ts). Er gehört trotzdem in die Zeile, damit die Zahl nicht
+  // den Eindruck erweckt, Deutsch fehle komplett (Nutzerwunsch 12.09.).
+  ` · Deutsch ${VOCABULARY_DE.length} (abgeleitet)`;
 
 /** Die gespeicherten Dialoge kennen genau diese beiden Richtungen. */
 const RICHTUNGEN = ['de_to_th', 'th_to_de'] as const;
@@ -594,7 +597,9 @@ export default function ContentStudio() {
         counts={richtungsZaehler(situationsByDirection)}
         runOptions={SITUATION_RUNS}
         onStart={startSituations}
-        onDelete={clearSituations}
+        // Nach dem Löschen sofort nachzählen — ein stehengebliebener Zähler
+        // sieht aus, als hätte das Löschen nicht geklappt (Nutzerwunsch 12.09.).
+        onDelete={async () => { await clearSituations(); await refreshSituations(); }}
         deleteLabel="Alle Situationen löschen"
         canDelete={Boolean(situations && situations > 0)}
         onFinished={refreshStock}
@@ -616,7 +621,7 @@ export default function ContentStudio() {
         counts={sprachZaehler(imagesByLanguage, mediaLanguage)}
         runOptions={imageRunOptions(mediaLanguage)}
         onStart={startImages}
-        onDelete={clearVocabImages}
+        onDelete={async () => { await clearVocabImages(); await refreshImages(); }}
         deleteLabel="Alle Bilder löschen"
         canDelete={Boolean(images && images > 0)}
         onFinished={refreshStock}
@@ -636,7 +641,7 @@ export default function ContentStudio() {
         counts={pruefZaehler(examsByLevel)}
         runOptions={EXAM_RUNS}
         onStart={startExams}
-        onDelete={clearGeneratedExamModules}
+        onDelete={async () => { await clearGeneratedExamModules(); await refreshExams(); }}
         deleteLabel="Erzeugte Aufgaben löschen"
         canDelete={Boolean(exams && exams.generated > 0)}
         onFinished={refreshStock}
@@ -658,7 +663,7 @@ export default function ContentStudio() {
         counts={sprachZaehler(clipsByLanguage, mediaLanguage)}
         runOptions={clipRunOptions(storedSituations, generators.audio.provider, mediaLanguage, storedExams).options}
         onStart={startClips}
-        onDelete={clearAudioClips}
+        onDelete={async () => { await clearAudioClips(); await refreshClips(); }}
         deleteLabel="Alle Clips löschen"
         canDelete={Boolean(clips && clips.count > 0)}
         onFinished={refreshStock}

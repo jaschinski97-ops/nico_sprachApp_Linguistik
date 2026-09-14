@@ -86,8 +86,102 @@ class ContentPipeline {
   }
   async catalog() { return readJson(this.catalogFile, { version: 2, entries: [] }); }
   async state() {
-    return { stage: await readJson(this.stageFile, { version: 2, entries: [] }),
-      shipped: await this.catalog(), report: await readJson(this.reportFile, { entries: [] }) };
+    const stageState = await readJson(this.stageFile, { version: 2, entries: [] });
+    const shipped = await this.catalog();
+    // Phase 2, Schritt 1 (14.09.2026): Der Bericht wird LIVE aus Stage und
+    // Katalog ABGELEITET statt aus pipeline/reports/automatic-checks.json
+    // durchgereicht. Die Datei wird nur bei publish() geschrieben — nach den
+    // Grundstock-Kürzungen (d1a54ac, 677cd7b) listete der Bericht deshalb
+    // weiter 3.085 Einträge, die längst gelöscht waren. Die Ableitung kennt
+    // denselben Stand wie das Studio: Stage gewinnt per Schlüssel gegen den
+    // Katalog (jüngerer Stand), gelöschte Einträge verschwinden, und ein
+    // Eintrag ohne Prüfungsinformation erscheint ehrlich als ungeprüft. Die
+    // Report-Datei bleibt als Messspuren-Archiv von publish() bestehen.
+    return { stage: stageState, shipped, report: this.deriveReport(stageState, shipped) };
+  }
+  /**
+   * Berichtseinträge aus Stage ∪ Katalog, dedupe per `kind:id` (Stage
+   * gewinnt), deterministisch sortiert. Je Eintrag die Anzeige-Felder des
+   * Prüfberichts plus die Prüfung selbst — ein fehlender Check zählt als
+   * ungeprüft mit Grund, nie als bestanden.
+   */
+  deriveReport(stageState, shipped) {
+    const merged = new Map(shipped.entries.map((entry) => [keyOf(entry), entry]));
+    for (const entry of stageState.entries) merged.set(keyOf(entry), entry);
+    const entries = [...merged.values()]
+      .sort((a, b) => keyOf(a).localeCompare(keyOf(b)))
+      .map((entry) => ({
+        kind: entry.kind,
+        id: entry.id,
+        digest: entry.digest,
+        text: entry.document.text ?? entry.document.title,
+        language: entry.document.language,
+        sourceId: entry.document.sourceId,
+        clipKind: entry.document.kind,
+        asset: entry.asset,
+        ...(entry.check ?? {
+          status: 'unchecked',
+          label: 'ungeprüft',
+          scope: 'none',
+          reason: 'Keine Prüfungsinformation hinterlegt.',
+        }),
+      }));
+    return { checkedAt: new Date().toISOString(), limitations: TONE_GATE_LIMITS, entries };
+  }
+  /** Ist das eine wohlgeformte Inhaltsart/ID für die Lösch-Endpunkte? */
+  static gueltigerSchluessel(kind, id) {
+    return KINDS.includes(kind) && /^[a-zA-Z0-9_-]{1,180}$/.test(String(id ?? ''));
+  }
+  /**
+   * Löscht einen Stage-Eintrag (aussortierte oder unerwünschte Entwürfe).
+   * Liefert den entfernten Eintrag, `null` wenn es ihn nicht gibt.
+   */
+  async deleteFromStage(kind, id) {
+    if (!ContentPipeline.gueltigerSchluessel(kind, id)) throw Error('Ungültige Inhaltsart oder ID.');
+    const stageState = await readJson(this.stageFile, { version: 2, entries: [] });
+    const entry = stageState.entries.find((item) => keyOf(item) === `${kind}:${id}`);
+    if (!entry) return null;
+    stageState.entries = stageState.entries.filter((item) => keyOf(item) !== `${kind}:${id}`);
+    await atomicJson(this.stageFile, stageState);
+    return entry;
+  }
+  /**
+   * Löscht einen AUSLIEFERTEN Eintrag aus dem Katalog — und bewusst AUCH den
+   * gleichnamigen Stage-Eintrag: publish() merged Stage nur HINZU, ein
+   * überlebender Stage-Zwilling käme beim nächsten Export zurück (der
+   * Fallstrick aus den Grundstock-Kürzungen). Regeneriert assets.ts mit
+   * (writeCatalog) und entfernt die Asset-Datei, sobald kein anderer Eintrag
+   * sie referenziert.
+   */
+  async deleteFromCatalog(kind, id) {
+    if (!ContentPipeline.gueltigerSchluessel(kind, id)) throw Error('Ungültige Inhaltsart oder ID.');
+    const key = `${kind}:${id}`;
+    const shipped = await this.catalog();
+    const entry = shipped.entries.find((item) => keyOf(item) === key);
+    if (!entry) return null;
+    shipped.entries = shipped.entries.filter((item) => keyOf(item) !== key);
+    const stageState = await readJson(this.stageFile, { version: 2, entries: [] });
+    const zwilling = stageState.entries.find((item) => keyOf(item) === key);
+    if (zwilling) {
+      stageState.entries = stageState.entries.filter((item) => keyOf(item) !== key);
+      await atomicJson(this.stageFile, stageState);
+    }
+    const verbleibendeAssets = new Set(
+      shipped.entries.flatMap((item) => (item.asset ? [item.asset] : []))
+    );
+    await this.writeCatalog(shipped);
+    if (entry.asset && !verbleibendeAssets.has(entry.asset)) {
+      await fs.rm(path.join(this.root, 'assets/content', entry.asset), { force: true });
+      await fs.rm(path.join(this.work, entry.asset), { force: true });
+    }
+    tryWriteProtocol({
+      script: 'content-pipeline',
+      action: 'delete',
+      items: 1,
+      result: 'ok',
+      notes: `${key}${entry.asset ? ` · Asset ${entry.asset} entfernt` : ''}`,
+    }, { root: this.root });
+    return entry;
   }
   async stage({ kind, document, base64 }) {
     assertDocument(kind, document);

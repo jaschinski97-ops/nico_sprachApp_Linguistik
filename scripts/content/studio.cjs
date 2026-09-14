@@ -168,7 +168,7 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         await handleTtsProxy(req, res, { getApiKey, openaiFetch, logRun, allowRequest });
         return;
       }
-      if (req.method !== 'POST' || !['/stage','/publish'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
+      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
       if (!originAllowed(req.headers.origin) || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
       let size = 0; const parts = [];
       for await (const chunk of req) {
@@ -177,7 +177,15 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         parts.push(chunk);
       }
       const data = JSON.parse(Buffer.concat(parts).toString('utf8'));
-      const action = () => req.url === '/stage' ? pipeline.stage(data) : pipeline.publish();
+      // Phase 2, Schritt 1: die Lösch-Endpunkte des Prüfberichts. /stage/delete
+      // nimmt einen Entwurf aus dem Stage, /catalog/delete löscht einen
+      // ausgelieferten Eintrag (inkl. Stage-Zwilling und verwaistem Asset) —
+      // beides über dieselbe Serialisierungs-Warteschlange wie Stage/Publish.
+      const action = () =>
+        req.url === '/stage' ? pipeline.stage(data) :
+        req.url === '/publish' ? pipeline.publish() :
+        req.url === '/stage/delete' ? pipeline.deleteFromStage(data.kind, data.id) :
+        pipeline.deleteFromCatalog(data.kind, data.id);
       const operation = queue.then(action);
       queue = operation.catch(() => {});
       json(200, await operation);

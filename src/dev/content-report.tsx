@@ -5,9 +5,15 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
-import { studioRequest, type StudioState } from './content-client';
+import { LANGUAGE_LABELS } from '@/lib/languages/registry';
+import { loadApiKey } from '@/lib/api-key';
+import { defaultVoiceFor, loadGeneratorSettings } from '@/lib/providers/settings';
+import { createClipGenerationClient } from '@/lib/clips/generator';
+import { runClipBatch } from '@/lib/clips/batch';
+import { clipIdFor } from '@/lib/clips/types';
+import { estimateRunCost } from './run-cost';
+import { deleteContent, exportDrafts, studioRequest, type ReportEntry, type StudioState } from './content-client';
 
-type ReportEntry = StudioState['report']['entries'][number];
 type GroupKey = 'failed' | 'unchecked' | 'passed';
 
 /**
@@ -172,6 +178,7 @@ export function ContentReport({ revision }: { revision: number }) {
                     onMore={() =>
                       setShown((prev) => ({ ...prev, [key]: prev[key] + PAGE_STEP }))
                     }
+                    onRefresh={refresh}
                   />
                 ) : null}
               </View>
@@ -216,12 +223,14 @@ function GroupBody({
   filter,
   shown,
   onMore,
+  onRefresh,
 }: {
   entries: ReportEntry[];
   groupKey: GroupKey;
   filter: string;
   shown: number;
   onMore: () => void;
+  onRefresh: () => Promise<void>;
 }) {
   const needle = filter.trim().toLowerCase();
   const matches = useMemo(() => {
@@ -254,7 +263,7 @@ function GroupBody({
         </ThemedText>
       ) : null}
       {visible.map((entry, index) => (
-        <EntryRow key={`${entry.id}:${index}`} entry={entry} />
+        <EntryRow key={`${entry.id}:${index}`} entry={entry} onChanged={onRefresh} />
       ))}
       {matches.length > visible.length ? (
         <Pressable
@@ -272,7 +281,85 @@ function GroupBody({
   );
 }
 
-function EntryRow({ entry }: { entry: ReportEntry }) {
+function EntryRow({ entry, onChanged }: { entry: ReportEntry; onChanged: () => void }) {
+  const theme = useTheme();
+  // Aktionenzustand: 'idle' → 'confirm' (Kosten stehen da) → 'läuft' → fertig.
+  const [phase, setPhase] = useState<'idle' | 'confirm'>('idle');
+  const [busy, setBusy] = useState<'regenerate' | 'delete' | null>(null);
+  const [message, setMessage] = useState('');
+
+  const grund =
+    entry.status === 'failed'
+      ? entry.tone?.reason ?? entry.reason ?? 'Schema- oder Integritätsprüfung fehlgeschlagen.'
+      : entry.status === 'unchecked'
+        ? entry.tone?.reason ??
+          entry.reason ??
+          'Ungeprüft — keine automatische Messung hinterlegt.'
+        : null;
+
+  /** Löschen: Katalog-Eintrag (inkl. Stage-Zwilling) und Stage-Entwurf. */
+  const loeschen = useCallback(async () => {
+    setBusy('delete');
+    setMessage('');
+    try {
+      const imKatalog = await deleteContent(entry.kind, entry.id, 'catalog');
+      const imStage = await deleteContent(entry.kind, entry.id, 'stage');
+      setMessage(imKatalog || imStage ? 'Gelöscht.' : 'Eintrag war weder im Katalog noch im Stage.');
+      onChanged();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(null);
+    }
+  }, [entry.kind, entry.id, onChanged]);
+
+  /** Neu erzeugen: derselbe Clip-Auftrag, neuer Lauf — erst nach Bestätigung. */
+  const neuErzeugen = useCallback(async () => {
+    if (entry.kind !== 'audio' || !entry.text || !entry.language) return;
+    setBusy('regenerate');
+    setMessage('');
+    try {
+      const settings = await loadGeneratorSettings();
+      const { provider, model, voice } = settings.audio;
+      const apiKey = (await loadApiKey(provider)) ?? '';
+      // Narrowing vor dem Spec: Sprache und Text kommen aus dem Live-Bericht
+      // (Pipeline leitet sie aus dem Dokument ab) — ohne beides kein Lauf.
+      const text = entry.text;
+      const language = (['th', 'de', 'en', 'es'] as const).find(
+        (kandidat) => kandidat === entry.language
+      );
+      if (!language || !text) throw new Error('Sprache oder Text fehlen im Berichtseintrag.');
+      const spec = {
+        id: clipIdFor(language, text),
+        language,
+        text,
+        kind: (entry.clipKind ?? 'vocab') as 'vocab' | 'example' | 'turn',
+        sourceId: entry.sourceId ?? entry.id,
+      };
+      await runClipBatch({
+        specs: [spec],
+        client: createClipGenerationClient(provider, apiKey, model, voice ?? defaultVoiceFor(provider)),
+        onProgress: () => {},
+        // Der Eintrag existiert bereits — missingClipSpecs würde ihn
+        // ausfiltern. Neu erzeugen heißt: bewusst überschreiben.
+        delayMs: provider === 'chatgpt-helper' ? 2200 : 600,
+      });
+      await exportDrafts((m) => setMessage(m));
+      setMessage('Neu erzeugt und geprüft.');
+      onChanged();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : String(error));
+    } finally {
+      setBusy(null);
+      setPhase('idle');
+    }
+  }, [entry, onChanged]);
+
+  const kosten =
+    entry.kind === 'audio' && entry.text
+      ? estimateRunCost('audio', 'chatgpt-helper', 'gpt-4o-mini-tts-2025-12-15', [{ text: entry.text }])
+      : null;
+
   if (entry.status === 'failed') {
     return (
       <View style={styles.row}>
@@ -280,13 +367,40 @@ function EntryRow({ entry }: { entry: ReportEntry }) {
           {entry.text ?? entry.id}
         </ThemedText>
         <ThemedText selectable type="small" themeColor="textSecondary">
-          {entry.tone?.reason ?? 'Schema- oder Integritätsprüfung fehlgeschlagen.'}
+          {grund}
         </ThemedText>
         {entry.tone?.summary ? (
           <ThemedText selectable type="small" themeColor="textSecondary">
             {entry.tone.summary.durMs} ms · Verlauf {entry.tone.summary.slope.toFixed(1)} Halbtöne
           </ThemedText>
         ) : null}
+        <EntryActions
+          entry={entry} phase={phase} busy={busy} message={message} kosten={kosten}
+          theme={theme}
+          onConfirm={() => setPhase('confirm')} onCancel={() => setPhase('idle')}
+          onRegenerate={neuErzeugen} onDelete={loeschen}
+        />
+      </View>
+    );
+  }
+  if (entry.status === 'unchecked') {
+    return (
+      <View style={styles.row}>
+        <ThemedText type="small" numberOfLines={1}>
+          {entry.text ?? entry.id}
+        </ThemedText>
+        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          {entry.id}
+        </ThemedText>
+        <ThemedText selectable type="small" themeColor="textSecondary">
+          {grund}
+        </ThemedText>
+        <EntryActions
+          entry={entry} phase={phase} busy={busy} message={message} kosten={kosten}
+          theme={theme}
+          onConfirm={() => setPhase('confirm')} onCancel={() => setPhase('idle')}
+          onRegenerate={neuErzeugen} onDelete={loeschen}
+        />
       </View>
     );
   }
@@ -298,6 +412,106 @@ function EntryRow({ entry }: { entry: ReportEntry }) {
       <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
         {entry.id}
       </ThemedText>
+    </View>
+  );
+}
+
+/**
+ * Die zwei Aktionen unter ungeprüften und ausgeschiedenen Einträgen
+ * (Phase 2, Schritt 1). „Neu erzeugen" ist kostenpflichtig — Menge,
+ * Anbieter und Kostenschätzung stehen deshalb vor dem Ausführen da und
+ * der erste Knopfdruck bestätigt nur; der zweite führt aus (Regel: kein
+ * kostenpflichtiger Lauf ohne angezeigte Schätzung und Bestätigung).
+ */
+function EntryActions({
+  entry,
+  phase,
+  busy,
+  message,
+  kosten,
+  theme,
+  onConfirm,
+  onCancel,
+  onRegenerate,
+  onDelete,
+}: {
+  entry: ReportEntry;
+  phase: 'idle' | 'confirm';
+  busy: 'regenerate' | 'delete' | null;
+  message: string;
+  kosten: { count: number; usd: number | null; basis: string } | null;
+  theme: ReturnType<typeof useTheme>;
+  onConfirm: () => void;
+  onCancel: () => void;
+  onRegenerate: () => void;
+  onDelete: () => void;
+}) {
+  const kannNeu = entry.kind === 'audio' && Boolean(entry.text) && Boolean(entry.language);
+  return (
+    <View style={styles.actions}>
+      <View style={styles.actionRow}>
+        {kannNeu ? (
+          phase === 'idle' ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Neu erzeugen: ${entry.text ?? entry.id}`}
+              disabled={busy !== null}
+              onPress={onConfirm}
+              style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
+              <ThemedText type="smallBold" style={{ color: theme.accent }}>
+                ↻ Neu erzeugen
+              </ThemedText>
+            </Pressable>
+          ) : (
+            <View style={styles.confirmBox}>
+              <ThemedText selectable type="small" themeColor="textSecondary">
+                {kosten
+                  ? `1 Clip · Anbieter: lokaler Helper (OpenAI) · geschätzte Kosten ${kosten.usd === null ? 'ohne Tarif hinterlegt' : `≈ ${kosten.usd.toFixed(4)} $`}`
+                  : '1 Eintrag neu erzeugen'}
+                {' · '}
+                {kosten?.basis}
+              </ThemedText>
+              <View style={styles.actionRow}>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Kosten bestätigen und neu erzeugen"
+                  disabled={busy !== null}
+                  onPress={onRegenerate}
+                  style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
+                  <ThemedText type="smallBold" style={{ color: theme.accent }}>
+                    {busy === 'regenerate' ? 'läuft …' : 'Ja, neu erzeugen'}
+                  </ThemedText>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Abbrechen"
+                  disabled={busy !== null}
+                  onPress={onCancel}
+                  style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
+                  <ThemedText type="small" themeColor="textSecondary">
+                    Abbrechen
+                  </ThemedText>
+                </Pressable>
+              </View>
+            </View>
+          )
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Löschen: ${entry.text ?? entry.id}`}
+          disabled={busy !== null}
+          onPress={onDelete}
+          style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
+          <ThemedText type="smallBold" themeColor="textSecondary">
+            {busy === 'delete' ? 'löscht …' : '🗑 Löschen'}
+          </ThemedText>
+        </Pressable>
+      </View>
+      {message ? (
+        <ThemedText accessibilityLiveRegion="polite" type="small" themeColor="textSecondary">
+          {message}
+        </ThemedText>
+      ) : null}
     </View>
   );
 }
@@ -369,6 +583,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 15,
+  },
+  actions: {
+    gap: Spacing.one,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  confirmBox: {
+    gap: Spacing.one,
   },
   pressed: {
     opacity: 0.7,
