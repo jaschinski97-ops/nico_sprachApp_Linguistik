@@ -110,6 +110,7 @@ const ko = {
   "conversation.listenA11y": "듣기: {{text}}",
   "conversation.syntheticNote": "(합성 음성, 원어민 녹음 아님)",
   "conversation.topicCount": "{{count}} 대화",
+  "conversation.meaningLanguage": "의미: {{language}}",
   "topic.greeting": "인사 및 소개",
   "topic.market": "시장 및 쇼핑",
   "topic.restaurant": "식당 및 음식",

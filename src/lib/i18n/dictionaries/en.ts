@@ -132,6 +132,7 @@ const en: Partial<Record<TranslationKey, string>> = {
   'conversation.listenA11y': 'Listen: {{text}}',
   'conversation.syntheticNote': ' (synthetic voice, no native-speaker recording)',
   'conversation.topicCount': '{{count}} dialogues',
+  'conversation.meaningLanguage': 'Meanings: {{language}}',
   'topic.greeting': 'Greetings & getting acquainted',
   'topic.market': 'Market & shopping',
   'topic.restaurant': 'Restaurant & food',

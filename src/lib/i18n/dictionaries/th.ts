@@ -132,6 +132,7 @@ const th: Partial<Record<TranslationKey, string>> = {
   'conversation.listenA11y': 'ฟัง: {{text}}',
   'conversation.syntheticNote': ' (เสียงสังเคราะห์ ไม่ใช่เสียงเจ้าของภาษา)',
   'conversation.topicCount': 'บทสนทนา {{count}} บท',
+  'conversation.meaningLanguage': 'ความหมาย: {{language}}',
   'topic.greeting': 'ทักทายและแนะนำตัว',
   'topic.market': 'ตลาดและช้อปปิ้ง',
   'topic.restaurant': 'ร้านอาหาร',

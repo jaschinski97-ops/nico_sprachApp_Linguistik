@@ -110,6 +110,7 @@ const id = {
   "conversation.listenA11y": "Dengarkan: {{text}}",
   "conversation.syntheticNote": "(suara sintetis, bukan rekaman penutur asli)",
   "conversation.topicCount": "{{count}} dialog",
+  "conversation.meaningLanguage": "Arti: {{language}}",
   "topic.greeting": "Salam & Perkenalan",
   "topic.market": "Pasar & Belanja",
   "topic.restaurant": "Restoran & Makanan",

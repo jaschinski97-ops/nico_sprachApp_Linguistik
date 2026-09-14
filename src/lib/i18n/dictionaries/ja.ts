@@ -110,6 +110,7 @@ const ja = {
   "conversation.listenA11y": "聞く: {{text}}",
   "conversation.syntheticNote": "（合成音声、ネイティブスピーカーの録音ではありません）",
   "conversation.topicCount": "{{count}}の対話",
+  "conversation.meaningLanguage": "意味: {{language}}",
   "topic.greeting": "挨拶と自己紹介",
   "topic.market": "市場と買い物",
   "topic.restaurant": "レストランと食事",

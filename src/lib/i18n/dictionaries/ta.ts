@@ -110,6 +110,7 @@ const ta = {
   "conversation.listenA11y": "கேளுங்கள்: {{text}}",
   "conversation.syntheticNote": "(செயற்கை குரல், தாய்மொழி பேசுபவரின் பதிவு இல்லை)",
   "conversation.topicCount": "{{count}} உரையாடல்கள்",
+  "conversation.meaningLanguage": "பொருள்கள்: {{language}}",
   "topic.greeting": "வணக்கம் & அறிமுகம்",
   "topic.market": "சந்தை & வாங்குதல்",
   "topic.restaurant": "உணவகம் & உணவு",

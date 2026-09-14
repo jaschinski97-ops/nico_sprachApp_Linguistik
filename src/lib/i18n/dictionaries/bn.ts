@@ -110,6 +110,7 @@ const bn = {
   "conversation.listenA11y": "শুনুন: {{text}}",
   "conversation.syntheticNote": "(কৃত্রিম কণ্ঠ, মাতৃভাষী রেকর্ডিং নয়)",
   "conversation.topicCount": "{{count}} সংলাপ",
+  "conversation.meaningLanguage": "অর্থ: {{language}}",
   "topic.greeting": "স্বাগতম ও পরিচয়",
   "topic.market": "বাজার ও কেনাকাটা",
   "topic.restaurant": "রেস্টুরেন্ট ও খাবার",

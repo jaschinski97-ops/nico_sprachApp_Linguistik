@@ -1,4 +1,5 @@
 import { Direction } from '../fsrs/types';
+import { LanguageCode } from '../languages/types';
 
 /**
  * Vorproduzierte Sprachsituationen.
@@ -17,6 +18,33 @@ import { Direction } from '../fsrs/types';
 
 export const LEVELS = ['A1', 'A2'] as const;
 export type Level = (typeof LEVELS)[number];
+
+/**
+ * Sprachcode eines Gesprächs-Eintrags. Deutsch ist als Dialogsprache dabei,
+ * obwohl es im Stoff-Registry (`LanguageCode`) nur die Brücke ist — die
+ * th_to_de-Situationen SIND die deutschen Gespräche.
+ */
+export type Situationssprache = 'de' | LanguageCode;
+
+/**
+ * Der Gesprächs-Reiter listet SPRACHEN statt Richtungen (14.09.): Je Eintrag
+ * zeigt die Menge, in der diese Sprache die Dialog- und Übungsseite ist — es
+ * gibt keine zweite Reihe von Sprach-Buttons mehr. Deutsch steht oben
+ * (th_to_de — die Dialoge mit deutschen Zeilen), Thai dahinter (de_to_th);
+ * Englisch/Spanisch haben noch keine Situationen und zeigen den ehrlichen
+ * Leerzustand, bis ihr Grundstoff Gespräche bekommt. Die GEGENSEITE der
+ * Dialoge (die Bedeutungszeilen) hängt an der App-Systemsprache, nicht an
+ * einer Wahl in diesem Reiter.
+ */
+export const SITUATION_SPRACHEN: readonly {
+  sprache: Situationssprache;
+  direction: Direction;
+}[] = [
+  { sprache: 'de', direction: 'th_to_de' },
+  { sprache: 'th', direction: 'de_to_th' },
+  { sprache: 'en', direction: 'de_to_en' },
+  { sprache: 'es', direction: 'de_to_es' },
+];
 
 export const TOPICS = [
   { id: 'greeting', label: 'Begrüßung & Kennenlernen' },

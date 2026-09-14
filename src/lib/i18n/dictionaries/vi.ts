@@ -110,6 +110,7 @@ const vi = {
   "conversation.listenA11y": "Nghe: {{text}}",
   "conversation.syntheticNote": "(giọng nói tổng hợp, không phải ghi âm của người bản ngữ)",
   "conversation.topicCount": "{{count}} đối thoại",
+  "conversation.meaningLanguage": "Nghĩa: {{language}}",
   "topic.greeting": "Chào hỏi & Làm quen",
   "topic.market": "Chợ & Mua sắm",
   "topic.restaurant": "Nhà hàng & Ẩm thực",

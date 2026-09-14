@@ -110,6 +110,7 @@ const tr = {
   "conversation.listenA11y": "Dinle: {{text}}",
   "conversation.syntheticNote": "(sentetik ses, ana dili konuşan kaydı yok)",
   "conversation.topicCount": "{{count}} diyalog",
+  "conversation.meaningLanguage": "Anlamlar: {{language}}",
   "topic.greeting": "Selamlaşma & Tanışma",
   "topic.market": "Pazar & Alışveriş",
   "topic.restaurant": "Restoran & Yemek",

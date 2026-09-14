@@ -2,22 +2,22 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { PlaybackKind, playPronunciation } from '@/lib/audio';
-import { ConversationSituation, TopicId } from '@/lib/conversation/types';
-import { Direction } from '@/lib/fsrs/types';
+import {
+  ConversationSituation,
+  SITUATION_SPRACHEN,
+  Situationssprache,
+  TopicId,
+} from '@/lib/conversation/types';
 import { loadSituations } from '@/lib/repository';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { setConversationDirection } from '@/lib/profile';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { goalLanguage, zielFuerDirection } from '@/lib/languages/goals';
-import { directionsFor } from '@/lib/languages/types';
-import { directionLabel } from '@/lib/review-session';
 
 /** Gesprächsthemen als Übersetzungsschlüssel statt als deutsche Konstante. */
 const TOPIC_KEYS: Record<ConversationSituation['topic'], TranslationKey> = {
@@ -27,21 +27,48 @@ const TOPIC_KEYS: Record<ConversationSituation['topic'], TranslationKey> = {
   travel: 'topic.travel',
 };
 
+/**
+ * Die Sprache der Bedeutungszeilen. DECISION 14.09.: Die Gegenseite der
+ * Dialoge hängt an der App-Systemsprache — der Reiter fragt sie nicht extra.
+ * Solange Bedeutungen nur auf Deutsch erzeugt sind, fällt der Hinweis ehrlich
+ * auf Deutsch zurück; deckt der Übersetzungsbestand die 20 App-Sprachen,
+ * steht hier die Systemsprache (`uiLanguage`).
+ */
+const BEDEUTUNGSSPRACHE = 'de' as const;
+
 export default function ConversationScreen() {
   const { t, languageName } = useLocale();
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Die Richtung haengt an der Sprache (Phase 17): gewaehlt wird eine der
-  // zwei Richtungen der gerade gelernten Sprache, sonst die erste davon.
-  const { language, profile, chooseLanguage } = useLearnerLanguage();
-  const [chosen, setChosen] = useState<Direction | null>(null);
-  const directions = directionsFor(language);
-  // Wie im Lernen-Reiter (Phase 18): Die zuletzt geoeffnete Richtung bleibt
-  // offen, bis auf der Uebersicht eine Sprache gewaehlt wird. `profile`
-  // liefert nur einen Stand der aktuellen Sprache.
+  // Der Reiter listet Sprachen, keine Richtungen (14.09.): Jeder Eintrag
+  // öffnet die Menge, in der diese Sprache die Dialogseite ist. Vorgabe ist
+  // der Stoff, den man gerade lernt; die Wahl merkt sich im Profil — im
+  // selben conversation-Spot wie vorher, nur sprachbenannt statt als zweite
+  // Button-Reihe unterhalb.
+  const { language, profile } = useLearnerLanguage();
+  const [gewaehlt, setGewaehlt] = useState<Situationssprache | null>(null);
+  // Wie im Lern-Reiter: Der zuletzt geöffnete Eintrag bleibt offen. Der Spot
+  // trägt eine Richtung; gehört sie zu einem Eintrag der Liste, übernimmt
+  // der Reiter ihn.
   const gemerkt = profile?.conversation ?? null;
-  const aktuell = chosen ?? gemerkt;
-  const direction = aktuell && directions.includes(aktuell) ? aktuell : directions[0];
+  const gemerkterEintrag = gemerkt
+    ? SITUATION_SPRACHEN.find((eintrag) => eintrag.direction === gemerkt)
+    : undefined;
+  const eintrag =
+    (gewaehlt && SITUATION_SPRACHEN.find((e) => e.sprache === gewaehlt)) ??
+    gemerkterEintrag ??
+    SITUATION_SPRACHEN.find((e) => e.sprache === language) ??
+    SITUATION_SPRACHEN[0];
+  const sprache = eintrag.sprache;
+  const direction = eintrag.direction;
+  const waehlen = (code: Situationssprache) => {
+    const eintrag = SITUATION_SPRACHEN.find((e) => e.sprache === code);
+    if (!eintrag) return;
+    setGewaehlt(code);
+    // Feuer-und-vergessen ist hier gewollt, aber ein Speicherfehler darf
+    // keine unbehandelte Promise-Rejection werden.
+    void setConversationDirection(eintrag.direction).catch(() => {});
+  };
   const [openId, setOpenId] = useState<string | null>(null);
   // WHY einklappbar: Je Richtung liegen ~243 Situationen an — die volle Liste
   // war eine Scrollwüste. Standard ist deshalb JEDES Thema zugeklappt; der
@@ -123,67 +150,61 @@ export default function ConversationScreen() {
     );
   }
 
-  const mine = situations.filter((s) => directions.includes(s.direction));
-
-  if (mine.length === 0) {
-    return (
-      <ScreenScaffold
-        title={t('tabs.conversation')}
-        subtitle={t('conversation.subtitleLanguage', {
-          language: languageName(language),
-        })}>
-        <LanguageSwitch selected={language} onSelect={chooseLanguage} />
-        <ThemedView type="backgroundElement" style={styles.card}>
-          <ThemedText type="smallBold">
-            {t('conversation.noneFor', { language: languageName(language) })}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {t('conversation.noneForBody', { language: languageName(language) })}
-          </ThemedText>
-        </ThemedView>
-      </ScreenScaffold>
-    );
-  }
+  // Eine Sprache ohne eigene Situationen (heute Englisch/Spanisch) zeigt
+  // ihren ehrlichen Leerzustand; sonst zählen die Untertitel den Bestand.
+  const subtitle =
+    visible.length === 0
+      ? t('conversation.subtitleLanguage', { language: languageName(sprache) })
+      : t('conversation.subtitleCount', { count: visible.length });
 
   return (
-    <ScreenScaffold
-      title={t('tabs.conversation')}
-      subtitle={t('conversation.subtitleCount', { count: mine.length })}>
-      <LanguageSwitch selected={language} onSelect={chooseLanguage} />
-      <View style={styles.row}>
-        {directions.map((d) => {
-          // Zielname statt „Deutsch → Thai“ (Nutzerentscheidung 2026-09-10).
-          // Situationen gibt es nur für das Thai-Paar (lib/conversation/types
-          // lässt genau de_to_th/th_to_de zu), beide tragen ein Lernziel; der
-          // Rückfall auf das Richtungslabel ist reine Absicherung.
-          const ziel = zielFuerDirection(d);
-          const label = ziel ? languageName(goalLanguage(ziel)) : directionLabel(d);
+    <ScreenScaffold title={t('tabs.conversation')} subtitle={subtitle}>
+      {/* Die Sprachliste des Reiters (14.09.): Deutsch als eigene Sprache
+          oben — die Richtung steckt im Eintrag, es gibt keine zweite Reihe
+          von Sprach-Buttons mehr. */}
+      <View
+        style={styles.row}
+        role="radiogroup"
+        accessibilityLabel={t('common.switchLanguageA11y')}>
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('common.languageLabel')}
+        </ThemedText>
+        {SITUATION_SPRACHEN.map(({ sprache: code }) => {
+          const aktiv = code === sprache;
           return (
             <Pressable
-              key={d}
-              onPress={() => {
-                setChosen(d);
-                // Feuer-und-vergessen ist hier gewollt, aber ein Speicherfehler
-                // darf keine unbehandelte Promise-Rejection werden.
-                void setConversationDirection(d).catch(() => {});
-              }}
-              accessibilityRole="button"
-              accessibilityState={{ selected: direction === d }}
+              key={code}
+              onPress={() => waehlen(code)}
+              accessibilityRole="radio"
+              accessibilityLabel={t('common.learnGoal', { language: languageName(code) })}
+              aria-checked={aktiv}
               style={({ pressed }) => pressed && styles.pressed}>
               <ThemedView
-                type={direction === d ? 'backgroundSelected' : 'backgroundElement'}
+                type={aktiv ? 'backgroundSelected' : 'backgroundElement'}
                 style={styles.chip}>
-                <ThemedText type="small">{label}</ThemedText>
+                <ThemedText type="small" themeColor={aktiv ? 'text' : 'textSecondary'}>
+                  {languageName(code)}
+                </ThemedText>
               </ThemedView>
             </Pressable>
           );
         })}
       </View>
+      {/* Die Gegenseite der Dialoge ist keine Wahl, sondern die App-Sprache —
+          solange Bedeutungen nur auf Deutsch erzeugt sind, steht das hier. */}
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('conversation.meaningLanguage', { language: languageName(BEDEUTUNGSSPRACHE) })}
+      </ThemedText>
 
       {visible.length === 0 ? (
-        <ThemedText type="small" themeColor="textSecondary">
-          {t('conversation.noneForDirection')}
-        </ThemedText>
+        <ThemedView type="backgroundElement" style={styles.card}>
+          <ThemedText type="smallBold">
+            {t('conversation.noneFor', { language: languageName(sprache) })}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">
+            {t('conversation.noneForBody', { language: languageName(sprache) })}
+          </ThemedText>
+        </ThemedView>
       ) : (
         groups.map(([topic, gruppe]) => {
           const offen = offeneThemen.has(topic);
@@ -218,7 +239,10 @@ export default function ConversationScreen() {
                       key={situation.id}
                       situation={situation}
                       variantSuffix={variantSuffix.get(situation.id) ?? ''}
-                      lerntDeutsch={direction.endsWith('_to_de')}
+                      // Deutsch-Eintrag: die deutschen Zeilen klingen und
+                      // sind die Übungsseite. Sonst die Dialogsprache —
+                      // heute nur Thai, weitere folgen mit ihrem Grundstoff.
+                      sprechSprache={sprache === 'de' ? 'de' : 'th'}
                       open={openId === situation.id}
                       onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
                     />
@@ -235,15 +259,16 @@ export default function ConversationScreen() {
 function SituationCard({
   situation,
   variantSuffix,
-  lerntDeutsch,
+  sprechSprache,
   open,
   onToggle,
 }: {
   situation: ConversationSituation;
   variantSuffix: string;
-  /** Deutsch ist die geübte Sprache (Ziel Deutsch) — dann klingt die
-      deutsche Zeile, nicht die Thai-Zeile (Nutzerentscheidung 10.09.). */
-  lerntDeutsch: boolean;
+  /** Welche Zeilen-Seite gesprochen wird: beim Deutsch-Eintrag die deutschen
+      Zeilen (Gerätestimme), sonst die Dialogsprache — heute Thai, mit Clip
+      (Nutzerentscheidung 10.09., sprachbenannt seit 14.09.). */
+  sprechSprache: 'de' | 'th';
   open: boolean;
   onToggle: () => void;
 }) {
@@ -290,7 +315,10 @@ function SituationCard({
                 <ThemedText type="small" themeColor="textSecondary">
                   {turn.speaker === 'learner' ? t('conversation.you') : t('conversation.partner')}
                 </ThemedText>
-                <TurnSpeakButton text={lerntDeutsch ? turn.german : turn.thai} lerntDeutsch={lerntDeutsch} />
+                <TurnSpeakButton
+                  text={sprechSprache === 'de' ? turn.german : turn.thai}
+                  sprechSprache={sprechSprache}
+                />
               </View>
               <ThemedText>{turn.thai}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
@@ -324,7 +352,7 @@ function SituationCard({
  * einer, steht „KI-Stimme" daneben: eine synthetische Aufnahme, keine
  * Muttersprachler-Aufnahme (Pflicht 4).
  */
-function TurnSpeakButton({ text, lerntDeutsch }: { text: string; lerntDeutsch: boolean }) {
+function TurnSpeakButton({ text, sprechSprache }: { text: string; sprechSprache: 'de' | 'th' }) {
   const [played, setPlayed] = useState<PlaybackKind | null>(null);
   const { t } = useLocale();
   // WHY Icon statt Emoji: Das 🔊-Schriftzeichen sieht je Plattform anders aus
@@ -343,9 +371,9 @@ function TurnSpeakButton({ text, lerntDeutsch }: { text: string; lerntDeutsch: b
           // Auslieferungs-Politik gestattet ungeprüfte Thai-Clips für Vokabel-
           // und Satzzwecke (audio-policy). Ohne Purpose liefe hier fast jeder
           // Zug auf System-TTS statt auf den erzeugten Clip. Die Sprache
-          // folgt dem Lernziel: Beim Ziel Deutsch klingt die deutsche Zeile
+          // folgt dem Eintrag: Bei „Deutsch“ klingt die deutsche Zeile
           // (Gerätestimme), sonst die Thai-Zeile mit Clip.
-          playPronunciation({ text, language: lerntDeutsch ? 'de' : 'th', purpose: 'sentence' })
+          playPronunciation({ text, language: sprechSprache, purpose: 'sentence' })
             .then(setPlayed)
             .catch(() => {});
         }}

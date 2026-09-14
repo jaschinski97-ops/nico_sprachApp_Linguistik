@@ -110,6 +110,7 @@ const ru = {
   "conversation.listenA11y": "Прослушать: {{text}}",
   "conversation.syntheticNote": "(синтетический голос, не запись носителя языка)",
   "conversation.topicCount": "{{count}} диалогов",
+  "conversation.meaningLanguage": "Значения: {{language}}",
   "topic.greeting": "Приветствие и знакомство",
   "topic.market": "Рынок и покупки",
   "topic.restaurant": "Ресторан и еда",

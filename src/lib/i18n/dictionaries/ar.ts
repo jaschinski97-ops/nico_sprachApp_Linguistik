@@ -111,6 +111,7 @@ const ar = {
   "conversation.listenA11y": "استمع: {{text}}",
   "conversation.syntheticNote": "(صوت صناعي، ليس تسجيل لمتحدث أصلي)",
   "conversation.topicCount": "{{count}} حوارات",
+  "conversation.meaningLanguage": "المعاني: {{language}}",
   "topic.greeting": "تحية & تعارف",
   "topic.market": "سوق & تسوق",
   "topic.restaurant": "مطعم & طعام",

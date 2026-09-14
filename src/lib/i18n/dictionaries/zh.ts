@@ -110,6 +110,7 @@ const zh = {
   "conversation.listenA11y": "听：{{text}}",
   "conversation.syntheticNote": "（合成声音，无母语者录音）",
   "conversation.topicCount": "{{count}} 对话",
+  "conversation.meaningLanguage": "释义：{{language}}",
   "topic.greeting": "问候与认识",
   "topic.market": "市场与购物",
   "topic.restaurant": "餐厅与饮食",

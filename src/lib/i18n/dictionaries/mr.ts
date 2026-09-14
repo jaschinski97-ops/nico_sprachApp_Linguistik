@@ -110,6 +110,7 @@ const mr = {
   "conversation.listenA11y": "ऐका: {{text}}",
   "conversation.syntheticNote": "(कृत्रिम आवाज, मातृभाषिकांच्या रेकॉर्डिंग नाहीत)",
   "conversation.topicCount": "{{count}} संवाद",
+  "conversation.meaningLanguage": "अर्थ: {{language}}",
   "topic.greeting": "सर्व स्वागत & ओळख",
   "topic.market": "बाजार & खरेदी",
   "topic.restaurant": "रेस्टॉरंट & जेवण",

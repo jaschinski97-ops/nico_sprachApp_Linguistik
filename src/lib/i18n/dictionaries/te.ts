@@ -110,6 +110,7 @@ const te = {
   "conversation.listenA11y": "వినండి: {{text}}",
   "conversation.syntheticNote": "(సింథటిక్ స్వరం, మాతృభాషి రికార్డింగ్ లేదు)",
   "conversation.topicCount": "{{count}} సంభాషణలు",
+  "conversation.meaningLanguage": "అర్థాలు: {{language}}",
   "topic.greeting": "స్వాగతం & పరిచయం",
   "topic.market": "మార్కెట్ & కొనుగోలు",
   "topic.restaurant": "రెస్టారెంట్ & భోజనం",

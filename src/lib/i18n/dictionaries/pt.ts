@@ -110,6 +110,7 @@ const pt = {
   "conversation.listenA11y": "Ouvir: {{text}}",
   "conversation.syntheticNote": "(voz sintética, não gravação de falante nativo)",
   "conversation.topicCount": "{{count}} diálogos",
+  "conversation.meaningLanguage": "Significados: {{language}}",
   "topic.greeting": "Saudações e Apresentações",
   "topic.market": "Mercado e Compras",
   "topic.restaurant": "Restaurante e Alimentação",

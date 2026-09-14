@@ -110,6 +110,7 @@ const ur = {
   "conversation.listenA11y": "سنیں: {{text}}",
   "conversation.syntheticNote": "(مصنوعی آواز، کوئی مادری زبان بولنے والے کی ریکارڈنگ نہیں)",
   "conversation.topicCount": "{{count}} مکالمے",
+  "conversation.meaningLanguage": "معنی: {{language}}",
   "topic.greeting": "سلام اور جان پہچان",
   "topic.market": "بازار اور خریداری",
   "topic.restaurant": "ریستوران اور کھانا",

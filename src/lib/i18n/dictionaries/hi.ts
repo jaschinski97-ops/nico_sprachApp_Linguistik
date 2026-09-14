@@ -110,6 +110,7 @@ const hi = {
   "conversation.listenA11y": "सुनें: {{text}}",
   "conversation.syntheticNote": "(संश्लेषित आवाज, कोई मातृभाषी रिकॉर्डिंग नहीं)",
   "conversation.topicCount": "{{count}} संवाद",
+  "conversation.meaningLanguage": "अर्थ: {{language}}",
   "topic.greeting": "नमस्ते & परिचय",
   "topic.market": "बाजार & खरीदारी",
   "topic.restaurant": "रेस्तरां & भोजन",

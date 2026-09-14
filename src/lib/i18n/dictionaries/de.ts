@@ -197,6 +197,7 @@ const de = {
   'conversation.listenA11y': 'Anhören: {{text}}',
   'conversation.syntheticNote': ' (synthetische Stimme, keine Muttersprachler-Aufnahme)',
   'conversation.topicCount': '{{count}} Dialoge',
+  'conversation.meaningLanguage': 'Bedeutungen: {{language}}',
   'topic.greeting': 'Begrüßung & Kennenlernen',
   'topic.market': 'Markt & Einkaufen',
   'topic.restaurant': 'Restaurant & Essen',

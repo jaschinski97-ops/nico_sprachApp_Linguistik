@@ -110,6 +110,7 @@ const fr = {
   "conversation.listenA11y": "Écouter : {{text}}",
   "conversation.syntheticNote": "(voix synthétique, pas d'enregistrement de locuteur natif)",
   "conversation.topicCount": "{{count}} dialogues",
+  "conversation.meaningLanguage": "Significations : {{language}}",
   "topic.greeting": "Salutations & Présentations",
   "topic.market": "Marché & Achats",
   "topic.restaurant": "Restaurant & Nourriture",
