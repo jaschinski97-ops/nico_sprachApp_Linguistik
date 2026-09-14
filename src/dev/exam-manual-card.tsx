@@ -16,7 +16,8 @@ import {
   type UebertragZiel,
 } from '@/lib/exam/translate';
 import { createTextClient } from '@/lib/providers/text';
-import { loadGeneratorSettings } from '@/lib/providers/settings';
+import { defaultModelFor, loadGeneratorSettings } from '@/lib/providers/settings';
+import { pruefeExamKreuz, schluesselPruefer } from '@/lib/content/kreuzpruefung';
 import { estimateRunCost } from './run-cost';
 import { studioRequest } from './content-client';
 
@@ -40,7 +41,7 @@ export function ExamManualCard({ onSaved }: { onSaved: () => void }) {
   // Übertragung
   const [quelle, setQuelle] = useState<ExamModule | null>(null);
   const [ziele, setZiele] = useState<UebertragZiel[]>([]);
-  const [uebersetzt, setUebersetzt] = useState<{ ziel: UebertragZiel; modul: ExamModule }[]>([]);
+
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'confirm' | 'ergebnis'>('idle');
 
@@ -81,7 +82,23 @@ export function ExamManualCard({ onSaved }: { onSaved: () => void }) {
       const { provider, model } = settings.situations;
       const apiKey = (await loadApiKey(provider)) ?? '';
       const client = createTextClient(provider, apiKey, model);
-      const ergebnisse: { ziel: UebertragZiel; modul: ExamModule }[] = [];
+      // Phase 2, Schritt 5: die Kreuzprüfung — der ANDERE Anbieter bewertet
+      // das übersetzte Modul; sein Urteil wird angezeigt und geht in die
+      // Speicher-Entscheidung ein.
+      const schluessel: Partial<Record<string, string | null>> = {
+        gemini: await loadApiKey('gemini'),
+        chatgpt: await loadApiKey('chatgpt'),
+        'chatgpt-helper': 'serverseitig',
+      };
+      const hatSchluessel = (anbieter: string): boolean => Boolean(schluessel[anbieter]);
+      const clientFuer = (anbieter: Parameters<typeof defaultModelFor>[0]) =>
+        createTextClient(
+          anbieter,
+          (schluessel[anbieter] ?? '') as string,
+          defaultModelFor(anbieter, 'text')
+        );
+
+      const ergebnisse: { ziel: UebertragZiel; modul: ExamModule; kreuz: string }[] = [];
       const fehler: string[] = [];
       for (const ziel of ziele) {
         try {
@@ -92,8 +109,16 @@ export function ExamManualCard({ onSaved }: { onSaved: () => void }) {
             maxTokens: 4000,
           });
           const ergebnis = uebertragePruefung(quelle, ziel, antwort.text, { model });
-          if (ergebnis.ok) ergebnisse.push({ ziel, modul: ergebnis.modul });
-          else fehler.push(`${ziel}: ${ergebnis.fehler.join(' | ')}`);
+          if (!ergebnis.ok) {
+            fehler.push(`${ziel}: ${ergebnis.fehler.join(' | ')}`);
+            continue;
+          }
+          const kreuz = await pruefeExamKreuz(ergebnis.modul, provider, hatSchluessel, clientFuer);
+          ergebnisse.push({
+            ziel,
+            modul: ergebnis.modul,
+            kreuz: kreuz.geprueft ? 'Kreuzprüfung bestanden' : `Kreuzprüfung: Mangel — ${kreuz.gruende.join('; ') || 'siehe Urteil'}`,
+          });
         } catch (error) {
           fehler.push(`${ziel}: ${error instanceof Error ? error.message : String(error)}`);
         }
@@ -101,7 +126,7 @@ export function ExamManualCard({ onSaved }: { onSaved: () => void }) {
       setUebersetzt(ergebnisse);
       setPhase('ergebnis');
       setMeldung(
-        `${ergebnisse.length} von ${ziele.length} Übertragungen geprüft und übernommen.` +
+        `${ergebnisse.length} von ${ziele.length} Übertragungen erzeugt und geprüft.` +
           (fehler.length ? ` Fehler: ${fehler.join(' | ')}` : '')
       );
     } catch (error) {
@@ -110,6 +135,10 @@ export function ExamManualCard({ onSaved }: { onSaved: () => void }) {
       setRunning(false);
     }
   }, [quelle, ziele]);
+
+  const [uebersetzt, setUebersetzt] = useState<
+    { ziel: UebertragZiel; modul: ExamModule; kreuz: string }[]
+  >([]);
 
   const speichern = useCallback(async () => {
     setRunning(true);
@@ -246,8 +275,10 @@ export function ExamManualCard({ onSaved }: { onSaved: () => void }) {
         {phase === 'ergebnis' && uebersetzt.length > 0 ? (
           <ThemedView type="backgroundSelected" style={styles.confirmBox}>
             <ThemedText type="small" selectable>
-              Geprüft: {uebersetzt.map((e) => `${e.modul.id} (${e.ziel})`).join(', ')} — mit
-              Struktur-1:1, Schrift-Check und Schema.
+              {uebersetzt
+                .map((e) => `${e.modul.id} (${e.ziel}): ${e.kreuz}`)
+                .join(' · ')}{' '}
+              — Struktur-1:1, Schrift-Check und Schema bestanden.
             </ThemedText>
             <Button label="Als manuell speichern" onPress={speichern} disabled={running} />
           </ThemedView>

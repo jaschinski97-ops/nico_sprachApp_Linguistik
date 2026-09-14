@@ -6,9 +6,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { loadApiKey } from '@/lib/api-key';
 import { createTextClient } from '@/lib/providers/text';
-import { loadGeneratorSettings } from '@/lib/providers/settings';
+import { defaultModelFor, loadGeneratorSettings } from '@/lib/providers/settings';
+import {
+  pruefeVocabKreuz,
+  schluesselPruefer,
+} from '@/lib/content/kreuzpruefung';
+import { loadApiKey } from '@/lib/api-key';
 import { estimateRunCost } from './run-cost';
 import { studioRequest } from './content-client';
 import { loadVocabulary, writeMeta } from '@/lib/repository';
@@ -44,8 +48,9 @@ type Stufe = (typeof STUFEN)[number];
 
 type LaufErgebnis = {
   erzeugt: number;
-  geprueft: number;
-  ungeprueft: number;
+  kreuzGeprueft: number;
+  einfachGeprueft: number;
+  kreuzAbgelehnt: number;
   duplikate: number;
   aussortiert: number;
 };
@@ -161,6 +166,21 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       const { provider, model } = settings.situations;
       const apiKey = (await loadApiKey(provider)) ?? '';
       const client = createTextClient(provider, apiKey, model);
+      // Kreuzprüfung vorbereiten (Phase 2, Schritt 5): der ANDERE Anbieter
+      // prüft; fehlt dessen Schlüssel, prüft der Erzeuger selbst zweimal
+      // („einfach geprüft“).
+      const schluessel: Partial<Record<string, string | null>> = {
+        gemini: await loadApiKey('gemini'),
+        chatgpt: await loadApiKey('chatgpt'),
+        'chatgpt-helper': 'serverseitig',
+      };
+      const hatSchluessel = (anbieter: string): boolean => Boolean(schluessel[anbieter]);
+      const clientFuer = (anbieter: ReturnType<typeof defaultModelFor> extends never ? never : Parameters<typeof defaultModelFor>[0]) =>
+        createTextClient(
+          anbieter,
+          (schluessel[anbieter] ?? '') as string,
+          defaultModelFor(anbieter, 'text')
+        );
 
       const alle = await loadVocabulary();
       const bekannte = alle
@@ -183,7 +203,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           .map((e) => vocabSchluessel(e.term, sprache))
       );
       const laufSchluessel = new Set<string>();
-      const resultat: LaufErgebnis = { erzeugt: 0, geprueft: 0, ungeprueft: 0, duplikate: 0, aussortiert: 0 };
+      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0 };
 
       for (const rohEintrag of geparst.woerter) {
         const kandidat = rohEintrag as Record<string, unknown>;
@@ -209,20 +229,42 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           resultat.aussortiert += 1;
           continue;
         }
+        // Phase 2, Schritt 5: der ANDERE Anbieter prüft Übersetzung,
+        // Grammatik, Umschrift/Ton/Betonung, Natürlichkeit und Stufe. Nur
+        // Kreuzbestandenes gilt als „geprüft“; ohne zweiten Schlüssel läuft
+        // die Selbstprüfung (zweiter Durchlauf) und der Eintrag bleibt
+        // „einfach geprüft“ — durchgefallene Einträge werden verworfen.
+        const kreuz = await pruefeVocabKreuz(
+          eintrag,
+          stufe,
+          provider,
+          hatSchluessel,
+          clientFuer
+        );
+        if (kreuz.kreuz && kreuz.geprueft) {
+          eintrag.sourceVerified = true;
+          eintrag.verificationNote = `KI-Kreuzprüfung bestanden (${provider} erzeugt, zweiter Anbieter geprüft).`;
+          resultat.kreuzGeprueft += 1;
+        } else if (kreuz.geprueft || kreuz.urteile.every((urteil) => urteil.bestanden)) {
+          eintrag.verificationNote =
+            'KI-Erzeugung, einfach geprüft (zweiter Durchlauf desselben Anbieters bestanden).';
+          resultat.einfachGeprueft += 1;
+        } else {
+          resultat.kreuzAbgelehnt += 1;
+          continue;
+        }
         await studioRequest('/stage', { kind: 'vocabulary', document: { ...eintrag } });
         laufSchluessel.add(schluessel);
         resultat.erzeugt += 1;
-        resultat.ungeprueft += 1;
       }
       if (resultat.erzeugt > 0) {
         await studioRequest('/publish', {});
         await ladeBestand();
         onFinished();
       }
-      resultat.geprueft = resultat.erzeugt;
       setErgebnis(resultat);
       setMeldung(
-        `Lauf beendet: ${resultat.erzeugt} erzeugt · ${resultat.ungeprueft} ungeprüft (einfach geprüft) · ${resultat.duplikate} Duplikate verworfen · ${resultat.aussortiert} aussortiert.`
+        `Lauf beendet: ${resultat.erzeugt} erzeugt · ${resultat.kreuzGeprueft} kreuzgeprüft · ${resultat.einfachGeprueft} einfach geprüft · ${resultat.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${resultat.duplikate} Duplikate verworfen · ${resultat.aussortiert} aussortiert.`
       );
     } catch (error) {
       setMeldung(error instanceof Error ? error.message : String(error));
@@ -363,7 +405,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
 
       {ergebnis ? (
         <ThemedText type="smallBold" accessibilityLiveRegion="polite">
-          {`Ergebnis: ${ergebnis.erzeugt} erzeugt · ${ergebnis.geprueft} einfach geprüft · ${ergebnis.ungeprueft} ungeprüft · ${ergebnis.duplikate} Duplikate verworfen · ${ergebnis.aussortiert} aussortiert.`}
+          {`Ergebnis: ${ergebnis.erzeugt} erzeugt · ${ergebnis.kreuzGeprueft} kreuzgeprüft · ${ergebnis.einfachGeprueft} einfach geprüft · ${ergebnis.kreuzAbgelehnt} abgelehnt · ${ergebnis.duplikate} Duplikate verworfen · ${ergebnis.aussortiert} aussortiert.`}
         </ThemedText>
       ) : null}
 
