@@ -9,12 +9,14 @@ const { planSituations, FULL_RUN } = domain.load('src/lib/conversation/plan');
 const { checkThaiTone } = domain.load('src/lib/content/tone-gate');
 const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
 const { decodeAudio, decodeImage } = require('./media.cjs');
+const { vocabSchluessel } = domain.load('src/lib/content/vocab-schema');
 const { createHash } = require('node:crypto');
 
 function checkContent(root, { integrityOnly = false } = {}) {
   const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/content/catalog.json'), 'utf8'));
   const errors = [];
   const seen = new Set();
+  const vocabSeen = new Set();
   const assetMap = fs.readFileSync(path.join(root, 'src/content/assets.ts'), 'utf8');
   let audioSourceBytes = 0;
   let audioCompressedBytes = 0;
@@ -26,6 +28,13 @@ function checkContent(root, { integrityOnly = false } = {}) {
       assertDocument(entry.kind, entry.document);
       if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
       seen.add(keyOf(entry));
+      // Phase 2, Schritt 6: inhaltliche Duplikate im Wortschatz — derselbe
+      // normalisierte Begriff je Sprache zählt als Fehler.
+      if (entry.kind === 'vocabulary') {
+        const schluessel = vocabSchluessel(entry.document.term, String(entry.document.language));
+        if (vocabSeen.has(schluessel)) throw Error('Doppelter Wortschatz-Begriff (normalisiert): ' + schluessel);
+        vocabSeen.add(schluessel);
+      }
       if (entry.review || !isDeliverableEntry(entry) || !entry.check.checkedAt || !['schema-integrity-decode', 'schema-language'].includes(entry.check.scope) ||
           entry.check.label !== (entry.check.status === 'unchecked' ? 'ungeprüft' : 'automatisch geprüft')) throw Error('Automatische Prüfung fehlt.');
       const media = entry.kind === 'audio' || entry.kind === 'images';

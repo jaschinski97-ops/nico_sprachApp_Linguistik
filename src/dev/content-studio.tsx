@@ -7,6 +7,9 @@ import { ContentReport } from './content-report';
 import { ExamManualCard } from './exam-manual-card';
 import { VocabZieleCard } from './vocab-ziele-card';
 import { durchschnittsAnteil } from '@/lib/content/wortschatz-anteil';
+import { findeDuplikat } from '@/lib/content/aehnlichkeit';
+import { getStore } from '@/lib/storage';
+import type { ConversationSituation as Situation } from '@/lib/conversation/types';
 import { estimateRunCost } from './run-cost';
 import { exportDrafts, studioRequest, type StudioState } from './content-client';
 import { fahreKette, planChain, type ChainStep } from './chain-run';
@@ -453,6 +456,10 @@ export default function ContentStudio() {
       maxNew
     );
     if (!await confirmRun(estimateRunCost('situations', provider, model, all.map(() => ({}))))) return;
+    // Phase 2, Schritt 6: Bestands-Snapshot vor dem Lauf — danach lassen sich
+    // die NEUEN Situationen identifizieren und gegen (fast) Duplikate prüfen.
+    const bestandVorher: Situation[] = await loadSituations();
+    const vorIds = new Set(bestandVorher.map((situation) => situation.id));
     await fahreKette(steps, all.length, { onChainStep, onProgress, shouldCancel },
       (missing, onStepProgress) => runGenerationBatch({
         specs: missing,
@@ -463,6 +470,26 @@ export default function ContentStudio() {
         // unnötig ins Rate-Limit rennt.
         delayMs: 400,
       }));
+    // Duplikate: fast gleiche Situationen (normalisierter Text, Jaccard ab
+    // 0,85) werden aus dem Store verworfen und gezählt, BEVOR der Export sie
+    // in Stage und Katalog bringen würde.
+    const nachher = await loadSituations();
+    const neueSituationen = nachher.filter((situation) => !vorIds.has(situation.id));
+    const referenz: Situation[] = [...bestandVorher];
+    const verworfen: Situation[] = [];
+    for (const kandidat of neueSituationen) {
+      const doppelt = findeDuplikat(kandidat, referenz);
+      if (doppelt) {
+        verworfen.push(kandidat);
+      } else {
+        referenz.push(kandidat);
+      }
+    }
+    if (verworfen.length > 0) {
+      const db = await getStore();
+      for (const situation of verworfen) await db.remove('situations', situation.id);
+      setExportMessage(`Duplikate verworfen: ${verworfen.length} (fast gleiche Situationen schon im Bestand).`);
+    }
     await exportDrafts(setExportMessage);
     setReportRevision(value => value + 1);
   },

@@ -202,6 +202,20 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         alle.filter((e) => (e as { language: string }).language === sprache)
           .map((e) => vocabSchluessel(e.term, sprache))
       );
+      // Phase 2, Schritt 6: auch der STAGE zählt als vorhanden — Einträge,
+      // die im nächsten Export ohnehin übernommen würden, sind Duplikate.
+      try {
+        const zustand = await studioRequest<{
+          stage: { entries: { kind: string; document: { term?: string } }[] };
+        }>('/state');
+        for (const eintrag of zustand.stage.entries) {
+          if (eintrag.kind === 'vocabulary' && typeof eintrag.document?.term === 'string') {
+            vorhandenSchluessel.add(vocabSchluessel(eintrag.document.term, sprache));
+          }
+        }
+      } catch {
+        // Ohne Helper bleibt der Vergleich beim lokalen Bestand.
+      }
       const laufSchluessel = new Set<string>();
       const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0 };
 
