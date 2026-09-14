@@ -34,7 +34,10 @@ import {
 
 const SETTINGS_KEY = 'generators';
 
-export const GENERATOR_GROUPS = ['situations', 'exam', 'images', 'audio'] as const;
+// Phase 2, Schritt 3: 'exam' ist aus den Generator-Gruppen gefallen —
+// der Prüfungsaufgaben-Generator ist entfernt, Prüfungen werden manuell
+// gepflegt (content/exam/manual/ + JSON-Import im Studio).
+export const GENERATOR_GROUPS = ['situations', 'images', 'audio'] as const;
 export type GeneratorGroupId = (typeof GENERATOR_GROUPS)[number];
 
 export type GeneratorGroupInfo = {
@@ -53,14 +56,6 @@ export const GENERATOR_GROUP_INFO: Record<GeneratorGroupId, GeneratorGroupInfo> 
     // Auswahl gefallen — der Default MUSS deshalb wandern. Gemini, weil die
     // Audio-Gruppe ihn schon trägt (derselbe Schlüssel deckt dann alle
     // Textgruppen) und sein Web-Weg gemessen ist (AE-26).
-    defaultProvider: 'gemini',
-  },
-  exam: {
-    id: 'exam',
-    label: 'Prüfungsinhalte',
-    needs: 'text',
-    // Derselbe Grund wie `situations`: Der claude-Default existiert nicht
-    // mehr, Gemini rückt an seine Stelle.
     defaultProvider: 'gemini',
   },
   images: {
@@ -120,7 +115,6 @@ export function defaultChoiceFor(group: GeneratorGroupId): GeneratorChoice {
 export function defaultSettings(): GeneratorSettings {
   return {
     situations: defaultChoiceFor('situations'),
-    exam: defaultChoiceFor('exam'),
     images: defaultChoiceFor('images'),
     audio: defaultChoiceFor('audio'),
   };
@@ -173,7 +167,6 @@ export async function loadGeneratorSettings(store?: DataStore): Promise<Generato
   const stored = await readMeta<Record<string, unknown>>(SETTINGS_KEY, {}, store);
   return {
     situations: normalizeChoice(stored?.situations, 'situations'),
-    exam: normalizeChoice(stored?.exam, 'exam'),
     images: normalizeChoice(stored?.images, 'images'),
     audio: normalizeChoice(stored?.audio, 'audio'),
   };
