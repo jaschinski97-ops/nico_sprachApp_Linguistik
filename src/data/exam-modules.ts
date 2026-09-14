@@ -1,6 +1,9 @@
 import { TargetDirection } from '@/lib/languages/types';
 
 import { ExamModule } from '@/lib/exam/types';
+// Phase 2, Schritt 3: manuell gepflegte Prüfungen (GENERIERT aus
+// content/exam/manual/*.json — siehe scripts/content/exam-manual.cjs).
+import { MANUAL_EXAM_MODULES } from './exam-modules-manual';
 
 /**
  * Mitgelieferte Prüfungsaufgaben (Phase 7).
@@ -1714,3 +1717,16 @@ export const EXAM_OFFER_BY_TARGET: Record<ExamOfferTarget, ExamOffer> = {
     note: 'Für Spanisch als Zielsprache liegen noch keine Prüfungsaufgaben vor — bewusst leer, statt Scheinaufgaben zu zeigen.',
   },
 };
+
+
+/**
+ * Die gebündelten Prüfungen INSGESAMT: die recherchierten Mitgelieferten
+ * (oben) plus die manuell gepflegten Module aus content/exam/manual/
+ * (Phase 2, Schritt 3). Die App liest nur diese Liste — der Studio-JSON-
+ * Import schreibt neue Module in den manual-Ordner und regeneriert diese
+ * Datei über den Merge.
+ */
+export const GEBUENDELTE_EXAM_MODULES: ExamModule[] = [
+  ...BUILTIN_EXAM_MODULES,
+  ...MANUAL_EXAM_MODULES,
+];

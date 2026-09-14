@@ -464,21 +464,6 @@ export async function countExamModulesByLevel(store?: DataStore): Promise<ExamLe
   return zaehler;
 }
 
-/**
- * Loescht nur die erzeugten Aufgaben.
- *
- * Die mitgelieferten bleiben: sie sind Teil der App und muessen ohne
- * Schluessel und ohne Netz da sein - dieselbe Regel wie beim
- * Vokabel-Grundstock.
- */
-export async function clearGeneratedExamModules(store?: DataStore): Promise<void> {
-  const db = store ?? (await getStore());
-  const modules = await db.getAll<ExamModule>('exam');
-  for (const module of modules) {
-    if (module.source === 'generated') await db.remove('exam', module.id);
-  }
-}
-
 /* ---------- Einstellungen / Lernprofil ---------- */
 
 export async function readMeta<T>(key: string, fallback: T, store?: DataStore): Promise<T> {

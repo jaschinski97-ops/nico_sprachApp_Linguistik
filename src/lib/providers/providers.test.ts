@@ -12,7 +12,6 @@ import {
 } from '../api-key';
 import { createSituationClient, GENERATOR_MODEL } from '../conversation/generator';
 import { situationId } from '../conversation/types';
-import { createExamModuleClient, EXAM_GENERATOR_MODEL } from '../exam/generator';
 import {
   buildImagePrompt,
   createImageClient,
@@ -190,14 +189,13 @@ describe('Fähigkeiten der Anbieter', () => {
 // ---------------------------------------------------------------------------
 
 describe('Voreinstellungen nach der Anbieter-Entfernung (10.09.)', () => {
-  it('startet mit Gemini für Sprachsituationen und Prüfungsinhalte', () => {
+  it('startet mit Gemini für Sprachsituationen', () => {
     // Der frühere claude-Default existiert nicht mehr; der Default MUSSTE
     // wandern — nicht still, sondern als Folge der Nutzerentscheidung.
     expect(defaultChoiceFor('situations')).toEqual({
       provider: 'gemini',
       model: GENERATOR_MODEL,
     });
-    expect(defaultChoiceFor('exam')).toEqual({ provider: 'gemini', model: EXAM_GENERATOR_MODEL });
   });
 
   it('startet mit Gemini für Bilder', () => {
@@ -215,7 +213,6 @@ describe('Einstellungen je Generator-Gruppe', () => {
 
     expect(gelesen.situations).toEqual({ provider: 'gemini', model: 'gemini-9.9-pro' });
     // Die anderen Gruppen bleiben unberuehrt.
-    expect(gelesen.exam.provider).toBe('gemini');
     expect(gelesen.images.provider).toBe('gemini');
   });
 
@@ -223,12 +220,12 @@ describe('Einstellungen je Generator-Gruppe', () => {
     const store = new MemoryDataStore();
     await store.init();
 
-    await setGeneratorChoice('exam', { model: 'gemini-eigenbau-1' }, store);
-    const nachher = await setGeneratorProvider('exam', 'chatgpt', store);
+    await setGeneratorChoice('images', { model: 'gemini-eigenbau-1' }, store);
+    const nachher = await setGeneratorProvider('images', 'chatgpt', store);
 
     // `gemini-eigenbau-1` an OpenAI zu schicken gaebe nur einen Fehlschlag,
     // den niemand mit dem Wechsel in Verbindung braechte.
-    expect(nachher.exam).toEqual({ provider: 'chatgpt', model: PROVIDER_INFO.chatgpt.modelPlaceholder.text });
+    expect(nachher.images).toEqual({ provider: 'chatgpt', model: PROVIDER_INFO.chatgpt.modelPlaceholder.image });
   });
 
   it('nimmt jeden Modellnamen an, ohne ihn zu prüfen', () => {
@@ -245,7 +242,7 @@ describe('Einstellungen je Generator-Gruppe', () => {
     // ist kein Grund, eine App unbenutzbar zu machen.
     expect(normalizeChoice(null, 'situations')).toEqual(defaultChoiceFor('situations'));
     expect(normalizeChoice('kaputt', 'images')).toEqual(defaultChoiceFor('images'));
-    expect(normalizeChoice({ provider: 'gibtesnicht' }, 'exam')).toEqual(defaultChoiceFor('exam'));
+    expect(normalizeChoice({ provider: 'gibtesnicht' }, 'audio')).toEqual(defaultChoiceFor('audio'));
   });
 
   it('verwirft einen Anbieter, der die Aufgabe der Gruppe nicht kann', () => {
@@ -265,8 +262,8 @@ describe('Einstellungen je Generator-Gruppe', () => {
     expect(normalizeChoice({ provider: 'claude', model: 'claude-opus-5' }, 'situations')).toEqual(
       defaultChoiceFor('situations')
     );
-    expect(normalizeChoice({ provider: 'claude', model: 'x' }, 'exam')).toEqual(
-      defaultChoiceFor('exam')
+    expect(normalizeChoice({ provider: 'claude', model: 'x' }, 'audio')).toEqual(
+      defaultChoiceFor('audio')
     );
     expect(normalizeChoice({ provider: 'stability', model: 'stable-image-core' }, 'images')).toEqual(
       defaultChoiceFor('images')
@@ -578,31 +575,6 @@ describe('Die Generatoren hinter der Abstraktion', () => {
   it('lässt einen Anbieterfehler als Fehlschlag durch, nicht als halbe Situation', async () => {
     const { client } = fakeTextClient('kein json');
     await expect(createSituationClient(client).generate(spec)).rejects.toThrow(/JSON/);
-  });
-
-  it('nutzt beim Prüfungsgenerator dieselbe Naht', async () => {
-    const { client, seen } = fakeTextClient(
-      JSON.stringify({
-        title: 'Anzeige',
-        instruction: 'Lesen Sie.',
-        stimulusBody: 'Das Haus ist groß.',
-        items: [
-          { prompt: 'Frage 1', options: ['A', 'B', 'C'], correctIndex: 0, explanation: 'Weil.' },
-          { prompt: 'Frage 2', options: ['A', 'B', 'C'], correctIndex: 1, explanation: 'Weil.' },
-        ],
-      })
-    );
-    const module = await createExamModuleClient(client).generate({
-      id: 'gen-A1-lesen-multipleChoice-001',
-      level: 'A1',
-      skill: 'lesen',
-      taskType: 'multipleChoice',
-      variant: 1,
-    });
-
-    expect(module.modelUsed).toBe('test-modell-v2');
-    // Die recherchierte Pruefungsstruktur steht weiterhin im Prompt (AE-18).
-    expect(seen[0].user).toContain('Goethe-Zertifikat');
   });
 
   it('reicht Prompt, Negativ-Prompt und Seitenverhältnis an den Bildanbieter durch', async () => {

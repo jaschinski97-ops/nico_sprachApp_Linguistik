@@ -55,7 +55,7 @@ async function atomicJson(file, value) {
 function assertDocument(kind, doc) {
   if (!KINDS.includes(kind) || !doc || !/^[a-zA-Z0-9_-]{1,180}$/.test(doc.id)) throw Error('Ungültige Inhaltsart oder ID.');
   const valid = kind === 'situations' ? isValidSituation(doc) && ['A1','A2'].includes(doc.level) && ['greeting','market','restaurant','travel'].includes(doc.topic) && Number.isFinite(doc.generatedAt) && typeof doc.modelUsed === 'string' :
-    kind === 'exam' ? isValidExamModule(doc) && doc.source === 'generated' :
+    kind === 'exam' ? isValidExamModule(doc) && ['generated', 'manual'].includes(doc.source) :
     kind === 'audio' ? isValidAudioClip(doc) && doc.id === clipIdFor(doc.language, doc.text) && ['vocab','example','turn'].includes(doc.kind) && ['gemini','chatgpt'].includes(doc.provider) && typeof doc.voice === 'string' && typeof doc.model === 'string' && Number.isFinite(doc.generatedAt) :
     doc.id === doc.vocabId && VOCABULARY.some((word) => word.id === doc.id && word.isConcrete) && ['png','jpeg','webp'].includes(doc.format) && typeof doc.prompt === 'string' && typeof doc.model === 'string' && Number.isFinite(doc.generatedAt);
   if (!valid) throw Error(`Inhalt verletzt den ${kind}-Vertrag: ${doc.id}`);

@@ -4,17 +4,19 @@ import { ApiKeysCard } from '@/components/api-keys-card';
 import { SettingsRow } from '@/components/settings-row';
 import { ThemedButton } from '@/components/themed-button';
 import { ContentReport } from './content-report';
+import { ExamManualCard } from './exam-manual-card';
 import { estimateRunCost } from './run-cost';
 import { exportDrafts, studioRequest, type StudioState } from './content-client';
 import { fahreKette, planChain, type ChainStep } from './chain-run';
 import { planDeliveryAudio } from '@/lib/content/audio-plan';
 import { previewAudioDelivery } from '@/lib/content/delivery-preview';
-import { EXAM_LEVELS, type ExamLevel, type ExamModule } from '@/lib/exam/types';
+
 
 import { DiagnosticsCard } from '@/components/diagnostics-card';
 import { CountItem, GeneratorCard, RunOption, StartArgs } from '@/components/generator-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { EXAM_LEVELS, type ExamModule } from '@/lib/exam/types';
 import { Spacing } from '@/constants/theme';
 import { VOCABULARY_DE } from '@/data/vocabulary-de';
 import { runClipBatch, missingClipSpecs } from '@/lib/clips/batch';
@@ -26,9 +28,6 @@ import { runGenerationBatch, missingSpecs } from '@/lib/conversation/batch';
 import { ConversationSituation } from '@/lib/conversation/types';
 import { createGenerationClient } from '@/lib/conversation/generator';
 import { FULL_RUN, planSituations } from '@/lib/conversation/plan';
-import { runExamBatch, missingExamSpecs } from '@/lib/exam/batch';
-import { createExamGenerationClient } from '@/lib/exam/generator';
-import { EXAM_FULL_RUN, EXAM_TEST_RUN, GENERATED_LEVELS, planExamModules } from '@/lib/exam/plan';
 import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store';
 import { runImageBatch, missingImageSpecs } from '@/lib/images/batch';
 import { createImageGenerationClient } from '@/lib/images/generator';
@@ -53,7 +52,6 @@ import { helperAudioAvailable } from '@/lib/providers/audio';
 import {
   loadExamModules,
   clearAudioClips,
-  clearGeneratedExamModules,
   clearSituations,
   clearVocabImages,
   countAudioClips,
@@ -102,19 +100,6 @@ const SITUATION_RUNS: RunOption[] = [
 // (Pflicht 4), aber diese Seite bietet die Wahl noch nicht an - und eine Zahl
 // ohne Sprache waere hier eine stille Falschaussage. Was fehlt, steht in
 // PROGRESS.md unter Phase 16.
-
-const EXAM_RUNS: RunOption[] = [
-  {
-    id: 'test',
-    label: 'Probelauf',
-    hint: `${planExamModules(EXAM_TEST_RUN).length} Aufgaben — jede Kombination aus Stufe, Fertigkeit und Format einmal`,
-  },
-  {
-    id: 'full',
-    label: 'Vollständiger Lauf',
-    hint: `${planExamModules(EXAM_FULL_RUN).length} Aufgaben — kostet echtes Geld und dauert`,
-  },
-];
 
 /**
  * Der Vokabel-Pool einer Generier-Sprache (Nutzerentscheidung 10.09.,
@@ -233,9 +218,6 @@ const ALLE_RICHTUNGEN: ChainStep[] = RICHTUNGEN.map((richtung) => ({
   label: directionLabel(richtung),
 }));
 
-/** „Alle Levels“ — der Prüfungs-Generator kennt A1 und A2, nicht alle Sprachen. */
-const ALLE_STUFEN: ChainStep[] = GENERATED_LEVELS.map((stufe) => ({ key: stufe, label: stufe }));
-
 /**
  * Eine Zeile „Thai 12 · Englisch 3 · Spanisch 0 · Deutsch 0“ fürs
  * Grundstock-Panel — die Deutsch-Zeile zählt die Clips/Bilder des
@@ -282,7 +264,7 @@ export default function ContentStudio() {
   // Audio / Bilder); die Generator-Karten bleiben, die Navigation darüber
   // gruppiert neu. 'exam' entfällt ab Schritt 3 (Generator wird entfernt).
   const [section, setSection] = useState<
-    'home' | 'keys' | 'reports' | 'text' | 'audio' | 'bilder' | GeneratorGroupId
+    'home' | 'keys' | 'reports' | 'text' | 'audio' | 'bilder' | 'pruefungen' | GeneratorGroupId
   >('home');
   /** Warnung des Audio-Reiters: ungeprüfte Einträge im Live-Bericht. */
   const [audioWarnung, setAudioWarnung] = useState('');
@@ -538,35 +520,6 @@ export default function ContentStudio() {
     []
   );
 
-  const startExams = useCallback(
-    async ({ optionId, maxNew, chain, onChainStep, apiKey, provider, model, onProgress, shouldCancel, confirmRun }: StartArgs) => {
-      await studioRequest('/state');
-      // Prüfungsaufgaben sind deutsch geankert (Goethe-Format) — „alle“
-      // heißt hier: alle Stufen, die der Generator kennt (A1, A2).
-      const { steps, all } = await planChain(
-        chain ?? [{ key: '', label: 'alle Stufen' }],
-        (key) => planExamModules({
-          ...(optionId === 'full' ? EXAM_FULL_RUN : EXAM_TEST_RUN),
-          ...(key ? { levels: [key as ExamLevel] } : {}),
-        }),
-        (specs) => missingExamSpecs(specs),
-        maxNew
-      );
-      if (!await confirmRun(estimateRunCost('exam', provider, model, all.map(() => ({}))))) return;
-      await fahreKette(steps, all.length, { onChainStep, onProgress, shouldCancel },
-        (missing, onStepProgress) => runExamBatch({
-          specs: missing,
-          client: createExamGenerationClient(provider, apiKey, model),
-          onProgress: onStepProgress,
-          shouldCancel,
-          delayMs: 400,
-        }));
-      await exportDrafts(setExportMessage);
-      setReportRevision(value => value + 1);
-    },
-    []
-  );
-
   return (
     <View style={{ gap: Spacing.three }}>
       {section !== 'home' ? <ThemedButton label="Studio-Übersicht" disabled={running} onPress={() => setSection('home')} /> : null}
@@ -619,10 +572,12 @@ export default function ContentStudio() {
         <ThemedText type="smallBold">Verwaltung</ThemedText>
         <View style={{ borderRadius: 16, overflow: 'hidden', gap: 1 }}>
           <SettingsRow title="Anbieter & Schlüssel" detail="Zugänge zentral verwalten" icon="key-outline" onPress={() => setSection('keys')} />
+          <SettingsRow title="Prüfungen (manuell)" detail="DE-Prüfungen pflegen und übertragen" icon="ribbon-outline" onPress={() => setSection('pruefungen')} />
           <SettingsRow title="Prüfberichte & Diagnose" detail="Qualität und gespeicherte Inhalte" icon="pulse-outline" onPress={() => setSection('reports')} />
         </View>
       </> : null}
       {section === 'keys' ? <ApiKeysCard /> : null}
+      {section === 'pruefungen' ? <ExamManualCard onSaved={() => setReportRevision((v) => v + 1)} /> : null}
       {section === 'reports' ? <><ContentReport revision={reportRevision} /><DiagnosticsCard /></> : null}
       {exportMessage ? <ThemedText accessibilityLiveRegion="polite" type="small">{exportMessage}</ThemedText> : null}
       {/* Phase 2, Schritt 2: Unterreiter „Text, Wörter & Inhalte“ — die
@@ -682,26 +637,6 @@ export default function ContentStudio() {
         canDelete={Boolean(images && images > 0)}
         onFinished={refreshStock}
         allRun={{ label: 'Alle Sprachen', steps: ALLE_SPRACHEN }}
-      />
-      ) : null}
-
-      {section === 'exam' ? (
-      <GeneratorCard
-        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
-        heading="Generator: Prüfungsaufgaben"
-        description="Zusätzliche Lese- und Höraufgaben für Deutsch A1 und A2. Mitgelieferte Aufgaben bleiben erhalten."
-        group="exam"
-        choice={generators.exam}
-        onChoiceChange={(change) => changeGenerator('exam', change)}
-        statusLine={`Im Speicher: ${exams === null ? '…' : `${exams.total} Aufgaben, davon ${exams.generated} erzeugt`}`}
-        counts={pruefZaehler(examsByLevel)}
-        runOptions={EXAM_RUNS}
-        onStart={startExams}
-        onDelete={async () => { await clearGeneratedExamModules(); await refreshExams(); }}
-        deleteLabel="Erzeugte Aufgaben löschen"
-        canDelete={Boolean(exams && exams.generated > 0)}
-        onFinished={refreshStock}
-        allRun={{ label: 'Alle Levels', steps: ALLE_STUFEN }}
       />
       ) : null}
 

@@ -137,6 +137,8 @@ async function handleTtsProxy(req, res, {
 
 function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = createRateLimiter() } = {}) {
   const pipeline = new ContentPipeline(root);
+  const examManual = require('./exam-manual.cjs');
+  const { isValidExamModule } = domain.load('src/lib/exam/types');
   let queue = Promise.resolve();
   return http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
@@ -155,6 +157,36 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
     const json = (code, value) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     try {
       if (req.method === 'GET' && req.url === '/state') { json(200, await pipeline.state()); return; }
+      // Phase 2, Schritt 3: manuelle Prüfungs-Pflege. GET listet die IDs der
+      // gepflegten Module, POST validiert ein Dokument streng (ExamModule-
+      // Vertrag + source 'manual'), legt es als content/exam/manual/<id>.json
+      // ab und bündelt sofort (exam-modules-manual.ts).
+      if (req.method === 'GET' && req.url === '/exam/manual') {
+        const dir = path.join(root, 'content', 'exam', 'manual');
+        const dateien = await fs.readdir(dir).catch(() => []);
+        json(200, { ids: dateien.filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)).sort() });
+        return;
+      }
+      if (req.method === 'POST' && req.url === '/exam/manual') {
+        if (!originAllowed(req.headers.origin) || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
+        let size = 0; const teile = [];
+        for await (const chunk of req) {
+          size += chunk.length;
+          if (size > 1024 * 1024) throw Error('Prüfungsmodul überschreitet 1 MiB.');
+          teile.push(chunk);
+        }
+        const { document } = JSON.parse(Buffer.concat(teile).toString('utf8'));
+        if (!isValidExamModule(document)) throw Error('Verletzt den ExamModule-Vertrag.');
+        if (document.source !== 'manual') throw Error('Manuell gepflegte Module tragen source "manual".');
+        if (!/^[a-zA-Z0-9_-]{1,120}$/.test(document.id)) throw Error('Ungültige ID.');
+        const datei = path.join(root, 'content', 'exam', 'manual', `${document.id}.json`);
+        await fs.mkdir(path.dirname(datei), { recursive: true });
+        await fs.writeFile(datei, JSON.stringify(document, null, 2) + '\n');
+        const total = examManual.merge(root);
+        tryWriteProtocol({ script: 'studio-helper', action: 'exam-manual', items: 1, result: 'ok', notes: `${document.id} gebündelt (${total} manuell)` });
+        json(200, { ok: true, id: document.id, total });
+        return;
+      }
       if (req.method === 'GET' && /^\/asset\/[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(req.url)) {
         const name = req.url.slice('/asset/'.length);
         let bytes;
