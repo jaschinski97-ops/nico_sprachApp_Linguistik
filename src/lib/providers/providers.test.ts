@@ -203,6 +203,35 @@ describe('Voreinstellungen nach der Anbieter-Entfernung (10.09.)', () => {
   });
 });
 
+describe('Wortschatz-Gruppe mit Prüfmodell (Nutzerwunsch 15.09.)', () => {
+  it('existiert als eigene Text-Gruppe neben den Dialogen', () => {
+    // Die Erzeugung darf nicht still die situations-Wahl mitbenutzen.
+    expect(GENERATOR_GROUPS).toContain('vocabulary');
+    expect(GENERATOR_GROUP_INFO.vocabulary.needs).toBe('text');
+    expect(defaultChoiceFor('vocabulary').provider).toBe('gemini');
+  });
+
+  it('trägt ein gesetztes Prüfmodell durch und räumt leere Felder weg', () => {
+    const gesetzt = normalizeChoice(
+      { provider: 'gemini', model: 'gemini-9.9-pro', checkModel: ' pruefer-9 ' },
+      'vocabulary'
+    );
+    expect(gesetzt.checkModel).toBe('pruefer-9');
+    expect(normalizeChoice({ provider: 'gemini', model: 'm', checkModel: '   ' }, 'vocabulary').checkModel).toBeUndefined();
+    // Ungültiger Anbieter → Werksvorgabe; ein Modellnamen-Rest des alten
+    // Anbieters darf nicht übrig bleiben.
+    expect(normalizeChoice({ provider: 'claude', model: 'm', checkModel: 'x' }, 'vocabulary').checkModel).toBeUndefined();
+  });
+
+  it('speichert das Prüfmodell dauerhaft', async () => {
+    const store = new MemoryDataStore();
+    await store.init();
+    await setGeneratorChoice('vocabulary', { checkModel: 'pruefer-9' }, store);
+    const gelesen = await loadGeneratorSettings(store);
+    expect(gelesen.vocabulary.checkModel).toBe('pruefer-9');
+  });
+});
+
 describe('Einstellungen je Generator-Gruppe', () => {
   it('legt Anbieter und Modell dauerhaft ab und liest sie zurück', async () => {
     const store = new MemoryDataStore();

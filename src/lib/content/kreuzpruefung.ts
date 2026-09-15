@@ -40,15 +40,21 @@ const URTEILS_FORMAT = [
   '"bestehen" nur, wenn ALLE Punkte stimmen. Jeder Mangel bekommt einen kurzen Grund.',
 ].join('\n');
 
-/** Prüfprompt für einen Vokabel-Eintrag. */
-export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe: string): string {
+/**
+ * Prüfprompt für einen Vokabel-Eintrag. Die Stufe ist optional — seit die
+ * Wortschatz-Ziele ohne CEFR-Stufe laufen, prüft Punkt 5 dann die Passung
+ * (Häufigkeit/Alltagsnähe) statt einer festen Stufe.
+ */
+export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe?: string): string {
   return [
     'Prüfe diesen Lern-Vokabeleintrag kritisch in fünf Punkten:',
     '1. Übersetzung: stimmt die deutsche Bedeutung zum Begriff (und umgekehrt)?',
     '2. Grammatik/Rechtschreibung in der Zielsprache und im Deutschen.',
     `3. Umschrift/Ton/Betonung: ${eintrag.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintrag.language === 'es' ? 'ist die Silbentrennung mit korrekter Betonungssilbe?' : 'ist die Lautschrift plausibel?'}`,
     '4. Natürlichkeit: klingt der Beispielsatz wie ein echter Satz der Zielsprache?',
-    `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`,
+    stufe
+      ? `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`
+      : '5. Passung: ist das Wort ein grundlegender, hochfrequenter Alltagsbegriff (ohne feste Niveaustufe)?',
     '',
     'Eintrag:',
     JSON.stringify(eintrag, null, 2),
@@ -96,7 +102,7 @@ export type KreuzResultat = {
 /** Vokabel-Eintrag kreuzprüfen; bei Selbstprüfung bleiben zwei Durchläufe. */
 export async function pruefeVocabKreuz(
   eintrag: VocabEntry,
-  stufe: string,
+  stufe: string | undefined,
   erzeuger: ProviderId,
   hatSchluessel: (anbieter: ProviderId) => boolean,
   clientFuer: (anbieter: ProviderId) => TextClient

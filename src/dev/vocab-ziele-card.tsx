@@ -7,7 +7,16 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createTextClient } from '@/lib/providers/text';
-import { defaultModelFor, loadGeneratorSettings } from '@/lib/providers/settings';
+import {
+  defaultChoiceFor,
+  defaultModelFor,
+  loadGeneratorSettings,
+  providersForGroup,
+  setGeneratorChoice,
+  setGeneratorProvider,
+  type GeneratorChoice,
+} from '@/lib/providers/settings';
+import { PROVIDER_INFO, type ProviderId } from '@/lib/providers/types';
 import {
   pruefeVocabKreuz,
   schluesselPruefer,
@@ -28,10 +37,18 @@ import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
  *
  * JE Sprache ein eigenes Ziel (250 / 500 / 1.000 / 2.000 oder freie Zahl) —
  * angezeigt wird vorhanden / Ziel / fehlt, erzeugt werden nur die fehlenden
- * Wörter, in Paketen (z. B. 50) mit Thema und Stufe. Der Lauf schlägt die
- * neuen Begriffe als Katalog-Art `vocabulary` über Stage UND catalog.json
- * ein (dieselbe Regel wie für Clips); geprüfte Begriffe landen mit dem
- * nächsten App-Bundle im Lernbestand (GEBUENDELTE-Regel).
+ * Wörter, in Paketen (z. B. 50) mit optionalem Thema. Keine CEFR-Stufenwahl
+ * mehr (Nutzerwunsch 15.09.: „ich will nicht 2.000 Wörter A1 erstellen") —
+ * der Prompt verlangt grundlegende, hochfrequente Alltagswörter.
+ *
+ * Anbieter UND Modell für die ERZEUGUNG sind hier wählbar (eigene Gruppe
+ * `vocabulary`, getrennt von den Dialogen); das PRÜF-MODELL ebenfalls — der
+ * Prüf-ANBIETER bleibt bei der Kreuzregel „der jeweils andere Anbieter".
+ *
+ * Der Lauf schlägt die neuen Begriffe als Katalog-Art `vocabulary` über
+ * Stage UND catalog.json ein (dieselbe Regel wie für Clips); geprüfte
+ * Begriffe landen mit dem nächsten App-Bundle im Lernbestand
+ * (GEBUENDELTE-Regel).
  *
  * Der Lauf ist KOSTENPFLICHTIG: Anzahl, Anbieter und Kostenschätzung
  * stehen vor dem Start, der erste Knopfdruck bestätigt nur.
@@ -43,8 +60,6 @@ const SPRACHEN: { code: LanguageCode; label: string }[] = LANGUAGE_CODES.map((co
 }));
 
 const ZIEL_PRESETS = [250, 500, 1000, 2000];
-const STUFEN = ['A1', 'A2', 'B1'] as const;
-type Stufe = (typeof STUFEN)[number];
 
 type LaufErgebnis = {
   erzeugt: number;
@@ -70,10 +85,9 @@ function baueWortschatzPrompt(options: {
   sprache: LanguageCode;
   anzahl: number;
   thema: string;
-  stufe: Stufe;
   bekannte: string[];
 }): string {
-  const { sprache, anzahl, thema, stufe, bekannte } = options;
+  const { sprache, anzahl, thema, bekannte } = options;
   const sprachRegeln: Record<string, string> = {
     th: '- "term" in thailändischer Schrift; "syllables" mit JEDER Silbe als { "roman": Umschrift, "tone": "mid"|"low"|"falling"|"high"|"rising" }; "romanization" als Paiboon-artige Umschrift des ganzen Wortes.',
     en: '- "ipa" mit IPA-Lautschrift (RP); "syllables" als [{ "roman": "/" + IPA + "/" }].',
@@ -81,7 +95,7 @@ function baueWortschatzPrompt(options: {
     de: '—',
   };
   return [
-    `Erzeuge genau ${anzahl} Einträge eines ${stufe}-Wortschatzes für Lernende, die ${sprache.toUpperCase()} lernen.`,
+    `Erzeuge genau ${anzahl} Einträge eines grundlegenden Alltags-Wortschatzes für Lernende, die ${sprache.toUpperCase()} lernen.`,
     thema ? `Thema: „${thema}".` : 'Thema: grundlegende, hochfrequente Wörter und feste Wendungen des Alltags — häufige Wörter zuerst.',
     'Keine Eigennamen, keine Markennamen, keine vulgären Ausdrücke, keine Duplikate innerhalb der Liste.',
     '',
@@ -117,11 +131,28 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const [bestand, setBestand] = useState<Partial<Record<string, number>> | null>(null);
   const [paketText, setPaketText] = useState('50');
   const [thema, setThema] = useState('');
-  const [stufe, setStufe] = useState<Stufe>('A1');
+  const [wahl, setWahl] = useState<GeneratorChoice>(() => defaultChoiceFor('vocabulary'));
   const [running, setRunning] = useState(false);
   const [phase, setPhase] = useState<'idle' | 'confirm'>('idle');
   const [meldung, setMeldung] = useState('');
   const [ergebnis, setErgebnis] = useState<LaufErgebnis | null>(null);
+
+  useEffect(() => {
+    // Gespeicherte Wahl der Gruppe `vocabulary` — ohne Stand bleibt die
+    // Werksvorgabe (Gemini + dessen Text-Vorschlag) stehen.
+    loadGeneratorSettings()
+      .then((s) => setWahl(s.vocabulary))
+      .catch(() => {});
+  }, []);
+
+  /** Anbieterwechsel zieht das Modell mit (Regel wie bei allen Gruppen). */
+  const wahlAendern = useCallback(async (change: Partial<GeneratorChoice>) => {
+    const next =
+      change.provider !== undefined
+        ? await setGeneratorProvider('vocabulary', change.provider)
+        : await setGeneratorChoice('vocabulary', change);
+    setWahl(next.vocabulary);
+  }, []);
 
   const ladeBestand = useCallback(async () => {
     const alle = await loadVocabulary();
@@ -163,23 +194,26 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       }
 
       const settings = await loadGeneratorSettings();
-      const { provider, model } = settings.situations;
+      const { provider, model, checkModel } = settings.vocabulary;
       const apiKey = (await loadApiKey(provider)) ?? '';
       const client = createTextClient(provider, apiKey, model);
       // Kreuzprüfung vorbereiten (Phase 2, Schritt 5): der ANDERE Anbieter
       // prüft; fehlt dessen Schlüssel, prüft der Erzeuger selbst zweimal
-      // („einfach geprüft“).
+      // („einfach geprüft“). Das Prüf-Modell ist wählbar (checkModel); ohne
+      // Eintrag gilt der Text-Vorschlag des jeweiligen Prüfers.
       const schluessel: Partial<Record<string, string | null>> = {
         gemini: await loadApiKey('gemini'),
         chatgpt: await loadApiKey('chatgpt'),
         'chatgpt-helper': 'serverseitig',
       };
       const hatSchluessel = (anbieter: string): boolean => Boolean(schluessel[anbieter]);
+      const pruefModellFuer = (anbieter: ProviderId) =>
+        checkModel?.trim() || defaultModelFor(anbieter, 'text');
       const clientFuer = (anbieter: ReturnType<typeof defaultModelFor> extends never ? never : Parameters<typeof defaultModelFor>[0]) =>
         createTextClient(
           anbieter,
           (schluessel[anbieter] ?? '') as string,
-          defaultModelFor(anbieter, 'text')
+          pruefModellFuer(anbieter)
         );
 
       const alle = await loadVocabulary();
@@ -190,7 +224,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       const antwort = await client.complete({
         system:
           'Du erzeugst Lernwortschatz als JSON und hältst dich EXAKT an das geforderte Schema. Keine Duplikate, keine Eigennamen, häufige Wörter zuerst.',
-        user: baueWortschatzPrompt({ sprache, anzahl, thema, stufe, bekannte }),
+        user: baueWortschatzPrompt({ sprache, anzahl, thema, bekannte }),
         maxTokens: 8000,
       });
 
@@ -244,13 +278,13 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           continue;
         }
         // Phase 2, Schritt 5: der ANDERE Anbieter prüft Übersetzung,
-        // Grammatik, Umschrift/Ton/Betonung, Natürlichkeit und Stufe. Nur
+        // Grammatik, Umschrift/Ton/Betonung, Natürlichkeit und Passung. Nur
         // Kreuzbestandenes gilt als „geprüft“; ohne zweiten Schlüssel läuft
         // die Selbstprüfung (zweiter Durchlauf) und der Eintrag bleibt
         // „einfach geprüft“ — durchgefallene Einträge werden verworfen.
         const kreuz = await pruefeVocabKreuz(
           eintrag,
-          stufe,
+          undefined,
           provider,
           hatSchluessel,
           clientFuer
@@ -285,10 +319,13 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     } finally {
       setRunning(false);
     }
-  }, [sprache, ziele, paket, thema, stufe, ladeBestand, onFinished]);
+  }, [sprache, ziele, paket, thema, ladeBestand, onFinished]);
 
+  const prueferAnbieter: ProviderId = wahl.provider === 'gemini' ? 'chatgpt' : 'gemini';
+  const pruefModellFuer = (anbieter: ProviderId) =>
+    wahl.checkModel?.trim() || defaultModelFor(anbieter, 'text');
   const kostenSchätzung =
-    estimateRunCost('situations', 'gemini', 'gemini-2.5-flash', Array.from({ length: Math.min(paket, Math.max(1, fehlt)) }, () => ({ text: '' })));
+    estimateRunCost('vocabulary', wahl.provider, wahl.model, Array.from({ length: Math.min(paket, Math.max(1, fehlt)) }, () => ({ text: '' })));
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -373,26 +410,57 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           editable={!running}
           style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
-        <ThemedText type="small">Stufe</ThemedText>
+      </View>
+
+      <View style={styles.field}>
+        <ThemedText type="small">KI — Erzeugung</ThemedText>
         <View style={styles.zeile}>
-          {STUFEN.map((stufe_) => (
+          {providersForGroup('vocabulary').map((info) => (
             <Pressable
-              key={stufe_}
+              key={info.id}
               accessibilityRole="button"
-              accessibilityState={{ selected: stufe === stufe_ }}
-              onPress={() => setStufe(stufe_)}
+              accessibilityState={{ selected: wahl.provider === info.id }}
+              onPress={() => void wahlAendern({ provider: info.id })}
               disabled={running}
               style={({ pressed }) => [
                 styles.chip,
                 pressed && styles.pressed,
-                stufe === stufe_ && { borderColor: theme.accent, borderWidth: 1 },
+                wahl.provider === info.id && { borderColor: theme.accent, borderWidth: 1 },
               ]}>
-              <ThemedText type="small" themeColor={stufe === stufe_ ? 'text' : 'textSecondary'}>
-                {stufe_}
+              <ThemedText type="small" themeColor={wahl.provider === info.id ? 'text' : 'textSecondary'}>
+                {info.label}
               </ThemedText>
             </Pressable>
           ))}
         </View>
+        <TextInput
+          value={wahl.model}
+          onChangeText={(wert) => void wahlAendern({ model: wert })}
+          placeholder={PROVIDER_INFO[wahl.provider].modelPlaceholder.text}
+          placeholderTextColor={theme.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!running}
+          accessibilityLabel="Modellname für die Wortschatz-Erzeugung"
+          style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
+        />
+        <ThemedText type="small">KI — Prüfung (Modell des Prüfers)</ThemedText>
+        <TextInput
+          value={wahl.checkModel ?? ''}
+          onChangeText={(wert) => void wahlAendern({ checkModel: wert })}
+          placeholder={defaultModelFor(prueferAnbieter, 'text')}
+          placeholderTextColor={theme.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          editable={!running}
+          accessibilityLabel="Modellname für die Wortschatz-Prüfung"
+          style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
+        />
+        <ThemedText type="small" themeColor="textSecondary">
+          Freitext, leer lassen nimmt den Vorschlag des Anbieters. Der Prüf-Anbieter
+          ist per Kreuzregel automatisch der jeweils andere ({prueferAnbieter}); fehlt
+          dessen Schlüssel, prüft der Erzeuger sich selbst zweimal („einfach geprüft“).
+        </ThemedText>
       </View>
 
       {phase === 'idle' ? (
@@ -405,7 +473,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       ) : (
         <ThemedView type="backgroundSelected" style={styles.confirmBox}>
           <ThemedText selectable type="small">
-            {`Sprache: ${sprache} · Menge: ${Math.min(paket, fehlt)} · Anbieter: gemini · geschätzte Kosten ${
+            {`Sprache: ${sprache} · Menge: ${Math.min(paket, fehlt)} · Erzeugung: ${PROVIDER_INFO[wahl.provider].label} (${wahl.model}) · Prüfer: ${prueferAnbieter} · Prüfmodell: ${pruefModellFuer(prueferAnbieter)} · geschätzte Kosten ${
               kostenSchätzung.usd === null ? 'ohne Tarif hinterlegt' : `≈ ${kostenSchätzung.usd.toFixed(4)} $`
             }`}
           </ThemedText>

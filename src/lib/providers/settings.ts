@@ -37,7 +37,10 @@ const SETTINGS_KEY = 'generators';
 // Phase 2, Schritt 3: 'exam' ist aus den Generator-Gruppen gefallen —
 // der Prüfungsaufgaben-Generator ist entfernt, die Prüfungen sind
 // mitgeliefert (src/data/exam-modules.ts).
-export const GENERATOR_GROUPS = ['situations', 'images', 'audio'] as const;
+// Nutzerwunsch 15.09.: Wortschatz bekommt eine EIGENE Wahl (Anbieter +
+// Modell), damit die Erzeugung nicht still die Dialog-Einstellung
+// ('situations') mitbenutzt.
+export const GENERATOR_GROUPS = ['situations', 'images', 'audio', 'vocabulary'] as const;
 export type GeneratorGroupId = (typeof GENERATOR_GROUPS)[number];
 
 export type GeneratorGroupInfo = {
@@ -77,6 +80,12 @@ export const GENERATOR_GROUP_INFO: Record<GeneratorGroupId, GeneratorGroupInfo> 
     // Gemini — ein Default wandert nicht still mit.
     defaultProvider: 'gemini',
   },
+  vocabulary: {
+    id: 'vocabulary',
+    label: 'Wortschatz',
+    needs: 'text',
+    defaultProvider: 'gemini',
+  },
 };
 
 export type GeneratorChoice = {
@@ -90,6 +99,13 @@ export type GeneratorChoice = {
    * ein gültiges Modell ablehnt.
    */
   model: string;
+  /**
+   * Nur Wortschatz: das Modell der PRÜFUNG (Kreuzprüfung/Selbstprüfung).
+   * Freitext wie `model`. Der Prüf-ANBIETER bleibt bei der Regel „der jeweils
+   * andere Anbieter prüft" — bewusst nicht wählbar, die Unabhängigkeit ist
+   * der Sinn der Kreuzprüfung.
+   */
+  checkModel?: string;
 };
 
 export type GeneratorSettings = Record<GeneratorGroupId, GeneratorChoice>;
@@ -117,6 +133,7 @@ export function defaultSettings(): GeneratorSettings {
     situations: defaultChoiceFor('situations'),
     images: defaultChoiceFor('images'),
     audio: defaultChoiceFor('audio'),
+    vocabulary: defaultChoiceFor('vocabulary'),
   };
 }
 
@@ -154,6 +171,9 @@ export function normalizeChoice(raw: unknown, group: GeneratorGroupId): Generato
       : defaultModelFor(gespeichert, info.needs);
 
   const choice: GeneratorChoice = { provider: gespeichert, model };
+  if (typeof value.checkModel === 'string' && value.checkModel.trim() !== '') {
+    choice.checkModel = value.checkModel.trim();
+  }
   if (info.needs === 'audio') {
     choice.voice =
       typeof value.voice === 'string' && value.voice.trim() !== ''
@@ -169,6 +189,7 @@ export async function loadGeneratorSettings(store?: DataStore): Promise<Generato
     situations: normalizeChoice(stored?.situations, 'situations'),
     images: normalizeChoice(stored?.images, 'images'),
     audio: normalizeChoice(stored?.audio, 'audio'),
+    vocabulary: normalizeChoice(stored?.vocabulary, 'vocabulary'),
   };
 }
 

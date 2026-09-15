@@ -1,6 +1,6 @@
 import type { VocabEntry } from '@/data/vocab-types';
 
-import { gegenStueck, parseUrteil, pruefeVocabKreuz } from './kreuzpruefung';
+import { baueVocabPruefPrompt, gegenStueck, parseUrteil, pruefeVocabKreuz } from './kreuzpruefung';
 
 const vocab = {
   id: 'ki-th-abc12345',
@@ -59,6 +59,21 @@ describe('parseUrteil', ()=> {
 
   it('wirft bei kaputter Antwort', () => {
     expect(() => parseUrteil('kein json')).toThrow();
+  });
+});
+
+describe('baueVocabPruefPrompt — Stufe optional', () => {
+  it('nennt mit Stufe die übliche Stufen-Passung', () => {
+    const prompt = baueVocabPruefPrompt(vocab, 'A1');
+    expect(prompt).toContain('5. Stufe A1');
+  });
+
+  it('prüft ohne Stufe die Passung (Häufigkeit) statt einer Niveaustufe', () => {
+    // Nutzerwunsch 15.09.: die Wortschatz-Ziele laufen ohne CEFR-Stufen —
+    // der Prüfer darf dann keine Stufe behaupten, die es nicht gibt.
+    const prompt = baueVocabPruefPrompt(vocab, undefined);
+    expect(prompt).toContain('hochfrequenter Alltagsbegriff');
+    expect(prompt).not.toContain('Stufe undefined');
   });
 });
 
