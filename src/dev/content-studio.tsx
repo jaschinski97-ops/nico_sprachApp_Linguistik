@@ -205,6 +205,16 @@ const POOL_ZAEHLER =
 const RICHTUNGEN = ['de_to_th', 'th_to_de'] as const;
 
 /**
+ * Die GESPROCHENE Seite eines Dialogs — dieselbe Sicht, mit der auch der
+ * Gesprächs-Reiter die Sprachen listet (Thai = de_to_th, Deutsch = th_to_de;
+ * Nutzerwunsch 15.09.: Sprachnamen statt Richtungs-Pfeile im Grundstock).
+ */
+const GESPROCHENE_SEITE: Record<(typeof RICHTUNGEN)[number], string> = {
+  de_to_th: LANGUAGE_LABELS.th,
+  th_to_de: LANGUAGE_LABELS.de,
+};
+
+/**
  * Die Generier-Sprachen in Kettenreihenfolge — die drei Bestandspools
  * (`LANGUAGE_ORDER`), Deutsch zuletzt (Nutzerentscheidung 10.09., Deutsch
  * als Generier-/Zielsprache). Dieselben Schlüssel wie die Sprach-Zähler des
@@ -600,7 +610,7 @@ export default function ContentStudio() {
           <ThemedText type="small" themeColor="textSecondary">Bilder: {jeSprache(imagesByLanguage)}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             Dialog-Situationen: {RICHTUNGEN.map((richtung) =>
-              `${directionLabel(richtung)} ${situationsByDirection ? situationsByDirection[richtung] : '…'}`
+              `${GESPROCHENE_SEITE[richtung]} ${situationsByDirection ? situationsByDirection[richtung] : '…'}`
             ).join(' · ')}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">

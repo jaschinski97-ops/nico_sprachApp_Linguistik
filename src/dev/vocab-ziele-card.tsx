@@ -45,6 +45,11 @@ import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
  * `vocabulary`, getrennt von den Dialogen); das PRÜF-MODELL ebenfalls — der
  * Prüf-ANBIETER bleibt bei der Kreuzregel „der jeweils andere Anbieter".
  *
+ * „Alle Sprachen“ (Nutzerwunsch 15.09., wie bei den anderen Generatoren):
+ * EIN Kettenlauf über alle vier Sprachen mit EINER Kostenbestätigung —
+ * je Sprache nur die fehlenden Wörter bis zum Sprach-Ziel, Veröffentlichen
+ * einmal am Ende; Sprachen mit erreichtem Ziel werden übersprungen.
+ *
  * Der Lauf schlägt die neuen Begriffe als Katalog-Art `vocabulary` über
  * Stage UND catalog.json ein (dieselbe Regel wie für Clips); geprüfte
  * Begriffe landen mit dem nächsten App-Bundle im Lernbestand
@@ -127,6 +132,7 @@ function baueWortschatzPrompt(options: {
 export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const theme = useTheme();
   const [sprache, setSprache] = useState<LanguageCode>('th');
+  const [alleSprachen, setAlleSprachen] = useState(false);
   const [ziele, setZiele] = useState<Partial<Record<string, number>>>({});
   const [bestand, setBestand] = useState<Partial<Record<string, number>> | null>(null);
   const [paketText, setPaketText] = useState('50');
@@ -172,26 +178,38 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const vorhanden = bestand?.[sprache] ?? 0;
   const fehlt = Math.max(0, ziel - vorhanden);
 
+  /** Im „Alle Sprachen“-Lauf zählt jede Sprache mit ihrem eigenen Ziel. */
+  const aktiveSprachen: readonly LanguageCode[] = alleSprachen
+    ? (LANGUAGE_CODES as readonly LanguageCode[])
+    : [sprache];
+  const gesamtFehlt = aktiveSprachen.reduce(
+    (summe, code) => summe + Math.max(0, (ziele[code] ?? 250) - (bestand?.[code] ?? 0)),
+    0
+  );
+
   const zielSetzen = (wert: number) => {
     setZiele((alt) => ({ ...alt, [sprache]: wert }));
     void writeMeta(`vocabZiel-${sprache}`, wert).catch(() => {});
   };
 
   const paket = Math.max(1, Number.parseInt(paketText, 10) || 50);
+  /** Der nächste Lauf je Sprache — vom Paket und vom Sprach-Ziel begrenzt. */
+  const mengeFuer = (code: LanguageCode) =>
+    Math.min(paket, Math.max(0, (ziele[code] ?? 250) - (bestand?.[code] ?? 0)));
+  const gesamtMenge = aktiveSprachen.reduce((summe, code) => summe + mengeFuer(code), 0);
 
-  const erzeugen = useCallback(async () => {
-    setRunning(true);
-    setMeldung('');
-    setPhase('idle');
-    try {
+  /**
+   * EIN Sprachlauf: lädt Bestand und Stage, erzeugt das Paket, prüft und
+   * legt es auf die Stage. `null` heißt „nichts zu tun“ (Ziel erreicht).
+   * Veröffentlichen tut der Aufrufer — der „Alle Sprachen“-Kettenlauf
+   * published einmal am Ende statt je Sprache.
+   */
+  const laufeFuer = useCallback(async (code: LanguageCode): Promise<LaufErgebnis | null> => {
       const bestandJetzt = await ladeBestand();
-      const vorhandenJetzt = bestandJetzt[sprache] ?? 0;
-      const zielJetzt = ziele[sprache] ?? 250;
+      const vorhandenJetzt = bestandJetzt[code] ?? 0;
+      const zielJetzt = ziele[code] ?? 250;
       const anzahl = Math.min(paket, Math.max(0, zielJetzt - vorhandenJetzt));
-      if (anzahl <= 0) {
-        setMeldung('Nichts zu erzeugen — das Ziel ist erreicht.');
-        return;
-      }
+      if (anzahl <= 0) return null;
 
       const settings = await loadGeneratorSettings();
       const { provider, model, checkModel } = settings.vocabulary;
@@ -218,13 +236,13 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
 
       const alle = await loadVocabulary();
       const bekannte = alle
-        .filter((e) => (e as { language: string }).language === sprache)
+        .filter((e) => (e as { language: string }).language === code)
         .map((e) => e.term);
 
       const antwort = await client.complete({
         system:
           'Du erzeugst Lernwortschatz als JSON und hältst dich EXAKT an das geforderte Schema. Keine Duplikate, keine Eigennamen, häufige Wörter zuerst.',
-        user: baueWortschatzPrompt({ sprache, anzahl, thema, bekannte }),
+        user: baueWortschatzPrompt({ sprache: code, anzahl, thema, bekannte }),
         maxTokens: 8000,
       });
 
@@ -233,8 +251,8 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       if (!Array.isArray(geparst.woerter)) throw Error('Antwort enthält keine "woerter"-Liste.');
 
       const vorhandenSchluessel = new Set(
-        alle.filter((e) => (e as { language: string }).language === sprache)
-          .map((e) => vocabSchluessel(e.term, sprache))
+        alle.filter((e) => (e as { language: string }).language === code)
+          .map((e) => vocabSchluessel(e.term, code))
       );
       // Phase 2, Schritt 6: auch der STAGE zählt als vorhanden — Einträge,
       // die im nächsten Export ohnehin übernommen würden, sind Duplikate.
@@ -244,7 +262,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         }>('/state');
         for (const eintrag of zustand.stage.entries) {
           if (eintrag.kind === 'vocabulary' && typeof eintrag.document?.term === 'string') {
-            vorhandenSchluessel.add(vocabSchluessel(eintrag.document.term, sprache));
+            vorhandenSchluessel.add(vocabSchluessel(eintrag.document.term, code));
           }
         }
       } catch {
@@ -256,16 +274,16 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       for (const rohEintrag of geparst.woerter) {
         const kandidat = rohEintrag as Record<string, unknown>;
         const term = String(kandidat.term ?? '');
-        const schluessel = vocabSchluessel(term, sprache);
+        const schluessel = vocabSchluessel(term, code);
         if (!term || vorhandenSchluessel.has(schluessel) || laufSchluessel.has(schluessel)) {
           resultat.duplikate += 1;
           continue;
         }
         const eintrag: VocabEntry = {
           ...(kandidat as unknown as VocabEntry),
-          id: `ki-${sprache}-${kurzHash(schluessel)}`,
-          language: sprache,
-          concept: `ki-${sprache}-${kurzHash(schluessel)}`,
+          id: `ki-${code}-${kurzHash(schluessel)}`,
+          language: code,
+          concept: `ki-${code}-${kurzHash(schluessel)}`,
           register: (kandidat.register as VocabEntry['register']) ?? 'neutral',
           isConcrete: Boolean(kandidat.isConcrete),
           sourceVerified: false,
@@ -305,27 +323,78 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         laufSchluessel.add(schluessel);
         resultat.erzeugt += 1;
       }
-      if (resultat.erzeugt > 0) {
+      return resultat;
+  }, [ziele, paket, thema, ladeBestand]);
+
+  const erzeugen = useCallback(async () => {
+    setRunning(true);
+    setMeldung('');
+    setPhase('idle');
+    try {
+      const codes = alleSprachen ? [...aktiveSprachen] : [sprache];
+      const teile: Partial<Record<string, LaufErgebnis>> = {};
+      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0 };
+      const fehler: string[] = [];
+      let uebersprungen = 0;
+      for (const code of codes) {
+        try {
+          const teil = await laufeFuer(code);
+          if (!teil) {
+            uebersprungen += 1;
+            continue;
+          }
+          teile[code] = teil;
+          for (const feld of Object.keys(gesamt) as (keyof LaufErgebnis)[]) gesamt[feld] += teil[feld];
+        } catch (error) {
+          // Ein Sprachlauf reißt die Kette nicht mit — der Fehler wird
+          // gemeldet, die restlichen Sprachen laufen weiter.
+          fehler.push(error instanceof Error ? error.message : String(error));
+        }
+      }
+      if (gesamt.erzeugt > 0) {
         await studioRequest('/publish', {});
         await ladeBestand();
         onFinished();
       }
-      setErgebnis(resultat);
-      setMeldung(
-        `Lauf beendet: ${resultat.erzeugt} erzeugt · ${resultat.kreuzGeprueft} kreuzgeprüft · ${resultat.einfachGeprueft} einfach geprüft · ${resultat.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${resultat.duplikate} Duplikate verworfen · ${resultat.aussortiert} aussortiert.`
-      );
+      setErgebnis(gesamt);
+      if (!alleSprachen) {
+        const teil = teile[sprache];
+        if (fehler.length > 0) {
+          setMeldung(fehler[0]);
+        } else if (teil) {
+          setMeldung(
+            `Lauf beendet: ${teil.erzeugt} erzeugt · ${teil.kreuzGeprueft} kreuzgeprüft · ${teil.einfachGeprueft} einfach geprüft · ${teil.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${teil.duplikate} Duplikate verworfen · ${teil.aussortiert} aussortiert.`
+          );
+        } else {
+          setMeldung('Nichts zu erzeugen — das Ziel ist erreicht.');
+        }
+      } else {
+        const verteilung = codes
+          .map((code) => `${SPRACHEN.find((eintrag) => eintrag.code === code)?.label ?? code} ${teile[code]?.erzeugt ?? 0}`)
+          .join(' · ');
+        const zusatz = [
+          uebersprungen > 0 ? `${uebersprungen} Sprache(n) mit erreichtem Ziel übersprungen` : '',
+          fehler.length > 0 ? `Fehler: ${fehler[0]}${fehler.length > 1 ? ` (+${fehler.length - 1} weitere)` : ''}` : '',
+        ].filter(Boolean).join(' · ');
+        setMeldung(
+          `Kettenlauf beendet: ${verteilung} — ${gesamt.erzeugt} erzeugt · ${gesamt.kreuzGeprueft} kreuzgeprüft · ${gesamt.einfachGeprueft} einfach geprüft · ${gesamt.kreuzAbgelehnt} abgelehnt · ${gesamt.duplikate} Duplikate verworfen · ${gesamt.aussortiert} aussortiert${zusatz ? ` · ${zusatz}` : ''}.`
+        );
+      }
     } catch (error) {
       setMeldung(error instanceof Error ? error.message : String(error));
     } finally {
       setRunning(false);
     }
-  }, [sprache, ziele, paket, thema, ladeBestand, onFinished]);
+  }, [alleSprachen, aktiveSprachen, sprache, laufeFuer, ladeBestand, onFinished]);
 
   const prueferAnbieter: ProviderId = wahl.provider === 'gemini' ? 'chatgpt' : 'gemini';
   const pruefModellFuer = (anbieter: ProviderId) =>
     wahl.checkModel?.trim() || defaultModelFor(anbieter, 'text');
   const kostenSchätzung =
-    estimateRunCost('vocabulary', wahl.provider, wahl.model, Array.from({ length: Math.min(paket, Math.max(1, fehlt)) }, () => ({ text: '' })));
+    estimateRunCost('vocabulary', wahl.provider, wahl.model, Array.from({ length: Math.max(1, gesamtMenge) }, () => ({ text: '' })));
+  const wahlText = `Erzeugung: ${PROVIDER_INFO[wahl.provider].label} (${wahl.model}) · Prüfer: ${prueferAnbieter} · Prüfmodell: ${pruefModellFuer(prueferAnbieter)} · geschätzte Kosten ${
+    kostenSchätzung.usd === null ? 'ohne Tarif hinterlegt' : `≈ ${kostenSchätzung.usd.toFixed(4)} $`
+  }`;
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -336,21 +405,39 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           <Pressable
             key={code}
             accessibilityRole="button"
-            accessibilityState={{ selected: sprache === code }}
-            onPress={() => setSprache(code)}
+            accessibilityState={{ selected: !alleSprachen && sprache === code }}
+            onPress={() => {
+              setSprache(code);
+              setAlleSprachen(false);
+            }}
             disabled={running}
             style={({ pressed }) => [
               styles.chip,
               pressed && styles.pressed,
-              sprache === code && { borderColor: theme.accent, borderWidth: 1 },
+              !alleSprachen && sprache === code && { borderColor: theme.accent, borderWidth: 1 },
             ]}>
-            <ThemedText type="small" themeColor={sprache === code ? 'text' : 'textSecondary'}>
+            <ThemedText type="small" themeColor={!alleSprachen && sprache === code ? 'text' : 'textSecondary'}>
               {label}
             </ThemedText>
           </Pressable>
         ))}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected: alleSprachen }}
+          onPress={() => setAlleSprachen(true)}
+          disabled={running}
+          style={({ pressed }) => [
+            styles.chip,
+            pressed && styles.pressed,
+            alleSprachen && { borderColor: theme.accent, borderWidth: 1 },
+          ]}>
+          <ThemedText type="small" themeColor={alleSprachen ? 'text' : 'textSecondary'}>
+            Alle Sprachen
+          </ThemedText>
+        </Pressable>
       </View>
 
+      {!alleSprachen && (
       <View style={styles.zeile}>
         {ZIEL_PRESETS.map((preset) => (
           <Pressable
@@ -380,10 +467,12 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           style={[styles.input, styles.kurz, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
       </View>
+      )}
 
       <ThemedText type="smallBold">
-        {sprache}: {vorhanden.toLocaleString('de-DE')} vorhanden · Ziel {ziel.toLocaleString('de-DE')} ·{' '}
-        {fehlt.toLocaleString('de-DE')} fehlt
+        {alleSprachen
+          ? `Alle Sprachen: ${gesamtFehlt.toLocaleString('de-DE')} fehlen gegenüber den Sprach-Zielen`
+          : `${sprache}: ${vorhanden.toLocaleString('de-DE')} vorhanden · Ziel ${ziel.toLocaleString('de-DE')} · ${fehlt.toLocaleString('de-DE')} fehlt`}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {SPRACHEN.map(({ code, label }) => `${label} ${bestand?.[code] ?? '…'}`).join(' · ')}
@@ -465,17 +554,27 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
 
       {phase === 'idle' ? (
         <View style={styles.zeile}>
-          <Button label="Fehlende Wörter erzeugen …" onPress={() => setPhase('confirm')} disabled={running || fehlt === 0} />
+          <Button
+            label={alleSprachen ? 'Alle Sprachen erzeugen …' : 'Fehlende Wörter erzeugen …'}
+            onPress={() => setPhase('confirm')}
+            disabled={running || (alleSprachen ? gesamtMenge === 0 : fehlt === 0)}
+          />
           <ThemedText type="small" themeColor="textSecondary">
-            {fehlt === 0 ? 'Ziel erreicht.' : `${Math.min(paket, fehlt)} Wörter im nächsten Lauf`}
+            {alleSprachen
+              ? gesamtMenge === 0
+                ? 'Alle Ziele erreicht.'
+                : `${gesamtMenge} Wörter im nächsten Lauf (alle Sprachen)`
+              : fehlt === 0
+                ? 'Ziel erreicht.'
+                : `${Math.min(paket, fehlt)} Wörter im nächsten Lauf`}
           </ThemedText>
         </View>
       ) : (
         <ThemedView type="backgroundSelected" style={styles.confirmBox}>
           <ThemedText selectable type="small">
-            {`Sprache: ${sprache} · Menge: ${Math.min(paket, fehlt)} · Erzeugung: ${PROVIDER_INFO[wahl.provider].label} (${wahl.model}) · Prüfer: ${prueferAnbieter} · Prüfmodell: ${pruefModellFuer(prueferAnbieter)} · geschätzte Kosten ${
-              kostenSchätzung.usd === null ? 'ohne Tarif hinterlegt' : `≈ ${kostenSchätzung.usd.toFixed(4)} $`
-            }`}
+            {alleSprachen
+              ? `Alle Sprachen: ${aktiveSprachen.map((code) => `${SPRACHEN.find((eintrag) => eintrag.code === code)?.label ?? code} ${mengeFuer(code)}`).join(' · ')} (Σ ${gesamtMenge}) · ${wahlText}`
+              : `Sprache: ${sprache} · Menge: ${Math.min(paket, fehlt)} · ${wahlText}`}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary">{kostenSchätzung.basis}</ThemedText>
           <View style={styles.zeile}>
