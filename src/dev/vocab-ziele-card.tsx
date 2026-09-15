@@ -29,6 +29,7 @@ import {
   pruefeVocabDoc,
   vocabSchluessel,
 } from '@/lib/content/vocab-schema';
+import { listeAusAntwort } from '@/lib/content/ki-json';
 import type { VocabEntry } from '@/data/vocab-types';
 import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
 
@@ -73,6 +74,8 @@ type LaufErgebnis = {
   kreuzAbgelehnt: number;
   duplikate: number;
   aussortiert: number;
+  /** Einträge, die aus einer am Token-Limit abgeschnittenen Antwort gerettet wurden. */
+  gerettet: number;
 };
 
 /** Sieben Zeichen stabiler Hash für KI-Vokabel-IDs. */
@@ -243,12 +246,8 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         system:
           'Du erzeugst Lernwortschatz als JSON und hältst dich EXAKT an das geforderte Schema. Keine Duplikate, keine Eigennamen, häufige Wörter zuerst.',
         user: baueWortschatzPrompt({ sprache: code, anzahl, thema, bekannte }),
-        maxTokens: 8000,
+        maxTokens: 16000,
       });
-
-      const roh = antwort.text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
-      const geparst = JSON.parse(roh) as { woerter?: unknown[] };
-      if (!Array.isArray(geparst.woerter)) throw Error('Antwort enthält keine "woerter"-Liste.');
 
       const vorhandenSchluessel = new Set(
         alle.filter((e) => (e as { language: string }).language === code)
@@ -269,9 +268,16 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         // Ohne Helper bleibt der Vergleich beim lokalen Bestand.
       }
       const laufSchluessel = new Set<string>();
-      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0 };
+      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0 };
 
-      for (const rohEintrag of geparst.woerter) {
+      // 16000 statt 8000: 50 reiche Einträge (Thai-Schrift, Silben, Beispiele)
+      // sprengten das alte Limit — die Antwort brach mitten im JSON ab
+      // („Unterminated string", erster Kettenlauf 15.09.). 16000 passt auch
+      // unter gpt-4o-minis Ausgabe-Cap von 16384.
+      const { woerter, abgeschnitten } = listeAusAntwort(antwort.text);
+      if (abgeschnitten) resultat.gerettet = woerter.length;
+
+      for (const rohEintrag of woerter) {
         const kandidat = rohEintrag as Record<string, unknown>;
         const term = String(kandidat.term ?? '');
         const schluessel = vocabSchluessel(term, code);
@@ -333,7 +339,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     try {
       const codes = alleSprachen ? [...aktiveSprachen] : [sprache];
       const teile: Partial<Record<string, LaufErgebnis>> = {};
-      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0 };
+      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0 };
       const fehler: string[] = [];
       let uebersprungen = 0;
       for (const code of codes) {
@@ -357,13 +363,17 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         onFinished();
       }
       setErgebnis(gesamt);
+      const gerettetHinweis = (zahl: number) =>
+        zahl > 0
+          ? ` Antwort war am Token-Limit abgeschnitten — ${zahl} Einträge gerettet; beim nächsten Lauf Paketgröße senken.`
+          : '';
       if (!alleSprachen) {
         const teil = teile[sprache];
         if (fehler.length > 0) {
           setMeldung(fehler[0]);
         } else if (teil) {
           setMeldung(
-            `Lauf beendet: ${teil.erzeugt} erzeugt · ${teil.kreuzGeprueft} kreuzgeprüft · ${teil.einfachGeprueft} einfach geprüft · ${teil.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${teil.duplikate} Duplikate verworfen · ${teil.aussortiert} aussortiert.`
+            `Lauf beendet: ${teil.erzeugt} erzeugt · ${teil.kreuzGeprueft} kreuzgeprüft · ${teil.einfachGeprueft} einfach geprüft · ${teil.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${teil.duplikate} Duplikate verworfen · ${teil.aussortiert} aussortiert.${gerettetHinweis(teil.gerettet)}`
           );
         } else {
           setMeldung('Nichts zu erzeugen — das Ziel ist erreicht.');
@@ -374,6 +384,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           .join(' · ');
         const zusatz = [
           uebersprungen > 0 ? `${uebersprungen} Sprache(n) mit erreichtem Ziel übersprungen` : '',
+          gesamt.gerettet > 0 ? `${gesamt.gerettet} Einträge aus abgeschnittenen Antworten gerettet` : '',
           fehler.length > 0 ? `Fehler: ${fehler[0]}${fehler.length > 1 ? ` (+${fehler.length - 1} weitere)` : ''}` : '',
         ].filter(Boolean).join(' · ');
         setMeldung(
