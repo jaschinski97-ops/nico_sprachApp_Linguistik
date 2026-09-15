@@ -188,6 +188,59 @@ class ContentPipeline {
     }, { root: this.root });
     return entry;
   }
+  /**
+   * Nutzerwunsch 15.09.: „wo ist der Button, die gesamten generierten
+   * Inhalte zu löschen" — alles, was NACH dem Grundstock-Abschluss erzeugt
+   * wurde, aus Katalog UND Stage entfernen (dasselbe Provenienz-Urteil für
+   * beide, damit publish() nichts zurückholen kann), verwaiste Asset-Dateien
+   * mitlöschen, assets.ts über writeCatalog neu schreiben.
+   *
+   * STICHTAG: Der Grundstock wurde am 13.09.2026 eingefroren (d1a54ac/
+   * 677cd7b); seine Clips, Bilder und Situationen tragen generatedAt vom
+   * 06.–13.09. Alles mit generatedAt ab dem 14.09. gilt als „generiert".
+   * KI-Vokabeln haben kein generatedAt — sie tragen ki--IDs. `preview`
+   * zählt nur und ändert nichts.
+   */
+  async clearGenerated({ preview = false } = {}) {
+    const stichtag = Date.parse('2026-09-14T00:00:00.000Z');
+    const istGeneriert = (entry) => {
+      if (entry.kind === 'vocabulary') return String(entry.id ?? '').startsWith('ki-');
+      const zeit = entry.document?.generatedAt;
+      if (typeof zeit === 'number') return zeit >= stichtag;
+      if (typeof zeit === 'string') return Date.parse(zeit) >= stichtag;
+      return false;
+    };
+    const shipped = await this.catalog();
+    const stageState = await readJson(this.stageFile, { version: 2, entries: [] });
+    const katalogWeg = shipped.entries.filter(istGeneriert);
+    const stageWeg = stageState.entries.filter(istGeneriert);
+    const zahlen = {
+      katalog: katalogWeg.length,
+      stage: stageWeg.length,
+      assets: [...katalogWeg, ...stageWeg].filter((entry) => entry.asset).length,
+    };
+    if (preview || (zahlen.katalog === 0 && zahlen.stage === 0)) return zahlen;
+    const behalten = new Set(
+      [...shipped.entries, ...stageState.entries]
+        .filter((entry) => !istGeneriert(entry))
+        .flatMap((entry) => (entry.asset ? [entry.asset] : []))
+    );
+    for (const entry of [...katalogWeg, ...stageWeg]) {
+      if (!entry.asset || behalten.has(entry.asset)) continue;
+      await fs.rm(path.join(this.root, 'assets/content', entry.asset), { force: true });
+      await fs.rm(path.join(this.work, entry.asset), { force: true });
+    }
+    await this.writeCatalog({ version: 2, entries: shipped.entries.filter((entry) => !istGeneriert(entry)) });
+    await atomicJson(this.stageFile, { version: 2, entries: stageState.entries.filter((entry) => !istGeneriert(entry)) });
+    tryWriteProtocol({
+      script: 'content-pipeline',
+      action: 'clear-generated',
+      items: zahlen.katalog + zahlen.stage,
+      result: 'ok',
+      notes: `katalog ${zahlen.katalog}, stage ${zahlen.stage}, assets ${zahlen.assets}`,
+    }, { root: this.root });
+    return zahlen;
+  }
   async stage({ kind, document, base64 }) {
     assertDocument(kind, document);
     const state = await this.state();

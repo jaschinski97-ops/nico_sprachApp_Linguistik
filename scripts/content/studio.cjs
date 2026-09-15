@@ -155,6 +155,10 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
     const json = (code, value) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     try {
       if (req.method === 'GET' && req.url === '/state') { json(200, await pipeline.state()); return; }
+      if (req.method === 'GET' && req.url === '/catalog/clear-generated') {
+        // Nur zählen — der Löschlauf selbst geht durch die POST-Warteschlange.
+        json(200, await pipeline.clearGenerated({ preview: true })); return;
+      }
       if (req.method === 'GET' && /^\/asset\/[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(req.url)) {
         const name = req.url.slice('/asset/'.length);
         let bytes;
@@ -168,7 +172,7 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         await handleTtsProxy(req, res, { getApiKey, openaiFetch, logRun, allowRequest });
         return;
       }
-      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
+      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete','/catalog/clear-generated'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
       if (!originAllowed(req.headers.origin) || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
       let size = 0; const parts = [];
       for await (const chunk of req) {
@@ -185,6 +189,7 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         req.url === '/stage' ? pipeline.stage(data) :
         req.url === '/publish' ? pipeline.publish() :
         req.url === '/stage/delete' ? pipeline.deleteFromStage(data.kind, data.id) :
+        req.url === '/catalog/clear-generated' ? pipeline.clearGenerated() :
         pipeline.deleteFromCatalog(data.kind, data.id);
       const operation = queue.then(action);
       queue = operation.catch(() => {});

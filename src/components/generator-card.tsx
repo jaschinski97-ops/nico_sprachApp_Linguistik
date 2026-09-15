@@ -711,7 +711,8 @@ function tonZusammenfassung(progress: BatchProgress): string {
     : '';
 }
 
-function ProgressPanel({ progress }: { progress: BatchProgress }) {
+/** Exportiert für die Wortschatz-Karte — derselbe Fortschritt, dieselbe Optik. */
+export function ProgressPanel({ progress }: { progress: BatchProgress }) {
   const toneColor = useToneColor();
   const theme = useTheme();
   const pct = progress.total === 0 ? 0 : Math.round((progress.processed / progress.total) * 100);

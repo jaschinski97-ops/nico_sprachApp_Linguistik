@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Button } from '@/components/generator-card';
+import { Button, ProgressPanel } from '@/components/generator-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { createTextClient } from '@/lib/providers/text';
+import type { BatchProgress } from '@/lib/generation/batch';
 import {
   defaultChoiceFor,
   defaultModelFor,
@@ -33,6 +34,9 @@ import { listeAusAntwort } from '@/lib/content/ki-json';
 import type { VocabEntry } from '@/data/vocab-types';
 import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
 
+/** Die Vokabel-Sprachen: die drei Registry-Sprachen + Deutsch (KI-Pool). */
+type VocabSprache = LanguageCode | 'de';
+
 /**
  * Wortschatz mit festlegbarer Zielgröße (Phase 2, Schritt 4).
  *
@@ -47,9 +51,12 @@ import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
  * Prüf-ANBIETER bleibt bei der Kreuzregel „der jeweils andere Anbieter".
  *
  * „Alle Sprachen“ (Nutzerwunsch 15.09., wie bei den anderen Generatoren):
- * EIN Kettenlauf über alle vier Sprachen mit EINER Kostenbestätigung —
- * je Sprache nur die fehlenden Wörter bis zum Sprach-Ziel, Veröffentlichen
- * einmal am Ende; Sprachen mit erreichtem Ziel werden übersprungen.
+ * EIN Kettenlauf über alle vier Sprachen (th/en/es/de) mit EINER
+ * Kostenbestätigung — je Sprache nur die fehlenden Wörter bis zum
+ * Sprach-Ziel (im Alle-Modus je Sprache einstellbar), Veröffentlichen
+ * einmal am Ende; Sprachen mit erreichtem Ziel werden übersprungen. Der
+ * Lauf zeigt den LIVE-Fortschritt (dasselbe ProgressPanel wie die
+ * anderen Generatoren).
  *
  * Der Lauf schlägt die neuen Begriffe als Katalog-Art `vocabulary` über
  * Stage UND catalog.json ein (dieselbe Regel wie für Clips); geprüfte
@@ -60,10 +67,16 @@ import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
  * stehen vor dem Start, der erste Knopfdruck bestätigt nur.
  */
 
-const SPRACHEN: { code: LanguageCode; label: string }[] = LANGUAGE_CODES.map((code) => ({
-  code,
-  label: { th: 'Thai', en: 'Englisch', es: 'Spanisch', de: 'Deutsch' }[code as LanguageCode] ?? code,
-}));
+// Deutsch ist seit dem Nutzerwunsch vom 15.09. eine VOLLWERTIGE Auswahl:
+// eigene Chip, eigenes Ziel, im „Alle Sprachen“-Lauf dabei. de-Nomen
+// brauchen im Schema germanNoun — der Prompt verlangt es mit (unten).
+const SPRACHEN: { code: VocabSprache; label: string }[] = [
+  ...(LANGUAGE_CODES as readonly LanguageCode[]).map((code) => ({
+    code,
+    label: { th: 'Thai', en: 'Englisch', es: 'Spanisch', de: 'Deutsch' }[code as LanguageCode] ?? code,
+  })),
+  { code: 'de', label: 'Deutsch' },
+];
 
 const ZIEL_PRESETS = [250, 500, 1000, 2000];
 
@@ -90,7 +103,7 @@ function kurzHash(text: string): string {
 
 /** Der Erzeugungs-Prompt: Vertrags-JSON mit sprachspezifischen Pflichten. */
 function baueWortschatzPrompt(options: {
-  sprache: LanguageCode;
+  sprache: VocabSprache;
   anzahl: number;
   thema: string;
   bekannte: string[];
@@ -100,7 +113,7 @@ function baueWortschatzPrompt(options: {
     th: '- "term" in thailändischer Schrift; "syllables" mit JEDER Silbe als { "roman": Umschrift, "tone": "mid"|"low"|"falling"|"high"|"rising" }; "romanization" als Paiboon-artige Umschrift des ganzen Wortes.',
     en: '- "ipa" mit IPA-Lautschrift (RP); "syllables" als [{ "roman": "/" + IPA + "/" }].',
     es: '- "syllables" mit Silbentrennung und "stressed": true auf der betonten Silbe; spanische Nomen mit "spanishNoun" { "gender": "m"|"f", "article": "el"|"la", "plural": "…" }, Verben mit "spanishVerb" { "conjugation": "ar"|"er"|"ir", "irregular": true|false }.',
-    de: '—',
+    de: '- "term" ist das deutsche Wort; Nomen mit "germanNoun" { "article": "der"|"die"|"das", "plural": "…" } (Pflichtfeld des Schemas); "german" ist die kurze deutsche Bedeutung (Synonym oder Klarstellung), niemals Thai-Schrift.',
   };
   return [
     `Erzeuge genau ${anzahl} Einträge eines grundlegenden Alltags-Wortschatzes für Lernende, die ${sprache.toUpperCase()} lernen.`,
@@ -134,7 +147,7 @@ function baueWortschatzPrompt(options: {
 
 export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const theme = useTheme();
-  const [sprache, setSprache] = useState<LanguageCode>('th');
+  const [sprache, setSprache] = useState<VocabSprache>('th');
   const [alleSprachen, setAlleSprachen] = useState(false);
   const [ziele, setZiele] = useState<Partial<Record<string, number>>>({});
   const [bestand, setBestand] = useState<Partial<Record<string, number>> | null>(null);
@@ -145,6 +158,8 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const [phase, setPhase] = useState<'idle' | 'confirm'>('idle');
   const [meldung, setMeldung] = useState('');
   const [ergebnis, setErgebnis] = useState<LaufErgebnis | null>(null);
+  /** Live-Fortschritt während des Laufs — bleibt nach dem Lauf stehen (wie bei den anderen Karten). */
+  const [fortschritt, setFortschritt] = useState<BatchProgress | null>(null);
 
   useEffect(() => {
     // Gespeicherte Wahl der Gruppe `vocabulary` — ohne Stand bleibt die
@@ -182,22 +197,23 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const fehlt = Math.max(0, ziel - vorhanden);
 
   /** Im „Alle Sprachen“-Lauf zählt jede Sprache mit ihrem eigenen Ziel. */
-  const aktiveSprachen: readonly LanguageCode[] = alleSprachen
-    ? (LANGUAGE_CODES as readonly LanguageCode[])
+  const aktiveSprachen: readonly VocabSprache[] = alleSprachen
+    ? SPRACHEN.map((eintrag) => eintrag.code)
     : [sprache];
   const gesamtFehlt = aktiveSprachen.reduce(
     (summe, code) => summe + Math.max(0, (ziele[code] ?? 250) - (bestand?.[code] ?? 0)),
     0
   );
 
-  const zielSetzen = (wert: number) => {
-    setZiele((alt) => ({ ...alt, [sprache]: wert }));
-    void writeMeta(`vocabZiel-${sprache}`, wert).catch(() => {});
+  const zielSetzenFuer = (code: VocabSprache, wert: number) => {
+    setZiele((alt) => ({ ...alt, [code]: wert }));
+    void writeMeta(`vocabZiel-${code}`, wert).catch(() => {});
   };
+  const zielSetzen = (wert: number) => zielSetzenFuer(sprache, wert);
 
   const paket = Math.max(1, Number.parseInt(paketText, 10) || 50);
   /** Der nächste Lauf je Sprache — vom Paket und vom Sprach-Ziel begrenzt. */
-  const mengeFuer = (code: LanguageCode) =>
+  const mengeFuer = (code: VocabSprache) =>
     Math.min(paket, Math.max(0, (ziele[code] ?? 250) - (bestand?.[code] ?? 0)));
   const gesamtMenge = aktiveSprachen.reduce((summe, code) => summe + mengeFuer(code), 0);
 
@@ -207,7 +223,10 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
    * Veröffentlichen tut der Aufrufer — der „Alle Sprachen“-Kettenlauf
    * published einmal am Ende statt je Sprache.
    */
-  const laufeFuer = useCallback(async (code: LanguageCode): Promise<LaufErgebnis | null> => {
+  const laufeFuer = useCallback(async (
+    code: VocabSprache,
+    tick: (term: string, ausgang: 'ok' | 'failed' | 'skipped') => void
+  ): Promise<LaufErgebnis | null> => {
       const bestandJetzt = await ladeBestand();
       const vorhandenJetzt = bestandJetzt[code] ?? 0;
       const zielJetzt = ziele[code] ?? 250;
@@ -246,7 +265,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         system:
           'Du erzeugst Lernwortschatz als JSON und hältst dich EXAKT an das geforderte Schema. Keine Duplikate, keine Eigennamen, häufige Wörter zuerst.',
         user: baueWortschatzPrompt({ sprache: code, anzahl, thema, bekannte }),
-        maxTokens: 16000,
+        maxTokens: 32768,
       });
 
       const vorhandenSchluessel = new Set(
@@ -270,10 +289,11 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       const laufSchluessel = new Set<string>();
       const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0 };
 
-      // 16000 statt 8000: 50 reiche Einträge (Thai-Schrift, Silben, Beispiele)
+      // 32700 statt 8000: 50 reiche Einträge (Thai-Schrift, Silben, Beispiele)
       // sprengten das alte Limit — die Antwort brach mitten im JSON ab
-      // („Unterminated string", erster Kettenlauf 15.09.). 16000 passt auch
-      // unter gpt-4o-minis Ausgabe-Cap von 16384.
+      // („Unterminated string", erster Kettenlauf 15.09.). Die Nutzerwahl
+      // (gemini-3.8-flash, gpt-5.6-luna) trägt Ausgabe-Caps weit darüber;
+      // der Saldo ist eine Obergrenze pro Aufruf, kein Verbrauchsziel.
       const { woerter, abgeschnitten } = listeAusAntwort(antwort.text);
       if (abgeschnitten) resultat.gerettet = woerter.length;
 
@@ -283,12 +303,15 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         const schluessel = vocabSchluessel(term, code);
         if (!term || vorhandenSchluessel.has(schluessel) || laufSchluessel.has(schluessel)) {
           resultat.duplikate += 1;
+          tick(term, 'skipped');
           continue;
         }
         const eintrag: VocabEntry = {
           ...(kandidat as unknown as VocabEntry),
           id: `ki-${code}-${kurzHash(schluessel)}`,
-          language: code,
+          // 'de' trägt die Laufzeit längst (de-Pool; vocab-schema liest die
+          // Sprache als string) — nur der Typ kennt es noch nicht: Cast.
+          language: code as VocabEntry['language'],
           concept: `ki-${code}-${kurzHash(schluessel)}`,
           register: (kandidat.register as VocabEntry['register']) ?? 'neutral',
           isConcrete: Boolean(kandidat.isConcrete),
@@ -299,6 +322,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         const pruefung = pruefeVocabDoc(eintrag);
         if (!pruefung.ok) {
           resultat.aussortiert += 1;
+          tick(term, 'skipped');
           continue;
         }
         // Phase 2, Schritt 5: der ANDERE Anbieter prüft Übersetzung,
@@ -323,11 +347,13 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           resultat.einfachGeprueft += 1;
         } else {
           resultat.kreuzAbgelehnt += 1;
+          tick(term, 'failed');
           continue;
         }
         await studioRequest('/stage', { kind: 'vocabulary', document: { ...eintrag } });
         laufSchluessel.add(schluessel);
         resultat.erzeugt += 1;
+        tick(term, 'ok');
       }
       return resultat;
   }, [ziele, paket, thema, ladeBestand]);
@@ -336,6 +362,25 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     setRunning(true);
     setMeldung('');
     setPhase('idle');
+    setFortschritt({
+      total: Math.max(1, gesamtMenge), processed: 0, ok: 0, failed: 0, skipped: 0,
+      current: null, errors: [], done: false, cancelled: false,
+    });
+    const tick = (term: string, ausgang: 'ok' | 'failed' | 'skipped') => {
+      setFortschritt((alt) => {
+        if (!alt) return alt;
+        const processed = alt.processed + 1;
+        return {
+          ...alt,
+          processed,
+          total: Math.max(alt.total, processed),
+          current: term,
+          ok: alt.ok + (ausgang === 'ok' ? 1 : 0),
+          failed: alt.failed + (ausgang === 'failed' ? 1 : 0),
+          skipped: alt.skipped + (ausgang === 'skipped' ? 1 : 0),
+        };
+      });
+    };
     try {
       const codes = alleSprachen ? [...aktiveSprachen] : [sprache];
       const teile: Partial<Record<string, LaufErgebnis>> = {};
@@ -344,7 +389,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       let uebersprungen = 0;
       for (const code of codes) {
         try {
-          const teil = await laufeFuer(code);
+          const teil = await laufeFuer(code, tick);
           if (!teil) {
             uebersprungen += 1;
             continue;
@@ -394,9 +439,10 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     } catch (error) {
       setMeldung(error instanceof Error ? error.message : String(error));
     } finally {
+      setFortschritt((alt) => (alt ? { ...alt, done: true, current: null } : alt));
       setRunning(false);
     }
-  }, [alleSprachen, aktiveSprachen, sprache, laufeFuer, ladeBestand, onFinished]);
+  }, [alleSprachen, aktiveSprachen, sprache, gesamtMenge, laufeFuer, ladeBestand, onFinished]);
 
   const prueferAnbieter: ProviderId = wahl.provider === 'gemini' ? 'chatgpt' : 'gemini';
   const pruefModellFuer = (anbieter: ProviderId) =>
@@ -487,9 +533,30 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {SPRACHEN.map(({ code, label }) => `${label} ${bestand?.[code] ?? '…'}`).join(' · ')}
-        {' · '}
-        {`Deutsch ${bestand?.de ?? '…'}`}
       </ThemedText>
+
+      {alleSprachen && (
+        <View style={styles.field}>
+          <ThemedText type="small">Ziel je Sprache (im Alle-Sprachen-Lauf)</ThemedText>
+          <View style={styles.zeile}>
+            {SPRACHEN.map(({ code, label }) => (
+              <View key={code} style={styles.zielFeld}>
+                <TextInput
+                  value={String(ziele[code] ?? 250)}
+                  onChangeText={(text) => {
+                    const zahl = Number.parseInt(text.replace(/[^0-9]/g, ''), 10);
+                    if (Number.isFinite(zahl) && zahl > 0) zielSetzenFuer(code, zahl);
+                  }}
+                  keyboardType="number-pad"
+                  accessibilityLabel={`Ziel für ${label}`}
+                  style={[styles.input, styles.kurz, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
+                />
+                <ThemedText type="small" themeColor="textSecondary">{label}</ThemedText>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
 
       <View style={styles.field}>
         <ThemedText type="small">Paketgröße (Wörter je Lauf)</ThemedText>
@@ -595,6 +662,8 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         </ThemedView>
       )}
 
+      {fortschritt ? <ProgressPanel progress={fortschritt} /> : null}
+
       {ergebnis ? (
         <ThemedText type="smallBold" accessibilityLiveRegion="polite">
           {`Ergebnis: ${ergebnis.erzeugt} erzeugt · ${ergebnis.kreuzGeprueft} kreuzgeprüft · ${ergebnis.einfachGeprueft} einfach geprüft · ${ergebnis.kreuzAbgelehnt} abgelehnt · ${ergebnis.duplikate} Duplikate verworfen · ${ergebnis.aussortiert} aussortiert.`}
@@ -644,6 +713,10 @@ const styles = StyleSheet.create({
   },
   kurz: {
     width: 90,
+  },
+  zielFeld: {
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   field: {
     gap: Spacing.one,
