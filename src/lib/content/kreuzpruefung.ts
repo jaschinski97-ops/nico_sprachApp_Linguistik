@@ -41,10 +41,13 @@ const URTEILS_FORMAT = [
 ].join('\n');
 
 /**
- * Prüfprompt für einen Vokabel-Eintrag. Die Stufe ist optional — seit die
- * Wortschatz-Ziele ohne CEFR-Stufe laufen, prüft Punkt 5 dann die Passung
- * (Häufigkeit/Alltagsnähe) statt einer festen Stufe.
+ * Wie viele Einträge EIN Prüfaufruf auf einmal bekommt (15.09.: die
+ * Einzelprüfung machte aus 200 Wörtern 200 nacheinander laufende Aufrufe
+ * an ein Reasoning-Modell — das war der Zeitfresser des ersten Kettenlaufs).
  */
+export const PRUEF_BATCH_GROESSE = 10;
+
+/** Prüfprompt für EINEN Eintrag (Einzelfall/Tests — der Lauf nutzt den Batch). */
 export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe?: string): string {
   return [
     'Prüfe diesen Lern-Vokabeleintrag kritisch in fünf Punkten:',
@@ -60,6 +63,30 @@ export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe?: string): strin
     JSON.stringify(eintrag, null, 2),
     '',
     URTEILS_FORMAT,
+  ].join('\n');
+}
+
+/** Prüfprompt für ein GANZES Paket — ein Aufruf, ein Urteil je Eintrag. */
+export function baueVocabBatchPruefPrompt(eintraege: VocabEntry[], stufe?: string): string {
+  const punkte = [
+    'Prüfe diese Lern-Vokabeleinträge kritisch — JEDEN in denselben fünf Punkten:',
+    '1. Übersetzung: stimmt die deutsche Bedeutung zum Begriff (und umgekehrt)?',
+    `2. Grammatik/Rechtschreibung in der Zielsprache und im Deutschen.`,
+    `3. Umschrift/Ton/Betonung: ${eintraege[0]?.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintraege[0]?.language === 'es' ? 'ist die Silbentrennung mit korrekter Betonungssilbe?' : 'ist die Lautschrift plausibel?'}`,
+    '4. Natürlichkeit: klingt der Beispielsatz wie ein echter Satz der Zielsprache?',
+    stufe
+      ? `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`
+      : '5. Passung: ist das Wort ein grundlegender, hochfrequenter Alltagsbegriff (ohne feste Niveaustufe)?',
+  ];
+  return [
+    ...punkte,
+    '',
+    'Die Einträge (nummeriert):',
+    JSON.stringify(eintraege.map((eintrag, index) => ({ index, eintrag })), null, 2),
+    '',
+    'Antworte NUR mit JSON — GENAU EIN Urteil je index, in derselben Reihenfolge:',
+    '{ "urteile": [ { "index": 0, "urteil": "bestehen" | "mangel", "gruende": ["…"] }, … ] }',
+    '"bestehen" nur, wenn ALLE Punkte für diesen Eintrag stimmen. Jeder Mangel bekommt einen kurzen Grund.',
   ].join('\n');
 }
 
@@ -80,15 +107,52 @@ export function parseUrteil(roh: string): KreuzUrteil {
   return { bestanden: geparst.urteil === 'bestehen', gruende };
 }
 
-/** Ein Prüf-Durchlauf: Prompt an einen Client, Urteil parsen. */
-async function einmal(client: TextClient, prompt: string): Promise<KreuzUrteil> {
+const KEIN_URTEIL: KreuzUrteil = {
+  bestanden: false,
+  gruende: ['Kein Urteil für diesen Eintrag erhalten.'],
+};
+
+/**
+ * Urteile für ein GANZES Paket lesen. Versteht das Batch-Format
+ * (`{ "urteile": [ … ] }`) und — tolerant, etwa wenn ein Modell bei einem
+ * Eintrag in die Einzelform rutscht — das Einzelurteil. Fehlende Indizes
+ * werden NICHT erraten: Sie gelten als Mangel (fail-closed).
+ */
+export function parseUrteile(roh: string, anzahl: number): KreuzUrteil[] {
+  const json = roh.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
+  const geparst = JSON.parse(json) as { urteile?: unknown };
+  if (!Array.isArray(geparst.urteile)) {
+    // Einzelform: ein Eintrag im Paket, das Modell antwortete wie gehabt.
+    if (anzahl === 1) return [parseUrteil(json)];
+    throw Error('Prüfer-Antwort enthält keine "urteile"-Liste.');
+  }
+  const jeIndex = new Map<number, KreuzUrteil>();
+  let position = 0;
+  for (const rohUrteil of geparst.urteile) {
+    if (typeof rohUrteil !== 'object' || rohUrteil === null) continue;
+    const eintrag = rohUrteil as Record<string, unknown>;
+    const index = typeof eintrag.index === 'number' ? eintrag.index : position;
+    if (index < 0 || index >= anzahl || jeIndex.has(index)) continue;
+    jeIndex.set(index, {
+      bestanden: eintrag.urteil === 'bestehen',
+      gruende: Array.isArray(eintrag.gruende)
+        ? eintrag.gruende.filter((g): g is string => typeof g === 'string')
+        : [],
+    });
+    position += 1;
+  }
+  return Array.from({ length: anzahl }, (_, index) => jeIndex.get(index) ?? { ...KEIN_URTEIL });
+}
+
+/** Ein Prüf-Durchlauf für ein Paket: Prompt an einen Client, Urteile parsen. */
+async function einmalPaket(client: TextClient, prompt: string, anzahl: number): Promise<KreuzUrteil[]> {
   const antwort = await client.complete({
     system:
       'Du bist ein strenger Lektor für Lernmaterialien. Du prüfst inhaltlich und sprachlich und antwortest ausschließlich mit dem geforderten Urteils-JSON.',
     user: prompt,
-    maxTokens: 2000,
+    maxTokens: 4000,
   });
-  return parseUrteil(antwort.text);
+  return parseUrteile(antwort.text, anzahl);
 }
 
 export type KreuzResultat = {
@@ -99,7 +163,55 @@ export type KreuzResultat = {
   gruende: string[];
 };
 
-/** Vokabel-Eintrag kreuzprüfen; bei Selbstprüfung bleiben zwei Durchläufe. */
+/**
+ * Ein GANZES Paket kreuzprüfen — ein Prüfaufruf je Runde statt einem je
+ * Eintrag. Semantik je Eintrag identisch zum früheren Einzelweg: echte
+ * Kreuzprüfung genügt ein Durchlauf; bei der Selbstprüfung (nur ein
+ * Schlüssel) bekommen die Bestandenen eine ZWEITE Runde — und zwar nur
+ * sie, nicht das ganze Paket noch einmal.
+ */
+export async function pruefeVocabKreuzBatch(
+  eintraege: VocabEntry[],
+  stufe: string | undefined,
+  erzeuger: ProviderId,
+  hatSchluessel: (anbieter: ProviderId) => boolean,
+  clientFuer: (anbieter: ProviderId) => TextClient
+): Promise<KreuzResultat[]> {
+  if (eintraege.length === 0) return [];
+  const { anbieter, selbstpruefung } = gegenStueck(erzeuger, hatSchluessel);
+  const prompt = baueVocabBatchPruefPrompt(eintraege, stufe);
+  const erst = await einmalPaket(clientFuer(anbieter), prompt, eintraege.length);
+
+  const resultate: KreuzResultat[] = eintraege.map((_, index) => {
+    const urteil = erst[index];
+    if (urteil.bestanden) {
+      return { geprueft: !selbstpruefung, kreuz: !selbstpruefung, urteile: [urteil], gruende: [] };
+    }
+    return { geprueft: false, kreuz: !selbstpruefung, urteile: [urteil], gruende: urteil.gruende };
+  });
+
+  // Selbstprüfung: nur die Bestandenen der ersten Runde laufen noch einmal.
+  const durchgelassen = resultate
+    .map((resultat, index) => ({ resultat, index }))
+    .filter(({ resultat }) => resultat.urteile[0].bestanden);
+  if (selbstpruefung && durchgelassen.length > 0) {
+    const wiederholung = await einmalPaket(
+      clientFuer(anbieter),
+      baueVocabBatchPruefPrompt(durchgelassen.map(({ index }) => eintraege[index]), stufe),
+      durchgelassen.length
+    );
+    for (const [position, { resultat, index }] of durchgelassen.entries()) {
+      const zweites = wiederholung[position];
+      resultat.urteile = [resultat.urteile[0], zweites];
+      if (!zweites.bestanden) {
+        resultat.gruende = zweites.gruende;
+      }
+    }
+  }
+  return resultate;
+}
+
+/** Vokabel-Eintrag kreuzprüfen (Einzelfall — der Lauf nutzt die Batch-Funktion). */
 export async function pruefeVocabKreuz(
   eintrag: VocabEntry,
   stufe: string | undefined,
@@ -107,34 +219,14 @@ export async function pruefeVocabKreuz(
   hatSchluessel: (anbieter: ProviderId) => boolean,
   clientFuer: (anbieter: ProviderId) => TextClient
 ): Promise<KreuzResultat> {
-  const { anbieter, selbstpruefung } = gegenStueck(erzeuger, hatSchluessel);
-  const prompt = baueVocabPruefPrompt(eintrag, stufe);
-  const erst = await einmal(clientFuer(anbieter), prompt);
-  if (!erst.bestanden) {
-    return { geprueft: false, kreuz: !selbstpruefung, urteile: [erst], gruende: erst.gruende };
-  }
-  // Bestehen: bei echter Kreuzprüfung genügt ein Durchlauf; bei der
-  // Selbstprüfung verlangt die Regel den ZWEITEN Durchlauf desselben
-  // Anbieters — erst dann gilt „einfach geprüft".
-  const zweiter = await einmal(clientFuer(anbieter), prompt);
-  const beide = [erst, zweiter];
-  if (!zweiter.bestanden) {
-    return {
-      geprueft: false,
-      kreuz: !selbstpruefung,
-      urteile: beide,
-      gruende: zweiter.gruende,
-    };
-  }
-  // Semantik von `geprueft`: VOLL kreuzgeprüft. Die bestandene Selbstprüfung
-  // ist nur „einfach geprüft" — der Aufrufer markiert den Eintrag dann mit
-  // sourceVerified: false und lässt die Pipeline ihn als unchecked führen.
-  return {
-    geprueft: !selbstpruefung,
-    kreuz: !selbstpruefung,
-    urteile: beide,
-    gruende: [],
-  };
+  const [resultat] = await pruefeVocabKreuzBatch(
+    [eintrag],
+    stufe,
+    erzeuger,
+    hatSchluessel,
+    clientFuer
+  );
+  return resultat;
 }
 
 /** Prüfer als „Provider"-Alias für Anzeigen — der Helper zählt als ChatGPT. */

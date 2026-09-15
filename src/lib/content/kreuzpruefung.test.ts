@@ -1,6 +1,6 @@
 import type { VocabEntry } from '@/data/vocab-types';
 
-import { baueVocabPruefPrompt, gegenStueck, parseUrteil, pruefeVocabKreuz } from './kreuzpruefung';
+import { baueVocabPruefPrompt, gegenStueck, parseUrteil, parseUrteile, pruefeVocabKreuz, pruefeVocabKreuzBatch } from './kreuzpruefung';
 
 const vocab = {
   id: 'ki-th-abc12345',
@@ -74,6 +74,84 @@ describe('baueVocabPruefPrompt — Stufe optional', () => {
     const prompt = baueVocabPruefPrompt(vocab, undefined);
     expect(prompt).toContain('hochfrequenter Alltagsbegriff');
     expect(prompt).not.toContain('Stufe undefined');
+  });
+});
+
+describe('parseUrteile — Paket-Urteile', () => {
+  it('liest die Batch-Form je index und ergänzt Fehlende als Mangel', () => {
+    const roh = JSON.stringify({
+      urteile: [
+        { index: 1, urteil: 'bestehen', gruende: [] },
+        { index: 0, urteil: 'mangel', gruende: ['Ton falsch'] },
+      ],
+    });
+    const urteile = parseUrteile(roh, 3);
+    expect(urteile[0].bestanden).toBe(false);
+    expect(urteile[1].bestanden).toBe(true);
+    // Index 2 fehlt in der Antwort — fail-closed, nicht erraten.
+    expect(urteile[2].bestanden).toBe(false);
+    expect(urteile[2].gruende[0]).toMatch(/Kein Urteil/);
+  });
+
+  it('versteht die Einzelform als Paket von eins', () => {
+    const urteile = parseUrteil.length >= 0 ? parseUrteile('{"urteil":"bestehen","gruende":[]}', 1) : [];
+    expect(urteile).toHaveLength(1);
+    expect(urteile[0].bestanden).toBe(true);
+  });
+});
+
+describe('pruefeVocabKreuzBatch — Paketprüfung', () => {
+  const zweit = { ...vocab, term: 'zweiter Begriff' } as unknown as VocabEntry;
+  const batchClient = (urteile: unknown) => () => ({
+    provider: 'gemini' as const,
+    model: 'test',
+    complete: async () => ({ text: JSON.stringify({ urteile }), model: 'test' }),
+  });
+
+  it('prüft ein Paket mit gemischten Urteilen in EINEM Aufruf', async () => {
+    let aufrufe = 0;
+    const resultate = await pruefeVocabKreuzBatch(
+      [vocab, zweit], undefined, 'gemini', keyImmer(),
+      () => {
+        aufrufe += 1;
+        return batchClient([
+          { index: 0, urteil: 'bestehen', gruende: [] },
+          { index: 1, urteil: 'mangel', gruende: ['Übersetzung schief'] },
+        ])() as never;
+      }
+    );
+    expect(aufrufe).toBe(1);
+    expect(resultate[0].geprueft).toBe(true);
+    expect(resultate[1].geprueft).toBe(false);
+    expect(resultate[1].gruende).toContain('Übersetzung schief');
+  });
+
+  it('Selbstprüfung: die zweite Runde läuft nur über die Bestandenen', async () => {
+    let aufrufe = 0;
+    const resultate = await pruefeVocabKreuzBatch(
+      [vocab, zweit], undefined, 'gemini', (p) => p !== 'chatgpt',
+      () => {
+        aufrufe += 1;
+        // Beide Runden bestehen beide Einträge — die zweite Runde geht über
+        // das Paket der Bestandenen (hier: beide), also GENUG zwei Aufrufe.
+        return batchClient([
+          { index: 0, urteil: 'bestehen', gruende: [] },
+          { index: 1, urteil: 'bestehen', gruende: [] },
+        ])() as never;
+      }
+    );
+    expect(aufrufe).toBe(2);
+    expect(resultate.every((r) => r.kreuz === false && r.geprueft === false)).toBe(true);
+    expect(resultate.every((r) => r.urteile.length === 2)).toBe(true);
+  });
+
+  it('die alte Einzelfunktion leitet weiter und bleibt kompatibel', async () => {
+    const resultat = await pruefeVocabKreuz(
+      vocab, undefined, 'gemini', keyImmer(),
+      () => batchClient([{ index: 0, urteil: 'mangel', gruende: ['Feld fehlt'] }])() as never
+    );
+    expect(resultat.geprueft).toBe(false);
+    expect(resultat.gruende).toContain('Feld fehlt');
   });
 });
 

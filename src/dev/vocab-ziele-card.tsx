@@ -19,7 +19,8 @@ import {
 } from '@/lib/providers/settings';
 import { PROVIDER_INFO, type ProviderId } from '@/lib/providers/types';
 import {
-  pruefeVocabKreuz,
+  pruefeVocabKreuzBatch,
+  PRUEF_BATCH_GROESSE,
   schluesselPruefer,
 } from '@/lib/content/kreuzpruefung';
 import { loadApiKey } from '@/lib/api-key';
@@ -297,6 +298,9 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       const { woerter, abgeschnitten } = listeAusAntwort(antwort.text);
       if (abgeschnitten) resultat.gerettet = woerter.length;
 
+      // Phase A — sammeln: Duplikate und Schemamängel fliegen sofort raus,
+      // die übrigen Kandidaten gehen als PAKET in die Kreuzprüfung.
+      const kandidaten: { eintrag: VocabEntry; schluessel: string }[] = [];
       for (const rohEintrag of woerter) {
         const kandidat = rohEintrag as Record<string, unknown>;
         const term = String(kandidat.term ?? '');
@@ -325,35 +329,46 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           tick(term, 'skipped');
           continue;
         }
-        // Phase 2, Schritt 5: der ANDERE Anbieter prüft Übersetzung,
-        // Grammatik, Umschrift/Ton/Betonung, Natürlichkeit und Passung. Nur
-        // Kreuzbestandenes gilt als „geprüft“; ohne zweiten Schlüssel läuft
-        // die Selbstprüfung (zweiter Durchlauf) und der Eintrag bleibt
-        // „einfach geprüft“ — durchgefallene Einträge werden verworfen.
-        const kreuz = await pruefeVocabKreuz(
-          eintrag,
+        kandidaten.push({ eintrag, schluessel });
+      }
+
+      // Phase B — Phase 2, Schritt 5 als PAKETprüfung (15.09.): EIN
+      // Prüfaufruf je ~10 Einträge statt einem je Wort; der erste Kettenlauf
+      // verbrachte die Zeit mit 200 nacheinander laufenden Reasoning-Aufrufen.
+      // Der ANDERE Anbieter prüft Übersetzung, Grammatik, Umschrift/Ton,
+      // Natürlichkeit und Passung; ohne zweiten Schlüssel läuft die
+      // Selbstprüfung (zweite Runde nur über die Bestandenen) und der
+      // Eintrag bleibt „einfach geprüft“ — Durchgefallene werden verworfen.
+      for (let start = 0; start < kandidaten.length; start += PRUEF_BATCH_GROESSE) {
+        const paket = kandidaten.slice(start, start + PRUEF_BATCH_GROESSE);
+        const resultate = await pruefeVocabKreuzBatch(
+          paket.map((kandidat) => kandidat.eintrag),
           undefined,
           provider,
           hatSchluessel,
           clientFuer
         );
-        if (kreuz.kreuz && kreuz.geprueft) {
-          eintrag.sourceVerified = true;
-          eintrag.verificationNote = `KI-Kreuzprüfung bestanden (${provider} erzeugt, zweiter Anbieter geprüft).`;
-          resultat.kreuzGeprueft += 1;
-        } else if (kreuz.geprueft || kreuz.urteile.every((urteil) => urteil.bestanden)) {
-          eintrag.verificationNote =
-            'KI-Erzeugung, einfach geprüft (zweiter Durchlauf desselben Anbieters bestanden).';
-          resultat.einfachGeprueft += 1;
-        } else {
-          resultat.kreuzAbgelehnt += 1;
-          tick(term, 'failed');
-          continue;
+        for (const [position, kandidat] of paket.entries()) {
+          const kreuz = resultate[position];
+          const eintrag = kandidat.eintrag;
+          if (kreuz.kreuz && kreuz.geprueft) {
+            eintrag.sourceVerified = true;
+            eintrag.verificationNote = `KI-Kreuzprüfung bestanden (${provider} erzeugt, zweiter Anbieter geprüft).`;
+            resultat.kreuzGeprueft += 1;
+          } else if (kreuz.geprueft || kreuz.urteile.every((urteil) => urteil.bestanden)) {
+            eintrag.verificationNote =
+              'KI-Erzeugung, einfach geprüft (zweiter Durchlauf desselben Anbieters bestanden).';
+            resultat.einfachGeprueft += 1;
+          } else {
+            resultat.kreuzAbgelehnt += 1;
+            tick(eintrag.term, 'failed');
+            continue;
+          }
+          await studioRequest('/stage', { kind: 'vocabulary', document: { ...eintrag } });
+          laufSchluessel.add(kandidat.schluessel);
+          resultat.erzeugt += 1;
+          tick(eintrag.term, 'ok');
         }
-        await studioRequest('/stage', { kind: 'vocabulary', document: { ...eintrag } });
-        laufSchluessel.add(schluessel);
-        resultat.erzeugt += 1;
-        tick(term, 'ok');
       }
       return resultat;
   }, [ziele, paket, thema, ladeBestand]);
