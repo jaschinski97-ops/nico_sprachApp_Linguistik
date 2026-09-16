@@ -123,14 +123,50 @@ const KEIN_URTEIL: KreuzUrteil = {
 };
 
 /**
+ * Rettung für verkürzte Prüfer-Antworten: vom letzten vollständigen Urteil-
+ * Objekt aus das Array schließen und parsen. Liefert die geretteten Roh-
+ * Urteile oder null, wenn nichts Vergleichbares übrig bleibt.
+ */
+function retteUrteile(text: string): unknown[] | null {
+  const start = text.indexOf('[');
+  if (start === -1) return null;
+  let versuche = 0;
+  for (
+    let ende = text.lastIndexOf('}');
+    ende > start && versuche < 40;
+    ende = text.lastIndexOf('}', ende - 1)
+  ) {
+    versuche += 1;
+    try {
+      const geparst = JSON.parse(
+        text.slice(start, ende + 1).trimEnd().replace(/,\s*$/, '') + ']'
+      ) as unknown;
+      if (Array.isArray(geparst) && geparst.length > 0) return geparst;
+    } catch {
+      // Das '}' gehörte wohl in ein halbes Urteil — das vorherige versuchen.
+    }
+  }
+  return null;
+}
+
+/**
  * Urteile für ein GANZES Paket lesen. Versteht das Batch-Format
  * (`{ "urteile": [ … ] }`) und — tolerant, etwa wenn ein Modell bei einem
- * Eintrag in die Einzelform rutscht — das Einzelurteil. Fehlende Indizes
- * werden NICHT erraten: Sie gelten als Mangel (fail-closed).
+ * Eintrag in die Einzelform rutscht — das Einzelurteil. Kaputte/abgebrochene
+ * Antworten werden am letzten vollständigen Urteil GERETTET (dieselbe Regel
+ * wie bei der Erzeugung — bezahlte Antworten nicht wegwerfen). Fehlende
+ * Indizes werden NICHT erraten: Sie gelten als Mangel (fail-closed).
  */
 export function parseUrteile(roh: string, anzahl: number): KreuzUrteil[] {
   const json = roh.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '');
-  const geparst = JSON.parse(json) as { urteile?: unknown };
+  let geparst: { urteile?: unknown };
+  try {
+    geparst = JSON.parse(json) as { urteile?: unknown };
+  } catch (fehler) {
+    const gerettet = retteUrteile(json);
+    if (!gerettet) throw fehler;
+    geparst = { urteile: gerettet };
+  }
   if (!Array.isArray(geparst.urteile)) {
     // Einzelform: ein Eintrag im Paket, das Modell antwortete wie gehabt.
     if (anzahl === 1) return [parseUrteil(json)];
@@ -165,6 +201,19 @@ async function einmalPaket(client: TextClient, prompt: string, anzahl: number): 
   return parseUrteile(antwort.text, anzahl);
 }
 
+/** Durchlauf mit EINER Wiederholung — kaputte Antworten (abgebrochenes JSON) passieren. */
+async function einmalPaketMitWiederholung(
+  client: TextClient,
+  prompt: string,
+  anzahl: number
+): Promise<KreuzUrteil[]> {
+  try {
+    return await einmalPaket(client, prompt, anzahl);
+  } catch {
+    return await einmalPaket(client, prompt, anzahl);
+  }
+}
+
 export type KreuzResultat = {
   geprueft: boolean;
   /** true = echte Kreuzprüfung (zweiter Anbieter), false = Selbstprüfung. */
@@ -191,7 +240,7 @@ export async function pruefeVocabKreuzBatch(
   if (eintraege.length === 0) return [];
   const { anbieter, selbstpruefung } = gegenStueck(erzeuger, hatSchluessel, prueferWahl);
   const prompt = baueVocabBatchPruefPrompt(eintraege, stufe);
-  const erst = await einmalPaket(clientFuer(anbieter), prompt, eintraege.length);
+  const erst = await einmalPaketMitWiederholung(clientFuer(anbieter), prompt, eintraege.length);
 
   const resultate: KreuzResultat[] = eintraege.map((_, index) => {
     const urteil = erst[index];
@@ -206,7 +255,7 @@ export async function pruefeVocabKreuzBatch(
     .map((resultat, index) => ({ resultat, index }))
     .filter(({ resultat }) => resultat.urteile[0].bestanden);
   if (selbstpruefung && durchgelassen.length > 0) {
-    const wiederholung = await einmalPaket(
+    const wiederholung = await einmalPaketMitWiederholung(
       clientFuer(anbieter),
       baueVocabBatchPruefPrompt(durchgelassen.map(({ index }) => eintraege[index]), stufe),
       durchgelassen.length

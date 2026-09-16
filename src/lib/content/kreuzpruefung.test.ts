@@ -122,6 +122,18 @@ describe('pruefeVocabKreuzBatch — Paketprüfung', () => {
     complete: async () => ({ text: JSON.stringify({ urteile }), model: 'test' }),
   });
 
+  it('rettet ein mittig abgebrochenes Paket und füllt Fehlende fail-closed auf', () => {
+    // Exakt der Lauf-Fehler vom 15.09.: „Unterminated string" in der PRÜF-
+    // Antwort — die vollständigen Urteile müssen trotzdem verwertet werden.
+    const roh =
+      '{"urteile": [{"index": 0, "urteil": "bestehen", "gruende": []}, {"index": 1, "urteil": "mangel", "gruende": ["Ton falsch"]}, {"index": 2, "ur';
+    const urteile = parseUrteile(roh, 3);
+    expect(urteile[0].bestanden).toBe(true);
+    expect(urteile[1].bestanden).toBe(false);
+    // Das halbe dritte Urteil ist weg → fail-closed, nicht geraten.
+    expect(urteile[2].gruende[0]).toMatch(/Kein Urteil/);
+  });
+
   it('prüft ein Paket mit gemischten Urteilen in EINEM Aufruf', async () => {
     let aufrufe = 0;
     const resultate = await pruefeVocabKreuzBatch(
@@ -157,6 +169,26 @@ describe('pruefeVocabKreuzBatch — Paketprüfung', () => {
     expect(aufrufe).toBe(2);
     expect(resultate.every((r) => r.kreuz === false && r.geprueft === false)).toBe(true);
     expect(resultate.every((r) => r.urteile.length === 2)).toBe(true);
+  });
+
+  it('wiederholt das Paket einmal, wenn die erste Prüf-Antwort kaputt ist', async () => {
+    let aufrufe = 0;
+    const resultate = await pruefeVocabKreuzBatch(
+      [vocab], undefined, 'gemini', keyImmer(),
+      () => ({
+        provider: 'gemini' as const,
+        model: 'test',
+        complete: async () => {
+          aufrufe += 1;
+          if (aufrufe === 1) {
+            return { text: '{"urteile": [{"index": 0, "urteil": "bes', model: 'test' };
+          }
+          return { text: JSON.stringify({ urteile: [{ index: 0, urteil: 'bestehen', gruende: [] }] }), model: 'test' };
+        },
+      }) as never
+    );
+    expect(aufrufe).toBe(2);
+    expect(resultate[0].geprueft).toBe(true);
   });
 
   it('die alte Einzelfunktion leitet weiter und bleibt kompatibel', async () => {

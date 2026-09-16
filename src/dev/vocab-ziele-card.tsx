@@ -22,6 +22,7 @@ import {
   pruefeVocabKreuzBatch,
   PRUEF_BATCH_GROESSE,
   schluesselPruefer,
+  type KreuzResultat,
 } from '@/lib/content/kreuzpruefung';
 import { loadApiKey } from '@/lib/api-key';
 import { estimateRunCost } from './run-cost';
@@ -90,6 +91,8 @@ type LaufErgebnis = {
   aussortiert: number;
   /** Einträge, die aus einer am Token-Limit abgeschnittenen Antwort gerettet wurden. */
   gerettet: number;
+  /** Weiche Fehler (z. B. ein kaputtes Prüfpaket) — der Lauf läuft weiter. */
+  fehler: string[];
 };
 
 /** Sieben Zeichen stabiler Hash für KI-Vokabel-IDs. */
@@ -288,7 +291,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         // Ohne Helper bleibt der Vergleich beim lokalen Bestand.
       }
       const laufSchluessel = new Set<string>();
-      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0 };
+      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0, fehler: [] };
 
       // 32700 statt 8000: 50 reiche Einträge (Thai-Schrift, Silben, Beispiele)
       // sprengten das alte Limit — die Antwort brach mitten im JSON ab
@@ -341,16 +344,28 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       // Eintrag bleibt „einfach geprüft“ — Durchgefallene werden verworfen.
       for (let start = 0; start < kandidaten.length; start += PRUEF_BATCH_GROESSE) {
         const paket = kandidaten.slice(start, start + PRUEF_BATCH_GROESSE);
-        const resultate = await pruefeVocabKreuzBatch(
-          paket.map((kandidat) => kandidat.eintrag),
-          undefined,
-          provider,
-          hatSchluessel,
-          clientFuer,
-          // Nutzerwunsch 15.09.: hinterlegter Prüf-Anbieter schlägt die
-          // Kreuzregel; undefined lässt die Regel „der jeweils andere“ laufen.
-          checkProvider
-        );
+        let resultate: KreuzResultat[];
+        try {
+          resultate = await pruefeVocabKreuzBatch(
+            paket.map((kandidat) => kandidat.eintrag),
+            undefined,
+            provider,
+            hatSchluessel,
+            clientFuer,
+            // Nutzerwunsch 15.09.: hinterlegter Prüf-Anbieter schlägt die
+            // Kreuzregel; undefined lässt die Regel „der jeweils andere“ laufen.
+            checkProvider
+          );
+        } catch (error) {
+          // Ein kaputtes Paket (z. B. verstümmelte Prüf-Antwort) wirft NICHT
+          // den Sprachlauf — bereits geprüfte Pakete zählen und werden
+          // veröffentlicht, der Fehler steht in der Meldung.
+          const nummer = Math.floor(start / PRUEF_BATCH_GROESSE) + 1;
+          resultat.fehler.push(
+            `Prüfpaket ${nummer}: ${error instanceof Error ? error.message : String(error)}`
+          );
+          continue;
+        }
         for (const [position, kandidat] of paket.entries()) {
           const kreuz = resultate[position];
           const eintrag = kandidat.eintrag;
@@ -406,7 +421,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     try {
       const codes = alleSprachen ? [...aktiveSprachen] : [sprache];
       const teile: Partial<Record<string, LaufErgebnis>> = {};
-      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0 };
+      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0, fehler: [] };
       const fehler: string[] = [];
       let uebersprungen = 0;
       for (const code of codes) {
@@ -417,7 +432,10 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
             continue;
           }
           teile[code] = teil;
-          for (const feld of Object.keys(gesamt) as (keyof LaufErgebnis)[]) gesamt[feld] += teil[feld];
+          for (const feld of ['erzeugt', 'kreuzGeprueft', 'einfachGeprueft', 'kreuzAbgelehnt', 'duplikate', 'aussortiert', 'gerettet'] as const) {
+            gesamt[feld] += teil[feld];
+          }
+          gesamt.fehler.push(...teil.fehler);
         } catch (error) {
           // Ein Sprachlauf reißt die Kette nicht mit — der Fehler wird
           // gemeldet, die restlichen Sprachen laufen weiter.
@@ -440,7 +458,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           setMeldung(fehler[0]);
         } else if (teil) {
           setMeldung(
-            `Lauf beendet: ${teil.erzeugt} erzeugt · ${teil.kreuzGeprueft} kreuzgeprüft · ${teil.einfachGeprueft} einfach geprüft · ${teil.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${teil.duplikate} Duplikate verworfen · ${teil.aussortiert} aussortiert.${gerettetHinweis(teil.gerettet)}`
+            `Lauf beendet: ${teil.erzeugt} erzeugt · ${teil.kreuzGeprueft} kreuzgeprüft · ${teil.einfachGeprueft} einfach geprüft · ${teil.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${teil.duplikate} Duplikate verworfen · ${teil.aussortiert} aussortiert.${gerettetHinweis(teil.gerettet)}${teil.fehler.length > 0 ? ` Fehler: ${teil.fehler[0]}${teil.fehler.length > 1 ? ` (+${teil.fehler.length - 1} weitere)` : ''}` : ''}`
           );
         } else {
           setMeldung('Nichts zu erzeugen — das Ziel ist erreicht.');
@@ -452,7 +470,10 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         const zusatz = [
           uebersprungen > 0 ? `${uebersprungen} Sprache(n) mit erreichtem Ziel übersprungen` : '',
           gesamt.gerettet > 0 ? `${gesamt.gerettet} Einträge aus abgeschnittenen Antworten gerettet` : '',
-          fehler.length > 0 ? `Fehler: ${fehler[0]}${fehler.length > 1 ? ` (+${fehler.length - 1} weitere)` : ''}` : '',
+          gesamt.fehler.length > 0
+            ? `Fehler: ${gesamt.fehler[0]}${gesamt.fehler.length > 1 ? ` (+${gesamt.fehler.length - 1} weitere)` : ''}`
+            : '',
+          fehler.length > 0 ? `Sprachfehler: ${fehler[0]}${fehler.length > 1 ? ` (+${fehler.length - 1} weitere)` : ''}` : '',
         ].filter(Boolean).join(' · ');
         setMeldung(
           `Kettenlauf beendet: ${verteilung} — ${gesamt.erzeugt} erzeugt · ${gesamt.kreuzGeprueft} kreuzgeprüft · ${gesamt.einfachGeprueft} einfach geprüft · ${gesamt.kreuzAbgelehnt} abgelehnt · ${gesamt.duplikate} Duplikate verworfen · ${gesamt.aussortiert} aussortiert${zusatz ? ` · ${zusatz}` : ''}.`
