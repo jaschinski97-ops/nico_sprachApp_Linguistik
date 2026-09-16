@@ -22,11 +22,21 @@ import type { VocabEntry } from '@/data/vocab-types';
 
 export type KreuzUrteil = { bestanden: boolean; gruende: string[] };
 
-/** Der Prüfer-Anbieter: der jeweils andere; wenn dessen Schlüssel fehlt, Selbstprüfung. */
+/** Der Prüfer-Anbieter: der jeweils andere; wenn dessen Schlüssel fehlt, Selbstprüfung.
+ *
+ * `wahl` (Nutzerwunsch 15.09.) überschreibt die Kreuzregel: Wer einen
+ * Prüf-Anbieter hinterlegt hat, bekommt ihn — sofern dessen Schlüssel
+ * vorhanden ist. Wahl = Erzeuger gilt bewusst als Selbstprüfung (zwei
+ * Runden, „einfach geprüft"), denn dieselbe KI prüft sich dann selbst.
+ */
 export function gegenStueck(
   erzeuger: ProviderId,
-  hatSchluessel: (anbieter: ProviderId) => boolean
+  hatSchluessel: (anbieter: ProviderId) => boolean,
+  wahl?: ProviderId
 ): { anbieter: ProviderId; selbstpruefung: boolean } {
+  if (wahl && wahl !== 'chatgpt-helper' && hatSchluessel(wahl)) {
+    return { anbieter: wahl, selbstpruefung: wahl === erzeuger };
+  }
   const anderer: ProviderId = erzeuger === 'gemini' ? 'chatgpt' : 'gemini';
   if (erzeuger === 'chatgpt-helper' || hatSchluessel(anderer)) {
     return { anbieter: anderer, selbstpruefung: false };
@@ -175,10 +185,11 @@ export async function pruefeVocabKreuzBatch(
   stufe: string | undefined,
   erzeuger: ProviderId,
   hatSchluessel: (anbieter: ProviderId) => boolean,
-  clientFuer: (anbieter: ProviderId) => TextClient
+  clientFuer: (anbieter: ProviderId) => TextClient,
+  prueferWahl?: ProviderId
 ): Promise<KreuzResultat[]> {
   if (eintraege.length === 0) return [];
-  const { anbieter, selbstpruefung } = gegenStueck(erzeuger, hatSchluessel);
+  const { anbieter, selbstpruefung } = gegenStueck(erzeuger, hatSchluessel, prueferWahl);
   const prompt = baueVocabBatchPruefPrompt(eintraege, stufe);
   const erst = await einmalPaket(clientFuer(anbieter), prompt, eintraege.length);
 
@@ -217,14 +228,16 @@ export async function pruefeVocabKreuz(
   stufe: string | undefined,
   erzeuger: ProviderId,
   hatSchluessel: (anbieter: ProviderId) => boolean,
-  clientFuer: (anbieter: ProviderId) => TextClient
+  clientFuer: (anbieter: ProviderId) => TextClient,
+  prueferWahl?: ProviderId
 ): Promise<KreuzResultat> {
   const [resultat] = await pruefeVocabKreuzBatch(
     [eintrag],
     stufe,
     erzeuger,
     hatSchluessel,
-    clientFuer
+    clientFuer,
+    prueferWahl
   );
   return resultat;
 }

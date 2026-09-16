@@ -45,6 +45,20 @@ describe('gegenStück — der jeweils andere Anbieter prüft', () => {
     expect(anbieter).toBe('gemini');
     expect(selbstpruefung).toBe(true);
   });
+
+  it('NUTZERWAHL schlägt die Kreuzregel — und Wahl = Erzeuger ist Selbstprüfung', () => {
+    // Der Prüfer ist der HINTERLEGTE, nicht automatisch der andere.
+    const a = gegenStueck('gemini', keyImmer(), 'gemini');
+    expect(a.anbieter).toBe('gemini');
+    expect(a.selbstpruefung).toBe(true);
+    const b = gegenStueck('gemini', keyImmer(), 'chatgpt');
+    expect(b.anbieter).toBe('chatgpt');
+    expect(b.selbstpruefung).toBe(false);
+    // Fehlt dem gewählten Prüfer der Schlüssel, greift die Kreuzregel weiter.
+    const c = gegenStueck('gemini', (p) => p === 'gemini', 'chatgpt');
+    expect(c.anbieter).toBe('gemini');
+    expect(c.selbstpruefung).toBe(true);
+  });
 });
 
 describe('parseUrteil', ()=> {

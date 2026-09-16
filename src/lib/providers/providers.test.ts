@@ -223,6 +223,18 @@ describe('Wortschatz-Gruppe mit Prüfmodell (Nutzerwunsch 15.09.)', () => {
     expect(normalizeChoice({ provider: 'claude', model: 'm', checkModel: 'x' }, 'vocabulary').checkModel).toBeUndefined();
   });
 
+  it('trägt den gewählten Prüf-Anbieter durch und wirft unbekannte weg', () => {
+    // NUTZERWUNSCH 15.09.: Der Prüf-Anbieter ist wählbar statt automatisch
+    // „der jeweils andere“.
+    const gesetzt = normalizeChoice(
+      { provider: 'gemini', model: 'm', checkProvider: 'chatgpt' },
+      'vocabulary'
+    );
+    expect(gesetzt.checkProvider).toBe('chatgpt');
+    expect(normalizeChoice({ provider: 'gemini', model: 'm', checkProvider: 'claude' }, 'vocabulary').checkProvider).toBeUndefined();
+    expect(normalizeChoice({ provider: 'gemini', model: 'm' }, 'vocabulary').checkProvider).toBeUndefined();
+  });
+
   it('speichert das Prüfmodell dauerhaft', async () => {
     const store = new MemoryDataStore();
     await store.init();

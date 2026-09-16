@@ -235,7 +235,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       if (anzahl <= 0) return null;
 
       const settings = await loadGeneratorSettings();
-      const { provider, model, checkModel } = settings.vocabulary;
+      const { provider, model, checkModel, checkProvider } = settings.vocabulary;
       const apiKey = (await loadApiKey(provider)) ?? '';
       const client = createTextClient(provider, apiKey, model);
       // Kreuzprüfung vorbereiten (Phase 2, Schritt 5): der ANDERE Anbieter
@@ -346,7 +346,10 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           undefined,
           provider,
           hatSchluessel,
-          clientFuer
+          clientFuer,
+          // Nutzerwunsch 15.09.: hinterlegter Prüf-Anbieter schlägt die
+          // Kreuzregel; undefined lässt die Regel „der jeweils andere“ laufen.
+          checkProvider
         );
         for (const [position, kandidat] of paket.entries()) {
           const kreuz = resultate[position];
@@ -377,9 +380,13 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     setRunning(true);
     setMeldung('');
     setPhase('idle');
+    // Altes Ergebnis weg — sonst sieht es nach einem fehlgeschlagenen Vorlauf
+    // so aus, als hätte der NEUE Lauf nichts getan (Verwirrung 15.09.).
+    setErgebnis(null);
     setFortschritt({
       total: Math.max(1, gesamtMenge), processed: 0, ok: 0, failed: 0, skipped: 0,
-      current: null, errors: [], done: false, cancelled: false,
+      current: 'Modell schreibt das Paket — der erste Aufruf dauert gern 1–3 Minuten.',
+      errors: [], done: false, cancelled: false,
     });
     const tick = (term: string, ausgang: 'ok' | 'failed' | 'skipped') => {
       setFortschritt((alt) => {
@@ -459,7 +466,8 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     }
   }, [alleSprachen, aktiveSprachen, sprache, gesamtMenge, laufeFuer, ladeBestand, onFinished]);
 
-  const prueferAnbieter: ProviderId = wahl.provider === 'gemini' ? 'chatgpt' : 'gemini';
+  const prueferAnbieter: ProviderId =
+    wahl.checkProvider ?? (wahl.provider === 'gemini' ? 'chatgpt' : 'gemini');
   const pruefModellFuer = (anbieter: ProviderId) =>
     wahl.checkModel?.trim() || defaultModelFor(anbieter, 'text');
   const kostenSchätzung =
@@ -626,7 +634,41 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           accessibilityLabel="Modellname für die Wortschatz-Erzeugung"
           style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
-        <ThemedText type="small">KI — Prüfung (Modell des Prüfers)</ThemedText>
+        <ThemedText type="small">KI — Prüfung: Anbieter</ThemedText>
+        <View style={styles.zeile}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityState={{ selected: wahl.checkProvider === undefined }}
+            onPress={() => void wahlAendern({ checkProvider: undefined })}
+            disabled={running}
+            style={({ pressed }) => [
+              styles.chip,
+              pressed && styles.pressed,
+              wahl.checkProvider === undefined && { borderColor: theme.accent, borderWidth: 1 },
+            ]}>
+            <ThemedText type="small" themeColor={wahl.checkProvider === undefined ? 'text' : 'textSecondary'}>
+              Kreuzregel
+            </ThemedText>
+          </Pressable>
+          {providersForGroup('vocabulary').map((info) => (
+            <Pressable
+              key={info.id}
+              accessibilityRole="button"
+              accessibilityState={{ selected: wahl.checkProvider === info.id }}
+              onPress={() => void wahlAendern({ checkProvider: info.id })}
+              disabled={running}
+              style={({ pressed }) => [
+                styles.chip,
+                pressed && styles.pressed,
+                wahl.checkProvider === info.id && { borderColor: theme.accent, borderWidth: 1 },
+              ]}>
+              <ThemedText type="small" themeColor={wahl.checkProvider === info.id ? 'text' : 'textSecondary'}>
+                {info.label}
+              </ThemedText>
+            </Pressable>
+          ))}
+        </View>
+        <ThemedText type="small">KI — Prüfung: Modell des Prüfers</ThemedText>
         <TextInput
           value={wahl.checkModel ?? ''}
           onChangeText={(wert) => void wahlAendern({ checkModel: wert })}
@@ -639,9 +681,11 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
         <ThemedText type="small" themeColor="textSecondary">
-          Freitext, leer lassen nimmt den Vorschlag des Anbieters. Der Prüf-Anbieter
-          ist per Kreuzregel automatisch der jeweils andere ({prueferAnbieter}); fehlt
-          dessen Schlüssel, prüft der Erzeuger sich selbst zweimal („einfach geprüft“).
+          „Kreuzregel“ nimmt automatisch den jeweils anderen Anbieter ({prueferAnbieter});
+          ein eigener Anbieter und Modell wird GENAU so benutzt (Nutzerwunsch 15.09.).
+          Modell freitext, leer lassen nimmt den Vorschlag des Prüfer-Anbieters. Fehlt
+          der Schlüssel des Prüfers, prüft der Erzeuger sich selbst zweimal
+          („einfach geprüft“).
         </ThemedText>
       </View>
 

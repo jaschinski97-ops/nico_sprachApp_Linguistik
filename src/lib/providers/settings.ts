@@ -101,11 +101,19 @@ export type GeneratorChoice = {
   model: string;
   /**
    * Nur Wortschatz: das Modell der PRÜFUNG (Kreuzprüfung/Selbstprüfung).
-   * Freitext wie `model`. Der Prüf-ANBIETER bleibt bei der Regel „der jeweils
-   * andere Anbieter prüft" — bewusst nicht wählbar, die Unabhängigkeit ist
-   * der Sinn der Kreuzprüfung.
+   * Freitext wie `model`. Gehört zum bei `checkProvider` gewählten Prüf-
+   * Anbieter — ohne `checkProvider` zum jeweiligen anderen (Kreuzregel).
    */
   checkModel?: string;
+  /**
+   * Nur Wortschatz: der Prüf-ANBIETER. Leer/unbekannt = die Kreuzregel
+   * („der jeweils andere Anbieter"). NUTZERWUNSCH 15.09.: Wer den Prüfer
+   * explizit wählt, bekommt ihn — gleiches Prinzip wie beim Freitext-Modell,
+   * die Verantwortung für eine sinnvolle (unabhängige) Kombination wandert
+   * mit der Wahl zur nutzenden Person. Wahl = Erzeuger gilt als Selbstprüfung
+   * (zwei Runden, „einfach geprüft").
+   */
+  checkProvider?: ProviderId;
 };
 
 export type GeneratorSettings = Record<GeneratorGroupId, GeneratorChoice>;
@@ -173,6 +181,9 @@ export function normalizeChoice(raw: unknown, group: GeneratorGroupId): Generato
   const choice: GeneratorChoice = { provider: gespeichert, model };
   if (typeof value.checkModel === 'string' && value.checkModel.trim() !== '') {
     choice.checkModel = value.checkModel.trim();
+  }
+  if (isProviderId(value.checkProvider)) {
+    choice.checkProvider = value.checkProvider;
   }
   if (info.needs === 'audio') {
     choice.voice =
