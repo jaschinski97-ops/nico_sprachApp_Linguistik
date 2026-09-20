@@ -3,6 +3,17 @@ import { VOCABULARY_TH } from '@/data/vocabulary';
 import { buildToneQuestion } from '@/lib/drills/questions';
 import { Flashcard } from './flashcard';
 import { DrillRunner } from './drill-runner';
+// Diese UI-Tests wählen Deutsch ausdrücklich; der Produkt-Default bleibt Englisch.
+jest.mock('@/lib/i18n', () => {
+  const actual = jest.requireActual('@/lib/i18n') as typeof import('@/lib/i18n');
+  return { ...actual, useLocale: () => ({
+    ...actual.useLocale(), uiLanguage: 'de',
+    t: (key: import('@/lib/i18n').TranslationKey, params?: import('@/lib/i18n/types').TParams) => actual.translate('de', key, params),
+    languageName: (code: import('@/lib/i18n').UiLanguage) => actual.languageDisplayName(code, 'de'),
+  }) };
+});
+
+
 
 const mockPlayback = jest.fn();
 const mockHasClip = jest.fn();

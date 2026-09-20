@@ -72,8 +72,8 @@ export type Lernziel = {
  *      nicht Pools.
  *   b) Das Brücken-Lernziel (die Brücke selbst von einer anderen Sprache
  *      lernen) NUR, wo echter Dialog-/Grammatik-Bestand existiert. Das ist
- *      aktuell das Paar th↔de: Brücke de lernt Deutsch (th_to_de, wie heute),
- *      Brücke th lernt Thai von Deutsch (de_to_th) — und liest als Ziel
+ *      aktuell nur die Brücke th: Sie lernt Thai von Deutsch (de_to_th)
+ *      und liest als Ziel
  *      „Deutsch“ (th_to_de) mit, denn dieses Paar ist vollständig
  *      ausgebaut. Für Brücken en/es bleibt das Brücken-Lernziel außen vor
  *      (Stufe 2): Es gäbe heute weder Dialoge noch deutsche Grammatikstoff
@@ -81,9 +81,9 @@ export type Lernziel = {
  *
  * REIHENFOLGE: die Pool-Sprachen in `LANGUAGE_CODES`-Ordnung, dann Deutsch
  * als Ziel (`Brücke_to_de`, seit dem 10.09. für en/es; bei Brücke de fehlt
- * es als Selbstpaar), dann die th↔de-Ziele — Brücke de liefert damit EXAKT
- * die vier Ziele von vor Stufe 1 (Thai, Englisch, Spanisch, Deutsch), kein
- * Regression für den Hauptnutzer.
+ * es als Selbstpaar), dann das zusätzliche Thai-Ziel auf Thai-Oberfläche.
+ * Seit der Nutzerentscheidung vom 19.09. zeigt die deutsche Oberfläche
+ * ausschließlich Thai, Englisch und Spanisch.
  * NUTZERENTSCHEIDUNG 10.09. („Füge noch Deutsch zum Generieren hinzu"):
  * Über die Brücke de hinaus kommt bewusst NICHTS an de_to_X-Zielen dazu (die
  * de_to_X-Ziele decken Deutsch schon ab — „Deutsch (von Englisch)" für
@@ -125,9 +125,7 @@ export function zieleFuerBruecke(bridge: Lang | ForeignBridge): Lernziel[] {
     });
 
   // Das th↔de-Paar — der einzige Ort mit deutschem Dialog-/Grammatik-Bestand.
-  if (bridge === 'de') {
-    ziele.push({ direction: 'th_to_de', language: 'th' });
-  } else if (bridge === 'th') {
+  if (bridge === 'th') {
     ziele.push({ direction: 'de_to_th', language: 'th', vonSprache: 'de' });
   }
   return ziele;
@@ -139,6 +137,12 @@ export function zieleFuerBruecke(bridge: Lang | ForeignBridge): Lernziel[] {
  * Referenz haben. Neue Oberflächen lesen `zieleFuerBruecke`.
  */
 export const LERNZIELE: readonly Lernziel[] = zieleFuerBruecke('de');
+
+/** Alte oder fremde Profilziele fallen auf das erste Ziel der aktuellen Brücke. */
+export function directionForBridge(bridge: Lang | ForeignBridge, direction: PairDirection): PairDirection {
+  const goals = zieleFuerBruecke(bridge);
+  return goals.find(goal => goal.direction === direction)?.direction ?? goals[0].direction;
+}
 
 /**
  * Alle Ziele über allen Brücken, ohne Doppelnennung — das Nachschlagewerk

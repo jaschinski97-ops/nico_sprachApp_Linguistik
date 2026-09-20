@@ -27,7 +27,7 @@ export const TONES = {
     colors: { light: '#546850', dark: '#88a083' },
     /** contour path drawn in a 34x21 viewBox */
     path: 'M3 10 L31 10',
-    mark: 'kein Zeichen',
+    mark: '',
   },
   low: {
     label: 'Tief',

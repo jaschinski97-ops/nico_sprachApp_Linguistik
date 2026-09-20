@@ -189,7 +189,7 @@ function SpellingLegend({ compact }: { compact: boolean }) {
               <ThemedText type="smallBold">{group.grapheme}</ThemedText>
             </ThemedView>
             <View style={styles.spellingWords}>
-              {group.members.map((member) => (
+              {group.members.filter((member, index, members) => members.findIndex(other => other.sound === member.sound) === index).map((member) => (
                 <ThemedText key={member.entry.id} type="small" themeColor="textSecondary">
                   <ThemedText type="small">{member.entry.term}</ThemedText> {member.sound}
                 </ThemedText>

@@ -133,7 +133,7 @@ export function LanguagePicker({
                   ziel.vonSprache !== undefined
                     ? t('goal.fromSource', { language: languageName(ziel.vonSprache) })
                     : null,
-                  gelehrteSprache !== 'de' ? languageOf(gelehrteSprache).challenge : null,
+                  gelehrteSprache !== 'de' ? t(languageOf(gelehrteSprache).challenge) : null,
                   gelehrteSprache !== 'de' ? t(featureKey(gelehrteSprache)) : null,
                 ]
                   .filter((part): part is string => part !== null)

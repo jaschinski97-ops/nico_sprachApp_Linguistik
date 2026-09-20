@@ -1,6 +1,9 @@
-import { LanguageCode, TargetLanguage } from '@/lib/languages/types';
+import { translate, type UiLanguage } from '@/lib/i18n';
+import { LanguageCode } from '@/lib/languages/types';
 
 import { VOCABULARY_TH } from './vocabulary';
+import { activeVocabulary, usesGeneratedVocabulary } from './active-vocabulary';
+import type { VocabEntry } from './vocab-types';
 
 /** Rule-based review of existing examples, not a claim of verbatim corpus attestation. */
 export const SENTENCE_SOURCES = {
@@ -73,42 +76,138 @@ export const SENTENCE_TASKS = SENTENCE_AUDIT.filter(entry => entry.eligible).map
   ...entry, id: `sentence-${entry.vocabId}`, focus: REVIEWS[entry.vocabId].focus,
   answers: [entry.german, ...REVIEWS[entry.vocabId].wrong],
 }));
-export type SentenceTask = typeof SENTENCE_TASKS[number];
+/**
+ * Eine Satz-Aufgabe, wie die Satz-, Diktat- und Sprechübungen sie lesen.
+ *
+ * BIS zur Grundstock-Ära kamen diese Objekte ausschließlich aus dem Audit
+ * oben (deshalb die optionalen Prüffelder). SEIT dem generierten Wortschatz
+ * (16.09.2026) baut `buildSentenceTasks` dieselbe Form aus den Beispielsätzen
+ * der generierten Vokabeln — jedes Dokument trägt exampleTerm/exampleRoman/
+ * exampleGerman, mit dem Worteintrag erzeugt und kreuzgeprüft.
+ */
+export type SentenceTask = {
+  id: string;
+  /** Die Vokabel, aus deren Beispielsatz die Aufgabe entstand — FSRS-Schlüssel. */
+  vocabId: string;
+  /** Der Satz in der Zielsprache. */
+  text: string;
+  /** Deutsche Bedeutung des Satzes. */
+  german: string;
+  /** Lesehilfe (Thai: Umschrift; lateinische Sprachen: der Satz selbst). */
+  roman: string;
+  /** Hinweis unter der Aufgabe — beim generierten Bestand das Kernwort. */
+  focus: string;
+  /** Bedeutung + Ablenker für „Satz verstehen“ (erste Antwort ist richtig). */
+  answers: string[];
+  eligible?: boolean;
+  reason?: string;
+  lexicalSources?: string[];
+  ruleSource?: string | null;
+  reviewedAt?: string;
+  reviewMethod?: string;
+};
 
-export const SENTENCE_LIMITS = 'Diese Übungen helfen beim Vorbereiten und Wiederholen. Die App liefert kein unvorhersehbares Gegenüber, das nachfragt und dich zum Umformulieren zwingt. Übe zusätzlich mit Menschen; die App allein reicht für echte Gespräche nicht aus.';
-export const SENTENCE_AUDIO_NOTICE = 'KI-Stimme, keine Muttersprachler-Aufnahme. Tonverlauf nicht geprüft. Das Hörbeispiel ist kein Bewertungsmaßstab.';
+export const SENTENCE_LIMITS = translate('de', 'sentence.limits');
+export const SENTENCE_AUDIO_NOTICE = translate('de', 'sentence.audioClip');
 
 /**
- * Satzaufgaben je Zielsprache (AE-66).
+ * Satzaufgaben je Zielsprache (AE-66; 18.09.2026 auf den generierten
+ * Bestand umgestellt).
  *
- * Thai: die geprüften vollständigen Satzlesarten aus dem Audit oben — bis
- * AE-66 nur unter „Deutsch → Thai" erreichbar, jetzt in beiden Richtungen
- * des Paars.
- *
- * Spanisch: der Grundstock führt 30 Beispiele, aber alle sind Nominalgruppen
- * wie „el agua" — dieselbe Prüfung, die für Thai Wortgruppen ausgeschlossen
- * hat, schließt sie hier aus. Sie zu Scheinsätzen aufzublähen wäre erfundener
- * Stoff.
- *
- * Englisch: keine Beispiele (Phase 16: erfundene Sätze gibt es nicht).
- *
- * Französisch: Runde-3-Stoff, ehrlich leer — der Runner zeigt denselben
- * ehrlichen Hinweis wie bei Spanisch und Englisch, bis geprüfte Sätze
- * vorliegen.
- *
- * Eine Sprache ohne geprüfte Sätze bleibt ehrlich leer; die Übungen zeigen
- * einen Hinweis statt Stoff. Sobald vollständige, geprüfte Sätze vorliegen,
- * füllt sich die Übung, ohne dass die Oberfläche geändert werden muss.
+ * BIS zur Grundstock-Ära war diese Registry statisch: Thai trug die
+ * hand-auditierten Satzlesarten des festen Wortschatzes, Englisch/Spanisch
+ * waren bewusst leer („erfundene Sätze gibt es nicht"), und der Hinweis
+ * versprach, die Übung fülle sich, „sobald geprüfte Sätze vorliegen" —
+ * nichts füllte sie je. Seit der Wortschatz generiert wird (16.09.2026),
+ * trägt JEDE Vokabel einen vollständigen, mitgeprüften Beispielsatz; die
+ * Registry unten baut daraus die Aufgaben für alle vier Sprachen.
  */
-export const SENTENCE_TASKS_BY_LANGUAGE: Record<TargetLanguage, SentenceTask[]> = {
-  th: SENTENCE_TASKS,
-  es: [],
-  en: [],
+/**
+ * Sprachen mit Satzstoff. `de` gehört dazu, seit Deutsch ein vollwertiges
+ * Lernziel ist — der Deutsch-Kurs (th_to_de) produziert deutsche Sätze.
+ */
+export type SatzSprache = 'th' | 'en' | 'es' | 'de';
+
+/**
+ * Baut Satz-Aufgaben aus dem AKTIVEN Wortschatzbestand (18.09.2026).
+ *
+ * Jede generierte Vokabel trägt einen vollständigen Beispielsatz
+ * (exampleTerm/exampleRoman/exampleGerman, „ganz oder gar nicht" im
+ * Schema-Vertrag). Diese Funktion macht daraus Aufgaben: Bedeutung aus dem
+ * Satz, Ablenker aus den Nachbarn im Bestand (deterministisch — die Sitzung
+ * mischt später mit ihrer Aussaat), Fokus-Hinweis = das Kernwort mit seiner
+ * Bedeutung (im Deutsch-Ziel die Thai-Bedeutung, denn Thai ist dort die
+ * Ankerseite).
+ */
+export function buildSentenceTasks(words: VocabEntry[]): SentenceTask[] {
+  const gesehen = new Set<string>();
+  const basis: VocabEntry[] = [];
+  for (const word of words) {
+    const text = (word.exampleTerm ?? '').trim();
+    // Doppelsätze (gleicher Text über zwei Wörtern) würden doppelte Aufgaben
+    // mit derselben Lösung ergeben — der erste gewinnt.
+    if (!text || gesehen.has(text)) continue;
+    gesehen.add(text);
+    basis.push(word);
+  }
+  return basis.map((word, index) => {
+    const german = (word.exampleGerman ?? '').trim();
+    const ablenker: string[] = [];
+    for (let schritt = 1; ablenker.length < 2 && schritt < basis.length; schritt += 1) {
+      const andere = basis[(index + schritt) % basis.length];
+      const vorschlag = (andere.exampleGerman ?? '').trim();
+      if (!vorschlag || vorschlag === german || ablenker.includes(vorschlag)) continue;
+      ablenker.push(vorschlag);
+    }
+    // Deutsch-Ziel: Thai ist die Anker-/Bedeutungsseite des Paars.
+    const bedeutung = String(word.language) === 'de'
+      ? (word.translations?.th ?? word.german)
+      : word.german;
+    return {
+      id: `sentence-${word.id}`,
+      vocabId: word.id,
+      text: (word.exampleTerm ?? '').trim(),
+      german,
+      roman: (word.exampleRoman ?? '').trim(),
+      focus: `${word.term} · ${bedeutung}`,
+      answers: [german, ...ablenker],
+      reason: 'KI-erzeugter Beispielsatz des generierten Wortschatzbestands; mit dem Worteintrag erzeugt und kreuzgeprüft.',
+      reviewMethod: 'KI-Erzeugung mit Kreuzprüfung (Studio-Pipeline)',
+    };
+  });
+}
+
+function generierteSatzTasks(language: SatzSprache): SentenceTask[] {
+  return buildSentenceTasks(activeVocabulary().filter(word => String(word.language) === language));
+}
+
+/**
+ * Satzaufgaben je Sprache (AE-66, 18.09. erweitert).
+ *
+ * LEGACY-Katalog (fester Grundstock): Thai liefert die hand-auditierten
+ * Satzlesarten, die anderen Sprachen bleiben ehrlich leer.
+ *
+ * GENERIERTER Katalog: alle vier Sprachen liefern die Beispielsätze ihrer
+ * Vokabeln — auch Deutsch. Der Bestand füllt sich damit automatisch, sobald
+ * die Erzeugung lief; der Leerzustand bleibt der ehrliche Hinweis.
+ */
+export const SENTENCE_TASKS_BY_LANGUAGE: Record<SatzSprache, SentenceTask[]> = {
+  get th() { return usesGeneratedVocabulary() ? generierteSatzTasks('th') : SENTENCE_TASKS; },
+  get en() { return usesGeneratedVocabulary() ? generierteSatzTasks('en') : []; },
+  get es() { return usesGeneratedVocabulary() ? generierteSatzTasks('es') : []; },
+  get de() { return usesGeneratedVocabulary() ? generierteSatzTasks('de') : []; },
 };
 
 /** Der ehrliche Fußtext je Sprache — Thai zählt den Bestand, die anderen sagen, was fehlt. */
 export const SENTENCE_FOOTNOTE_BY_LANGUAGE: Record<LanguageCode, string> = {
-  th: `${SENTENCE_TASKS.length} vollständige Satzlesarten aus 84 vorhandenen Beispielen. Wörter und Satzregeln nachvollzogen; keine pauschale Quellenbestätigung aller 84 Beispiele. Wortgruppen bleiben außerhalb dieser Übung.`,
-  es: 'Für Spanisch liegen noch keine geprüften vollständigen Sätze vor — die 30 vorhandenen Beispiele sind Wortgruppen wie „el agua" und bleiben außerhalb dieser Übung. Sobald vollständige Sätze geprüft sind, erscheinen sie hier.',
-  en: 'Für Englisch liegen noch keine geprüften Beispielsätze vor. Sobald welche geprüft sind, erscheinen sie hier.',
+  th: translate('de', 'sentence.stockLegacy', { count: SENTENCE_TASKS.length }),
+  es: translate('de', 'sentence.stockEmpty'),
+  en: translate('de', 'sentence.stockEmpty'),
 };
+
+/** Inhaltshinweis ohne Behauptung über eine noch nicht abgespielte Stimme. */
+export function sentenceFootnote(language: SatzSprache, uiLanguage: UiLanguage = 'de'): string {
+  const count = SENTENCE_TASKS_BY_LANGUAGE[language].length;
+  if (!count) return translate(uiLanguage, 'sentence.stockEmpty');
+  return translate(uiLanguage, usesGeneratedVocabulary() ? 'sentence.stockGenerated' : 'sentence.stockLegacy', { count });
+}

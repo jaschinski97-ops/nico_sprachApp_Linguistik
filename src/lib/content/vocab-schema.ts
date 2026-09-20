@@ -46,6 +46,18 @@ export function vocabSchluessel(term: string, language: string): string {
   return `${language}:${basis}`;
 }
 
+function validSyllable(value: unknown, language: string): boolean {
+  if ((language === 'de' || language === 'en') && typeof value === 'string') return value.length > 0;
+  if (!value || typeof value !== 'object') return false;
+  const s = value as Record<string, unknown>;
+  // Alias nur für bereits erzeugte Daten; neue Prompts verlangen roman.
+  const roman = s.roman ?? s.syllable ?? s.text;
+  if (typeof roman !== 'string' || !roman.trim()) return false;
+  if (s.stressed !== undefined && typeof s.stressed !== 'boolean') return false;
+  if (language === 'es' && s.roman !== undefined && typeof s.stressed !== 'boolean') return false;
+  return s.tone === undefined || ['mid', 'low', 'falling', 'high', 'rising'].includes(String(s.tone));
+}
+
 export function isValidVocabEntry(value: unknown): value is VocabEntry {
   if (typeof value !== 'object' || value === null) return false;
   const d = value as Record<string, unknown>;
@@ -59,7 +71,7 @@ export function isValidVocabEntry(value: unknown): value is VocabEntry {
   if (typeof d.register !== 'string' || !['neutral', 'formal', 'informal'].includes(d.register)) return false;
   if (typeof d.isConcrete !== 'boolean') return false;
   if (typeof d.sourceVerified !== 'boolean') return false;
-  if (!Array.isArray(d.syllables)) return false;
+  if (!Array.isArray(d.syllables) || d.syllables.some(s => !validSyllable(s, String(d.language)))) return false;
   if (!d.sourceVerified && typeof d.verificationNote !== 'string') {
     // Nicht quellengeprüfte Einträge MÜSSEN sagen, woher sie kommen.
     return false;
@@ -94,6 +106,10 @@ export function pruefeVocabDoc(doc: VocabEntry): VocabPruefung {
   // Als string: der de-Pool trägt zur Laufzeit language 'de', der Typ kennt
   // es (noch) nicht — die Regelprüfung darf das nicht verschweigen.
   const language: string = doc.language;
+
+  if (!Array.isArray(doc.syllables) || doc.syllables.some(s => !validSyllable(s, language))) {
+    fehler.push('Silben benötigen roman (Altbestand: syllable/text), gültigen Ton bzw. stressed als Boolean.');
+  }
 
   // Schrift passt zur Sprache.
   if (language === 'th' && !istThaiSchrift(doc.term)) {

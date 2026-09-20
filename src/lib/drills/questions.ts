@@ -2,6 +2,9 @@ import { TONE_KEYS, TONES } from '@/constants/tones';
 import { TargetVocabEntry, VocabEntry } from '@/data/vocab-types';
 
 import { Direction } from '../fsrs/types';
+import { syllablesOf } from '@/data/vocab-helpers';
+import type { PairDirection } from '../languages/types';
+import type { UiLanguage } from '../i18n/types';
 import { HUB_LANGUAGE } from '../languages/types';
 import { analyzeSyllable } from '../reading/syllable';
 import { ACUTE_TO_PLAIN } from '@/data/spanish-stress';
@@ -320,9 +323,13 @@ export function canBuildDeutschLesenQuestion(entry: VocabEntry): boolean {
 export function buildDeutschLesenQuestion(
   entry: VocabEntry,
   pool: VocabEntry[],
-  random: Random
+  random: Random,
+  direction: PairDirection = 'th_to_de'
 ): DrillQuestion {
-  const visible = entry.german.split(',')[0].trim();
+  const source = direction.split('_to_')[0] as UiLanguage;
+  const visible = String(entry.language) === 'de'
+    ? (entry.translations?.[source] ?? '').trim()
+    : entry.german.split(',')[0].trim();
   const correct = entry.term;
   const foreign = shuffled(
     pool
@@ -343,7 +350,7 @@ export function buildDeutschLesenQuestion(
   return {
     id: `deutschLesen:${entry.id}`,
     drill: 'deutschLesen',
-    direction: toHub(entry),
+    direction: direction as Direction,
     vocabId: entry.id,
     visible,
     visibleHint: null,
@@ -656,11 +663,13 @@ export function buildSpellingQuestion(
   // "anders gesprochen" waere schlicht falsch.
   const andere = group.members
     .filter((member) => member.entry.id !== entry.id && member.sound !== spelling.sound)
+    .slice(0, 4)
     .map((member) => `${member.entry.term} ${member.sound}`)
     .join(' · ');
 
   const gleiche = group.members
     .filter((member) => member.entry.id !== entry.id && member.sound === spelling.sound)
+    .slice(0, 4)
     .map((member) => member.entry.term)
     .join(', ');
 
@@ -713,17 +722,18 @@ export function canBuildStressHearQuestion(entry: VocabEntry): boolean {
 }
 
 export function buildStressHearQuestion(entry: VocabEntry): DrillQuestion {
-  const stressed = entry.syllables.findIndex((syllable) => syllable.stressed);
+  const syllables = syllablesOf(entry);
+  const stressed = syllables.findIndex((syllable) => syllable.stressed);
   if (stressed < 0) {
     throw new Error(`"${entry.id}" hat keine abgelegte Betonung - keine Hoeraufgabe.`);
   }
 
-  const options: DrillOption[] = entry.syllables.map((syllable, index) => ({
+  const options: DrillOption[] = syllables.map((syllable, index) => ({
     label: withoutAccent(syllable.roman),
     hint: `${index + 1}. Silbe`,
   }));
 
-  const geschrieben = entry.syllables.some((syllable) => syllable.roman !== withoutAccent(syllable.roman));
+  const geschrieben = syllables.some((syllable) => syllable.roman !== withoutAccent(syllable.roman));
 
   return {
     id: `stressHear:${entry.id}`,
@@ -768,7 +778,8 @@ export function canBuildSoundSpellingQuestion(
 
 export function buildSoundSpellingQuestion(
   entry: VocabEntry,
-  groups: GraphemeGroup[] = graphemeGroups()
+  groups: GraphemeGroup[] = graphemeGroups(),
+  random: Random = Math.random
 ): DrillQuestion {
   const group = groupFor(entry, groups);
   if (!group) {
@@ -778,7 +789,13 @@ export function buildSoundSpellingQuestion(
   // Die Ablenker sind die anderen Woerter derselben Gruppe - echte Woerter des
   // Grundstocks mit derselben Buchstabenfolge. Erfunden ist daran nichts, und
   // sie sind genau die Verwechslung, um die es geht.
-  const options: DrillOption[] = group.members.map((member) => ({
+  const members = shuffled([
+    group.members.find(member => member.entry.id === entry.id)!,
+    ...shuffled(group.members.filter(member => member.entry.id !== entry.id && member.entry.term !== entry.term)
+      .filter((member, index, rest) => rest.findIndex(other => other.entry.term === member.entry.term) === index), random)
+      .slice(0, 3),
+  ], random);
+  const options: DrillOption[] = members.map((member) => ({
     label: member.entry.term,
     hint: member.sound,
   }));
@@ -792,11 +809,11 @@ export function buildSoundSpellingQuestion(
     visibleHint: null,
     speak: { text: entry.term, language: 'en' },
     options,
-    correctIndex: group.members.findIndex((member) => member.entry.id === entry.id),
+    correctIndex: members.findIndex(member => member.entry.id === entry.id),
     solution: `${entry.term} ${entry.ipa ?? ''} — ${entry.german}`.trim(),
     explanation:
-      `Alle diese Woerter tragen „${group.grapheme}" und klingen verschieden: ` +
-      group.members.map((member) => `${member.entry.term} ${member.sound}`).join(' · ') +
+      `Diese Wörter enthalten „${group.grapheme}“: ` +
+      members.map((member) => `${member.entry.term} ${member.sound}`).join(' · ') +
       '.',
   };
 }

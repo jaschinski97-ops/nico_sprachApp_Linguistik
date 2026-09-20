@@ -1,7 +1,6 @@
 import type { CapturedPcm } from './microphone-capture';
 import { analyzeToneContour, type ToneContourMeasurement } from './analysis';
-import { SENTENCE_TASKS_BY_LANGUAGE, type SentenceTask } from '@/data/sentence-tasks';
-import { LanguageCode } from '../languages/types';
+import { SENTENCE_TASKS_BY_LANGUAGE, type SatzSprache, type SentenceTask } from '@/data/sentence-tasks';
 import { shuffled, seededRandom } from '../drills/random';
 
 export const SENTENCE_PREPARATION_MS = 15_000;
@@ -14,9 +13,11 @@ export type SentenceMode = 'shadowing' | 'sentenceRepeat' | 'sentenceListening';
  * Vorher stand hier das Thai-Array fest verdrahtet — die Übungen gab es nur
  * unter „Deutsch → Thai". Seit AE-66 gehören sie zu jeder Richtung jedes
  * Paars; welche Sprache tatsächlich Satzstoff hat, entscheidet die Registry
- * in `data/sentence-tasks.ts` allein.
+ * in `data/sentence-tasks.ts` allein. Seit dem 18.09.2026 umfasst der
+ * Schlüssel auch `de` — der Deutsch-Kurs (th_to_de) produziert deutsche
+ * Sätze aus demselben generierten Bestand.
  */
-export function sentenceSession(language: LanguageCode, seed: number): SentenceTask[] {
+export function sentenceSession(language: SatzSprache, seed: number): SentenceTask[] {
   return shuffled(SENTENCE_TASKS_BY_LANGUAGE[language] ?? [], seededRandom(seed));
 }
 export function sentenceAnswers(task: SentenceTask, seed: number): string[] {

@@ -312,7 +312,7 @@ const de = {
   'drill.noVocab': 'Keine passenden Vokabeln',
   'drill.toneEmpty':
     'Für dieses Hörquiz liegen noch keine geprüften Aussprache-Aufnahmen vor. Ungeprüfte Clips und Computerstimmen werden bewusst nicht benutzt — lieber übst du mit einer der anderen Übungen.',
-  'drill.noneFor': 'Für „{{drill}}" gibt es im Grundstock gerade keine geeigneten Einträge.',
+  'drill.noneFor': 'Für „{{drill}}" gibt es im aktuellen Bestand gerade keine geeigneten Einträge.',
   'drill.roundDone': 'Runde beendet',
   'drill.roundScore': '{{correct}} von {{total}} richtig.',
   'drill.newRound': 'Neue Runde',
@@ -378,7 +378,7 @@ const de = {
     'Diese Runde zählt als Wiederholung: Anders als die Auswahlübungen schreibt das freie Schreiben den Kartenzustand fort (AE-40).',
   'writing.inputA11y': 'Antwort eingeben',
   'writing.checkA11y': 'Antwort prüfen',
-  'writing.check': 'Aufgabe {{index}} von {{total}}',
+  'writing.check': 'Prüfen',
   'writing.taskOf': 'Aufgabe {{index}} von {{total}}',
 
   /* ---------- Bewertungshinweis (writing-runner, dictation-runner) ---------- */
@@ -500,8 +500,8 @@ const de = {
   'sentence.hintShadowing':
     'Höre den Satz zuerst. Sprich danach während des Vorbilds mit. Nutze Kopfhörer: Über Lautsprecher kann das Vorbild in deiner Mikrofonmessung landen.',
   'sentence.prepare': 'Verpflichtende Vorbereitung · noch {{seconds}} Sekunden',
-  'sentence.prepareBody':
-    'Kläre die Bedeutung und plane den ganzen Satz. {{focus}} Die 15 Sekunden sind eine Übungsentscheidung, kein wissenschaftlich ermitteltes Optimum.',
+'sentence.prepareBody':
+    'Kläre die Bedeutung und plane den ganzen Satz. {{focus}}',
   'sentence.listen': 'Satz hören',
   'sentence.listenAgain': 'Satz erneut hören',
   'sentence.exampleNote': 'Das Hörbeispiel ist kein Bewertungsmaßstab für deine Aufnahme.',
@@ -562,6 +562,21 @@ const de = {
   'diagnostics.backends': 'Datenspeicher: {{data}} · Bildablage: {{images}} · Clipablage: {{clips}}',
   'diagnostics.loading': 'Lade …',
 
+  "language.th.description": "Fünf bedeutungsunterscheidende Töne. Konsonantenklasse, Vokallänge, Schlusslaut und Tonzeichen bestimmen den Ton.",
+  "language.th.feature": "Töne",
+  "language.en.description": "Die Aussprache wird Wort für Wort gelernt. Gleiche Buchstabenfolgen können unterschiedlich klingen.",
+  "language.en.feature": "Aussprache",
+  "language.es.description": "Betonung folgt der Schreibung: meist vorletzte Silbe bei Vokal, n oder s, sonst letzte Silbe; Abweichungen tragen einen Akut.",
+  "language.es.feature": "Betonung",
+  "tone.noMark": "kein Zeichen",
+  "sentence.stockGenerated": "KI-erzeugte, mit dem Worteintrag kreuzgeprüfte Beispielsätze im Bestand: {{count}}.",
+  "sentence.stockEmpty": "Im aktuellen Bestand gibt es für diese Sprache keine Beispielsätze.",
+  "sentence.stockLegacy": "Geprüfte vollständige Satzlesarten aus den vorhandenen Beispielen: {{count}}.",
+  "sentence.audioClip": "KI-Stimme, keine Muttersprachler-Aufnahme. Das Hörbeispiel ist kein Bewertungsmaßstab.",
+  "sentence.audioSystem": "Systemstimme des Geräts. Die Aussprache wurde nicht geprüft.",
+  "sentence.limits": "Übe zusätzlich mit Menschen. Diese Übungen helfen beim Vorbereiten und Wiederholen von Gesprächen.",
+  "speaking.crossChecked": "Sollton aus KI-kreuzgeprüften Silbendaten; keine Quellenbestätigung.",
+  "conversation.topicCountOne": "{{count}} Dialog",
 } as const;
 
 export default de;

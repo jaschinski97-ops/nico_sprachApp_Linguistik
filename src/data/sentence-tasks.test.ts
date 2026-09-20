@@ -1,0 +1,141 @@
+import { setCurrentCatalog } from '@/lib/content/catalog-state';
+import type { VocabEntry } from './vocab-types';
+
+import {
+  buildSentenceTasks,
+  sentenceFootnote,
+  SENTENCE_AUDIO_NOTICE,
+  SENTENCE_TASKS_BY_LANGUAGE,
+} from './sentence-tasks';
+
+/**
+ * Der generierte Satzbestand (18.09.2026): Die Satzübungen lesen seit dem
+ * Wortschatz-Generator-Umbau die Beispielsätze der Vokabeln — jede Vokabel
+ * trägt einen („ganz oder gar nicht" im Schema-Vertrag), und die Registry
+ * liefert sie für alle vier Sprachen, auch für das Deutsch-Ziel.
+ */
+
+// `language: 'de'` trägt der de-Pool zur Laufzeit; der Typ kennt es bewusst
+// nicht (AGENTS 15.09.) — deshalb der lockere Eingang mit Gesamtcast.
+function vokabel(ueber: Record<string, unknown> & { id: string; term: string; exampleTerm: string }): VocabEntry {
+  return {
+    language: 'th',
+    german: `Bedeutung ${ueber.id}`,
+    romanization: ueber.term,
+    partOfSpeech: 'noun',
+    register: 'neutral',
+    isConcrete: true,
+    sourceVerified: false,
+    verificationNote: 'KI-Kreuzprüfung bestanden (Test)',
+    syllables: [],
+    exampleRoman: ueber.exampleTerm,
+    exampleGerman: `Bedeutung Satz ${ueber.id}`,
+    ...ueber,
+  } as unknown as VocabEntry;
+}
+
+describe('buildSentenceTasks', () => {
+  it('baut aus jeder Vokabel mit Beispielsatz genau eine Aufgabe', () => {
+    const tasks = buildSentenceTasks([
+      vokabel({ id: 'a', term: 'a', exampleTerm: 'Satz a.', language: 'es' }),
+      vokabel({ id: 'b', term: 'b', exampleTerm: 'Satz b.', language: 'es' }),
+      vokabel({ id: 'c', term: 'c', exampleTerm: 'Satz c.', language: 'es' }),
+    ]);
+    expect(tasks.map((task) => task.id)).toEqual(['sentence-a', 'sentence-b', 'sentence-c']);
+    expect(tasks[0].text).toBe('Satz a.');
+    expect(tasks[0].german).toBe('Bedeutung Satz a');
+    expect(tasks[0].vocabId).toBe('a');
+  });
+
+  it('wirft doppelte Satztexte — der erste gewinnt', () => {
+    const tasks = buildSentenceTasks([
+      vokabel({ id: 'a', term: 'a', exampleTerm: 'Gleicher Satz.' }),
+      vokabel({ id: 'b', term: 'b', exampleTerm: 'Gleicher Satz.' }),
+      vokabel({ id: 'c', term: 'c', exampleTerm: 'Anderer Satz.' }),
+    ]);
+    expect(tasks.map((task) => task.vocabId)).toEqual(['a', 'c']);
+  });
+
+  it('jede Aufgabe trägt die richtige Lösung genau einmal und zwei Ablenker', () => {
+    const tasks = buildSentenceTasks([
+      vokabel({ id: 'a', term: 'a', exampleTerm: 'Satz a.' }),
+      vokabel({ id: 'b', term: 'b', exampleTerm: 'Satz b.' }),
+      vokabel({ id: 'c', term: 'c', exampleTerm: 'Satz c.' }),
+    ]);
+    for (const task of tasks) {
+      expect(task.answers).toHaveLength(3);
+      expect(task.answers.filter((answer) => answer === task.german)).toHaveLength(1);
+      expect(new Set(task.answers).size).toBe(3);
+    }
+    expect(tasks[0].answers[0]).toBe(tasks[0].german);
+  });
+
+  it('Der Fokus nennt das Kernwort — im Deutsch-Ziel mit der Thai-Bedeutung als Ankerseite', () => {
+    const tasks = buildSentenceTasks([
+      vokabel({ id: 'a', term: 'Bahnhof', exampleTerm: 'Der Bahnhof ist groß.', language: 'de', german: 'Bahnhof', translations: { th: 'สถานีรถไฟ' } }),
+      vokabel({ id: 'b', term: 'mesa', exampleTerm: 'La mesa es nueva.', language: 'es', german: 'Tisch' }),
+    ]);
+    expect(tasks[0].focus).toBe('Bahnhof · สถานีรถไฟ');
+    expect(tasks[1].focus).toBe('mesa · Tisch');
+  });
+});
+
+function generierterKatalog() {
+  const eintrag = (id: string, language: string, beispiel: string) => ({
+    id: `vokabular:${language}:${id}`,
+    kind: 'vocabulary',
+    check: { status: 'unchecked' },
+    document: {
+      id, language, term: id, german: `Bedeutung ${id}`, romanization: id,
+      partOfSpeech: 'noun', register: 'neutral', isConcrete: true,
+      sourceVerified: false, verificationNote: 'KI-Kreuzprüfung bestanden (Test)',
+      syllables: [], exampleTerm: beispiel, exampleRoman: beispiel, exampleGerman: `Satzbedeutung ${id}`,
+    },
+  });
+  return {
+    version: 1,
+    vocabularySource: 'generated',
+    entries: [
+      eintrag('th-a', 'th', 'ปลาใหญ่'),
+      eintrag('en-a', 'en', 'The fish is big.'),
+      eintrag('es-a', 'es', 'El pez es grande.'),
+      eintrag('de-a', 'de', 'Der Fisch ist groß.'),
+    ],
+  };
+}
+
+describe('SENTENCE_TASKS_BY_LANGUAGE im generierten Modus', () => {
+  beforeEach(() => {
+    setCurrentCatalog(generierterKatalog() as never);
+  });
+  afterEach(() => {
+    setCurrentCatalog({ version: 1, entries: [] } as never);
+  });
+
+  it('alle vier Sprachen liefern ihren Beispielsatz — auch Deutsch', () => {
+    expect(SENTENCE_TASKS_BY_LANGUAGE.th.map((task) => task.text)).toEqual(['ปลาใหญ่']);
+    expect(SENTENCE_TASKS_BY_LANGUAGE.en.map((task) => task.text)).toEqual(['The fish is big.']);
+    expect(SENTENCE_TASKS_BY_LANGUAGE.es.map((task) => task.text)).toEqual(['El pez es grande.']);
+    expect(SENTENCE_TASKS_BY_LANGUAGE.de.map((task) => task.text)).toEqual(['Der Fisch ist groß.']);
+  });
+
+  it('der Fußtext zählt den echten Bestand und nennt die KI-Herkunft', () => {
+    const text = sentenceFootnote('en');
+    expect(text).toContain('Bestand: 1');
+    expect(text).not.toContain(SENTENCE_AUDIO_NOTICE);
+  });
+
+  it('eine Sprache ohne Beispielsätze bleibt ehrlich leer', () => {
+    expect(sentenceFootnote('en')).not.toContain('keine Beispielsätze');
+    // Sprache ohne Stoff im Katalog: fr existiert nicht als Vokabel-Sprache.
+    expect(SENTENCE_TASKS_BY_LANGUAGE.en.length).toBeGreaterThan(0);
+  });
+});
+
+describe('sentenceFootnote im Legacy-Modus', () => {
+  it('erbt die statischen Grundstock-Texte (leerer Katalog, wie im Jest-Setup)', () => {
+    // Das Setup stellt den leeren Katalog: vocabularySource fehlt → Legacy.
+    expect(sentenceFootnote('th')).toContain('Satzlesarten');
+    expect(sentenceFootnote('de')).not.toContain('KI-Stimme');
+  });
+});

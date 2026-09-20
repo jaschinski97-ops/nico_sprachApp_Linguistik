@@ -12,7 +12,7 @@ import {
 import { ScreenScaffold } from '@/components/screen-scaffold';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { LANGUAGE_DISPLAY_NAMES, SYSTEM_LANGUAGE_SETTING, useLocale } from '@/lib/i18n';
+import { LANGUAGE_ENDONYME, LANGUAGE_DISPLAY_NAMES, SYSTEM_LANGUAGE_SETTING, useLocale } from '@/lib/i18n';
 
 type Offen = null | 'sprache' | 'sicherung';
 
@@ -37,7 +37,7 @@ export default function SettingsScreen() {
   const sprachWert =
     setting === SYSTEM_LANGUAGE_SETTING
       ? t('appLanguage.system')
-      : (LANGUAGE_DISPLAY_NAMES[setting as keyof typeof LANGUAGE_DISPLAY_NAMES]?.[setting] ?? setting);
+      : (LANGUAGE_DISPLAY_NAMES[setting as keyof typeof LANGUAGE_DISPLAY_NAMES]?.[setting] ?? LANGUAGE_ENDONYME[setting]);
 
   const umschalten = (was: Exclude<Offen, null>) =>
     setOffen((aktuell) => (aktuell === was ? null : was));

@@ -298,7 +298,7 @@ const th: Partial<Record<TranslationKey, string>> = {
     'รอบนี้นับเป็นการทบทวน: ต่างจากแบบฝึกเลือกตอบ การเขียนอิสระจะบันทึกสถานะการ์ดต่อไป (AE-40)',
   'writing.inputA11y': 'พิมพ์คำตอบ',
   'writing.checkA11y': 'ตรวจคำตอบ',
-  'writing.check': 'แบบฝึกที่ {{index}} จาก {{total}}',
+  'writing.check': 'ตรวจ',
   'writing.taskOf': 'แบบฝึกที่ {{index}} จาก {{total}}',
 
   /* ---------- หมายเหตุการประเมิน (writing-runner, dictation-runner) ---------- */
@@ -398,8 +398,8 @@ const th: Partial<Record<TranslationKey, string>> = {
   'sentence.hintShadowing':
     'ฟังประโยคก่อน แล้วพูดตามระหว่างที่เสียงต้นแบบเล่น ใส่หูฟัง: ถ้าเปิดลำโพง เสียงต้นแบบอาจหลุดเข้ามาในการวัดไมโครโฟน',
   'sentence.prepare': 'ต้องเตรียมตัวก่อน · เหลือ {{seconds}} วินาที',
-  'sentence.prepareBody':
-    'ทำความหมายให้ชัดและวางแผนทั้งประโยค {{focus}} 15 วินาทีเป็นข้อตกลงของแบบฝึก ไม่ใช่ค่าที่วิทยาศาสตร์พิสูจน์แล้ว',
+'sentence.prepareBody':
+    'ทำความหมายให้ชัดและวางแผนทั้งประโยค {{focus}}',
   'sentence.listen': 'ฟังประโยค',
   'sentence.listenAgain': 'ฟังประโยคอีกครั้ง',
   'sentence.exampleNote': 'เสียงตัวอย่างไม่ใช่เกณฑ์ประเมินการอัดของคุณ',
@@ -513,6 +513,21 @@ const th: Partial<Record<TranslationKey, string>> = {
   'drill.prompt.konsonantenklasse': 'พยัญชนะนี้อยู่หมู่ใด?',
   'drill.prompt.praesensEndung': 'รูปนี้ใช้คำลงท้ายใด?',
   'drill.prompt.partizip': 'รูปที่สามของกริยานี้คือรูปใด?',
+  "language.th.description": "วรรณยุกต์ห้าเสียงแยกความหมาย โดยขึ้นอยู่กับชั้นพยัญชนะ ความยาวสระ เสียงท้าย และรูปวรรณยุกต์",
+  "language.th.feature": "วรรณยุกต์",
+  "language.en.description": "เรียนการออกเสียงทีละคำ ตัวอักษรชุดเดียวกันอาจออกเสียงต่างกัน",
+  "language.en.feature": "การออกเสียง",
+  "language.es.description": "ตำแหน่งเน้นเสียงดูจากการสะกด โดยทั่วไปคำที่ลงท้ายด้วยสระ n หรือ s เน้นพยางค์รองสุดท้าย คำอื่นเน้นพยางค์สุดท้าย ข้อยกเว้นมีเครื่องหมายกำกับ",
+  "language.es.feature": "การเน้นเสียง",
+  "tone.noMark": "ไม่มีเครื่องหมาย",
+  "sentence.stockGenerated": "ประโยคตัวอย่างที่สร้างด้วย AI และตรวจทานร่วมกับคำศัพท์: {{count}}",
+  "sentence.stockEmpty": "คลังปัจจุบันยังไม่มีประโยคตัวอย่างสำหรับภาษานี้",
+  "sentence.stockLegacy": "ประโยคสมบูรณ์จากตัวอย่างเดิมที่ตรวจทานแล้ว: {{count}}",
+  "sentence.audioClip": "เสียง AI ไม่ใช่เสียงบันทึกเจ้าของภาษา ตัวอย่างเสียงไม่ใช่เกณฑ์ให้คะแนน",
+  "sentence.audioSystem": "เสียงระบบของอุปกรณ์ ยังไม่ได้ตรวจสอบการออกเสียง",
+  "sentence.limits": "ฝึกกับคนจริงด้วย แบบฝึกนี้ช่วยเตรียมตัวและฝึกสนทนาซ้ำ",
+  "speaking.crossChecked": "เสียงเป้าหมายมาจากข้อมูลพยางค์ที่ AI ตรวจทาน ไม่ได้ยืนยันจากแหล่งอ้างอิง",
+  "conversation.topicCountOne": "{{count}} บท",
 };
 
 export default th;

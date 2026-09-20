@@ -15,13 +15,14 @@ import {
 } from '@/lib/audio';
 import { dictationConfigFor } from '@/data/dictation-config';
 import { dictationTasksFor } from '@/lib/dictation/tasks';
-import { SENTENCE_TASKS_BY_LANGUAGE, type SentenceTask } from '@/data/sentence-tasks';
+import { SENTENCE_TASKS_BY_LANGUAGE, type SatzSprache, type SentenceTask } from '@/data/sentence-tasks';
 import { buildDrillSession } from '@/lib/drills/session';
 import { seededRandom, shuffled } from '@/lib/drills/random';
 import { type DrillId, type DrillQuestion } from '@/lib/drills/types';
 import { type Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { pairLanguageOf, type PairDirection } from '@/lib/languages/types';
+import { type PairDirection } from '@/lib/languages/types';
+import { zielSprache } from '@/lib/production/tasks';
 import { loadOrCreateCardState, rateCard } from '@/lib/repository';
 import { recordDrill } from '@/lib/review-log';
 import {
@@ -90,10 +91,11 @@ const PROMPT_KEYS: Record<DrillId, TranslationKey> = {
   partizip: 'drill.prompt.partizip',
 };
 
-const DIKTAT_PROMPT_KEYS: Record<'th' | 'en' | 'es', TranslationKey> = {
+const DIKTAT_PROMPT_KEYS: Record<SatzSprache, TranslationKey> = {
   th: 'dictation.promptTh',
   en: 'dictation.promptEn',
   es: 'dictation.promptEs',
+  de: 'dictation.promptDe',
 };
 
 const SEGMENT_NAMEN: Record<RoundKind, TranslationKey> = {
@@ -121,7 +123,9 @@ export function TodayRoundRunner({
 }) {
   const { t } = useLocale();
   const colors = useTheme();
-  const sprache = pairLanguageOf(direction);
+  // Die produzierte Sprache des Paars — im Deutsch-Ziel (th_to_de) werden
+  // deutsche Sätze gebildet, diktiert und mitgesprochen, nicht thailändische.
+  const sprache = zielSprache(direction);
 
   const [runde, setRunde] = useState<TodayRound | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -251,28 +255,29 @@ export function TodayRoundRunner({
         />
       ) : segment.kind === 'hoeren' ? (
         <HoerenSegment
-          sprache={sprache as 'th' | 'en' | 'es'}
+          sprache={sprache}
           anzahl={segment.items}
           position={position}
           onAnswered={() => setErledigt((value) => value + 1)}
         />
       ) : segment.kind === 'satz' ? (
         <SatzSegment
-          sprache={sprache as 'th' | 'en' | 'es'}
+          sprache={sprache}
           anzahl={segment.items}
           position={position}
           onAnswered={() => setErledigt((value) => value + 1)}
         />
       ) : segment.kind === 'diktat' ? (
         <DiktatSegment
-          sprache={sprache as 'th' | 'en' | 'es'}
+          sprache={sprache}
+          direction={direction}
           anzahl={segment.items}
           position={position}
           onAnswered={() => setErledigt((value) => value + 1)}
         />
       ) : (
         <ShadowingSegment
-          sprache={sprache as 'th' | 'en' | 'es'}
+          sprache={sprache}
           anzahl={segment.items}
           position={position}
           onDone={() => setErledigt((value) => value + 1)}
@@ -370,7 +375,7 @@ function HoerenSegment({
   position,
   onAnswered,
 }: {
-  sprache: 'th' | 'en' | 'es';
+  sprache: SatzSprache;
   anzahl: number;
   position: number;
   onAnswered: () => void;
@@ -380,12 +385,18 @@ function HoerenSegment({
   const [leer, setLeer] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
 
+  // Deutsch hat keinen Wort-Hör-Drill (kein tone/soundSpelling/stressHear);
+  // der Planer plant das Segment dafür gar nicht mehr — ohne Drill wird unten
+  // ehrlich übersprungen, der Effect bleibt für den leeren Fall gar nicht hängen.
+  const hoerenSprache = sprache === 'de' ? undefined : sprache;
+  const drill = hoerenSprache === undefined ? undefined : HOEREN_DRILL[hoerenSprache];
+
   useEffect(() => {
     let cancelled = false;
-    const drill = HOEREN_DRILL[sprache];
+    if (!drill || !hoerenSprache) return;
     buildDrillSession({
       drill,
-      language: sprache,
+      language: hoerenSprache,
       size: anzahl,
       isEligible:
         drill === 'tone'
@@ -403,7 +414,7 @@ function HoerenSegment({
     return () => {
       cancelled = true;
     };
-  }, [sprache, anzahl]);
+  }, [drill, hoerenSprache, anzahl]);
 
   const frage = fragen && fragen.length > 0 ? fragen[position % fragen.length] : null;
   useEffect(() => setChosen(null), [position]);
@@ -424,7 +435,7 @@ function HoerenSegment({
     })();
   }, [frage]);
 
-  if (leer || !frage) {
+  if (!drill || leer || !frage) {
     return (
       <ThemedText type="small" themeColor="textSecondary">
         {t('round.emptySkip')}
@@ -481,7 +492,7 @@ function SatzSegment({
   position,
   onAnswered,
 }: {
-  sprache: 'th' | 'en' | 'es';
+  sprache: SatzSprache;
   anzahl: number;
   position: number;
   onAnswered: () => void;
@@ -558,11 +569,13 @@ function SatzSegment({
 
 function DiktatSegment({
   sprache,
+  direction,
   anzahl,
   position,
   onAnswered,
 }: {
-  sprache: 'th' | 'en' | 'es';
+  sprache: SatzSprache;
+  direction: PairDirection;
   anzahl: number;
   position: number;
   onAnswered: () => void;
@@ -571,11 +584,11 @@ function DiktatSegment({
   const colors = useTheme();
   const tasks = useMemo(() => {
     try {
-      return dictationTasksFor(sprache).slice(0, Math.max(anzahl, 1));
+      return dictationTasksFor(sprache, direction).slice(0, Math.max(anzahl, 1));
     } catch {
       return [];
     }
-  }, [sprache, anzahl]);
+  }, [sprache, direction, anzahl]);
   const task = tasks.length > 0 ? tasks[position % tasks.length] : null;
   const [draft, setDraft] = useState('');
   const [ergebnis, setErgebnis] = useState<'passed' | 'failed' | null>(null);
@@ -669,7 +682,7 @@ function ShadowingSegment({
   position,
   onDone,
 }: {
-  sprache: 'th' | 'en' | 'es';
+  sprache: SatzSprache;
   anzahl: number;
   position: number;
   onDone: () => void;

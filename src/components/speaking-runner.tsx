@@ -377,7 +377,7 @@ function TargetBlock({ prompt }: { prompt: SpeakingPrompt }) {
         </ThemedText>
       </View>
       <ThemedText type="small" themeColor="textSecondary">
-        {t('speaking.source', { link: prompt.source ? t('speaking.sourceLink') : '' })}
+        {prompt.sourceVerified ? t('speaking.source', { link: prompt.source ? t('speaking.sourceLink') : '' }) : t('speaking.crossChecked')}
       </ThemedText>
     </View>
   );

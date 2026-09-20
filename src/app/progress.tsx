@@ -10,7 +10,7 @@ import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { useLearnerLanguage } from '@/hooks/use-learner-language';
-import { TranslationKey, monthNamesFor, useLocale } from '@/lib/i18n';
+import { TranslationKey, localeTagFor, useLocale, type UiLanguage } from '@/lib/i18n';
 import { CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
 /**
@@ -36,14 +36,14 @@ const STATE_KEYS: Record<string, TranslationKey> = {
  * „2026-05-12" → „12. Mai" — dieselbe Information wie die Spaltenbeschriftung,
  * nur als ganze Ansage. Die Monatsnamen kommen aus der UI-Sprache.
  */
-function tagLabel(date: string, months: readonly string[]): string {
-  const tag = Number(date.slice(8, 10));
-  const monat = months[Number(date.slice(5, 7)) - 1];
-  return monat ? `${tag}. ${monat}` : date;
+export function tagLabel(date: string, language: UiLanguage): string {
+  const [year, month, day] = date.split('-').map(Number);
+  return new Intl.DateTimeFormat(localeTagFor(language), { day: 'numeric', month: 'long' })
+    .format(new Date(year, month - 1, day, 12));
 }
 
 export default function ProgressScreen() {
-  const { t, languageName, uiLanguage } = useLocale();
+  const { t, languageName } = useLocale();
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,7 +106,7 @@ export default function ProgressScreen() {
         <Tile label={t('tile.mastered')} value={String(stats.cardStates.mastered)} />
       </View>
 
-      <ReviewChart stats={stats} months={monthNamesFor(uiLanguage)} />
+      <ReviewChart stats={stats} />
       <CardStates stats={stats} />
 
     </ScreenScaffold>
@@ -138,13 +138,14 @@ function Tile({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
-function ReviewChart({ stats, months }: { stats: LearningStats; months: readonly string[] }) {
+function ReviewChart({ stats }: { stats: LearningStats }) {
   // Wiederholungen und Uebungen werden gestapelt, nicht summiert dargestellt:
   // beides ist Lernzeit, aber nur die Wiederholungen laufen durch FSRS
   // (AE-16). Eine gemeinsame Saeule ohne Trennung wuerde die Beschriftung
   // "Wiederholungen" zur Unwahrheit machen.
   const toneColor = useToneColor();
   const { t } = useLocale();
+  const { uiLanguage } = useLocale();
   const max = Math.max(1, ...stats.days.map((day) => day.total + drillCount(day)));
 
   return (
@@ -166,7 +167,7 @@ function ReviewChart({ stats, months }: { stats: LearningStats; months: readonly
             style={styles.barColumn}
             accessible
             accessibilityLabel={t('chart.columnA11y', {
-              date: tagLabel(day.date, months),
+              date: tagLabel(day.date, uiLanguage),
               reviews: day.total,
               drills: drillCount(day),
             })}>

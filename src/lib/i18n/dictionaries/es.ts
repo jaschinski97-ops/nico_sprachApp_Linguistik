@@ -301,7 +301,7 @@ const es: Partial<Record<TranslationKey, string>> = {
     'Esta ronda cuenta como repetición: a diferencia de los ejercicios de elección, la escritura libre actualiza el estado de la tarjeta (AE-40).',
   'writing.inputA11y': 'Introducir la respuesta',
   'writing.checkA11y': 'Comprobar la respuesta',
-  'writing.check': 'Tarea {{index}} de {{total}}',
+  'writing.check': 'Comprobar',
   'writing.taskOf': 'Tarea {{index}} de {{total}}',
 
   /* ---------- Nota de valoración (writing-runner, dictation-runner) ---------- */
@@ -414,8 +414,8 @@ const es: Partial<Record<TranslationKey, string>> = {
   'sentence.hintShadowing':
     'Escucha primero la frase. Luego habla mientras suena el modelo. Usa auriculares: por altavoz el modelo puede colarse en la medición de tu micrófono.',
   'sentence.prepare': 'Preparación obligatoria · quedan {{seconds}} segundos',
-  'sentence.prepareBody':
-    'Aclara el significado y planifica la frase entera. {{focus}} Los 15 segundos son una decisión del ejercicio, no un óptimo científicamente determinado.',
+'sentence.prepareBody':
+    'Aclara el significado y planifica la frase entera. {{focus}}',
   'sentence.listen': 'Escuchar la frase',
   'sentence.listenAgain': 'Escuchar la frase de nuevo',
   'sentence.exampleNote': 'El ejemplo de audio no es una referencia para tu grabación.',
@@ -533,6 +533,21 @@ const es: Partial<Record<TranslationKey, string>> = {
   'drill.prompt.konsonantenklasse': '¿A qué clase pertenece esta consonante?',
   'drill.prompt.praesensEndung': '¿Qué terminación recibe la forma?',
   'drill.prompt.partizip': '¿Qué tercera forma pertenece a este verbo?',
+  "language.th.description": "Cinco tonos distinguen significados. La clase consonántica, la longitud vocálica, el sonido final y la marca tonal determinan el tono.",
+  "language.th.feature": "Tonos",
+  "language.en.description": "La pronunciación se aprende palabra por palabra. Las mismas letras pueden representar sonidos distintos.",
+  "language.en.feature": "Pronunciación",
+  "language.es.description": "El acento suele caer en la penúltima sílaba si la palabra termina en vocal, n o s; en las demás, en la última. Las excepciones llevan tilde.",
+  "language.es.feature": "Acentuación",
+  "tone.noMark": "sin marca",
+  "sentence.stockGenerated": "Ejemplos generados por IA y cotejados con su entrada de vocabulario: {{count}}.",
+  "sentence.stockEmpty": "No hay frases de ejemplo para este idioma en el contenido actual.",
+  "sentence.stockLegacy": "Lecturas completas revisadas de los ejemplos existentes: {{count}}.",
+  "sentence.audioClip": "Voz de IA, no una grabación de un hablante nativo. El audio no es una referencia de evaluación.",
+  "sentence.audioSystem": "Voz del sistema del dispositivo. Su pronunciación no ha sido revisada.",
+  "sentence.limits": "Practica también con personas. Estos ejercicios ayudan a preparar y repetir conversaciones.",
+  "speaking.crossChecked": "Tono objetivo de datos silábicos cotejados por IA; sin verificación de fuentes.",
+  "conversation.topicCountOne": "{{count}} diálogo",
 };
 
 export default es;

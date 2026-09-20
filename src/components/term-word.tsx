@@ -73,11 +73,11 @@ export function TermWord({
             </View>
           ))}
         </View>
-      ) : (
+      ) : (entry.ipa ?? entry.romanization) !== entry.term ? (
         <ThemedText type="small" themeColor="textSecondary">
           {entry.ipa ?? entry.romanization}
         </ThemedText>
-      )}
+      ) : null}
 
       {showsStress ? (
         <ThemedText type="small" themeColor="textSecondary">

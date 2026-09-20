@@ -46,7 +46,7 @@ export function ToneLegend({ compact = false }: { compact?: boolean }) {
               </ThemedText>
               {!compact ? (
                 <ThemedText type="small" themeColor="textSecondary">
-                  {TONES[tone].mark}
+                  {TONES[tone].mark || t('tone.noMark')}
                 </ThemedText>
               ) : null}
             </View>

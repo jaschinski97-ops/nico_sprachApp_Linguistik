@@ -2,7 +2,8 @@ import { VocabEntry } from '@/data/vocab-types';
 
 import { retrievability } from '../fsrs/fsrs';
 import { FSRSCardState } from '../fsrs/types';
-import { TargetLanguage } from '../languages/types';
+import { PairDirection, TargetLanguage } from '../languages/types';
+import type { UiLanguage } from '../i18n/types';
 import { ensureCardStates } from '../review-session';
 import { DataStore, getStore } from './../storage';
 
@@ -73,6 +74,7 @@ export type DrillSessionOptions = {
    * statt falsch gefuellt.
    */
   language: TargetLanguage;
+  direction?: PairDirection;
   store?: DataStore;
   now?: number;
   size?: number;
@@ -129,7 +131,8 @@ function buildQuestion(
   drill: DrillId,
   entry: VocabEntry,
   pool: VocabEntry[],
-  random: Random
+  random: Random,
+  direction: PairDirection
 ): DrillQuestion {
   switch (drill) {
     case 'tone':
@@ -141,7 +144,7 @@ function buildQuestion(
     case 'verbForms':
       return buildVerbFormQuestion(entry, pool, random);
     case 'deutschLesen':
-      return buildDeutschLesenQuestion(entry, pool, random);
+      return buildDeutschLesenQuestion(entry, pool, random, direction);
     case 'irregularPast':
       return buildIrregularPastQuestion(entry, pool, random);
     case 'stressRule':
@@ -151,7 +154,7 @@ function buildQuestion(
     case 'stressHear':
       return buildStressHearQuestion(entry);
     case 'soundSpelling':
-      return buildSoundSpellingQuestion(entry);
+      return buildSoundSpellingQuestion(entry, undefined, random);
     case 'praesensEndung':
       return buildPraesensEndungQuestion(entry, pool, random);
     case 'partizip':
@@ -173,7 +176,7 @@ function weakness(card: FSRSCardState | undefined, now: number): number {
 
 export async function buildDrillSession(options: DrillSessionOptions): Promise<DrillSession> {
   const drill = options.drill;
-  const direction = directionForDrill(drill, options.language);
+  const direction = options.direction ?? directionForDrill(drill, options.language);
   const now = options.now ?? Date.now();
   const size = options.size ?? DRILL_SESSION_SIZE;
   const random = seededRandom(options.seed ?? now);
@@ -197,7 +200,7 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
   const { entries, cards } = await ensureCardStates(direction, db, now);
 
   const cardByVocabId = new Map(cards.map((card) => [card.vocabId, card]));
-  const potential = entries.filter((entry) => canBuild(drill, entry));
+  const potential = entries.filter((entry) => canBuild(drill, entry) && (drill !== 'deutschLesen' || String(entry.language) !== 'de' || Boolean(entry.translations?.[direction.split('_to_')[0] as UiLanguage])));
   const eligibility = options.isEligible ? await Promise.all(potential.map(options.isEligible)) : potential.map(() => true);
   const candidates = potential.filter((_, i) => eligibility[i]);
 
@@ -210,7 +213,7 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
 
   return {
     drill,
-    questions: chosen.map((entry) => buildQuestion(drill, entry, candidates, random)),
+    questions: chosen.map((entry) => buildQuestion(drill, entry, candidates, random, direction)),
     available: candidates.length,
   };
 }

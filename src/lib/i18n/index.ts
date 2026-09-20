@@ -115,10 +115,7 @@ export function interpolate(template: string, params?: TParams): string {
 
 /** Ein Schlüssel in einer Sprache — bei Fehlbestand auf Deutsch zurückfallend. */
 export function translate(language: UiLanguage, key: TranslationKey, params?: TParams): string {
-  const template =
-    language === DEFAULT_UI_LANGUAGE
-      ? de[key]
-      : (dictionaries[language][key] ?? de[key]);
+  const template = dictionaries[language][key] ?? en[key] ?? de[key];
   return interpolate(template, params);
 }
 

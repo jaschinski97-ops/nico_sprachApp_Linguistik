@@ -1,6 +1,6 @@
 import { isDeAnchored, isPairDirection } from '../languages/types';
 
-import { situationId, SITUATION_SPRACHEN, Situationssprache } from './types';
+import { situationSprachenFuerBruecke, situationId, SITUATION_SPRACHEN, Situationssprache } from './types';
 
 /**
  * Der Gesprächs-Reiter listet SPRACHEN (14.09.): Die Zuordnung Sprache →
@@ -8,6 +8,12 @@ import { situationId, SITUATION_SPRACHEN, Situationssprache } from './types';
  * landen die Dialoge unter der falschen Sprache. Darum festgenagelt.
  */
 describe('SITUATION_SPRACHEN — die Sprachliste des Gesprächs-Reiters', () => {
+  it('blendet Deutsch nur auf deutscher Oberfläche aus', () => {
+    expect(situationSprachenFuerBruecke('de').map(e => e.sprache)).toEqual(['th', 'en', 'es']);
+    for (const bridge of ['th', 'en', 'ar'] as const) {
+      expect(situationSprachenFuerBruecke(bridge)).toEqual(SITUATION_SPRACHEN);
+    }
+  });
   it('ordnet jeder Sprache die Menge zu, in der SIE die Dialogseite ist', () => {
     const mapping = new Map(SITUATION_SPRACHEN.map((eintrag) => [eintrag.sprache, eintrag.direction]));
     expect(mapping.get('de')).toBe('th_to_de'); // die deutschsprachigen Dialoge

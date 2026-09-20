@@ -33,4 +33,4 @@ export type ContentEntry<K extends ContentKind = ContentKind> = {
   byteSize?: number;
   check?: ContentCheck;
 };
-export type ContentCatalog = { version: 2; entries: ContentEntry[] };
+export type ContentCatalog = { version: 2; vocabularySource?: 'generated'; entries: ContentEntry[]; deleted?: Record<string, number>; clearedBefore?: Record<string, number> };

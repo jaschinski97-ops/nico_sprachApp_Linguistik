@@ -303,7 +303,7 @@ const en: Partial<Record<TranslationKey, string>> = {
     'This round counts as a review: unlike the multiple-choice exercises, free writing updates the card state (AE-40).',
   'writing.inputA11y': 'Enter the answer',
   'writing.checkA11y': 'Check the answer',
-  'writing.check': 'Task {{index}} of {{total}}',
+  'writing.check': 'Check',
   'writing.taskOf': 'Task {{index}} of {{total}}',
 
   /* ---------- Rating note (writing-runner, dictation-runner) ---------- */
@@ -416,8 +416,8 @@ const en: Partial<Record<TranslationKey, string>> = {
   'sentence.hintShadowing':
     'Listen to the sentence first. Then speak along while the model plays. Use headphones: over a loudspeaker the model can end up in your microphone measurement.',
   'sentence.prepare': 'Mandatory preparation · {{seconds}} seconds left',
-  'sentence.prepareBody':
-    'Clarify the meaning and plan the whole sentence. {{focus}} The 15 seconds are an exercise decision, not a scientifically determined optimum.',
+'sentence.prepareBody':
+    'Clarify the meaning and plan the whole sentence. {{focus}}',
   'sentence.listen': 'Listen to the sentence',
   'sentence.listenAgain': 'Listen to the sentence again',
   'sentence.exampleNote': 'The listening example is not a benchmark for your recording.',
@@ -535,6 +535,21 @@ const en: Partial<Record<TranslationKey, string>> = {
   'drill.prompt.konsonantenklasse': 'To which class does this consonant belong?',
   'drill.prompt.praesensEndung': 'Which ending does the form take?',
   'drill.prompt.partizip': 'Which third form belongs to this verb?',
+  "language.th.description": "Five tones distinguish meaning. Consonant class, vowel length, final sound and tone mark determine the tone.",
+  "language.th.feature": "Tones",
+  "language.en.description": "Pronunciation is learned word by word. The same letter sequence can represent different sounds.",
+  "language.en.feature": "Pronunciation",
+  "language.es.description": "Stress follows spelling: usually the penultimate syllable for vowel, n or s endings, otherwise the last; exceptions carry an acute accent.",
+  "language.es.feature": "Stress",
+  "tone.noMark": "no mark",
+  "sentence.stockGenerated": "AI-generated example sentences, cross-checked with their vocabulary entries: {{count}}.",
+  "sentence.stockEmpty": "There are no example sentences for this language in the current collection.",
+  "sentence.stockLegacy": "Reviewed complete sentence readings from the existing examples: {{count}}.",
+  "sentence.audioClip": "AI voice, not a native-speaker recording. The audio example is not a scoring reference.",
+  "sentence.audioSystem": "Device system voice. Its pronunciation has not been checked.",
+  "sentence.limits": "Practise with people too. These exercises help you prepare and repeat conversations.",
+  "speaking.crossChecked": "Target tone from AI cross-checked syllable data; not source-verified.",
+  "conversation.topicCountOne": "{{count}} dialogue",
 };
 
 export default en;

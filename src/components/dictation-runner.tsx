@@ -7,6 +7,7 @@ import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { dictationConfigFor, type DictationLanguage } from '@/data/dictation-config';
+import type { SatzSprache } from '@/data/sentence-tasks';
 import { Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import {
@@ -27,7 +28,7 @@ import {
   type DictationScore,
 } from '@/lib/dictation/scoring';
 import { type Rating } from '@/lib/fsrs/types';
-import { type LanguageCode } from '@/lib/languages/types';
+import { type PairDirection } from '@/lib/languages/types';
 import { languageOf } from '@/lib/languages/registry';
 import { loadOrCreateCardState, rateCard } from '@/lib/repository';
 import { recordDrill } from '@/lib/review-log';
@@ -55,9 +56,12 @@ import { ratingExplanation } from '@/lib/writing';
  * bewegt. Dieselbe Karte wie Karteikarte und freies Schreiben, kein zweiter
  * Schlüssel (AE-16).
  *
- * Der Runner hängt bewusst NUR an `{ language, onExit }` — er zieht sich
- * Stoff, Bewertung und Karte selbst. Ein Bildschirm braucht also weder
- * Richtung noch Store.
+ * Der Runner hängt an `{ language, direction, onExit }` — er zieht sich Stoff,
+ * Bewertung und Karte selbst. Die Richtung kommt seit dem 18.09.2026 vom
+ * Aufrufer: Das Deutsch-Diktat (th_to_de) schreibt dieselbe Karte fort wie
+ * Karteikarte und freies Schreiben dieser Richtung (AE-16), und die Sprache
+ * ist die PRODUZIERTE Seite des Paars (`de` im Deutsch-Ziel), nicht mehr die
+ * über `pairLanguageOf` abgeleitete Ankerseite.
  */
 
 /** Verlangsamt, aber hörbar — innerhalb der expo-audio-Grenze (Android 0.1–2.0). */
@@ -104,23 +108,33 @@ function Palette({
   return null;
 }
 
+/** Anzeige-Name einer Diktat-Sprache — `de` hat keinen Registry-Eintrag (AE-11). */
+const DIKTAT_SPRACHE_LABEL: Record<SatzSprache, string> = {
+  th: languageOf('th').label,
+  en: languageOf('en').label,
+  es: languageOf('es').label,
+  de: 'Deutsch',
+};
+
 export function DictationRunner({
   language,
+  direction,
   onExit,
 }: {
-  language: LanguageCode;
+  language: SatzSprache;
+  direction: PairDirection;
   onExit: () => void;
 }) {
   const theme = useTheme();
   const toneColor = useToneColor();
-  const { t } = useLocale();
-  const label = languageOf(language).label;
+  const { t, uiLanguage } = useLocale();
+  const label = DIKTAT_SPRACHE_LABEL[language];
 
   // Die Aussaat würfelt die Runde neu — dieselbe Bauart wie alle anderen
   // Übungen, damit „Neue Runde" nicht dieselbe Folge zeigt. Die Zusammen-
   // stellung ist reine Datenrechnung (kein Store), deshalb synchron abgeleitet.
   const [seed, setSeed] = useState(() => Date.now());
-  const session = useMemo(() => buildDictationSession(language, seed), [language, seed]);
+  const session = useMemo(() => buildDictationSession(language, direction, seed), [language, direction, seed]);
 
   const [index, setIndex] = useState(0);
   const [draft, setDraft] = useState('');
@@ -164,7 +178,7 @@ export function DictationRunner({
       return false;
     }
     const playback = await playPronunciationWithStatus(request);
-    setAudioNote(playback.label);
+    setAudioNote(playback.kind === 'asset' ? t('sentence.audioClip') : playback.kind === 'tts' ? t('sentence.audioSystem') : t('dictation.noVoice', { language: label }));
     return playback.kind !== 'unavailable';
   }, [task, language, label, t]);
 
@@ -246,7 +260,7 @@ export function DictationRunner({
     return (
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">{t('dictation.noneFor', { language: label })}</ThemedText>
-        <ThemedText type="small">{dictationFootnote(language)}</ThemedText>
+        <ThemedText type="small">{dictationFootnote(language, uiLanguage)}</ThemedText>
         <ExitButton onExit={onExit} label={t('common.back')} />
       </ThemedView>
     );

@@ -1,3 +1,5 @@
+import type { VocabEntry } from '@/data/vocab-types';
+import type { UiLanguage } from '../i18n/types';
 import { SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 
 import { retrievability } from '../fsrs/fsrs';
@@ -48,16 +50,17 @@ export function zielSprache(direction: PairDirection): 'th' | 'en' | 'es' | 'de'
 }
 
 function wortAufgaben(
-  entries: { id: string; term: string; romanization: string; german: string }[],
+  entries: VocabEntry[],
   cards: FSRSCardState[],
   anzahl: number,
   random: ReturnType<typeof seededRandom>,
-  produziertDeutsch: boolean
+  produziertDeutsch: boolean,
+  source: UiLanguage
 ): ProduktionsAufgabe[] {
   const byVocabId = new Map(cards.map((card) => [card.vocabId, card]));
   const schwaeche = (card: FSRSCardState | undefined): number =>
     card ? retrievability(card, Date.now()) : 0;
-  const ranked = [...entries].sort(
+  const ranked = entries.filter(entry => !produziertDeutsch || String(entry.language) !== 'de' || entry.translations?.[source]).sort(
     (a, b) => schwaeche(byVocabId.get(a.id)) - schwaeche(byVocabId.get(b.id))
   );
   const fenster = ranked.slice(0, Math.max(anzahl, anzahl * FENSTER));
@@ -67,7 +70,7 @@ function wortAufgaben(
           id: `produktion-wort-${entry.id}`,
           vocabId: entry.id,
           art: 'wort' as const,
-          bedeutung: `${entry.term} · ${entry.romanization}`,
+          bedeutung: String(entry.language) === 'de' ? entry.translations![source]! : `${entry.term} · ${entry.romanization}`,
           ziel: entry.german,
         }
       : {
@@ -111,5 +114,5 @@ export async function produktionsAufgaben(options: {
 
   // Wörter: schwächste zuerst, aus einem Fenster gezogen.
   const { entries, cards } = await ensureCardStates(options.direction, options.store, Date.now());
-  return wortAufgaben(entries, cards, anzahl, random, produziertDeutsch);
+  return wortAufgaben(entries, cards, anzahl, random, produziertDeutsch, options.direction.split('_to_')[0] as UiLanguage);
 }

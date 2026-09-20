@@ -10,6 +10,24 @@ const { pruneOrphans } = require('./prune-orphans.cjs');
 const domain = require('./domain.cjs');
 const { clipIdFor } = domain.load('src/lib/clips/types');
 const { VOCABULARY } = domain.load('src/data/vocabulary');
+test('scoped vocabulary publish preserves unrelated staged drafts and budget', async t => {
+  const { root, pipeline } = await setup(t);
+  const words = ['first', 'second'].map((term, index) => ({
+    id: 'scope-' + index, language: 'en', term, german: term, romanization: term,
+    partOfSpeech: 'adjective', register: 'neutral', isConcrete: false,
+    syllables: [], sourceVerified: false, verificationNote: 'KI-Kreuzprüfung bestanden (Test)',
+  }));
+  await pipeline.stage({ kind: 'vocabulary', document: words[0] });
+  await pipeline.stage({ kind: 'vocabulary', document: words[1] });
+  const before = await pipeline.state();
+  await pipeline.publish({ vocabularyIds: [words[0].id] });
+  const after = await pipeline.state();
+  assert.deepEqual(after.shipped.entries.map(e => e.id), [words[0].id]);
+  assert.deepEqual(after.stage.entries.find(e => e.id === words[1].id),
+    before.stage.entries.find(e => e.id === words[1].id));
+  await assert.rejects(pipeline.publish({ vocabularyIds: ['missing'] }), /Nicht alle/);
+  assert.ok(root);
+});
 const { analyzeToneContour } = domain.load('src/lib/speaking/analysis');
 const { decodeAudio } = require('./media.cjs');
 const situation = {

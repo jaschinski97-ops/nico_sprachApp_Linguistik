@@ -329,11 +329,19 @@ class ContentPipeline {
     // Catalog is the last write: new entries only become visible after assets exist.
     await atomicJson(this.catalogFile, catalog);
   }
-  async publish() {
+  async publish(options = {}) {
     const state = await this.state();
     const merged = new Map(state.shipped.entries.map((entry) => [keyOf(entry), entry]));
     const assetDir = path.join(this.root, 'assets/content');
-    for (const entry of state.stage.entries) merged.set(keyOf(entry), entry);
+    let staged = state.stage.entries;
+    const selected = options.vocabularyIds;
+    if (selected !== undefined) {
+      if (!Array.isArray(selected) || !selected.length || selected.some(id => typeof id !== 'string')) throw Error('vocabularyIds muss eine nichtleere ID-Liste sein.');
+      const ids = new Set(selected);
+      staged = staged.filter(entry => entry.kind === 'vocabulary' && ids.has(entry.id));
+      if (staged.length !== ids.size) throw Error('Nicht alle gewählten Vokabeln sind im Stage.');
+    }
+    for (const entry of staged) merged.set(keyOf(entry), entry);
     const entries = [...merged.values()].sort((a,b) => keyOf(a).localeCompare(keyOf(b)));
     const budgetBytes = entries.reduce((sum, entry) => sum + shippingBytes(entry), 0);
     if (budgetBytes > BUDGET) throw Error(`Inhalt überschreitet das Budget von ${Math.round(BUDGET / 1024 / 1024)} MiB. Kein Teil wurde übernommen; Umfang ausdrücklich neu entscheiden.`);
@@ -395,8 +403,11 @@ class ContentPipeline {
     // meldet "Unable to resolve" fuer Dateien, die laengst da sind. Die kurze
     // Ruhepause laesst den Watcher aufholen — reiner Dev-Komfort, kein Vertrag.
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    await this.writeCatalog({ version: 2, entries: delivered });
-    await atomicJson(this.stageFile, { version: 2, entries: prepared.map(({ entry }) => entry) });
+    await this.writeCatalog({ ...(await this.catalog()), version: 2, entries: delivered });
+    await atomicJson(this.stageFile, { version: 2, entries: selected === undefined
+      ? prepared.map(({ entry }) => entry)
+      : state.stage.entries.map(entry => staged.some(item => keyOf(item) === keyOf(entry))
+        ? prepared.find(item => keyOf(item.entry) === keyOf(entry)).entry : entry) });
     return report;
   }
 }

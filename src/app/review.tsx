@@ -19,6 +19,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
 import {
+  directionForBridge,
   goalEndonym,
   goalLanguage,
   zielFuerDirection,
@@ -32,6 +33,7 @@ import {
   type PairDirection,
 } from '@/lib/languages/types';
 import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
+import { zielSprache } from '@/lib/production/tasks';
 import { rateCard } from '@/lib/repository';
 import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
 import {
@@ -118,7 +120,7 @@ function ZurueckZurUebersicht() {
 }
 
 export default function ReviewScreen() {
-  const { t } = useLocale();
+  const { t, uiLanguage } = useLocale();
   const params = useLocalSearchParams<{ direction?: string; mode?: string; waehlen?: string }>();
   const router = useRouter();
 
@@ -161,7 +163,7 @@ export default function ReviewScreen() {
     (direction: PairDirection, mode: Mode) => {
       router.setParams({
         direction,
-        mode: mode === 'cards' ? undefined : mode,
+        mode,
         waehlen: undefined,
       });
     },
@@ -193,7 +195,8 @@ export default function ReviewScreen() {
   // bleiben, wenn ein Stand gemerkt ist - sonst waere er eine Einbahnstrasse.
   // `profile.review` traegt nur einen Stand der AKTUELLEN Sprache; darum
   // kuemmert sich `loadProfile`.
-  const direction = params.waehlen === '1' ? null : (explicit ?? profile.review?.direction ?? null);
+  const requested = explicit ?? profile.review?.direction ?? null;
+  const direction = params.waehlen === '1' || !requested ? null : directionForBridge(uiLanguage, requested);
 
   if (!direction) {
     return (
@@ -331,14 +334,15 @@ function ReviewBody({
       ) : mode === 'dictation' ? (
         <DictationRunner
           key={`${direction}:dictation`}
-          language={pairLanguageOf(direction)}
+          language={zielSprache(direction)}
+          direction={direction}
           onExit={onExit}
         />
       ) : mode === 'shadowing' || mode === 'sentenceRepeat' || mode === 'sentenceListening' ? (
         <SentenceRunner
           key={`${direction}:${mode}`}
           mode={mode}
-          language={pairLanguageOf(direction)}
+          language={zielSprache(direction)}
           onExit={onExit}
         />
       ) : mode === 'lesestoffe' ? (
@@ -359,6 +363,7 @@ function ReviewBody({
       ) : (
         <DrillRunner
           drill={mode}
+          direction={direction}
           language={pairLanguageOf(direction)}
           key={`${direction}:${mode}`}
           onExit={onExit}

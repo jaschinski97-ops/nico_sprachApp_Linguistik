@@ -4,7 +4,7 @@ import { DrillRunner } from './drill-runner';
 import { SentenceAction, SentenceRunner } from './sentence-runner';
 import ReviewScreen from '@/app/review';
 // Die Screens schreiben Fehlerzustände über i18n (`t('common.retry')`). Ohne
-// Provider gilt dabei ausdrücklich die Referenzsprache Deutsch (siehe
+// Provider wählt dieser Test ausdrücklich Deutsch (siehe
 // useLocale in lib/i18n) — die Assertion liest den Beschriftungstrotzdem aus
 // dem de-Wörterbuch, damit sie die Semantik prüft und nicht einen zufällig
 // gleichlautenden Textwitz der Oberfläche.
@@ -18,6 +18,17 @@ const d = (key: TranslationKey) => dictionaries.de[key]!;
 const ROUND_HINT_TAIL = d('sentence.roundHint').split('{{round}}')[1]!;
 import type { MicrophoneCaptureController } from '@/lib/speaking/microphone-capture';
 import { sentenceAnswers, sentenceSession } from '@/lib/speaking/sentence-session';
+// Diese UI-Tests wählen Deutsch ausdrücklich; der Produkt-Default bleibt Englisch.
+jest.mock('@/lib/i18n', () => {
+  const actual = jest.requireActual('@/lib/i18n') as typeof import('@/lib/i18n');
+  return { ...actual, useLocale: () => ({
+    ...actual.useLocale(), uiLanguage: 'de',
+    t: (key: import('@/lib/i18n').TranslationKey, params?: import('@/lib/i18n/types').TParams) => actual.translate('de', key, params),
+    languageName: (code: import('@/lib/i18n').UiLanguage) => actual.languageDisplayName(code, 'de'),
+  }) };
+});
+
+
 
 const mockPlay = jest.fn(async () => ({ kind: 'asset', label: 'KI-Stimme, Ton nicht geprüft', toneStatus: 'unchecked' }));
 const mockStopAudio = jest.fn(async () => {});
@@ -90,7 +101,7 @@ test('shadowing enforces preparation, hearing and headphones before mic; plays o
   mockPlay.mockClear();
   await press(d('sentence.start'));
   expect(mockStart).toHaveBeenCalledTimes(1); expect(mockPlay).toHaveBeenCalledTimes(1);
-  expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton nicht geprüft');
+  expect(JSON.stringify(tree.toJSON())).toContain(d('sentence.audioClip'));
   expect(mockOptions.allowPlayback).toBe(true);
   expect(mockPlay).toHaveBeenCalledWith(expect.objectContaining({ concurrentRecording: true }));
   expect(mockStart.mock.invocationCallOrder[0]).toBeLessThan(mockPlay.mock.invocationCallOrder[0]);
@@ -120,10 +131,10 @@ test('hearing presents no transcript before answer, handles missing voice and ev
   mockAvailable.mockResolvedValue(false); await press(d('sentence.listen'));
   expect(mockPlay).not.toHaveBeenCalled(); expect(button(task.german).props.disabled).toBe(true);
   mockAvailable.mockResolvedValue(true); await press(d('sentence.listen'));
-  expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton nicht geprüft');
+  expect(JSON.stringify(tree.toJSON())).toContain(d('sentence.audioClip'));
   mockPlay.mockResolvedValueOnce({ kind: 'asset', label: 'KI-Stimme, Ton automatisch geprüft', toneStatus: 'passed' });
   await press(d('sentence.listenAgain'));
-  expect(JSON.stringify(tree.toJSON())).toContain('KI-Stimme, Ton automatisch geprüft');
+  expect(JSON.stringify(tree.toJSON())).toContain(d('sentence.audioClip'));
   expect(JSON.stringify(tree.toJSON())).not.toContain('KI-Stimme, Ton nicht geprüft');
   await press(task.german);
   expect(JSON.stringify(tree.toJSON())).toContain(d('sentence.correct'));
@@ -157,7 +168,7 @@ test('a language without audited sentences shows an honest notice and never touc
   // Der Sprachname kommt aus `languageOf` (lib-Inhalt, bleibt Deutsch) und ist
   // inzwischen Teil desselben interpolierten Text-Segments.
   expect(json).toContain(d('sentence.noneFor').replace('{{language}}', 'Spanisch'));
-  expect(json).toContain('Wortgruppen');
+  expect(json).toContain(d('sentence.stockEmpty'));
   // Kein Aufnahme-/Wiedergabeknopf, keine Vorbereitungsuhr — nur der Hinweis.
   expect(json).not.toContain(d('sentence.start'));
   expect(json).not.toContain(d('sentence.listen'));
@@ -226,15 +237,15 @@ test('der Methodik-Hintergrund ist eingeklappt und lässt sich auf- und zuklappe
   expect(json()).not.toContain(d('sentence.hintRepeat'));
   // „unvorhersehbares Gegenüber“ steht in SENTENCE_LIMITS (lib-Inhalt, bleibt
   // laut Architektur-Entscheidung Deutsch).
-  expect(json()).not.toContain('unvorhersehbares Gegenüber');
+  expect(json()).not.toContain(d('sentence.limits'));
   expect(toggle().props.accessibilityState.expanded).toBe(false);
   await act(async () => toggle().props.onPress());
   expect(json()).toContain(d('sentence.hintRepeat'));
-  expect(json()).toContain('unvorhersehbares Gegenüber');
+  expect(json()).toContain(d('sentence.limits'));
   expect(toggle().props.accessibilityState.expanded).toBe(true);
   await act(async () => toggle().props.onPress());
   expect(json()).not.toContain(d('sentence.hintRepeat'));
-  expect(json()).not.toContain('unvorhersehbares Gegenüber');
+  expect(json()).not.toContain(d('sentence.limits'));
 });
 
 test('drill-runner zeigt einen Fehlerzustand statt eines endlosen Spinners, wenn das Zusammenstellen scheitert', async () => {
@@ -259,4 +270,18 @@ test('CardSession des Lernen-Reiters zeigt einen Fehlerzustand, wenn die Wartesc
   const json = JSON.stringify(tree.toJSON());
   expect(json).toContain('Karteikasten defekt');
   expect(json).toContain(ERNEUT_VERSUCHEN);
+});
+
+test('identische Silben behalten eigene Antwort-Keys', async () => {
+  const errors = jest.spyOn(console, 'error').mockImplementation(() => {});
+  mockBuildDrillSession.mockResolvedValue({ available: 1, drill: 'stressHear', questions: [{
+    id: 'stressHear:mama', drill: 'stressHear', direction: 'de_to_es', vocabId: 'mama',
+    visible: null, visibleHint: null, speak: null, solution: 'mamá', explanation: '',
+    options: [{ label: 'ma', hint: '1' }, { label: 'ma', hint: '2' }], correctIndex: 1,
+  }] });
+  try {
+    await act(async () => { tree = create(<DrillRunner drill="stressHear" language="es" onExit={() => {}} />); });
+    expect(JSON.stringify(tree.toJSON())).toContain('ma');
+    expect(errors.mock.calls.flat().join(' ')).not.toMatch(/same key|unique.*key/i);
+  } finally { errors.mockRestore(); }
 });

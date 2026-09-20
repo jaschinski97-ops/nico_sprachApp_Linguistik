@@ -1,7 +1,8 @@
 import { SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 
 import { dictationTasksFor } from './dictation/tasks';
-import { type PairDirection, pairLanguageOf } from './languages/types';
+import { type PairDirection } from './languages/types';
+import { zielSprache } from './production/tasks';
 import { loadReviewLog, type ReviewDayLog } from './review-log';
 import { buildReviewQueue, type ReviewItem } from './review-session';
 import { type DataStore } from './storage';
@@ -176,19 +177,22 @@ export function schwaecheAusLog(
   };
 }
 
-/** Hat die Sprache für den Bereich Stoff? (th hat Satzstoff, en/es Hördrills …) */
+/** Hat die Sprache für den Bereich Stoff? (18.09.: je PRODUZIERTER Sprache, auch de) */
 export function bereichVerfuegbar(direction: PairDirection, kind: Exclude<RoundKind, 'cards'>): boolean {
-  const sprache = pairLanguageOf(direction);
+  // Die satztragenden Bereiche folgen der produzierten Sprache — im Deutsch-
+  // Ziel (th_to_de) sind das deutsche Sätze, nicht die Thai-Ankerseite.
+  const sprache = zielSprache(direction);
   switch (kind) {
     case 'hoeren':
-      // th: „Satz verstehen“; en: „Wort hören“; es: „Betonung hören“.
-      return true;
+      // Wort-Hör-Drills gibt es nur für th/en/es; das Deutsch-Ziel hört über
+      // „Satz verstehen“ (Bereich satz) mit.
+      return sprache !== 'de';
     case 'satz':
     case 'shadowing':
       return (SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? []).length > 0;
     case 'diktat':
       try {
-        return dictationTasksFor(sprache).length > 0;
+        return dictationTasksFor(sprache, direction).length > 0;
       } catch {
         return false;
       }

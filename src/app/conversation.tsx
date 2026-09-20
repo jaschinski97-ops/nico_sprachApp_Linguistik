@@ -9,8 +9,10 @@ import { Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { PlaybackKind, playPronunciation } from '@/lib/audio';
 import {
+  spokenText,
+  situationTranslation,
   ConversationSituation,
-  SITUATION_SPRACHEN,
+  situationSprachenFuerBruecke,
   Situationssprache,
   TopicId,
 } from '@/lib/conversation/types';
@@ -27,17 +29,8 @@ const TOPIC_KEYS: Record<ConversationSituation['topic'], TranslationKey> = {
   travel: 'topic.travel',
 };
 
-/**
- * Die Sprache der Bedeutungszeilen. DECISION 14.09.: Die Gegenseite der
- * Dialoge hängt an der App-Systemsprache — der Reiter fragt sie nicht extra.
- * Solange Bedeutungen nur auf Deutsch erzeugt sind, fällt der Hinweis ehrlich
- * auf Deutsch zurück; deckt der Übersetzungsbestand die 20 App-Sprachen,
- * steht hier die Systemsprache (`uiLanguage`).
- */
-const BEDEUTUNGSSPRACHE = 'de' as const;
-
 export default function ConversationScreen() {
-  const { t, languageName } = useLocale();
+  const { t, languageName, uiLanguage } = useLocale();
   const [situations, setSituations] = useState<ConversationSituation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Der Reiter listet Sprachen, keine Richtungen (14.09.): Jeder Eintrag
@@ -50,19 +43,21 @@ export default function ConversationScreen() {
   // Wie im Lern-Reiter: Der zuletzt geöffnete Eintrag bleibt offen. Der Spot
   // trägt eine Richtung; gehört sie zu einem Eintrag der Liste, übernimmt
   // der Reiter ihn.
+  const sprachen = useMemo(() => situationSprachenFuerBruecke(uiLanguage), [uiLanguage]);
+  const lernsprache = profile?.review?.direction.endsWith('_to_de') ? 'de' : language;
   const gemerkt = profile?.conversation ?? null;
   const gemerkterEintrag = gemerkt
-    ? SITUATION_SPRACHEN.find((eintrag) => eintrag.direction === gemerkt)
+    ? sprachen.find((eintrag) => eintrag.direction === gemerkt)
     : undefined;
   const eintrag =
-    (gewaehlt && SITUATION_SPRACHEN.find((e) => e.sprache === gewaehlt)) ??
+    (gewaehlt && sprachen.find((e) => e.sprache === gewaehlt)) ??
     gemerkterEintrag ??
-    SITUATION_SPRACHEN.find((e) => e.sprache === language) ??
-    SITUATION_SPRACHEN[0];
+    sprachen.find((e) => e.sprache === lernsprache) ??
+    sprachen[0];
   const sprache = eintrag.sprache;
   const direction = eintrag.direction;
   const waehlen = (code: Situationssprache) => {
-    const eintrag = SITUATION_SPRACHEN.find((e) => e.sprache === code);
+    const eintrag = sprachen.find((e) => e.sprache === code);
     if (!eintrag) return;
     setGewaehlt(code);
     // Feuer-und-vergessen ist hier gewollt, aber ein Speicherfehler darf
@@ -169,7 +164,7 @@ export default function ConversationScreen() {
         <ThemedText type="small" themeColor="textSecondary">
           {t('common.languageLabel')}
         </ThemedText>
-        {SITUATION_SPRACHEN.map(({ sprache: code }) => {
+        {sprachen.map(({ sprache: code }) => {
           const aktiv = code === sprache;
           return (
             <Pressable
@@ -193,7 +188,7 @@ export default function ConversationScreen() {
       {/* Die Gegenseite der Dialoge ist keine Wahl, sondern die App-Sprache —
           solange Bedeutungen nur auf Deutsch erzeugt sind, steht das hier. */}
       <ThemedText type="small" themeColor="textSecondary">
-        {t('conversation.meaningLanguage', { language: languageName(BEDEUTUNGSSPRACHE) })}
+        {t('conversation.meaningLanguage', { language: languageName(visible.every(s => s.translations?.[uiLanguage]) ? uiLanguage : 'de') })}
       </ThemedText>
 
       {visible.length === 0 ? (
@@ -215,7 +210,7 @@ export default function ConversationScreen() {
                 accessibilityRole="button"
                 accessibilityState={{ expanded: offen }}
                 accessibilityLabel={`${t(TOPIC_KEYS[topic])}, ${t(
-                  'conversation.topicCount',
+                  gruppe.length === 1 ? 'conversation.topicCountOne' : 'conversation.topicCount',
                   { count: gruppe.length }
                 )}`}
                 style={({ pressed }) => [styles.topicHead, pressed && styles.pressed]}>
@@ -225,7 +220,7 @@ export default function ConversationScreen() {
                   </ThemedText>
                   <View style={styles.topicMeta}>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {t('conversation.topicCount', { count: gruppe.length })}
+                      {t(gruppe.length === 1 ? 'conversation.topicCountOne' : 'conversation.topicCount', { count: gruppe.length })}
                     </ThemedText>
                     <ThemedText type="small" themeColor="textSecondary">
                       {offen ? '▲' : '▼'}
@@ -242,7 +237,7 @@ export default function ConversationScreen() {
                       // Deutsch-Eintrag: die deutschen Zeilen klingen und
                       // sind die Übungsseite. Sonst die Dialogsprache —
                       // heute nur Thai, weitere folgen mit ihrem Grundstoff.
-                      sprechSprache={sprache === 'de' ? 'de' : 'th'}
+                      sprechSprache={sprache}
                       open={openId === situation.id}
                       onToggle={() => setOpenId(openId === situation.id ? null : situation.id)}
                     />
@@ -268,12 +263,13 @@ function SituationCard({
   /** Welche Zeilen-Seite gesprochen wird: beim Deutsch-Eintrag die deutschen
       Zeilen (Gerätestimme), sonst die Dialogsprache — heute Thai, mit Clip
       (Nutzerentscheidung 10.09., sprachbenannt seit 14.09.). */
-  sprechSprache: 'de' | 'th';
+  sprechSprache: Situationssprache;
   open: boolean;
   onToggle: () => void;
 }) {
   const toneColor = useToneColor();
-  const { t } = useLocale();
+  const { t, uiLanguage } = useLocale();
+  const translated = situationTranslation(situation, uiLanguage);
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -284,7 +280,7 @@ function SituationCard({
         style={({ pressed }) => pressed && styles.pressed}>
         <View style={styles.header}>
           <View style={styles.headerText}>
-            <ThemedText type="smallBold">{situation.title}</ThemedText>
+            <ThemedText type="smallBold">{translated.title}</ThemedText>
             {/* WHY: Das Thema steht einmal am Abschnittslabel — die Karte
                 trägt nur noch Stufe und Varianten-Anhang. */}
             <ThemedText type="small" themeColor="textSecondary">
@@ -301,7 +297,7 @@ function SituationCard({
       {open ? (
         <>
           <ThemedText type="small" themeColor="textSecondary">
-            {situation.setting}
+            {translated.setting}
           </ThemedText>
 
           {situation.scriptTurns.map((turn, index) => (
@@ -316,21 +312,21 @@ function SituationCard({
                   {turn.speaker === 'learner' ? t('conversation.you') : t('conversation.partner')}
                 </ThemedText>
                 <TurnSpeakButton
-                  text={sprechSprache === 'de' ? turn.german : turn.thai}
+                  text={spokenText(situation, turn)}
                   sprechSprache={sprechSprache}
                 />
               </View>
-              <ThemedText>{turn.thai}</ThemedText>
+              <ThemedText>{spokenText(situation, turn)}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {turn.roman}
               </ThemedText>
-              <ThemedText type="small">{turn.german}</ThemedText>
+              <ThemedText type="small">{translated.turns[index]}</ThemedText>
             </View>
           ))}
 
           <ThemedView type="backgroundSelected" style={styles.corrections}>
             <ThemedText type="smallBold">{t('conversation.mistakesTitle')}</ThemedText>
-            {situation.corrections.map((hint, index) => (
+            {translated.corrections.map((hint, index) => (
               <View key={index}>
                 <ThemedText type="small">{hint.issue}</ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
@@ -352,7 +348,7 @@ function SituationCard({
  * einer, steht „KI-Stimme" daneben: eine synthetische Aufnahme, keine
  * Muttersprachler-Aufnahme (Pflicht 4).
  */
-function TurnSpeakButton({ text, sprechSprache }: { text: string; sprechSprache: 'de' | 'th' }) {
+function TurnSpeakButton({ text, sprechSprache }: { text: string; sprechSprache: Situationssprache }) {
   const [played, setPlayed] = useState<PlaybackKind | null>(null);
   const { t } = useLocale();
   // WHY Icon statt Emoji: Das 🔊-Schriftzeichen sieht je Plattform anders aus

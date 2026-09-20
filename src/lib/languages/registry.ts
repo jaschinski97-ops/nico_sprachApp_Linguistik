@@ -1,8 +1,7 @@
-import { VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
+import { activeVocabularyFor } from '@/data/active-vocabulary';
 import { languageDisplayName, type UiLanguage } from '@/lib/i18n';
 
 import {
-  Direction,
   directionsFor,
   HUB_LANGUAGE,
   Lang,
@@ -38,14 +37,13 @@ export const LANGUAGES: Record<(typeof TARGET_LANGUAGES)[number], LanguageDefini
     label: 'Thai',
     endonym: 'ภาษาไทย',
     speechLocale: 'th-TH',
-    challenge: 'Fünf Töne, die Bedeutung tragen — und eine eigene Schrift.',
-    entryCount: VOCABULARY_TH.length,
+    challenge: 'language.th.description',
+    get entryCount() { return activeVocabularyFor('th').length; },
     hasGermanModules: true,
     delivered: true,
     feature: {
-      label: 'Töne',
-      description:
-        'Der Ton einer Silbe unterscheidet Bedeutungen und lässt sich aus der Schrift ableiten: aus Konsonantenklasse, Vokallänge, Schlusslaut und Tonzeichen.',
+      label: 'language.th.feature',
+      description: 'language.th.description',
       // Deshalb gibt es die Herleitungsuebung aus Phase 13 - und deshalb ist
       // sie dort ueberhaupt moeglich gewesen.
       kind: 'derivable',
@@ -65,14 +63,13 @@ export const LANGUAGES: Record<(typeof TARGET_LANGUAGES)[number], LanguageDefini
     label: 'Spanisch',
     endonym: 'español',
     speechLocale: 'es-ES',
-    challenge: 'Die Betonung ist regelhaft — wer die Regel kennt, braucht sie nicht zu merken.',
-    entryCount: VOCABULARY_ES.length,
+    challenge: 'language.es.description',
+    get entryCount() { return activeVocabularyFor('es').length; },
     hasGermanModules: true,
     delivered: true,
     feature: {
-      label: 'Betonung',
-      description:
-        'Welche Silbe betont wird, steht in der Schreibung: Wörter auf Vokal, -n oder -s werden auf der vorletzten Silbe betont, alle anderen auf der letzten; jede Abweichung trägt einen Akut. Die Betonung ist damit wie der Thai-Ton eine ableitbare Regel und kein Gedächtnisstoff — die Übung „Betonung herleiten" zeigt den Weg dorthin Schritt für Schritt.',
+      label: 'language.es.feature',
+      description: 'language.es.description',
       kind: 'derivable',
       // Seit Phase 16 gebaut: lib/stress leitet die Betonung her, und die
       // Uebung 'stressRule' zeigt den Weg dorthin.
@@ -92,14 +89,13 @@ export const LANGUAGES: Record<(typeof TARGET_LANGUAGES)[number], LanguageDefini
     label: 'Englisch',
     endonym: 'English',
     speechLocale: 'en-GB',
-    challenge: 'Schreibung und Aussprache klaffen auseinander — Wort für Wort.',
-    entryCount: VOCABULARY_EN.length,
+    challenge: 'language.en.description',
+    get entryCount() { return activeVocabularyFor('en').length; },
     hasGermanModules: true,
     delivered: true,
     feature: {
-      label: 'Aussprache',
-      description:
-        'Anders als bei Thai und Spanisch lässt sich die Aussprache NICHT aus der Schreibung ableiten: ⟨ough⟩ allein hat mindestens zehn Lesarten. Das Merkmal steht deshalb je Wort als Lautschrift, und geübt wird der Vergleich statt der Herleitung — enough, through, though und thought tragen dasselbe ⟨ough⟩ und klingen viermal verschieden.',
+      label: 'language.en.feature',
+      description: 'language.en.description',
       kind: 'per-word',
       // Seit Phase 16 gebaut - aber ausdruecklich NICHT als Herleitung:
       // lib/spelling stellt Woerter mit gleichem Schriftstueck und

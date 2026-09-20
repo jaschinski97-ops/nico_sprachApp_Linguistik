@@ -171,6 +171,7 @@ export function Flashcard({ entry, direction, revealed, bridgeEntry = null }: Pr
 
 function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?: boolean }) {
   const { t } = useLocale();
+  if (entry.german === entry.term) return null;
   const chips: string[] = [];
   if (entry.germanNoun) {
     chips.push(t('flashcard.plural', { plural: entry.germanNoun.plural }));
@@ -225,12 +226,12 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
       <View style={styles.exampleRow}>
         <View style={styles.exampleText}>
           <ThemedText type="small">{entry.exampleTerm}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {entry.exampleRoman}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            {entry.exampleGerman}
-          </ThemedText>
+          {entry.exampleRoman && entry.exampleRoman !== entry.exampleTerm ? (
+            <ThemedText type="small" themeColor="textSecondary">{entry.exampleRoman}</ThemedText>
+          ) : null}
+          {entry.exampleGerman && entry.exampleGerman !== entry.exampleTerm && entry.exampleGerman !== entry.exampleRoman ? (
+            <ThemedText type="small" themeColor="textSecondary">{entry.exampleGerman}</ThemedText>
+          ) : null}
         </View>
         <SpeakButton
           label="▶"

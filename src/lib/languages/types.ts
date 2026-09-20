@@ -29,6 +29,7 @@
  */
 
 import { Tone } from '@/constants/tones';
+import type { TranslationKey } from '../i18n/keys';
 import { UI_LANGUAGES, type UiLanguage } from '@/lib/i18n/types';
 
 /**
@@ -359,7 +360,7 @@ export type LanguageMeta = {
    * steht. Für Thai die Töne, für Englisch die Aussprache, für Spanisch die
    * Betonung.
    */
-  challenge: string;
+  challenge: TranslationKey;
 };
 
 /**
@@ -377,10 +378,10 @@ export type LanguageMeta = {
  * geprüften, und genau das verbietet Pflicht 3.
  */
 export type LanguageFeature = {
-  /** Kurzname des Merkmals, etwa „Töne". */
-  label: string;
+  /** Übersetzungsschlüssel für den Kurznamen des Merkmals. */
+  label: TranslationKey;
   /** Ein Satz: was das Merkmal ist und warum es zählt. */
-  description: string;
+  description: TranslationKey;
   /**
    * Wie es erlernt wird — bestimmt, ob eine Herleitungsübung überhaupt Sinn
    * ergibt.

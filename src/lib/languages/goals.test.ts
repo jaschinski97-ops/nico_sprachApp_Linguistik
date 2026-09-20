@@ -2,7 +2,7 @@ import { VOCABULARY_AR } from '@/data/vocabulary-ar';
 import { VOCABULARY_DE } from '@/data/vocabulary-de';
 import { VOCABULARY_ES, VOCABULARY_TH, vocabularyFor } from '@/data/vocabulary';
 
-import { goalEndonym, goalLanguage, LERNZIELE, zielFuerDirection, zieleFuerBruecke, wortschatzFuerZiel } from './goals';
+import { directionForBridge, goalEndonym, goalLanguage, LERNZIELE, zielFuerDirection, zieleFuerBruecke, wortschatzFuerZiel } from './goals';
 import { isDeAnchored, isPairDirection, pairLanguageOf, type PairDirection } from './types';
 
 /**
@@ -14,19 +14,22 @@ import { isDeAnchored, isPairDirection, pairLanguageOf, type PairDirection } fro
  * App-Sprache ihre Ziele; die Brücke Deutsch muss den Bestand 1:1 erhalten.
  */
 describe('Lernziele — Deutsch als eigene Wahl (Brücke de, Bestand)', () => {
-  it('bildet die vier Ziele 1:1 auf Richtungen ab, in fester Reihenfolge', () => {
+  it('bildet die drei Ziele auf Richtungen ab, in fester Reihenfolge', () => {
     expect(LERNZIELE.map((ziel) => ziel.direction)).toEqual([
       'de_to_th',
       'de_to_en',
       'de_to_es',
-      'th_to_de',
     ]);
     expect(zieleFuerBruecke('de').map((ziel) => ziel.direction)).toEqual([
       'de_to_th',
       'de_to_en',
       'de_to_es',
-      'th_to_de',
     ]);
+  });
+
+  it('leitet alte deutsche Profilziele um und erhält Deutsch für Thai', () => {
+    expect(directionForBridge('de', 'th_to_de')).toBe('de_to_th');
+    expect(directionForBridge('th', 'th_to_de')).toBe('th_to_de');
   });
 
   it('gibt zu jeder Ziel-Richtung genau dieses Ziel zurück', () => {

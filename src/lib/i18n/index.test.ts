@@ -51,6 +51,7 @@ beforeEach(() => {
 
 describe('detectSystemLocale — Normierung der Systemsprache', () => {
   it('erkennt jeden Kanon-Code', () => {
+    for (const language of UI_LANGUAGES) expect(detectFrom(language)).toBe(language);
     expect(detectFrom('de')).toBe('de');
     expect(detectFrom('en')).toBe('en');
     expect(detectFrom('es')).toBe('es');
@@ -76,27 +77,27 @@ describe('detectSystemLocale — Normierung der Systemsprache', () => {
     expect(normalizeLanguageCode('pt-BR')).toBe('pt');
   });
 
-  it('fällt für unbekannte Sprachen auf Deutsch zurück', () => {
-    expect(detectFrom('it')).toBe('de'); // Italienisch: kein Teil der 20 App-Sprachen
-    expect(detectFrom('pl')).toBe('de'); // Polnisch ebenso
-    expect(detectFrom(undefined)).toBe('de');
+  it('fällt für unbekannte Sprachen auf Englisch zurück', () => {
+    expect(detectFrom('it')).toBe('en'); // Italienisch: kein Teil der 20 App-Sprachen
+    expect(detectFrom('pl')).toBe('en'); // Polnisch ebenso
+    expect(detectFrom(undefined)).toBe('en');
   });
 
-  it('fällt ohne Sprachauskunft und bei Fehlern auf Deutsch zurück', () => {
+  it('fällt ohne Sprachauskunft und bei Fehlern auf Englisch zurück', () => {
     mockedGetLocales.mockReturnValue(undefined);
-    expect(detectSystemLocale()).toBe('de');
+    expect(detectSystemLocale()).toBe('en');
 
     mockedGetLocales.mockImplementation(() => {
       throw new Error('natives Modul fehlt');
     });
-    expect(detectSystemLocale()).toBe('de');
+    expect(detectSystemLocale()).toBe('en');
   });
 
   it('normiert rohe Codes auch ohne Erkennung', () => {
-    expect(normalizeLanguageCode('FR')).toBe('de'); // bewusst strikt: Kleinschreibung ist der Vertrag von expo-localization
-    expect(normalizeLanguageCode('it')).toBe('de'); // Italienisch: nicht im Kanon → Fallback
+    expect(normalizeLanguageCode('FR')).toBe('en'); // bewusst strikt: Kleinschreibung ist der Vertrag von expo-localization
+    expect(normalizeLanguageCode('it')).toBe('en'); // Italienisch: nicht im Kanon → Fallback
     expect(normalizeLanguageCode('fr')).toBe('fr'); // seit dem 20-Sprachen-Ausbau im Kanon
-    expect(normalizeLanguageCode(42)).toBe('de');
+    expect(normalizeLanguageCode(42)).toBe('en');
   });
 });
 
@@ -161,13 +162,13 @@ describe('translate — Nachschlagen und Fallback', () => {
     expect(translate('en', 'cards.progress', { index: 1, total: 5 })).toBe('Card 1 of 5');
   });
 
-  it('fällt bei fehlendem Schlüssel auf Deutsch zurück', () => {
+  it('fällt bei fehlendem Schlüssel auf Englisch zurück', () => {
     const esDict = dictionaries.es as Record<string, string | undefined>;
     const original = esDict['cards.progress'];
     try {
       delete esDict['cards.progress'];
       expect(translate('es', 'cards.progress', { index: 3, total: 7 })).toBe(
-        'Karte 3 von 7'
+        'Card 3 of 7'
       );
     } finally {
       esDict['cards.progress'] = original;
@@ -244,18 +245,18 @@ describe('React-Anbindung', () => {
   });
 
   afterEach(() => {
-    tree?.unmount();
+    act(() => tree?.unmount());
   });
 
-  it('useLocale ohne Provider hält an der Referenzsprache Deutsch fest', () => {
+  it('useLocale ohne Provider nutzt den englischen Default', () => {
     // Die Testumgebung meldet Englisch — der providerlose Fallback darf davon
     // NICHT abhängen, sonst kippen alle deutschfassenden Komponententests.
     mockedGetLocales.mockReturnValue([{ languageCode: 'en', languageTag: 'en-US' }]);
     act(() => {
       tree = create(createElement(Probe));
     });
-    expect(captured?.uiLanguage).toBe('de');
-    expect(captured?.t('tabs.settings')).toBe('Einstellungen');
+    expect(captured?.uiLanguage).toBe('en');
+    expect(captured?.t('tabs.settings')).toBe('Settings');
   });
 
   it('der Provider löst "system" auf die erkannte Systemsprache auf', async () => {

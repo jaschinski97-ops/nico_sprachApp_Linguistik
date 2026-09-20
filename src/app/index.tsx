@@ -14,7 +14,7 @@ import { useLearnerLanguage } from '@/hooks/use-learner-language';
 import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
-import { zieleFuerBruecke, zielFuerDirection, goalLanguage } from '@/lib/languages/goals';
+import { zieleFuerBruecke, goalLanguage, directionForBridge } from '@/lib/languages/goals';
 import { languageOf } from '@/lib/languages/registry';
 import {
   isDeAnchored,
@@ -67,17 +67,20 @@ export default function DashboardScreen() {
   // Lesezeichen noch geschrieben wird — sonst spränge die Markierung des
   // Deutsch-Ziels (gleiche Profil-Sprache wie Thai) kurz zurück.
   const [wahlRichtung, setWahlRichtung] = useState<PairDirection | null>(null);
-  const selectedDirection = wahlRichtung ?? profile?.review?.direction ?? null;
+  const requestedDirection = wahlRichtung ?? profile?.review?.direction ?? null;
+  const selectedDirection = requestedDirection
+    ? directionForBridge(uiLanguage, requestedDirection)
+    : (ziele.find(ziel => ziel.language === language) ?? ziele[0]).direction;
 
   // Die Beschreibung unter dem Picker hängt am GEWÄHLTEN Ziel: Beim Deutsch-
   // Ziel war sonst der Thai-Tontext zu lesen (gleiche Paarsprache, anderes
   // Ziel — Nutzerhinweis 10.09.). Deutsch hat kein Registry-Merkmal und
   // bekommt einen eigenen Satz; ohne Wahl gilt das erste Ziel der Brücke.
   const aktivesZiel =
-    (selectedDirection && zielFuerDirection(selectedDirection)) || ziele[0];
+    ziele.find(ziel => ziel.direction === selectedDirection) || ziele[0];
   const zielBeschreibung = aktivesZiel.direction.endsWith('_to_de')
     ? t('goal.deutschDescription')
-    : languageOf(pairLanguageOf(aktivesZiel.direction)).feature.description;
+    : t(languageOf(pairLanguageOf(aktivesZiel.direction)).feature.description);
 
   /**
    * Lernziel gewählt: Paarsprache UND Richtung in einem. Reihenfolge ist
@@ -174,7 +177,7 @@ export default function DashboardScreen() {
           Thai, die Betonungsregel bei Spanisch, die Schriftstueck-Gruppen bei
           Englisch. Vorher stand hier fuer zwei von drei Sprachen nichts - die
           Bedingung war auf die Toene gemuenzt und schloss die anderen aus. */}
-      {featureIsImplemented(language) ? <FeatureLegend language={language} /> : null}
+      {goalLanguage(aktivesZiel) !== 'de' && featureIsImplemented(aktivesZiel.language) ? <FeatureLegend language={aktivesZiel.language} /> : null}
 
       {/* Die Beschreibung folgt dem GEWÄHLTEN Ziel, nicht der Paarsprache:
           Beim Deutsch-Ziel stand hier sonst der Thai-Tontext (Nutzerhinweis

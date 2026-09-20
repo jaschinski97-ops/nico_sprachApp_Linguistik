@@ -20,7 +20,7 @@ import { VocabEntry } from '@/data/vocabulary';
 export function VerificationBadge({ entry }: { entry: VocabEntry }) {
   const [open, setOpen] = useState(false);
 
-  if (entry.sourceVerified) return null;
+  if (entry.sourceVerified || entry.verificationNote?.startsWith('KI-')) return null;
 
   return (
     <ThemedView type="backgroundSelected" style={styles.wrapper}>

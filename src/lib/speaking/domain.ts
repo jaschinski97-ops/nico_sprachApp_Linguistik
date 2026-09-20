@@ -33,12 +33,12 @@ export type SpeakingPrompt = {
   romanization: string;
   german: string;
   source: string | null;
-  sourceVerified: true;
+  sourceVerified: boolean;
   syllableIndex: 0;
   syllableRomanization: string;
   /** Sollton aus `syllables[0].tone`, niemals aus einem Audio-Clip. */
   targetTone: Tone;
-  targetSource: 'verified-vocabulary-syllables';
+  targetSource: 'verified-vocabulary-syllables' | 'cross-checked-vocabulary-syllables';
 };
 
 export type ToneContourVerdict =
@@ -73,7 +73,7 @@ export function canBuildSpeakingPrompt(entry: VocabEntry): boolean {
     // fuer Thai. Ob dasselbe Verfahren spanische Betonung erkennen kann, ist
     // eine offene Frage und keine Selbstverstaendlichkeit (AE-48).
     entry.language === 'th' &&
-    entry.sourceVerified === true &&
+    (entry.sourceVerified === true || entry.verificationNote?.startsWith('KI-Kreuzprüfung bestanden') === true) &&
     Array.isArray(entry.syllables) &&
     entry.syllables.length === 1 &&
     entry.syllables[0].tone !== undefined &&
@@ -82,7 +82,7 @@ export function canBuildSpeakingPrompt(entry: VocabEntry): boolean {
 }
 
 export function buildSpeakingPrompt(entry: VocabEntry): SpeakingPrompt {
-  if (entry.sourceVerified !== true) {
+  if (entry.sourceVerified !== true && !entry.verificationNote?.startsWith('KI-Kreuzprüfung bestanden')) {
     throw new Error(
       `"${entry.id}" ist nicht vollständig quellengeprüft — daraus wird keine Sollkontur gebaut.`
     );
@@ -105,11 +105,11 @@ export function buildSpeakingPrompt(entry: VocabEntry): SpeakingPrompt {
     romanization: entry.romanization,
     german: entry.german,
     source: entry.source ?? null,
-    sourceVerified: true,
+    sourceVerified: entry.sourceVerified,
     syllableIndex: 0,
     syllableRomanization: syllable.roman,
     targetTone: syllable.tone,
-    targetSource: 'verified-vocabulary-syllables',
+    targetSource: entry.sourceVerified ? 'verified-vocabulary-syllables' : 'cross-checked-vocabulary-syllables',
   };
 }
 

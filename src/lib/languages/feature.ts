@@ -36,6 +36,14 @@ import {
  * 3, 6 und 13 blieben ohne eine einzige Änderung grün.
  */
 
+/** Bereits publizierte ES-Daten verwenden teilweise den alten Alias. */
+export function normalizedSyllables(entry: VocabEntry): SyllableAnnotation[] {
+  return (entry.syllables ?? []).map(syllable => ({
+    ...syllable,
+    roman: syllable.roman ?? (syllable as SyllableAnnotation & { syllable?: string }).syllable ?? (syllable as SyllableAnnotation & { text?: string }).text ?? '',
+  }));
+}
+
 // Der Typ steht seit Phase 16 in `types.ts` - der Vokabeltyp braucht ihn,
 // und von hier aus waere es ein Zirkel.
 export type { SyllableAnnotation };
@@ -58,7 +66,7 @@ export type LanguageFeatureRuntime = {
  */
 const THAI_RUNTIME: LanguageFeatureRuntime = {
   annotate(entry) {
-    if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
+    if (entry.syllables && entry.syllables.length > 0) return normalizedSyllables(entry);
     return [{ roman: entry.romanization, tone: entry.tone }];
   },
   // Seit dem Lern-Reiter-Ausbau (13.09.) auch eine GRAMMATIK-Übung: Vorher
@@ -79,7 +87,7 @@ const THAI_RUNTIME: LanguageFeatureRuntime = {
  */
 const SPANISH_RUNTIME: LanguageFeatureRuntime = {
   annotate(entry) {
-    if (entry.syllables && entry.syllables.length > 0) return entry.syllables;
+    if (entry.syllables && entry.syllables.length > 0) return normalizedSyllables(entry);
     return [{ roman: entry.romanization || entry.term }];
   },
   drills: ['stressHear', 'stressRule', 'serEstar', 'praesensEndung'],

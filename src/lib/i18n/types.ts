@@ -38,7 +38,7 @@ export const UI_LANGUAGES = [
 export type UiLanguage = (typeof UI_LANGUAGES)[number];
 
 /** Die Sprache, die gilt, solange nichts anderes gewählt ist. */
-export const DEFAULT_UI_LANGUAGE: UiLanguage = 'de';
+export const DEFAULT_UI_LANGUAGE: UiLanguage = 'en';
 
 /** Einstellung in den Einstellungen: eine feste Sprache oder das System. */
 export type LanguageSetting = UiLanguage | 'system';

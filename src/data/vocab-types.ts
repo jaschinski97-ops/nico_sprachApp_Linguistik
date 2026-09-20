@@ -1,6 +1,7 @@
 import { Tone } from '@/constants/tones';
 
-import { Lang, LanguageCode, SyllableAnnotation, TargetLanguage } from '@/lib/languages/types';
+import { LanguageCode, SyllableAnnotation, TargetLanguage } from '@/lib/languages/types';
+import type { UiLanguage } from '@/lib/i18n/types';
 
 /**
  * Die Form eines Vokabeleintrags.
@@ -34,6 +35,8 @@ export type Register = 'neutral' | 'formal' | 'informal';
 
 export type VocabEntry = {
   id: string;
+  /** Zeitpunkt einer KI-Erzeugung; feste Grundstock-Einträge brauchen keinen. */
+  generatedAt?: number;
   /**
    * Welche Zielsprache (Phase 15). Deutsch ist die Drehscheibe und steht
    * deshalb nicht hier, sondern auf der anderen Seite jedes Paars (AE-42).
@@ -111,7 +114,7 @@ export type VocabEntry = {
    * sagt über `usedFallback` ehrlich, wenn gefallen worden ist. Ein
    * fehlender Brückentext ist damit kein Fehler, sondern ein Kennzeichen.
    */
-  translations?: Partial<Record<Lang, string>>;
+  translations?: Partial<Record<UiLanguage, string>>;
   /** Pflicht bei deutschen Substantiven: Genus und Plural. */
   germanNoun?: { article: 'der' | 'die' | 'das'; plural: string };
   /** Stammformen — für Thai-Muttersprachler die eigentliche Hürde. */

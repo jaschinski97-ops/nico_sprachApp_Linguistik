@@ -1,5 +1,6 @@
 import { Direction } from '../fsrs/types';
 import { LanguageCode } from '../languages/types';
+import type { UiLanguage } from '../i18n/types';
 
 /**
  * Vorproduzierte Sprachsituationen.
@@ -46,6 +47,10 @@ export const SITUATION_SPRACHEN: readonly {
   { sprache: 'es', direction: 'de_to_es' },
 ];
 
+export function situationSprachenFuerBruecke(bridge: UiLanguage) {
+  return SITUATION_SPRACHEN.filter(entry => bridge !== 'de' || entry.sprache !== 'de');
+}
+
 export const TOPICS = [
   { id: 'greeting', label: 'Begrüßung & Kennenlernen' },
   { id: 'market', label: 'Markt & Einkaufen' },
@@ -67,6 +72,8 @@ export type ConversationTurn = {
    * Gegenseite und wird vorgegeben.
    */
   speaker: 'learner' | 'partner';
+  /** Gesprochener Satz in der gewählten Lernsprache. */
+  targetText?: string;
   thai: string;
   roman: string;
   german: string;
@@ -90,7 +97,43 @@ export type ConversationSituation = {
   corrections: CorrectionHint[];
   generatedAt: number;
   modelUsed: string;
+  translations?: Partial<Record<UiLanguage, SituationTranslation>>;
 };
+
+export type SituationTranslation = {
+  title: string;
+  setting: string;
+  turns: string[];
+  corrections: CorrectionHint[];
+};
+
+export function spokenText(situation: Pick<ConversationSituation, 'direction'>, turn: ConversationTurn): string {
+  return turn.targetText ?? (situation.direction.endsWith('_to_de') ? turn.german : turn.thai);
+}
+
+export function situationTranslation(situation: ConversationSituation, language: UiLanguage): SituationTranslation {
+  return situation.translations?.[language] ?? {
+    title: situation.title, setting: situation.setting,
+    turns: situation.scriptTurns.map(turn => turn.german), corrections: situation.corrections,
+  };
+}
+
+/** Read-only view for learning screens that use the legacy text fields. */
+export function localizedSituation(situation: ConversationSituation, language: UiLanguage): ConversationSituation {
+  const translation = situationTranslation(situation, language);
+  return {
+    ...situation,
+    title: translation.title,
+    setting: translation.setting,
+    corrections: translation.corrections,
+    scriptTurns: situation.scriptTurns.map((turn, index) => ({
+      ...turn,
+      targetText: spokenText(situation, turn),
+      thai: spokenText(situation, turn),
+      german: translation.turns[index],
+    })),
+  };
+}
 
 /** Was erzeugt werden soll — vor dem Lauf bekannt, damit er fortsetzbar ist. */
 export type SituationSpec = {
@@ -125,7 +168,7 @@ export function isValidSituation(value: unknown): value is ConversationSituation
 
   if (typeof s.id !== 'string' || s.id === '') return false;
   if (typeof s.title !== 'string' || typeof s.setting !== 'string') return false;
-  if (s.direction !== 'de_to_th' && s.direction !== 'th_to_de') return false;
+  if (!SITUATION_SPRACHEN.some(item => item.direction === s.direction)) return false;
   if (!Array.isArray(s.scriptTurns) || s.scriptTurns.length === 0) return false;
 
   const zuegeOk = s.scriptTurns.every((raw) => {
@@ -135,9 +178,20 @@ export function isValidSituation(value: unknown): value is ConversationSituation
       typeof turn.thai === 'string' &&
       typeof turn.roman === 'string' &&
       typeof turn.german === 'string'
+      && (turn.targetText === undefined || (typeof turn.targetText === 'string' && turn.targetText.trim() !== ''))
     );
   });
   if (!zuegeOk) return false;
+  if (s.translations !== undefined) {
+    if (!s.translations || typeof s.translations !== 'object' || Array.isArray(s.translations)) return false;
+    for (const translation of Object.values(s.translations)) {
+      const tr = translation as SituationTranslation;
+      if (!tr || typeof tr.title !== 'string' || !tr.title.trim() || typeof tr.setting !== 'string' || !tr.setting.trim() ||
+        !Array.isArray(tr.turns) || tr.turns.length !== s.scriptTurns.length || tr.turns.some(text => typeof text !== 'string' || !text.trim()) ||
+        !Array.isArray(tr.corrections) || !Array.isArray(s.corrections) || tr.corrections.length !== s.corrections.length ||
+        tr.corrections.some(hint => !hint || typeof hint.issue !== 'string' || typeof hint.explanation !== 'string')) return false;
+    }
+  }
 
   return (
     Array.isArray(s.corrections) &&

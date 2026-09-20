@@ -5,12 +5,10 @@ import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_LIMITS } from '@/data/sentence-tasks';
+import { sentenceFootnote, type SatzSprache } from '@/data/sentence-tasks';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
 import { useLocale } from '@/lib/i18n';
-import { LanguageCode } from '@/lib/languages/types';
-import { languageOf } from '@/lib/languages/registry';
 import type { CapturedPcm } from '@/lib/speaking';
 import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession,
   SENTENCE_WINDOWS_MS, type SentenceMeasurement, type SentenceMode } from '@/lib/speaking/sentence-session';
@@ -27,8 +25,9 @@ export function SentenceAction({ label, onPress, disabled = false }: {
   </Pressable>;
 }
 
-export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode; language: LanguageCode; onExit: () => void }) {
-  const { t } = useLocale();
+
+export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode; language: SatzSprache; onExit: () => void }) {
+  const { t, uiLanguage, languageName } = useLocale();
   // Die Aussaat ist ein eigener Zustand: „Neue Runde“ würfelt sie neu, damit
   // nicht dieselbe Satzfolge und Antwortmischung wie in der Runde davor
   // herauskommt.
@@ -86,7 +85,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
 
   async function play(concurrentRecording = false): Promise<boolean> {
     const turn = generation.current;
-    const label = languageOf(language).label;
+    const label = languageName(language);
     const request = { text: task.text, language, purpose: 'sentence' as const };
     if (!await hasPronunciationClip(request) && await isLanguageAvailable(language) === false) {
       if (turn === generation.current) setNotice(t('sentence.noVoice', { language: label }));
@@ -95,7 +94,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     if (turn !== generation.current) return false;
     const playback = await playPronunciationWithStatus({ ...request, ...(concurrentRecording ? { concurrentRecording: true } : {}) });
     if (turn !== generation.current) { await stopPronunciation(); return false; }
-    setNotice(playback.label);
+    setNotice(playback.kind === 'asset' ? t('sentence.audioClip') : playback.kind === 'tts' ? t('sentence.audioSystem') : t('sentence.noVoice', { language: label }));
     return playback.kind !== 'unavailable';
   }
 
@@ -166,8 +165,8 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
   // kein Mikrofon, keine Wiedergabe — nur der ehrliche Hinweis, was fehlt
   // (AE-66). Sobald die Registry Satzstoff führt, läuft alles wie bei Thai.
   if (tasks.length === 0) return <ThemedView style={styles.card}>
-    <ThemedText type="subtitle">{t('sentence.noneFor', { language: languageOf(language).label })}</ThemedText>
-    <ThemedText type="small">{SENTENCE_FOOTNOTE_BY_LANGUAGE[language]}</ThemedText>
+    <ThemedText type="subtitle">{t('sentence.noneFor', { language: languageName(language) })}</ThemedText>
+    <ThemedText type="small">{sentenceFootnote(language, uiLanguage)}</ThemedText>
     <SentenceAction label={t('common.back')} onPress={onExit} />
   </ThemedView>;
 
@@ -176,7 +175,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     <ThemedText>{listening
       ? t('sentence.listeningSummary', { correct, total: tasks.length })
       : t('sentence.spokenSummary', { total: tasks.length })}</ThemedText>
-    <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
+    <ThemedText type="small">{t('sentence.limits')}</ThemedText>
     <SentenceAction label={t('drill.newRound')} onPress={() => { setCorrect(0); setSeed(Date.now()); reset(0); }} />
     <SentenceAction label={t('common.back')} onPress={onExit} />
   </ThemedView>;
@@ -194,7 +193,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
       <ThemedText type="small" themeColor="textSecondary">{hintOpen ? t('sentence.hintHide') : t('sentence.hintShow')}</ThemedText>
     </Pressable>
     {hintOpen && <>
-      <ThemedText type="small">{SENTENCE_LIMITS}</ThemedText>
+      <ThemedText type="small">{t('sentence.limits')}</ThemedText>
       {!listening && <ThemedText type="small">{mode === 'sentenceRepeat'
         ? t('sentence.hintRepeat')
         : t('sentence.hintShadowing')}</ThemedText>}
@@ -203,7 +202,7 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
       <ThemedText type="smallBold">{task.german}</ThemedText>
       {/* Der Thai-Satz in Displaygröße: Skalierungsdeckel wie überall, sonst
           schneiden Zeilenhöhe und Tonzeichen einander (UI-Review 2026-09-07). */}
-      {(stage !== 'record' || mode === 'shadowing') && <><ThemedText type="subtitle" maxFontSizeMultiplier={2} style={{ lineHeight: displayLineHeight(32, 2) }}>{task.text}</ThemedText><ThemedText>{task.roman}</ThemedText></>}
+      {(stage !== 'record' || mode === 'shadowing') && <><ThemedText type="subtitle" maxFontSizeMultiplier={2} style={{ lineHeight: displayLineHeight(32, 2) }}>{task.text}</ThemedText>{task.roman && task.roman !== task.text && <ThemedText>{task.roman}</ThemedText>}</>}
       {stage === 'prepare' && <>
         <ThemedText type="smallBold">{t('sentence.prepare', { seconds: Math.ceil(remaining / 1000) })}</ThemedText>
         <ThemedText type="small">{t('sentence.prepareBody', { focus: task.focus })}</ThemedText>
@@ -234,12 +233,13 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
         onPress={() => { if (!heard || answer !== null) return; setAnswer(option); if (option === task.german) setCorrect(value => value + 1); void stopPronunciation(); }} />)}
       {answer !== null && <>
         <ThemedText accessibilityLiveRegion="polite">{answer === task.german ? t('sentence.correct') : t('sentence.meant', { answer: task.german })}</ThemedText>
-        <ThemedText>{task.text}</ThemedText><ThemedText>{task.roman}</ThemedText>
+        <ThemedText>{task.text}</ThemedText>
+        {task.roman && task.roman !== task.text ? <ThemedText>{task.roman}</ThemedText> : null}
         <ThemedText type="small">{task.focus}</ThemedText>
         <SentenceAction label={t('sentence.nextSentence')} onPress={() => reset(index + 1)} />
       </>}
     </>}
-    <ThemedText type="small">{SENTENCE_FOOTNOTE_BY_LANGUAGE[language]}</ThemedText>
+    <ThemedText type="small">{sentenceFootnote(language, uiLanguage)}</ThemedText>
   </ThemedView>;
 }
 

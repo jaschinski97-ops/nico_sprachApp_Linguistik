@@ -12,7 +12,7 @@ import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus 
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
 import { useLocale, type TranslationKey } from '@/lib/i18n';
-import { LanguageCode } from '@/lib/languages/types';
+import { PairDirection, LanguageCode } from '@/lib/languages/types';
 import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
 
@@ -73,10 +73,12 @@ const DRILL_PROMPT_KEYS: Record<DrillId, TranslationKey> = {
 export function DrillRunner({
   drill,
   language,
+  direction,
   onExit,
 }: {
   drill: DrillId;
   language: LanguageCode;
+  direction?: PairDirection;
   onExit: () => void;
 }) {
   const meta = DRILL_META[drill];
@@ -100,7 +102,7 @@ export function DrillRunner({
     setChosen(null);
     setAnswers([]);
     setHeardId(null);
-    buildDrillSession({ drill, language, ...(drill === 'tone' ? {
+    buildDrillSession({ drill, language, direction, ...(drill === 'tone' ? {
       isEligible: (entry: import('@/data/vocab-types').VocabEntry) => hasPronunciationClip({ text: entry.term, language: 'th', purpose: 'tone' }),
     } : {}) }).then((built) => {
       if (!cancelled) setSession(built);
@@ -112,7 +114,7 @@ export function DrillRunner({
     return () => {
       cancelled = true;
     };
-  }, [drill, language, round]);
+  }, [drill, language, direction, round]);
 
   // Jede HOERuebung braucht eine Stimme - seit Phase 18 sind das drei statt
   // einer. Gewarnt wird ausschliesslich bei einem eindeutigen "nein"; siehe
@@ -288,7 +290,7 @@ export function DrillRunner({
 
             return (
               <Pressable
-                key={option.label}
+                key={`${question.id}:${optionIndex}`}
                 onPress={() => answer(optionIndex)}
                 disabled={answered || (drill === 'tone' && heardId !== question.id)}
                 accessibilityRole="button"

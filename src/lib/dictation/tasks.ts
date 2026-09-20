@@ -1,25 +1,25 @@
 import { dictationConfigFor } from '@/data/dictation-config';
 
-import { SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
+import { SENTENCE_TASKS_BY_LANGUAGE, sentenceFootnote, type SatzSprache } from '@/data/sentence-tasks';
 
 import { seededRandom, shuffled } from '@/lib/drills/random';
 
-import { type Direction, type LanguageCode } from '@/lib/languages/types';
+import { type PairDirection } from '@/lib/languages/types';
 
 /**
- * Diktat-Aufgaben aus den geprüften Satz-Daten — NICHT aus einem zweiten
- * Satzbestand. `SENTENCE_TASKS_BY_LANGUAGE` enthält genau die Satzlesarten,
- * die das Audit in `data/sentence-tasks.ts` für vollständig und belegt
- * gehalten hat, inklusive Ton-geprüfter Clips; das Diktat erbt sie und damit
- * auch deren Ehrlichkeit: Es gibt heute nur Thai-Sätze, für Englisch und
- * Spanisch bleibt die Liste **leer** — und die Übung sagt das, statt Stoff zu
- * erfinden (dieselbe Regel wie AE-66).
+ * Diktat-Aufgaben aus den Satz-Daten der Zielsprache — NICHT aus einem
+ * zweiten Satzbestand. `SENTENCE_TASKS_BY_LANGUAGE` enthält die Satzlesarten
+ * der Registry (seit 18.09.2026: die generierten Beispielsätze je Sprache,
+ * auch Deutsch); das Diktat erbt sie und damit deren Ehrlichkeit: Eine
+ * Sprache ohne Satzstoff bleibt leer — und die Übung sagt das, statt Stoff
+ * zu erfinden (dieselbe Regel wie AE-66).
  *
- * Die Richtung ist `de_to_<Sprache>`: Diktat heißt, die **Zielsprache
- * hervorbringen** — dasselbe vermögen, das Karteikarte und freies Schreiben
- * in dieser Richtung abfragen. Deshalb darf das Diktat bei Erfolg dieselbe
- * Karte fortschreiben (AE-16: eine Erinnerungsspur je Item, kein zweiter
- * Schlüssel `vocabId:direction`).
+ * DIE RICHTUNG WIRD DURCHGEREICHT (18.09.2026): Für `de_to_<Sprache>` war
+ * sie früher hier abgeleitet — dem Deutsch-Ziel (th_to_de) würde damit
+ * entweder ein ungültiges `de_to_de` untergeschoben oder die falsche Karte
+ * fortgeschrieben. Der Aufrufer kennt die Lernrichtung; die FSRS-Karte
+ * (AE-16: eine Erinnerungsspur je Item, kein zweiter Schlüssel) muss dieselbe
+ * sein wie bei Karteikarte und freiem Schreiben dieser Richtung.
  */
 
 export type DictationTask = {
@@ -27,22 +27,22 @@ export type DictationTask = {
   id: string;
   /** Die Vokabel, aus deren Satzlesart das Diktat entstand — Schlüssel der FSRS-Karte. */
   vocabId: string;
-  /** Zielsprache, die getippt wird. */
-  language: LanguageCode;
-  /** Immer `de_to_<language>`: die Zielsprache wird produziert. */
-  direction: Direction;
+  /** Zielsprache, die getippt wird (seit 18.09. auch `de`). */
+  language: SatzSprache;
+  /** Die Lernrichtung des Aufrufers — derselbe Kartenschlüssel wie Karteikarte/Schreiben. */
+  direction: PairDirection;
   /** Der Satz, den es zu hören und zu tippen gilt — die Lösung. */
   text: string;
   /** Bedeutung auf Deutsch — erst NACH der Auswertung gezeigt, sonst liest man die Lösung vor dem Hören. */
   german: string;
   /** Umschrift — ebenfalls erst nach der Auswertung (sie wäre die halbe Lösung). */
   roman: string;
-  /** Der Satzregel-Hinweis aus dem Audit, nach der Auswertung gezeigt. */
+  /** Der Hinweis zur Aufgabe, nach der Auswertung gezeigt. */
   focus: string;
 };
 
-/** Sprachen ohne geprüfte Sätze liefern ehrlich nichts — der Runner zeigt einen Hinweis. */
-export function dictationTasksFor(language: LanguageCode): DictationTask[] {
+/** Sprachen ohne Satzstoff liefern ehrlich nichts — der Runner zeigt einen Hinweis. */
+export function dictationTasksFor(language: SatzSprache, direction: PairDirection): DictationTask[] {
   // Der Konfigurationseintrag ist die Fachlichkeit-Prüfung: Eine Sprache
   // ohne Diktat-Regeln kann keine Diktate urteilen.
   dictationConfigFor(language);
@@ -52,7 +52,7 @@ export function dictationTasksFor(language: LanguageCode): DictationTask[] {
       id: `dictation-${task.vocabId}`,
       vocabId: task.vocabId,
       language,
-      direction: `de_to_${language}` as Direction,
+      direction,
       text: task.text,
       german: task.german,
       roman: task.roman,
@@ -68,14 +68,15 @@ export const DICTATION_SESSION_SIZE = 10;
  * wie die Sitzungen der Übungen — Tests stellen sie exakt nach).
  */
 export function buildDictationSession(
-  language: LanguageCode,
+  language: SatzSprache,
+  direction: PairDirection,
   seed: number = Date.now(),
   size: number = DICTATION_SESSION_SIZE
 ): DictationTask[] {
-  return shuffled(dictationTasksFor(language), seededRandom(seed)).slice(0, size);
+  return shuffled(dictationTasksFor(language, direction), seededRandom(seed)).slice(0, size);
 }
 
 /** Der ehrliche Fußtext je Sprache — geerbt von den Satzübungen. */
-export function dictationFootnote(language: LanguageCode): string {
-  return SENTENCE_FOOTNOTE_BY_LANGUAGE[language];
+export function dictationFootnote(language: SatzSprache, uiLanguage: import('../i18n/types').UiLanguage = 'de'): string {
+  return sentenceFootnote(language, uiLanguage);
 }

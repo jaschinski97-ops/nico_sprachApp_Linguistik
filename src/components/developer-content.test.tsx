@@ -6,10 +6,21 @@ import AboutScreen from '../app/settings/about';
 import StudioScreen from '../app/settings/studio';
 import { DeveloperContent } from './developer-content';
 import { isContentDeveloper } from '../lib/content/developer';
-// Der Screen textet über i18n; ohne Provider gilt die Referenzsprache Deutsch.
+// Der Test wählt Deutsch ausdrücklich.
 // Die Assertion liest den erwarteten Satz aus dem de-Wörterbuch, damit sie an
 // der Semantik hängt statt an einer in den Test kopierten Zeichenkette.
 import { dictionaries } from '../lib/i18n';
+// Diese UI-Tests wählen Deutsch ausdrücklich; der Produkt-Default bleibt Englisch.
+jest.mock('@/lib/i18n', () => {
+  const actual = jest.requireActual('@/lib/i18n') as typeof import('@/lib/i18n');
+  return { ...actual, useLocale: () => ({
+    ...actual.useLocale(), uiLanguage: 'de',
+    t: (key: import('@/lib/i18n').TranslationKey, params?: import('@/lib/i18n/types').TParams) => actual.translate('de', key, params),
+    languageName: (code: import('@/lib/i18n').UiLanguage) => actual.languageDisplayName(code, 'de'),
+  }) };
+});
+
+
 
 /** Der Material-Hinweis, den die Produktions-Einstellungen zeigen müssen. */
 const MATERIAL_BODY = dictionaries.de['settings.materialBody']!;

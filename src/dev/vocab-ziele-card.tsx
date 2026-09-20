@@ -115,9 +115,9 @@ function baueWortschatzPrompt(options: {
   const { sprache, anzahl, thema, bekannte } = options;
   const sprachRegeln: Record<string, string> = {
     th: '- "term" in thailändischer Schrift; "syllables" mit JEDER Silbe als { "roman": Umschrift, "tone": "mid"|"low"|"falling"|"high"|"rising" }; "romanization" als Paiboon-artige Umschrift des ganzen Wortes.',
-    en: '- "ipa" mit IPA-Lautschrift (RP); "syllables" als [{ "roman": "/" + IPA + "/" }].',
-    es: '- "syllables" mit Silbentrennung und "stressed": true auf der betonten Silbe; spanische Nomen mit "spanishNoun" { "gender": "m"|"f", "article": "el"|"la", "plural": "…" }, Verben mit "spanishVerb" { "conjugation": "ar"|"er"|"ir", "irregular": true|false }.',
-    de: '- "term" ist das deutsche Wort; Nomen mit "germanNoun" { "article": "der"|"die"|"das", "plural": "…" } (Pflichtfeld des Schemas); "german" ist die kurze deutsche Bedeutung (Synonym oder Klarstellung), niemals Thai-Schrift.',
+    en: '- "ipa" mit IPA-Lautschrift (RP); "syllables" als [{ "roman": "/" + IPA + "/" }]; bei passenden Wörtern "englishSpelling" { "grapheme": "ea", "sound": "iː" } mit der tatsächlichen IPA-Lesart dieser Buchstabenfolge im Wort (z. B. ea in eat iː, bread e, great eɪ); Verben mit "englishVerb" { "past": "…", "participle": "…", "irregular": true|false } — bei regelmäßigen Verben irregular false, unregelmäßige mit ihren echten Formen (die Übungen „Unregelmäßige Verben"/„Dritte Form" lesen genau dieses Feld).',
+    es: '- "syllables" mit JEDER Silbe als { "roman": "Silbe", "stressed": true|false }, genau eine betonte Silbe; Feldname "roman", NICHT "syllable"; spanische Nomen mit "spanishNoun" { "gender": "m"|"f", "article": "el"|"la", "plural": "…" }, Verben mit "spanishVerb" { "conjugation": "ar"|"er"|"ir", "irregular": true|false }.',
+    de: '- "term" ist das deutsche Wort; ALLE Verben mit "germanVerb" { "thirdPerson": "er/sie/es-Form Präsens", "praeteritum": "3. Person Präteritum", "perfekt": "hat/ist + Partizip II", "irregular": true|false }; Nomen mit "germanNoun" { "article": "der"|"die"|"das", "plural": "…" } (Pflichtfeld des Schemas); "german" ist die kurze deutsche Bedeutung (Synonym oder Klarstellung), niemals Thai-Schrift.',
   };
   return [
     `Erzeuge genau ${anzahl} Einträge eines grundlegenden Alltags-Wortschatzes für Lernende, die ${sprache.toUpperCase()} lernen.`,
