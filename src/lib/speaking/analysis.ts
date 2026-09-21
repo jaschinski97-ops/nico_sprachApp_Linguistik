@@ -232,6 +232,33 @@ export function autocorrF0(samples: ArrayLike<number>, sampleRate: number, recov
   return frames;
 }
 
+/**
+ * Alle zusammenhaengenden stimmhaften Strecken, jede mindestens `minFrames` lang.
+ *
+ * Gegenstueck zu `longestRun` fuer mehrsilbige Clips: Thai-Silben sind im
+ * F0-Track oft eigene Zuege, weil stimmlose Plosive und Aspirate die
+ * Periodizitaet unterbrechen. Die Reihenfolge folgt der Zeit — Silbe i der
+ * Schrift gehoert zum i-ten Zug, solange die Zahl der Zuege zur Zahl der
+ * Soll-Silben passt (Zuordnung ausserhalb des Tor-Moduls, AE-7/AE-8 bleiben
+ * fail-closed: bei keiner uebereinstimmenden Zahl wird nichts geraten).
+ */
+export function voicedRuns(frames: readonly F0Frame[], minFrames = 4): F0Frame[][] {
+  const runs: F0Frame[][] = [];
+  let current: F0Frame[] = [];
+
+  for (const frame of frames) {
+    if (frame.f0 > 0) {
+      current.push(frame);
+    } else if (current.length) {
+      runs.push(current);
+      current = [];
+    }
+  }
+  if (current.length) runs.push(current);
+
+  return runs.filter((run) => run.length >= minFrames);
+}
+
 /** Laengste zusammenhaengende stimmhafte Strecke, mindestens vier Fenster. */
 export function longestRun(frames: readonly F0Frame[]): F0Frame[] | null {
   const runs: F0Frame[][] = [];
@@ -319,6 +346,55 @@ export function summarizeContour(
     mean,
     slope: pts[5] - pts[0],
     durMs: Math.round((span[n - 1].t - span[0].t) * 1000),
+  };
+}
+
+/**
+ * Die zwei BEWEGUNGEN einer Kontur: der Abfall nach dem Gipfel und der
+ * Anstieg nach dem Tal, jeweils mit der Lage des Wendepunkts.
+ *
+ * WARUM NICHT `slope` (Ende minus Anfang), 20.09.: Der thailaendische
+ * FALLENDE Ton wird regelmaessig als Steig-Fall gesprochen — die Silbe setzt
+ * tief an, steigt kurz und faellt dann. Gemessen an den echten Clips des
+ * Laufs (เจ้าสาว coral: Gipfel bei 40 %, Abfall 4,1 Halbtoene, `slope` aber
+ * nur −1,65) verfehlt eine reine Anfang-Ende-Steigung genau diese korrekt
+ * gesprochenen Silben. Derselbe Effekt spiegelbildlich beim steigenden Ton,
+ * wenn die Aeusserung am Ende absackt. Gipfel- und talbezogen gemessen
+ * bleiben Fall und Anstieg sichtbar, und die LAGE des Wendepunkts trennt
+ * fallend (frueher Gipfel) sauber von steigend (spaeter Gipfel).
+ *
+ * Bewusst nur beschreibend: welche Schwellen gelten, entscheidet der
+ * Aufrufer (das Tontor). `matchesTone`/`matchesToneShape` bleiben dafuer
+ * unveraendert — sie geben der Sprechuebung ihr an isolierten Silben
+ * kalibriertes Urteil.
+ */
+export type Konturbewegung = {
+  /** Groesster Abfall NACH dem Gipfel, in Halbtoenen; 0 = kein Abfall. */
+  fall: number;
+  /** Lage des Gipfels auf der Strecke: 0 = Anfang, 1 = Ende. */
+  gipfelBei: number;
+  /** Groesster Anstieg NACH dem Tal, in Halbtoenen; 0 = kein Anstieg. */
+  stieg: number;
+  /** Lage des Tals auf der Strecke: 0 = Anfang, 1 = Ende. */
+  talBei: number;
+};
+
+export function konturBewegung(summary: ToneContourSummary): Konturbewegung {
+  const pts = summary.pts;
+  const letzte = pts.length - 1;
+  let gipfel = 0;
+  let tal = 0;
+  for (let i = 1; i < pts.length; i++) {
+    if (pts[i] > pts[gipfel]) gipfel = i;
+    if (pts[i] < pts[tal]) tal = i;
+  }
+  const nachGipfel = pts.slice(gipfel + 1);
+  const nachTal = pts.slice(tal + 1);
+  return {
+    fall: nachGipfel.length ? pts[gipfel] - Math.min(...nachGipfel) : 0,
+    gipfelBei: gipfel / letzte,
+    stieg: nachTal.length ? Math.max(...nachTal) - pts[tal] : 0,
+    talBei: tal / letzte,
   };
 }
 

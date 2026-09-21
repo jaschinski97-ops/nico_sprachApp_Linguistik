@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
@@ -31,7 +31,7 @@ import {
   VOICE_SOURCES,
 } from '@/data/tts-voices';
 import { LANGUAGE_LABELS } from '@/lib/languages/registry';
-import { Lang, SUPPORTED_TARGETS } from '@/lib/languages/types';
+import { Lang } from '@/lib/languages/types';
 import type { RunEstimate } from '@/dev/run-cost';
 
 /**
@@ -68,7 +68,7 @@ import type { RunEstimate } from '@/dev/run-cost';
  * Die Beschriftung kommt aus `LANGUAGE_LABELS`, damit kein zweites
  * Namensverzeichnis entsteht.
  */
-export const GENERATOR_LANGUAGES: { code: Lang; label: string }[] = SUPPORTED_TARGETS.map(
+export const GENERATOR_LANGUAGES: { code: Lang; label: string }[] = (['th', 'en', 'es', 'de'] as const).map(
   (code) => ({ code, label: LANGUAGE_LABELS[code] })
 );
 
@@ -127,6 +127,7 @@ export type StartArgs = {
 type Props = {
   managedKeys?: boolean;
   onManageKeys?: () => void;
+  blocked?: boolean;
   onRunningChange?: (running: boolean) => void;
   /**
    * Für welche Sprache erzeugt wird (Phase 18). Fehlt die Angabe, bietet die
@@ -152,7 +153,7 @@ type Props = {
   counts?: CountItem[];
   runOptions: RunOption[];
   onStart: (args: StartArgs) => Promise<void>;
-  onDelete: () => Promise<void>;
+  onDelete: (languages: Lang[]) => Promise<void>;
   deleteLabel: string;
   /** Löschen nur anbieten, wenn es etwas zu löschen gibt. */
   canDelete: boolean;
@@ -168,10 +169,46 @@ type Props = {
   allRun?: { label: string; steps: { key: string; label: string }[] };
 };
 
+/**
+ * Lokaler Eingabepuffer für Freitextfelder, deren Wert async gespeichert wird.
+ *
+ * 17.09. (im Browser gemessen): Bindest du das Feld direkt an den gespeicherten
+ * Stand, feuert JEDE Taste einen Speicher-Roundtrip — kommt dessen Antwort als
+ * controlled value zurück, während noch getippt wird, überschreibt sie die
+ * laufende Eingabe („ggpt-4o-miniemini-3.8-flash"), und am Ende steht statt
+ * des getippten Modellnamens ein zerschossener Zwischenstand im Speicher. Der
+ * Puffer hält die Eingabe lokal stabil; gespeichert wird bei Blur und nach
+ * 600 ms Tipp-Ruhe. Äußere Wert-Änderungen (Anbieterwechsel setzt das
+ * Default-Modell ein) übernehmen den Puffer mit.
+ */
+function useEingabePuffer(wert: string, commit: (neu: string) => void) {
+  const [puffer, setPuffer] = useState(wert);
+  const [letzterAeusserer, setLetzterAeusserer] = useState(wert);
+  // Äußere Wert-Änderungen (Anbieterwechsel setzt das Default-Modell ein)
+  // während des Renders übernehmen — das dokumentierte Muster statt eines
+  // synchronisierenden Effects (react-hooks/set-state-in-effect).
+  if (wert !== letzterAeusserer) {
+    setLetzterAeusserer(wert);
+    setPuffer(wert);
+  }
+  const commitRef = useRef(commit);
+  useEffect(() => { commitRef.current = commit; });
+  useEffect(() => {
+    if (puffer === wert) return;
+    const timer = setTimeout(() => commitRef.current(puffer), 600);
+    return () => clearTimeout(timer);
+  }, [puffer, wert]);
+  const beiBlur = useCallback(() => {
+    if (puffer !== wert) commitRef.current(puffer);
+  }, [puffer, wert]);
+  return { puffer, setPuffer, beiBlur };
+}
+
 export function GeneratorCard({
   managedKeys = false,
   onManageKeys,
   onRunningChange,
+  blocked = false,
   language,
   onLanguageChange,
   heading,
@@ -210,23 +247,19 @@ export function GeneratorCard({
   /** Phase 2, Schritt 2: „Alle Sprachen“ als Teil der Sprachwahl gewählt. */
   const [alleSprachen, setAlleSprachen] = useState(false);
 
+  // Modell und Stimme tippen gegen den Puffer, nicht gegen den Speicherstand
+  // (siehe useEingabePuffer) — der Lauf startet mit dem, was im Feld steht.
+  const modell = useEingabePuffer(choice.model, (neu) => onChoiceChange({ model: neu }));
+  const stimme = useEingabePuffer(choice.voice ?? '', (neu) => onChoiceChange({ voice: neu }));
+
   useEffect(() => { onRunningChange?.(running); }, [running, onRunningChange]);
 
   const cancelRef = useRef(false);
   /** Letzter Progress-Stand — für die Ergebnis-Zeile nach dem Lauf. */
 
   const startingRef = useRef(false);
-  const confirmation = useRef<((accepted: boolean) => void) | null>(null);
-  const [estimate, setEstimate] = useState<RunEstimate | null>(null);
-  const [customCost, setCustomCost] = useState('');
 
-  useEffect(() => () => { cancelRef.current = true; confirmation.current?.(false); }, []);
-  function answerEstimate(accepted: boolean) {
-    const resolve = confirmation.current;
-    confirmation.current = null;
-    setEstimate(null);
-    resolve?.(accepted);
-  }
+  useEffect(() => () => { cancelRef.current = true; }, []);
 
   const groupInfo = GENERATOR_GROUP_INFO[group];
   const provider = choice.provider;
@@ -269,7 +302,7 @@ export function GeneratorCard({
   const maxNew = maxNewText.trim() ? Number.parseInt(maxNewText, 10) || undefined : undefined;
 
   const start = useCallback(async (mitKette = false) => {
-    if (startingRef.current) return;
+    if (startingRef.current || blocked) return;
     startingRef.current = true;
     setNotice(null);
     // Phase 2, Schritt 2: „Alle Sprachen“ in der Sprachwahl schaltet denselben
@@ -287,6 +320,8 @@ export function GeneratorCard({
     cancelRef.current = false;
     setRunning(true);
     setShowErrors(false);
+    setProgress({ total: 0, processed: 0, ok: 0, failed: 0, skipped: 0,
+      current: 'Lauf wird vorbereitet …', errors: [], done: false, cancelled: false });
     try {
       await onStart({
         optionId: runOption,
@@ -294,39 +329,39 @@ export function GeneratorCard({
         maxNew,
         // „Alle Sprachen“/„Alle Richtungen“/„Alle Levels“: die Schritte der
         // Kette gehen an den Studio-Start, der für ALLE Schritte gemeinsam
-        // plant, die Vorschau summiert und genau einmal bestätigen lässt.
+        // plant.
         chain: kette ? allRun?.steps : undefined,
         onChainStep: kette ? setChainStep : undefined,
         apiKey,
         provider,
         // Leeres Feld heisst „nimm den Vorschlag" - kein Grund fuer eine
         // Fehlermeldung, und geprueft wird der Name ohnehin nicht (Pflicht 5).
-        model: choice.model.trim() || providerInfo.modelPlaceholder[groupInfo.needs],
+        model: modell.puffer.trim() || providerInfo.modelPlaceholder[groupInfo.needs],
         voice:
           groupInfo.needs === 'audio'
-            ? (choice.voice ?? '').trim() || providerInfo.voicePlaceholder
+            ? stimme.puffer.trim() || providerInfo.voicePlaceholder
             : '',
         onProgress: setProgress,
         shouldCancel: () => cancelRef.current,
-        confirmRun: (next) => new Promise<boolean>((resolve) => {
-          setCustomCost(''); setEstimate(next); confirmation.current = resolve;
-        }),
+        // Nutzerwunsch 17.09.: die Kostenbestätigung ist GÄNZLICH raus (wie
+        // seit 16.09. beim Wortschatz) — die Verantwortung für bezahlte Läufe
+        // liegt bei der nutzenden Person. Der Vertrag bleibt, der Lauf startet
+        // sofort.
+        confirmRun: () => Promise.resolve(true),
       });
     } catch (error) {
       setNotice(error instanceof Error ? error.message : String(error));
     } finally {
+      setProgress(value => value ? { ...value, done: true, cancelled: value.cancelled || cancelRef.current, current: null } : value);
       setRunning(false);
       startingRef.current = false;
       setChainStep(null);
       await onFinished();
     }
-  }, [managedKeys, key, language, provider, providerInfo, groupInfo, choice.model, choice.voice, runOption, onStart, onFinished, maxNew, allRun, alleSprachen]);
+  }, [blocked, managedKeys, key, language, provider, providerInfo, groupInfo, modell.puffer, stimme.puffer, runOption, onStart, onFinished, maxNew, allRun, alleSprachen]);
 
   const stop = useCallback(() => {
     cancelRef.current = true;
-    confirmation.current?.(false);
-    confirmation.current = null;
-    setEstimate(null);
   }, []);
 
   const remove = useCallback(async () => {
@@ -334,12 +369,17 @@ export function GeneratorCard({
       setConfirmDelete(true);
       return;
     }
-    await onDelete();
-    setConfirmDelete(false);
-    setProgress(null);
-    await onFinished();
-    setNotice('Bestand gelöscht.');
-  }, [confirmDelete, onDelete, onFinished]);
+    if (blocked) return;
+    setRunning(true);
+    try {
+      await onDelete(alleSprachen ? GENERATOR_LANGUAGES.map(item => item.code) : [language ?? 'th']);
+      setConfirmDelete(false);
+      setProgress(null);
+      await onFinished();
+      setNotice('Bestand der Auswahl gelöscht.');
+    } catch (error) { setNotice(error instanceof Error ? error.message : String(error)); }
+    finally { setRunning(false); }
+  }, [blocked, confirmDelete, onDelete, onFinished, alleSprachen, language]);
 
   const activeOption = runOptions.find((option) => option.id === runOption) ?? runOptions[0];
 
@@ -382,9 +422,9 @@ export function GeneratorCard({
               <Button
                 key={code}
                 label={label}
-                onPress={() => { setAlleSprachen(false); onLanguageChange(code); }}
+                onPress={() => { setConfirmDelete(false); setAlleSprachen(false); onLanguageChange(code); }}
                 selected={!alleSprachen && language === code}
-                disabled={running}
+                disabled={running || blocked}
               />
             ))}
             {/* Phase 2, Schritt 2: „Alle Sprachen“ gehört IN die Sprachwahl —
@@ -393,10 +433,10 @@ export function GeneratorCard({
                 Bestätigung. */}
             {allRun ? (
               <Button
-                label="Alle"
-                onPress={() => setAlleSprachen(true)}
+                label="Alle Sprachen"
+                onPress={() => { setConfirmDelete(false); setAlleSprachen(true); }}
                 selected={alleSprachen}
-                disabled={running}
+                disabled={running || blocked}
               />
             ) : null}
           </ChoiceRow>
@@ -417,7 +457,7 @@ export function GeneratorCard({
               label={info.label}
               onPress={() => onChoiceChange({ provider: info.id })}
               selected={provider === info.id}
-              disabled={running}
+              disabled={running || blocked}
             />
           ))}
         </ChoiceRow>
@@ -432,14 +472,15 @@ export function GeneratorCard({
       <Pressable accessibilityRole="button" accessibilityState={{ expanded: advanced }}
         onPress={() => setAdvanced(value => !value)} style={styles.tapTarget}>
         <ThemedText type="small" themeColor="link">{advanced ? '▾' : '▸'} Erweitert · Modell{groupInfo.needs === 'audio' ? ' & Stimme' : ''}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">{choice.model || providerInfo.modelPlaceholder[groupInfo.needs]}{groupInfo.needs === 'audio' ? ` · ${choice.voice || providerInfo.voicePlaceholder}` : ''}</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">{modell.puffer || providerInfo.modelPlaceholder[groupInfo.needs]}{groupInfo.needs === 'audio' ? ` · ${stimme.puffer || providerInfo.voicePlaceholder}` : ''}</ThemedText>
       </Pressable>
       {advanced ? <>
       <View style={styles.field}>
         <ThemedText type="small">Modell</ThemedText>
         <TextInput
-          value={choice.model}
-          onChangeText={(value) => onChoiceChange({ model: value })}
+          value={modell.puffer}
+          onChangeText={modell.setPuffer}
+          onBlur={modell.beiBlur}
           placeholder={providerInfo.modelPlaceholder[groupInfo.needs]}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
@@ -473,7 +514,7 @@ export function GeneratorCard({
                       label={gender === 'female' ? 'Weiblich' : 'Männlich'}
                       onPress={() => name && onChoiceChange({ voice: name })}
                       selected={current?.gender === gender}
-                      disabled={running || !name}
+                      disabled={running || blocked || !name}
                     />
                   );
                 })}
@@ -496,8 +537,9 @@ export function GeneratorCard({
             </ThemedText>
           )}
           <TextInput
-            value={choice.voice ?? ''}
-            onChangeText={(value) => onChoiceChange({ voice: value })}
+            value={stimme.puffer}
+            onChangeText={stimme.setPuffer}
+            onBlur={stimme.beiBlur}
             placeholder={providerInfo.voicePlaceholder}
             placeholderTextColor={theme.textSecondary}
             autoCapitalize="none"
@@ -521,7 +563,7 @@ export function GeneratorCard({
         <ThemedText type="small" themeColor="textSecondary">{providerInfo.needsKey === false
           ? 'Schlüssel wird vom lokalen Helper bereitgestellt.'
           : keyStored ? `${providerInfo.vendor} · Schlüssel gespeichert` : `${providerInfo.vendor} · Noch kein Schlüssel`}</ThemedText>
-        {providerInfo.needsKey !== false ? <Button label="Anbieter & Schlüssel" onPress={() => onManageKeys?.()} disabled={running} /> : null}
+        {providerInfo.needsKey !== false && onManageKeys ? <Button label="Anbieter & Schlüssel" onPress={() => onManageKeys?.()} disabled={running || blocked} /> : null}
       </View> : (
       <View style={styles.field}>
         <ThemedText type="small">
@@ -558,8 +600,8 @@ export function GeneratorCard({
           )}
         </ThemedText>
         <View style={styles.buttonRow}>
-          <Button label="Schlüssel übernehmen" onPress={onSaveKey} disabled={running} />
-          {keyStored ? <Button label="Löschen" onPress={onClearKey} disabled={running} /> : null}
+          <Button label="Schlüssel übernehmen" onPress={onSaveKey} disabled={running || blocked} />
+          {keyStored ? <Button label="Löschen" onPress={onClearKey} disabled={running || blocked} /> : null}
         </View>
       </View>
 
@@ -574,7 +616,7 @@ export function GeneratorCard({
               label={option.label}
               onPress={() => setRunOption(option.id)}
               selected={runOption === option.id}
-              disabled={running}
+              disabled={running || blocked}
             />
           ))}
         </ChoiceRow>
@@ -601,6 +643,8 @@ export function GeneratorCard({
         </ThemedText>
       </View>
 
+      {progress ? <ProgressPanel progress={progress} active={running} /> : null}
+
       <View style={styles.buttonRow}>
         {running ? (
           <Button label="Anhalten" onPress={stop} />
@@ -609,32 +653,18 @@ export function GeneratorCard({
             <Button
               label={alleSprachen && allRun ? `${allRun.label} erzeugen` : 'Start'}
               onPress={() => start(false)}
+              disabled={blocked}
             />
             {/* Der Kettenlauf läuft über die Sprachwahl („Alle“). Nur Karten
                 ohne Sprachzeile — Richtungen, Stufen — behalten den Knopf hier.
                 Nur im Leerlauf: Ein Kettenlauf darf nie neben einem anderen
                 Lauf stehen — „Anhalten“ bricht die ganze Kette ab. */}
             {allRun && !(language && onLanguageChange) ? (
-              <Button label={allRun.label} onPress={() => start(true)} />
+              <Button label={allRun.label} onPress={() => start(true)} disabled={blocked} />
             ) : null}
           </>
         )}
       </View>
-
-      {estimate ? <View style={styles.field}>
-        <ThemedText type="smallBold">{estimate.count} Anbieteraufrufe · {provider} · {choice.model}</ThemedText>
-        {estimate.delivery ? <View>
-          <ThemedText type="smallBold">Auslieferungsvorschau für {estimate.delivery.total} geplante Clips</ThemedText>
-          <ThemedText type="small">{estimate.delivery.toneCheckable} Thai-Clips tonprüfbar · {estimate.delivery.technicalOnly} Clips nur technisch prüfbar · {estimate.delivery.uncheckedDelivered} Thai-Clips ungeprüft ausgeliefert · {estimate.delivery.excluded} ausgeschlossen</ThemedText>
-          <ThemedText type="small">Höchstens {estimate.delivery.total - estimate.delivery.excluded} von {estimate.delivery.total} Clips ({estimate.delivery.total ? (100 * (estimate.delivery.total - estimate.delivery.excluded) / estimate.delivery.total).toFixed(1) : '0.0'} %) können passieren. Die tatsächliche Durchlassquote steht erst nach Ton- und Integritätsprüfung fest; sie kann niedriger sein. Die Kosten gelten für die fehlenden Generierungen, auch für später ausgeschlossene Clips.</ThemedText>
-          {Object.entries(estimate.delivery.reasons).map(([reason, count]) => <ThemedText key={reason} type="small">{count}: {reason}</ThemedText>)}
-        </View> : null}
-        <ThemedText type="small">{estimate.basis}</ThemedText>
-        {estimate.usd === null ? <TextInput accessibilityLabel="Geschätzte Gesamtkosten in USD" value={customCost} onChangeText={setCustomCost} keyboardType="decimal-pad" placeholder="Gesamtschätzung USD" /> :
-          <ThemedText type="smallBold">Geschätzte Kosten: {estimate.usd.toFixed(3)} USD</ThemedText>}
-        <Button label="Kosten bestätigen und Lauf starten" disabled={estimate.usd === null && (!customCost.trim() || !Number.isFinite(Number(customCost.replace(',', '.'))) || Number(customCost.replace(',', '.')) <= 0)} onPress={() => answerEstimate(true)} />
-        <Button label="Abbrechen" onPress={() => answerEstimate(false)} />
-      </View> : null}
 
       {/* Kettenlauf („Alle Sprachen“ & Co.): welcher Schritt von wie vielen
           gerade läuft. Der Balken darunter summiert über die Kette. */}
@@ -643,8 +673,6 @@ export function GeneratorCard({
           {`Schritt ${chainStep.index} / ${chainStep.total} · ${chainStep.label}`}
         </ThemedText>
       ) : null}
-
-      {progress ? <ProgressPanel progress={progress} /> : null}
 
       {/* Phase 2, Schritt 2: das Ende-Ergebnis — verarbeitet, geprüft,
           aussortiert. Der progress-State bleibt nach dem Lauf stehen, die
@@ -685,15 +713,16 @@ export function GeneratorCard({
         </ThemedText>
       ) : null}
 
-      {canDelete ? (
+      {
         <View style={styles.buttonRow}>
           <Button
-            label={confirmDelete ? 'Wirklich alles löschen?' : deleteLabel}
+            label={confirmDelete ? `Wirklich löschen: ${alleSprachen ? 'Alle Sprachen' : LANGUAGE_LABELS[language ?? 'th']}?` : deleteLabel}
             onPress={remove}
-            disabled={running}
+            disabled={running || blocked || !canDelete}
           />
+          {confirmDelete ? <Button label="Abbrechen" onPress={() => setConfirmDelete(false)} disabled={running || blocked} /> : null}
         </View>
-      ) : null}
+      }
     </ThemedView>
   );
 }
@@ -703,31 +732,52 @@ export function GeneratorCard({
  * Progress mit; alle anderen Übungen haben keine automatische Messung.
  */
 function tonZusammenfassung(progress: BatchProgress): string {
-  const tone = (progress as BatchProgress & {
-    tone?: { passed: number; failed: number; other: number };
-  }).tone;
-  return tone
-    ? ` Tonprüfung: ${tone.passed} geprüft · ${tone.failed} aussortiert · ${tone.other} ungeprüft.`
+  const tone = progress.tone;
+  if (!tone) return '';
+  // Die Registerlage einzelner Clips ist nicht prüfbar — über den Lauf hinweg
+  // schon (20.09.): trennt die Stimme hohe von tiefen Silben?
+  const register = tone.register?.genug
+    ? ` Registerprobe: hoch/tief ${tone.register.abstand.toFixed(1)} Halbtöne auseinander über ${tone.register.silben} Silben${tone.register.abstand >= 2 ? ' — die Stimme trennt die Tonlagen' : ' — die Stimme trennt die Tonlagen NICHT'}.`
     : '';
+  return ` Tonprüfung: ${tone.passed} geprüft · ${tone.failed} aussortiert · ${tone.other} ungeprüft.${register}`;
+}
+
+function ElapsedTime() {
+  const [seconds, setSeconds] = useState(0);
+  useEffect(() => {
+    const started = Date.now();
+    const timer = setInterval(() => setSeconds(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  const elapsed = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+  return <ThemedText type="small" themeColor="textSecondary">{`Läuft seit ${elapsed}`}</ThemedText>;
 }
 
 /** Exportiert für die Wortschatz-Karte — derselbe Fortschritt, dieselbe Optik. */
-export function ProgressPanel({ progress }: { progress: BatchProgress }) {
+export function ProgressPanel({ progress, active = !progress.done && !progress.cancelled }: { progress: BatchProgress; active?: boolean }) {
   const toneColor = useToneColor();
   const theme = useTheme();
-  const pct = progress.total === 0 ? 0 : Math.round((progress.processed / progress.total) * 100);
+  const pct = progress.total === 0 ? 0 : Math.min(100, Math.round((progress.processed / progress.total) * 100));
 
   return (
     <View style={styles.field}>
+      <View style={styles.counter}>
+        {active ? <ActivityIndicator size="small" color={toneColor('mid')} accessibilityLabel="Generierung läuft" /> : null}
+        <ThemedText type="smallBold" accessibilityLiveRegion="polite">
+          {active ? (progress.current ?? 'Ergebnisse werden übernommen …') : progress.cancelled ? 'Lauf angehalten' : progress.done ? 'Lauf beendet' : 'Lauf vorbereitet'}
+        </ThemedText>
+      </View>
+      {active ? <ElapsedTime /> : null}
       <ThemedText type="small">
-        {progress.processed} / {progress.total}
-        {progress.cancelled ? ' — angehalten' : progress.done ? ' — fertig' : ''}
+        {progress.total > 0 ? `${progress.processed} / ${progress.total} verarbeitet · ${pct} %` : active ? 'Umfang wird ermittelt …' : `${progress.processed} Einträge verarbeitet`}
       </ThemedText>
 
       {/* Schiene über das `decorGrey`-Token statt hart codiertem rgba():
           damit gibt es auch im Dunkelmodus eine abgestimmte Fassung
           (UI-Review 2026-09-07, nur Farbe — keine Strukturänderung). */}
-      <View style={[styles.track, { backgroundColor: theme.decorGrey }]}>
+      <View accessibilityRole="progressbar" accessibilityLabel="Verarbeitete Einträge"
+        accessibilityValue={{ min: 0, max: progress.total || 1, now: progress.processed }}
+        style={[styles.track, { backgroundColor: theme.decorGrey }]}>
         <View style={[styles.fill, { width: `${pct}%`, backgroundColor: toneColor('mid') }]} />
       </View>
 
@@ -751,12 +801,17 @@ export function ProgressPanel({ progress }: { progress: BatchProgress }) {
           <Counter label="Ton ungeprüft" value={progress.tone.other} color={toneColor('low')} />
         </View>
       ) : null}
-
-      {progress.current ? (
+      {/* Register-Laufprobe: was einzeln unprüfbar ist (mittel/tief/hoch),
+          verrät die Stimme über viele Clips hinweg. Erst ab genug Silben. */}
+      {progress.tone?.register?.genug ? (
         <ThemedText type="small" themeColor="textSecondary">
-          gerade: {progress.current}
+          {`Registerprobe über ${progress.tone.register.silben} Silben: hoch ${progress.tone.register.high.toFixed(1)} · mittel ${progress.tone.register.mid.toFixed(1)} · tief ${progress.tone.register.low.toFixed(1)} Halbtöne` +
+            (progress.tone.register.abstand >= 2
+              ? ' — die Stimme trennt die Tonlagen.'
+              : ' — die Stimme trennt die Tonlagen NICHT; Lauf wird gestoppt.')}
         </ThemedText>
       ) : null}
+
     </View>
   );
 }

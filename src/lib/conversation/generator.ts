@@ -1,7 +1,10 @@
+import { UI_LANGUAGES } from '../i18n/types';
 import { createTextClient } from '../providers/text';
 import { PROVIDER_INFO, ProviderId, TextClient } from '../providers/types';
 
 import {
+  isValidSituation,
+  SITUATION_SPRACHEN,
   ConversationSituation,
   ConversationTurn,
   CorrectionHint,
@@ -40,7 +43,7 @@ export const GENERATOR_MODEL = PROVIDER_INFO.gemini.modelPlaceholder.text;
  * Antwortlänge. Großzügig, weil ein abgeschnittenes JSON den ganzen Eintrag
  * kostet und ein Fehlschlag teurer ist als ein paar ungenutzte Token.
  */
-export const GENERATOR_MAX_TOKENS = 16000;
+export const GENERATOR_MAX_TOKENS = 32768;
 
 export type GenerationClient = {
   generate(spec: SituationSpec): Promise<ConversationSituation>;
@@ -48,51 +51,33 @@ export type GenerationClient = {
 
 function systemPrompt(): string {
   return [
-    'Du erstellst Lernmaterial für eine Sprachlern-App für Thai und Deutsch.',
+    'Du erstellst Lernmaterial für eine Sprachlern-App für Thai, Englisch, Spanisch und Deutsch.',
     'Du antwortest ausschließlich mit einem einzigen JSON-Objekt, ohne',
     'Markdown-Codeblock, ohne Vor- oder Nachtext.',
   ].join(' ');
 }
 
-function userPrompt(spec: SituationSpec): string {
-  const learnerProduces = spec.direction === 'de_to_th' ? 'Thai' : 'Deutsch';
-  const learnerNative = spec.direction === 'de_to_th' ? 'Deutsch' : 'Thai';
-
-  return `Erstelle eine Dialogsituation zum Üben.
-
-Thema: ${TOPIC_LABELS[spec.topic]}
-Niveau: ${spec.level}
-Muttersprache der lernenden Person: ${learnerNative}
-Zu übende Sprache (aktiv produzieren): ${learnerProduces}
-Variante: ${spec.variant} (unterscheide dich deutlich von anderen Varianten desselben Themas)
-
-Anforderungen:
-- 6 bis 10 Gesprächszüge, abwechselnd zwischen "learner" und "partner".
-- Der Dialog beginnt mit "partner" oder "learner", je nachdem was natürlicher ist.
-- Jeder Zug enthält den Satz auf Thai (thai), die Paiboon-Umschrift mit
-  Tonzeichen (roman) und die deutsche Entsprechung (german) — unabhängig
-  davon, wer spricht.
-- Sprachniveau ${spec.level}: kurze Sätze, Alltagswortschatz, keine seltenen Wörter.
-- Höflichkeitspartikel im Thai konsequent verwenden (ครับ / ค่ะ).
-- 2 bis 4 Korrektur-Hinweise zu typischen Fehlern, die genau eine Person mit
-  Muttersprache ${learnerNative} beim Produzieren von ${learnerProduces} macht.
-  ${
-    spec.direction === 'de_to_th'
-      ? 'Also etwa: Töne, Vokallänge, fehlende Klassifikatoren, Höflichkeitspartikel.'
-      : 'Also etwa: Artikel und Genus, Kasus, Verbstellung im Satz, Pluralbildung, Konjugation.'
-  }
-
-Antworte mit genau diesem JSON-Objekt:
-{
-  "title": "kurzer deutscher Titel",
-  "setting": "ein bis zwei Sätze Szenenbeschreibung auf Deutsch",
-  "scriptTurns": [
-    {"speaker": "partner", "thai": "...", "roman": "...", "german": "..."}
-  ],
-  "corrections": [
-    {"issue": "kurze Benennung des Fehlers", "explanation": "Erklärung auf Deutsch"}
-  ]
-}`;
+export function userPrompt(spec: SituationSpec): string {
+  const language = SITUATION_SPRACHEN.find(item => item.direction === spec.direction)?.sprache;
+  if (!language) throw Error('Unbekannte Gesprächssprache.');
+  const name = { th: 'Thai', de: 'Deutsch', en: 'Englisch', es: 'Spanisch' }[language];
+  return `Erstelle eine natürliche Dialogsituation zum Üben von ${name}.
+Thema: ${TOPIC_LABELS[spec.topic]}. Niveau: ${spec.level}. Variante: ${spec.variant}.
+6 bis 10 abwechselnde Gesprächszüge (speaker: learner oder partner), mindestens eine learner-Zeile.
+Benutze häufigen Alltagswortschatz, kurze vollständige Sätze, idiomatische Formulierungen.
+Alle targetText-Zeilen sind ausschließlich auf ${name}, unabhängig vom Sprecher.
+${language === 'th' ? 'Thai-Schrift, korrekte Höflichkeitspartikel passend zur Sprecherrolle; roman ist Paiboon-Umschrift mit Tönen.' : language === 'en' ? 'Natürliches britisches Englisch. roman enthält die IPA-Lesehilfe.' : language === 'es' ? 'Natürliches Spanisch mit korrekten Akzenten und einheitlicher Anrede. roman ist eine Lesehilfe.' : 'Natürliches Deutsch, korrekte Artikel, Kasus und Wortstellung. roman ist eine Lesehilfe.'}
+german ist die deutsche Bedeutung. thai ist die Thai-Übersetzung (bei Thai gleich targetText).
+2 bis 4 hilfreiche Korrektur-Hinweise für Lernende dieser Zielsprache.
+Übersetze Titel, Szenenbeschreibung, ALLE Gesprächszeilen und Korrektur-Hinweise in JEDE dieser App-Sprachen: ${UI_LANGUAGES.join(', ')}.
+Die Reihenfolge und Anzahl der turns und corrections ist in jeder Übersetzung IDENTISCH.
+Keine neuen Gesprächszeilen erfinden. Für die Zielsprache entsprechen turns exakt targetText.
+JSON ohne Markdown:
+{"title":"deutscher Titel","setting":"deutsche Szenenbeschreibung",
+"scriptTurns":[{"speaker":"partner","targetText":"Satz auf ${name}","thai":"Thai-Übersetzung","roman":"Lesehilfe","german":"deutsche Bedeutung"}],
+"corrections":[{"issue":"typischer Fehler","explanation":"Erklärung auf Deutsch"}],
+"translations":{"de":{"title":"Titel","setting":"Beschreibung","turns":["übersetzter Satz"],"corrections":[{"issue":"Fehler","explanation":"Erklärung"}]}, "en": {"title":"...","setting":"...","turns":["..."],"corrections":[{"issue":"...","explanation":"..."}]}}}
+translations muss ALLE ${UI_LANGUAGES.length} Sprachcodes enthalten, nicht nur die beiden Beispiele.`;
 }
 
 function asString(value: unknown, field: string): string {
@@ -118,6 +103,15 @@ export function parseSituation(
   // Falls doch ein Codeblock kommt: Zäune abstreifen statt zu scheitern.
   const fenced = text.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/);
   if (fenced) text = fenced[1].trim();
+  // 17.09.: Drei von vier Aufrufen des Nutzer-Laufs scheiterten an „kein
+  // gültiges JSON" — die Modelle liefern gelegentlich Prosa um das Objekt
+  // („Hier ist …:"). Erstes { bis letztes } schält das Objekt heraus; gibt es
+  // keins, bleibt der Parse-Fehler darunter die ehrliche Antwort.
+  const objektStart = text.indexOf('{');
+  const objektEnde = text.lastIndexOf('}');
+  if (objektStart !== -1 && objektEnde > objektStart) {
+    text = text.slice(objektStart, objektEnde + 1);
+  }
 
   let data: Record<string, unknown>;
   try {
@@ -139,6 +133,7 @@ export function parseSituation(
     }
     return {
       speaker,
+      ...(t.targetText !== undefined ? { targetText: asString(t.targetText, `scriptTurns[${index}].targetText`) } : {}),
       thai: asString(t.thai, `scriptTurns[${index}].thai`),
       roman: asString(t.roman, `scriptTurns[${index}].roman`),
       german: asString(t.german, `scriptTurns[${index}].german`),
@@ -162,7 +157,7 @@ export function parseSituation(
     throw new Error('Keine Korrektur-Hinweise enthalten.');
   }
 
-  return {
+  const result: ConversationSituation = {
     id: spec.id,
     level: spec.level,
     topic: spec.topic,
@@ -173,7 +168,26 @@ export function parseSituation(
     corrections,
     generatedAt: now,
     modelUsed,
+    ...(data.translations !== undefined ? { translations: data.translations as ConversationSituation['translations'] } : {}),
   };
+  if (!isValidSituation(result)) throw Error('Unvollständige Gesprächsübersetzungen oder ungültige Dialogsprache.');
+  return result;
+}
+
+/**
+ * Inhaltliche Prüfungen einer geparsten Situation (Schrift passt, alle
+ * App-Sprachen und Zieltexte vorhanden) — als Funktion, damit der
+ * Wiederholungsversuch sie mit umfasst.
+ */
+function pruefeSituation(situation: ConversationSituation, spec: SituationSpec): ConversationSituation {
+  if (UI_LANGUAGES.some(code => !situation.translations?.[code]) || situation.scriptTurns.some(turn => !turn.targetText)) {
+    throw Error('Dialog unvollständig: Zieltext oder App-Sprachen fehlen. Bitte erneut erzeugen.');
+  }
+  const language = SITUATION_SPRACHEN.find(item => item.direction === spec.direction)!.sprache;
+  if (situation.scriptTurns.some(turn => language === 'th' ? !/[ก-๛]/.test(turn.targetText!) : /[ก-๛]/.test(turn.targetText!))) {
+    throw Error('Die Dialogschrift passt nicht zur gewählten Lernsprache.');
+  }
+  return situation;
 }
 
 /**
@@ -181,16 +195,30 @@ export function parseSituation(
  *
  * Das ist die ganze Anbieter-Anbindung: eine Anfrage, eine Antwort, der
  * vorhandene Parser. Ein vierter Anbieter bräuchte hier keine Zeile.
+ *
+ * SEIT DEM 17.09. mit GENAU EINEM Wiederholungsversuch je Situation: Flüchtige
+ * Antwort-Ausreißer (Prosa statt JSON, Unvollständiges) waren der Hauptverlust
+ * des Nutzer-Laufs — der zweite Aufruf kostet weniger als der bereits bezahlte
+ * erste, der sonst verworfen würde. Fehler VOR einer Antwort (Netz, Schlüssel,
+ * Modellname) werfen weiterhin sofort, ohne sie doppelt zu bezahlen.
  */
 export function createSituationClient(text: TextClient): GenerationClient {
   return {
     async generate(spec) {
-      const response = await text.complete({
-        system: systemPrompt(),
-        user: userPrompt(spec),
-        maxTokens: GENERATOR_MAX_TOKENS,
-      });
-      return parseSituation(response.text, spec, response.model);
+      let letzterFehler: unknown = null;
+      for (let versuch = 0; versuch < 2; versuch += 1) {
+        const response = await text.complete({
+          system: systemPrompt(),
+          user: userPrompt(spec),
+          maxTokens: GENERATOR_MAX_TOKENS,
+        });
+        try {
+          return pruefeSituation(parseSituation(response.text, spec, response.model), spec);
+        } catch (fehler) {
+          letzterFehler = fehler;
+        }
+      }
+      throw letzterFehler instanceof Error ? letzterFehler : new Error(String(letzterFehler));
     },
   };
 }
@@ -202,4 +230,3 @@ export function createGenerationClient(
 ): GenerationClient {
   return createSituationClient(createTextClient(provider, apiKey, model));
 }
-

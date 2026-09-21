@@ -55,6 +55,7 @@ export function findeDuplikat(
 ): { situation: ConversationSituation; aehnlichkeit: number } | null {
   let bestes: { situation: ConversationSituation; aehnlichkeit: number } | null = null;
   for (const andere of vorhandene) {
+    if (kandidat.direction !== andere.direction) continue;
     const wert = aehnlichkeit(kandidat, andere);
     if (wert >= schwelle && (!bestes || wert > bestes.aehnlichkeit)) {
       bestes = { situation: andere, aehnlichkeit: wert };

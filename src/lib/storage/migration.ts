@@ -1,4 +1,4 @@
-import { VOCABULARY } from '@/data/vocabulary';
+import { activeVocabulary } from '@/data/active-vocabulary';
 
 import { DataStore, getStore } from './index';
 
@@ -75,9 +75,9 @@ export async function migrateStore(store?: DataStore): Promise<MigrationResult> 
     // Der Grundstock kommt mit der App: ersetzen statt umbauen.
     await db.putMany(
       'vocab',
-      VOCABULARY.map((entry) => ({ id: entry.id, value: entry }))
+      activeVocabulary().map((entry) => ({ id: entry.id, value: entry }))
     );
-    reseeded = VOCABULARY.length;
+    reseeded = activeVocabulary().length;
   }
 
   await db.put('meta', VERSION_KEY, { version: CURRENT_SCHEMA_VERSION });

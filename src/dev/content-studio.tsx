@@ -11,7 +11,7 @@ import { findeDuplikat } from '@/lib/content/aehnlichkeit';
 import { getStore } from '@/lib/storage';
 import type { ConversationSituation as Situation } from '@/lib/conversation/types';
 import { estimateRunCost } from './run-cost';
-import { exportDrafts, studioRequest, type StudioState } from './content-client';
+import { clearContentSelection, exportDrafts, studioRequest, type StudioState } from './content-client';
 import { fahreKette, planChain, type ChainStep } from './chain-run';
 import { planDeliveryAudio } from '@/lib/content/audio-plan';
 import { previewAudioDelivery } from '@/lib/content/delivery-preview';
@@ -23,7 +23,6 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { EXAM_LEVELS, type ExamModule } from '@/lib/exam/types';
 import { Spacing } from '@/constants/theme';
-import { VOCABULARY_DE } from '@/data/vocabulary-de';
 import { runClipBatch, missingClipSpecs } from '@/lib/clips/batch';
 import { getActiveAudioBlobBackend, getAudioBlobStore } from '@/lib/clips/blob-store';
 import { createClipGenerationClient } from '@/lib/clips/generator';
@@ -38,12 +37,11 @@ import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store
 import { runImageBatch, missingImageSpecs } from '@/lib/images/batch';
 import { createImageGenerationClient } from '@/lib/images/generator';
 import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/plan';
-import { vocabularyFor } from '@/data/vocabulary';
+import { activeVocabularyFor } from '@/data/active-vocabulary';
 import { VocabEntry } from '@/data/vocab-types';
-import { directionLabel, LANGUAGE_ORDER, LANGUAGE_LABELS } from '@/lib/languages/registry';
+import { LANGUAGE_ORDER, LANGUAGE_LABELS } from '@/lib/languages/registry';
 import { Lang } from '@/lib/languages/types';
 import { loadProfile } from '@/lib/profile';
-import { loadVocabulary } from '@/lib/repository';
 import { HELPER_AUDIO_PROVIDER, ProviderId } from '@/lib/providers/types';
 import {
   defaultSettings,
@@ -57,10 +55,8 @@ import {
 } from '@/lib/providers/settings';
 import { helperAudioAvailable } from '@/lib/providers/audio';
 import {
+  loadVocabulary,
   loadExamModules,
-  clearAudioClips,
-  clearSituations,
-  clearVocabImages,
   countAudioClips,
   countAudioClipsByLanguage,
   countExamModules,
@@ -77,7 +73,6 @@ import {
   ImageLanguageCounts,
   SituationDirectionCounts,
 } from '@/lib/repository';
-import type { Direction } from '@/lib/fsrs/types';
 
 /**
  * Alle drei Generatoren teilen sich Aufbau und Bedienung (`GeneratorCard`),
@@ -94,12 +89,12 @@ const SITUATION_RUNS: RunOption[] = [
   {
     id: 'test',
     label: 'Probelauf',
-    hint: '16 Situationen (Thai) — alle Themen, Niveaus und Richtungen je einmal',
+    hint: '8 Situationen je Sprache — alle Themen und Niveaus je einmal',
   },
   {
     id: 'full',
     label: 'Vollständiger Lauf',
-    hint: `${planSituations(FULL_RUN).length} Situationen (Thai) — kostet echtes Geld und dauert`,
+    hint: '256 Situationen je Sprache — vorhandene werden übersprungen',
   },
 ];
 
@@ -108,16 +103,8 @@ const SITUATION_RUNS: RunOption[] = [
 // ohne Sprache waere hier eine stille Falschaussage. Was fehlt, steht in
 // PROGRESS.md unter Phase 16.
 
-/**
- * Der Vokabel-Pool einer Generier-Sprache (Nutzerentscheidung 10.09.,
- * Deutsch als Generator-Sprache): Für `'de'` kommt der abgeleitete de-Pool
- * (`VOCABULARY_DE`) — seine Einträge tragen `language: 'de'`, Clips und
- * Bilder landen also als deutsche im Store und greifen an den X_to_de-
- * Rückseiten automatisch (resolveClipUri über Sprache + Text).
- */
-function poolFuer(code: Lang): VocabEntry[] {
-  return code === 'de' ? VOCABULARY_DE : vocabularyFor(code);
-}
+/** Audio und Bilder greifen auf denselben veröffentlichten Wortschatz zu. */
+function poolFuer(code: Lang): VocabEntry[] { return activeVocabularyFor(code); }
 
 /**
  * Der Bilderlauf haengt seit Phase 18 an der gewaehlten Sprache: Wie viele
@@ -149,17 +136,17 @@ function clipRunOptions(
   language: Lang,
   exams: ExamModule[] = []
 ): { options: RunOption[]; specsFor: (optionId: string) => AudioClipSpec[] } {
+  storedSituations = storedSituations.filter(s => s.direction.endsWith(`_to_${language}`));
   const plans: Record<string, AudioClipSpec[]> = {
     // Phase 2, Schritt 2: die drei Haupt-Buttons — Wörter, Sätze, Dialoge —
     // sauber getrennt (Schritt 7: erst Wörter und Kernsätze als Clips, die
     // Dialog-Turns laufen standardmäßig über die Laufzeit-Stimme).
     words: planClips({ vocabulary: poolFuer(language), includeExamples: false }),
     sentences: planClips({ vocabulary: poolFuer(language), includeWords: false }),
-    // Gespraechszuege gibt es bisher nur auf Thai (AE-48); sie haengen an den
-    // gespeicherten Situationen und nicht an dieser Wahl.
+    // Nur Gesprächszüge der gewählten Zielsprache vertonen.
     turns: planClips({ includeWords: false, includeExamples: false, situations: storedSituations }),
     test: planClipTestRun(poolFuer(language)),
-    delivery: planDeliveryAudio(storedSituations, exams),
+    delivery: [...new Map([...planDeliveryAudio(storedSituations, exams), ...planClips({ vocabulary: poolFuer(language) })].filter(spec => spec.language === language).map(spec => [spec.id, spec])).values()],
     all: planClips({ vocabulary: poolFuer(language), situations: storedSituations }),
   };
   const size = (specs: AudioClipSpec[]) => {
@@ -175,10 +162,10 @@ function clipRunOptions(
       hint:
         plans.turns.length === 0
           ? 'Keine gespeicherten Sprachsituationen — erst im Text-Reiter Dialoge erzeugen.'
-          : `${plans.turns.length} Clips — jeder Thai-Zug der ${storedSituations.length} gespeicherten Situationen, gleiche Sätze nur einmal${size(plans.turns)}`,
+          : `${plans.turns.length} Clips — jeder Gesprächszug auf ${LANGUAGE_LABELS[language]} der ${storedSituations.length} gespeicherten Situationen, gleiche Sätze nur einmal${size(plans.turns)}`,
     },
     { id: 'test', label: 'Probelauf', hint: `${plans.test.length} Clips — fünf Vokabeln samt Beispielsatz${size(plans.test)}` },
-    { id: 'delivery', label: 'Auslieferung: alle Sprachen und Deutsch', hint: `${plans.delivery.length} Clips — Wörter, Beispiele, Dialoge und Hörtexte der Prüfungen${size(plans.delivery)}` },
+    { id: 'delivery', label: 'Auslieferung: gewählte Sprache', hint: `${plans.delivery.length} Clips — Wörter, Beispiele, Dialoge und Hörtexte der Prüfungen${size(plans.delivery)}` },
     { id: 'all', label: 'Alles', hint: `${plans.all.length} Clips${size(plans.all)} — kostet echtes Geld und dauert` },
   ];
   return { options, specsFor: (optionId) => plans[optionId] ?? plans.words };
@@ -190,20 +177,7 @@ function clipRunOptions(
 // sprachneutrale Registry/Planung und die Zähler-Helfer des Repositorys.
 // ---------------------------------------------------------------------------
 
-/**
- * Der statische Vokabel-Bestand — eine Zeile fürs Grundstock-Panel. Der
- * deutsche Pool steht dort bewusst NICHT: Er ist abgeleitet (aus den
- * `german`-Feldern dieses Bestands), kein zweiter eingetragener Grundstock.
- */
-const POOL_ZAEHLER =
-  LANGUAGE_ORDER.map((code) => `${LANGUAGE_LABELS[code]} ${vocabularyFor(code).length}`).join(' · ') +
-  // Deutsch hat keinen eigenen Grundstoff — der Pool ist abgeleitet (siehe
-  // vocabulary-de.ts). Er gehört trotzdem in die Zeile, damit die Zahl nicht
-  // den Eindruck erweckt, Deutsch fehle komplett (Nutzerwunsch 12.09.).
-  ` · Deutsch ${VOCABULARY_DE.length} (abgeleitet)`;
-
-/** Die gespeicherten Dialoge kennen genau diese beiden Richtungen. */
-const RICHTUNGEN = ['de_to_th', 'th_to_de'] as const;
+const RICHTUNGEN = ['de_to_th', 'de_to_en', 'de_to_es', 'th_to_de'] as const;
 
 /**
  * Die GESPROCHENE Seite eines Dialogs — dieselbe Sicht, mit der auch der
@@ -213,6 +187,8 @@ const RICHTUNGEN = ['de_to_th', 'th_to_de'] as const;
 const GESPROCHENE_SEITE: Record<(typeof RICHTUNGEN)[number], string> = {
   de_to_th: LANGUAGE_LABELS.th,
   th_to_de: LANGUAGE_LABELS.de,
+  de_to_en: LANGUAGE_LABELS.en,
+  de_to_es: LANGUAGE_LABELS.es,
 };
 
 /**
@@ -227,12 +203,6 @@ const GENERIER_SPRACHEN: Lang[] = [...LANGUAGE_ORDER, 'de'];
 const ALLE_SPRACHEN: ChainStep[] = GENERIER_SPRACHEN.map((code) => ({
   key: code,
   label: LANGUAGE_LABELS[code],
-}));
-
-/** „Alle Richtungen“ — der Dialog-Plan kennt nur Thai, also beide Hälften. */
-const ALLE_RICHTUNGEN: ChainStep[] = RICHTUNGEN.map((richtung) => ({
-  key: richtung,
-  label: directionLabel(richtung),
 }));
 
 /**
@@ -262,7 +232,7 @@ function sprachZaehler(
 function richtungsZaehler(counts: SituationDirectionCounts | null): CountItem[] {
   return RICHTUNGEN.map((richtung) => ({
     key: richtung,
-    label: directionLabel(richtung),
+    label: GESPROCHENE_SEITE[richtung],
     count: counts ? counts[richtung] : null,
   }));
 }
@@ -271,6 +241,7 @@ export default function ContentStudio() {
   // Phase 2, Schritt 2: „Inhalte erzeugen“ hat drei Unterreiter (Text /
   // Audio / Bilder); die Generator-Karten bleiben, die Navigation darüber
   // gruppiert neu. 'exam' entfällt ab Schritt 3 (Generator wird entfernt).
+  const [situationLanguage, setSituationLanguage] = useState<Lang>('th');
   const [section, setSection] = useState<
     'home' | 'keys' | 'reports' | 'text' | 'audio' | 'bilder' | GeneratorGroupId
   >('home');
@@ -292,6 +263,7 @@ export default function ContentStudio() {
   const [exams, setExams] = useState<{ total: number; generated: number } | null>(null);
   const [examsByLevel, setExamsByLevel] = useState<ExamLevelCounts | null>(null);
   const [storedExams, setStoredExams] = useState<ExamModule[]>([]);
+  const [wordsByLanguage, setWordsByLanguage] = useState<ClipLanguageCounts | null>(null);
   const [generators, setGenerators] = useState<GeneratorSettings>(defaultSettings());
   /**
    * Fuer welche Sprache Bilder und Clips erzeugt werden.
@@ -347,6 +319,9 @@ export default function ContentStudio() {
 
   /** Der ganze Bestand auf einmal — der „Aktualisieren“-Knopf und onFinished. */
   const refreshStock = useCallback(async () => {
+    await studioRequest('/state');
+    const words = await loadVocabulary();
+    setWordsByLanguage(Object.fromEntries(GENERIER_SPRACHEN.map(code => [code, words.filter(word => String(word.language) === code).length])) as ClipLanguageCounts);
     await Promise.all([refreshSituations(), refreshClips(), refreshImages(), refreshExams()]);
   }, [refreshSituations, refreshClips, refreshImages, refreshExams]);
 
@@ -377,10 +352,10 @@ export default function ContentStudio() {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([countSituations(), loadSituations(), countVocabImages(), loadExamModules(),
+    studioRequest('/state').then(() => Promise.all([countSituations(), loadSituations(), countVocabImages(), loadExamModules(),
       countExamModules(), countGeneratedExamModules(), countAudioClips(), sumAudioClipBytes(),
       countAudioClipsByLanguage(), countImagesByLanguage(), countSituationsByDirection(),
-      countExamModulesByLevel()])
+      countExamModulesByLevel()]))
       .then(([situationsCount, dialogs, imagesCount, modules, total, generated, count, bytes,
           clipsNachSprache, bilderNachSprache, situationenNachRichtung, pruefungenNachStufe]) => {
         if (cancelled) return;
@@ -393,7 +368,10 @@ export default function ContentStudio() {
         // Phase 2, Schritt 4: der bekannte Wortschatz-Anteil auch beim
         // ersten Laden — nicht erst nach „Aktualisieren“.
         const [dialoge, vocab] = await Promise.all([loadSituations(), loadVocabulary()]);
-        if (!cancelled) setWortschatzAnteil(durchschnittsAnteil(dialoge, vocab));
+        if (!cancelled) {
+          setWortschatzAnteil(durchschnittsAnteil(dialoge, vocab));
+          setWordsByLanguage(Object.fromEntries(GENERIER_SPRACHEN.map(code => [code, vocab.filter(word => String(word.language) === code).length])) as ClipLanguageCounts);
+        }
       }).catch(() => { if (!cancelled) setExportMessage('Der gespeicherte Bestand konnte nicht geladen werden. Bitte Studio erneut öffnen.'); });
     getAudioBlobStore().then(() => setClipBackend(getActiveAudioBlobBackend()));
     // Erst der Zugriff laedt das Plattform-Backend; danach steht fest, was
@@ -441,18 +419,13 @@ export default function ContentStudio() {
   );
 
   const startSituations = useCallback(
-    async ({ optionId, maxNew, chain, onChainStep, apiKey, provider, model, onProgress, shouldCancel, confirmRun }: StartArgs) => {
+    async ({ optionId, language, maxNew, chain, onChainStep, apiKey, provider, model, onProgress, shouldCancel, confirmRun }: StartArgs) => {
     await studioRequest('/state');
-    // Der Dialog-Plan kennt bisher nur Thai (SITUATION_LANGUAGES). „Alle“
-    // heißt hier deshalb ehrlich: alle RICHTUNGEN der Brücke, nicht alle
-    // Sprachen — der Knopf ist entsprechend beschriftet.
     const { steps, all } = await planChain(
-      chain ?? [{ key: '', label: 'beide Richtungen' }],
+      chain ?? [{ key: language, label: LANGUAGE_LABELS[language] }],
       (key) => planSituations({
         ...(optionId === 'full' ? FULL_RUN : { variantsPerCombo: 1 }),
-        // Ohne Ketten-Schlüssel (einfacher Start) bleibt es beim gewohnten
-        // Bauplan über beide Richtungen.
-        ...(key ? { directions: [key as Direction] } : {}),
+        targetLanguage: key as 'th' | 'en' | 'es' | 'de',
       }),
       (specs) => missingSpecs(specs),
       maxNew
@@ -543,43 +516,40 @@ export default function ContentStudio() {
         maxNew
       );
       if (!await confirmRun({ ...estimateRunCost('audio', provider, model, all),
-        delivery: previewAudioDelivery(all) })) return;
+        delivery: previewAudioDelivery(all, poolFuer('th')) })) return;
       // Phase 2, Schritt 7: mehrere Stimmen pro Sprache ABWECHSELND — die
       // Clips werden rundum auf die Stimmen des Anbieters verteilt (die
       // gewählte Stimme startet die Rotation). Fällt eine Stimme aus, hören
       // Lernende nicht denselben Klang für den ganzen Bestand.
+      // 18.09. Abend, Thai-Ton-Diagnose: Eine EXPLIZIT eingetragene Stimme
+      // rotiert nicht mehr — die Rotation verteilte bei Thai nach der ersten
+      // Stimme weiter zu Stimmen, die die Töne nachweislich verfehlen
+      // (coral/alloy/nova scheiterten an ลูกสาว, onyx bestand). Wer eine
+      // Stimme einträgt, will genau diese; ohne Eintrag gilt weiter die
+      // volle Rotation.
       const stimmen = voicesFor(provider).map((stimme) => stimme.name);
-      const reihenfolge = (voice?.trim() ? [voice.trim(), ...stimmen.filter((n) => n !== voice.trim())] : stimmen);
+      const reihenfolge = (voice?.trim() ? [voice.trim()] : stimmen);
       await fahreKette(steps, all.length, { onChainStep, onProgress, shouldCancel },
         async (missing, onStepProgress) => {
-          if (reihenfolge.length <= 1) {
-            await runClipBatch({
-              specs: missing,
-              client: createClipGenerationClient(provider, apiKey, model, voice ?? ''),
-              onProgress: onStepProgress,
-              shouldCancel,
-              delayMs: provider === 'gemini' ? 1200 : provider === 'chatgpt-helper' ? 2200 : 600,
-            });
-            return;
-          }
-          const laeufe: Promise<void>[] = [];
-          for (let index = 0; index < reihenfolge.length; index++) {
-            const anteil = missing.filter((_, j) => j % reihenfolge.length === index);
-            if (anteil.length === 0) continue;
-            laeufe.push(
-              runClipBatch({
-                specs: anteil,
-                client: createClipGenerationClient(provider, apiKey, model, reihenfolge[index]),
-                onProgress: onStepProgress,
-                shouldCancel,
-                delayMs: provider === 'gemini' ? 1200 : provider === 'chatgpt-helper' ? 2200 : 600,
-              }).then(() => {
-                // Kleine Pause zwischen den Stimmen-Blöcken — dieselbe
-                // Ratenlimit-Rücksicht wie innerhalb der Läufe.
-              })
-            );
-          }
-          await Promise.all(laeufe);
+          let voiceIndex = 0;
+          await runClipBatch({
+            specs: missing,
+            client: { generate: (spec) => createClipGenerationClient(provider, apiKey, model, reihenfolge[voiceIndex++ % reihenfolge.length] ?? voice ?? '').generate(spec) },
+            // 18.09.: Das Tontor liest die Solltöne je Silbe aus dem AKTIVEN
+            // Thai-Bestand (Wörter über syllables, Sätze über die Roman-Umschrift)
+            // — derselbe Stand, aus dem auch der Plan gebaut wurde. Andere
+            // Sprachen berührt das nicht (das Tor meldet dort not-applicable).
+            toneWortschatz: poolFuer('th'),
+            onProgress: onStepProgress,
+            shouldCancel,
+            // 17.09. Nacht FINAL (1400 → 500 ms): OpenAI-TTS ist auf 30 Aufrufe/
+            // Minute gedeckelt — der Helper WARTET bei vollem Fenster jetzt die
+            // genannte Sekundenzahl und stellt dann selbst durch (statt mit 429
+            // abzulehnen; siehe studio.cjs). Der Client darf deshalb flott
+            // fragen: das Fenster glättet den Lauf automatisch auf das Limit,
+            // der Durchsatz liegt damit AM Limit statt darunter.
+            delayMs: provider === 'gemini' ? 6500 : provider === 'chatgpt-helper' ? 500 : 600,
+          });
         });
       await exportDrafts(setExportMessage);
       setReportRevision(value => value + 1);
@@ -600,13 +570,7 @@ export default function ContentStudio() {
             <ThemedText type="smallBold">Grundstock</ThemedText>
             <ThemedButton label="Aktualisieren" onPress={refreshStock} disabled={running} />
           </View>
-          <ThemedText type="smallBold">Statisch (im App-Bestand — kein Generieren nötig)</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">Vokabeln: {POOL_ZAEHLER}</ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">
-            Übungen: statisch im Bestand — Töne herleiten und hören (Thai),
-            Betonung (Spanisch), deutsche Grammatik.
-          </ThemedText>
-          <ThemedText type="smallBold">Generiert (im Speicher, je Zielsprache)</ThemedText>
+          <ThemedText type="small" themeColor="textSecondary">Wortschatz (Vokabeln): {jeSprache(wordsByLanguage)}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">Hörclips: {jeSprache(clipsByLanguage)}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">Bilder: {jeSprache(imagesByLanguage)}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
@@ -654,10 +618,11 @@ export default function ContentStudio() {
           Erzeugung (Schritt 4 baut sie aus); Dialoge laufen wie bisher. */}
       {section === 'text' ? (
       <>
-        <VocabZieleCard onFinished={() => setReportRevision((v) => v + 1)} />
+        <VocabZieleCard blocked={running} onRunningChange={setRunning} onFinished={() => { setReportRevision((v) => v + 1); void refreshStock(); }} />
       <GeneratorCard
-        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
-        heading="Generator: Sprachsituationen"
+        blocked={running} managedKeys onRunningChange={setRunning}
+        language={situationLanguage} onLanguageChange={setSituationLanguage}
+        heading="Generator: Gesprächssituationen"
         description="Dialoge einmalig erstellen und lokal zum Üben speichern."
         group="situations"
         choice={generators.situations}
@@ -668,18 +633,18 @@ export default function ContentStudio() {
         onStart={startSituations}
         // Nach dem Löschen sofort nachzählen — ein stehengebliebener Zähler
         // sieht aus, als hätte das Löschen nicht geklappt (Nutzerwunsch 12.09.).
-        onDelete={async () => { await clearSituations(); await refreshSituations(); }}
-        deleteLabel="Alle Situationen löschen"
+        onDelete={async (languages) => { await clearContentSelection('situations', languages); await refreshSituations(); }}
+        deleteLabel="Erzeugte Situationen löschen"
         canDelete={Boolean(situations && situations > 0)}
         onFinished={refreshStock}
-        allRun={{ label: 'Alle Richtungen', steps: ALLE_RICHTUNGEN }}
+        allRun={{ label: 'Alle Sprachen', steps: ALLE_SPRACHEN }}
       />
       </>
       ) : null}
 
       {section === 'bilder' ? (
       <GeneratorCard
-        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
+        blocked={running} managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Bilder"
         description="Ein Bild je konkreter Vokabel — vorhandene werden übersprungen. Prüfung: dekodierbar und prompt-konform (ohne Text im Bild gebaut); ob das Bild zum Wort passt, prüfst du in der Vorschau."
         group="images"
@@ -691,7 +656,7 @@ export default function ContentStudio() {
         counts={sprachZaehler(imagesByLanguage, mediaLanguage)}
         runOptions={imageRunOptions(mediaLanguage)}
         onStart={startImages}
-        onDelete={async () => { await clearVocabImages(); await refreshImages(); }}
+        onDelete={async (languages) => { await clearContentSelection('images', languages); await refreshImages(); }}
         deleteLabel="Alle Bilder löschen"
         canDelete={Boolean(images && images > 0)}
         onFinished={refreshStock}
@@ -707,7 +672,7 @@ export default function ContentStudio() {
           </ThemedView>
         ) : null}
       <GeneratorCard
-        managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
+        blocked={running} managedKeys onManageKeys={() => setSection('keys')} onRunningChange={setRunning}
         heading="Generator: Hörclips"
         description="Erst Wörter und Kernsätze vertonen — Dialog-Turns laufen standardmäßig über die Laufzeit-Stimme. Stimmen wechseln im Lauf abwechselnd durch; Thai-Töne werden automatisch geprüft (ungeprüft/aussortiert sieht du im Prüfbericht)."
         language={mediaLanguage}
@@ -719,7 +684,7 @@ export default function ContentStudio() {
         counts={sprachZaehler(clipsByLanguage, mediaLanguage)}
         runOptions={clipRunOptions(storedSituations, generators.audio.provider, mediaLanguage, storedExams).options}
         onStart={startClips}
-        onDelete={async () => { await clearAudioClips(); await refreshClips(); }}
+        onDelete={async (languages) => { await clearContentSelection('audio', languages); await refreshClips(); }}
         deleteLabel="Alle Clips löschen"
         canDelete={Boolean(clips && clips.count > 0)}
         onFinished={refreshStock}

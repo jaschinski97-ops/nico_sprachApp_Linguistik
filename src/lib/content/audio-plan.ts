@@ -1,5 +1,6 @@
 import { BUILTIN_EXAM_MODULES } from '../../data/exam-modules';
-import { VOCABULARY } from '../../data/vocabulary';
+import { activeVocabulary } from '../../data/active-vocabulary';
+import type { VocabEntry } from '../../data/vocab-types';
 import { planClips } from '../clips/plan';
 import { AudioClipSpec, clipIdFor, normalizeClipText } from '../clips/types';
 import type { ConversationSituation } from '../conversation/types';
@@ -10,9 +11,10 @@ import type { LanguageCode } from '../languages/types';
 export function planDeliveryAudio(
   situations: ConversationSituation[] = [],
   exams: ExamModule[] = BUILTIN_EXAM_MODULES,
-  language?: LanguageCode
+  language?: LanguageCode,
+  vocabulary: VocabEntry[] = activeVocabulary()
 ): AudioClipSpec[] {
-  const entries = language ? VOCABULARY.filter((entry) => entry.language === language) : VOCABULARY;
+  const entries = language ? vocabulary.filter((entry) => entry.language === language) : vocabulary;
   const plan = planClips({ vocabulary: entries, situations });
   const add = (text: string, sourceId: string, kind: AudioClipSpec['kind']) => {
     text = normalizeClipText(text);

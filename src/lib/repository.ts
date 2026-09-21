@@ -6,11 +6,12 @@
  * Plattform SQLite oder AsyncStorage (AE-3).
  */
 
-import { VOCABULARY, VocabEntry, findVocab } from '@/data/vocabulary';
+import { VocabEntry, findVocab } from '@/data/vocabulary';
+import { activeVocabulary, isRetiredVocabulary } from '@/data/active-vocabulary';
 
 import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
 import { EXAM_LEVELS, ExamLevel, ExamModule, isValidExamModule } from './exam/types';
-import { bundledAssetUri, bundledDocuments, preferBundled } from './content/bundled';
+import { bundledAssetUri, bundledDocuments, isDeletedDraft, preferBundled } from './content/bundled';
 import { isContentDeveloper } from './content/developer';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
@@ -57,7 +58,7 @@ function meldeAussortierte(was: string, roh: number, gueltig: number): void {
  */
 export async function seedVocabulary(
   store?: DataStore,
-  entries: VocabEntry[] = VOCABULARY
+  entries: VocabEntry[] = activeVocabulary()
 ): Promise<number> {
   const db = store ?? (await getStore());
   await db.putMany(
@@ -70,19 +71,20 @@ export async function seedVocabulary(
 export async function loadVocabulary(store?: DataStore): Promise<VocabEntry[]> {
   const db = store ?? (await getStore());
   const lokale = await db.getAll<VocabEntry>('vocab');
+  const retired = lokale.filter(isRetiredVocabulary);
+  for (const word of retired) await db.remove('vocab', word.id);
   // Phase 2, Schritt 4: KI-erzeugter Wortschatz läuft über catalog.json und
   // kommt gebündelt ÜBER den Store — dieselbe Regel wie bei den Prüfungen.
   // (Gebündelt ist hier der Katalog-Bestand der Art 'vocabulary'; der
   // mitgelieferte Grundstock oben ist Teil des Seeds.)
-  return preferBundled('vocabulary', lokale);
+  return preferBundled('vocabulary', lokale.filter(word => !isRetiredVocabulary(word)));
 }
 
 export async function loadVocabEntry(
   id: string,
   store?: DataStore
 ): Promise<VocabEntry | null> {
-  const db = store ?? (await getStore());
-  return db.get<VocabEntry>('vocab', id);
+  return (await loadVocabulary(store)).find(word => word.id === id) ?? null;
 }
 
 /* ---------- Kartenzustände ---------- */
@@ -200,7 +202,7 @@ export async function countSituations(store?: DataStore): Promise<number> {
  * als eigenes Bündel, damit das Studio nicht die breite `Direction`-Union
  * als Schlüssel braucht.
  */
-export type SituationDirection = Extract<Direction, 'de_to_th' | 'th_to_de'>;
+export type SituationDirection = Extract<Direction, 'de_to_th' | 'th_to_de' | 'de_to_en' | 'de_to_es'>;
 export type SituationDirectionCounts = Record<SituationDirection, number>;
 
 /**
@@ -213,10 +215,10 @@ export type SituationDirectionCounts = Record<SituationDirection, number>;
 export async function countSituationsByDirection(
   store?: DataStore
 ): Promise<SituationDirectionCounts> {
-  const zaehler: SituationDirectionCounts = { de_to_th: 0, th_to_de: 0 };
+  const zaehler: SituationDirectionCounts = { de_to_th: 0, th_to_de: 0, de_to_en: 0, de_to_es: 0 };
   for (const situation of await loadSituations(store)) {
-    if (situation.direction === 'de_to_th' || situation.direction === 'th_to_de') {
-      zaehler[situation.direction] += 1;
+    if (situation.direction in zaehler) {
+      zaehler[situation.direction as SituationDirection] += 1;
     }
   }
   return zaehler;
@@ -243,7 +245,8 @@ export async function loadVocabImage(
   if (shipped) return shipped;
   if (!__DEV__ || (!store && !isContentDeveloper())) return null;
   const db = store ?? (await getStore());
-  return db.get<VocabImage>('images', vocabId);
+  const doc = await db.get<VocabImage>('images', vocabId);
+  return doc && !isDeletedDraft('images', doc) ? doc : null;
 }
 
 export async function loadVocabImages(store?: DataStore): Promise<VocabImage[]> {
@@ -281,10 +284,12 @@ export async function countImagesByLanguage(
   store?: DataStore
 ): Promise<ImageLanguageCounts> {
   const zaehler: ImageLanguageCounts = { th: 0, en: 0, es: 0, de: 0 };
+  const generated = bundledDocuments('vocabulary');
   for (const image of await loadVocabImages(store)) {
     const id = image.vocabId || image.id;
-    const eintrag = findVocab(id);
+    const eintrag = generated.find(word => word.id === id) ?? findVocab(id);
     if (eintrag && isLanguageCode(eintrag.language)) zaehler[eintrag.language] += 1;
+    if (eintrag && String(eintrag.language) === 'de') zaehler.de += 1;
     if (DE_CONCEPTS.has(id)) zaehler.de += 1;
   }
   return zaehler;

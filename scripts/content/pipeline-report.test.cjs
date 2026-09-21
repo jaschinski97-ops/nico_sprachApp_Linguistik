@@ -17,6 +17,45 @@ const path = require('node:path');
 
 const { ContentPipeline, keyOf } = require('./pipeline.cjs');
 
+test('generated vocabulary can be staged, published, deleted and regenerated without returning the legacy foundation', async () => {
+  const root = await tempRoot();
+  await fs.writeFile(path.join(root, 'src/content/catalog.json'), JSON.stringify({ version: 2, vocabularySource: 'generated', entries: [] }));
+  const pipeline = new ContentPipeline(root);
+  const word = { id: 'ki-en-test', language: 'en', term: 'hello', german: 'hallo', romanization: 'həˈləʊ', ipa: 'həˈləʊ',
+    partOfSpeech: 'interjection', register: 'neutral', isConcrete: false, syllables: [], sourceVerified: false,
+    verificationNote: 'KI-Erzeugung', translations: { de: 'hallo', th: 'สวัสดี' }, generatedAt: Date.now() };
+  await pipeline.stage({ kind: 'vocabulary', document: word });
+  await pipeline.publish();
+  assert.equal((await pipeline.catalog()).vocabularySource, 'generated');
+  assert.equal((await pipeline.catalog()).entries.length, 1);
+  await pipeline.clearGenerated({ kind: 'vocabulary', languages: ['en'], includeBase: true });
+  await assert.rejects(pipeline.stage({ kind: 'vocabulary', document: word }), /gelöscht/);
+  await pipeline.stage({ kind: 'vocabulary', document: { ...word, generatedAt: Date.now() + 10 } });
+  await pipeline.publish();
+  assert.equal((await pipeline.catalog()).entries.length, 1);
+});
+
+test('Löschen nach Art und Zielsprache entfernt auch alte Grundstock- und Stage-Einträge', async () => {
+  const root = await tempRoot();
+  const th = eintrag('situations', 'alt-th', { document: { direction: 'de_to_th', generatedAt: 1 } });
+  const de = eintrag('situations', 'alt-de', { document: { direction: 'th_to_de', generatedAt: 1 } });
+  const audio = eintrag('audio', 'clip', { document: { language: 'th', generatedAt: 1 } });
+  await fs.writeFile(path.join(root, 'src/content/catalog.json'), JSON.stringify({ version: 2, entries: [th,de,audio] }));
+  await fs.writeFile(path.join(root, '.content-studio/stage.json'), JSON.stringify({ version: 2, entries: [th,de] }));
+  const pipeline = new ContentPipeline(root);
+  const scope = { kind: 'situations', languages: ['th'], includeBase: true };
+  assert.equal((await pipeline.clearGenerated({ ...scope, preview: true })).katalog, 1);
+  assert.equal((await pipeline.catalog()).entries.length, 3);
+  assert.equal((await pipeline.clearGenerated(scope)).stage, 1);
+  const state = await pipeline.state();
+  assert.deepEqual(state.shipped.entries.map(keyOf), ['situations:alt-de', 'audio:clip']);
+  assert.deepEqual(state.stage.entries.map(keyOf), ['situations:alt-de']);
+  assert.ok(state.shipped.deleted['situations:alt-th'] > 1);
+  assert.equal((await pipeline.clearGenerated(scope)).katalog, 0);
+  await assert.rejects(pipeline.clearGenerated({ kind: 'unknown' }), /Löschart/);
+  await assert.rejects(pipeline.clearGenerated({ languages: [] }), /Sprachauswahl/);
+});
+
 async function tempRoot() {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'pipeline-report-'));
   await fs.mkdir(path.join(root, 'src', 'content'), { recursive: true });

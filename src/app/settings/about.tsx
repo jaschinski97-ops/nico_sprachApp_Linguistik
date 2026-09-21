@@ -10,7 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
-import { VOCABULARY } from '@/data/vocabulary';
+import { activeVocabulary } from '@/data/active-vocabulary';
 
 /**
  * „Über die App" (UI-Review 10.09.): Version, was an Lernmaterial drinsteckt
@@ -37,7 +37,7 @@ export default function AboutScreen() {
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">{t('settings.version', { version: version ?? '—' })}</ThemedText>
         <ThemedText type="small">
-          {t('settings.materialCount', { count: VOCABULARY.length })}
+          {t('settings.materialCount', { count: activeVocabulary().length })}
         </ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
           {t('settings.materialBody')}

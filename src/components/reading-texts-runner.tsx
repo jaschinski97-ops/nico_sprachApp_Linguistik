@@ -12,8 +12,9 @@ import {
   playPronunciationWithStatus,
   stopPronunciation,
 } from '@/lib/audio';
-import { type ConversationSituation, type ConversationTurn } from '@/lib/conversation/types';
-import { type TranslationKey, useLocale } from '@/lib/i18n';
+import { localizedSituation, type ConversationSituation, type ConversationTurn } from '@/lib/conversation/types';
+import { zielSprache } from '@/lib/production/tasks';
+import { useLocale } from '@/lib/i18n';
 import { type PairDirection } from '@/lib/languages/types';
 import { loadCardStatesForDirection, loadSituations } from '@/lib/repository';
 import {
@@ -24,7 +25,7 @@ import {
   type TextToken,
   type VerstaendnisFrage,
 } from '@/lib/reading-texts';
-import { VOCABULARY } from '@/data/vocabulary';
+import { activeVocabulary } from '@/data/active-vocabulary';
 
 /**
  * Längere Hör- und Lesetexte (Schritt 4, Lern-Reiter-Ausbau): Die
@@ -46,7 +47,7 @@ export function ReadingTextsRunner({
   direction: PairDirection;
   onExit: () => void;
 }) {
-  const { t } = useLocale();
+  const { t, uiLanguage } = useLocale();
   const [stoff, setStoff] = useState<LeseStoff[] | null>(null);
   const [gewaehlt, setGewaehlt] = useState<ConversationSituation | null>(null);
 
@@ -62,10 +63,10 @@ export function ReadingTextsRunner({
         setStoff(
           lesestoffeFuerRichtung({
             direction,
-            situationen,
-            pool: VOCABULARY,
+            situationen: situationen.map(s => localizedSituation(s, uiLanguage)),
+            pool: activeVocabulary(),
             cards,
-            latin: false,
+            latin: zielSprache(direction) !== 'th',
           })
         );
       } catch {
@@ -76,7 +77,7 @@ export function ReadingTextsRunner({
       cancelled = true;
       void stopPronunciation();
     };
-  }, [direction]);
+  }, [direction, uiLanguage]);
 
   if (stoff === null) {
     return (
@@ -178,6 +179,7 @@ function TextAnsicht({
 }) {
   const { t } = useLocale();
   const colors = useTheme();
+  const sprache = zielSprache(situation.direction);
   const [woerter, setWoerter] = useState<{ text: string; german: string }[]>([]);
   const [uebersetzt, setUebersetzt] = useState<Set<number>>(new Set());
   const [fragenStufe, setFragenStufe] = useState<number | null>(null);
@@ -187,14 +189,14 @@ function TextAnsicht({
   const spiele = useCallback((zeile: ConversationTurn) => {
     void (async () => {
       try {
-        const request = { text: zeile.thai, language: 'th' as const, purpose: 'sentence' as const };
-        if (!await hasPronunciationClip(request) && await isLanguageAvailable('th') === false) return;
+        const request = { text: zeile.thai, language: sprache, purpose: 'sentence' as const };
+        if (!await hasPronunciationClip(request) && await isLanguageAvailable(sprache) === false) return;
         await playPronunciationWithStatus(request);
       } catch {
         // Ohne Ton bleibt der Text — Lesen funktioniert unabhängig.
       }
     })();
-  }, []);
+  }, [sprache]);
 
   const antippen = (token: TextToken) => {
     if (!token.entry) return;
@@ -253,7 +255,7 @@ function TextAnsicht({
       </ThemedText>
 
       {situation.scriptTurns.map((zeile, i) => {
-        const tokens = tokenisiereFuerAntippen(zeile.thai, VOCABULARY, false);
+        const tokens = tokenisiereFuerAntippen(zeile.thai, activeVocabulary(), sprache !== 'th');
         return (
           <ThemedView
             key={`${i}`}

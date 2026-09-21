@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Button, ProgressPanel } from '@/components/generator-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { createTextClient } from '@/lib/providers/text';
 import type { BatchProgress } from '@/lib/generation/batch';
 import {
@@ -17,17 +17,15 @@ import {
   setGeneratorProvider,
   type GeneratorChoice,
 } from '@/lib/providers/settings';
-import { PROVIDER_INFO, type ProviderId } from '@/lib/providers/types';
+import { PROVIDER_INFO, type ProviderId, type TextClient } from '@/lib/providers/types';
 import {
   pruefeVocabKreuzBatch,
   PRUEF_BATCH_GROESSE,
-  schluesselPruefer,
   type KreuzResultat,
 } from '@/lib/content/kreuzpruefung';
 import { loadApiKey } from '@/lib/api-key';
-import { estimateRunCost } from './run-cost';
-import { studioRequest } from './content-client';
-import { loadVocabulary, writeMeta } from '@/lib/repository';
+import { clearContentSelection, studioRequest } from './content-client';
+import { readMeta, writeMeta } from '@/lib/repository';
 import {
   pruefeVocabDoc,
   vocabSchluessel,
@@ -35,43 +33,12 @@ import {
 import { listeAusAntwort } from '@/lib/content/ki-json';
 import type { VocabEntry } from '@/data/vocab-types';
 import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
+import { UI_LANGUAGES } from '@/lib/i18n/types';
 
 /** Die Vokabel-Sprachen: die drei Registry-Sprachen + Deutsch (KI-Pool). */
 type VocabSprache = LanguageCode | 'de';
 
-/**
- * Wortschatz mit festlegbarer Zielgröße (Phase 2, Schritt 4).
- *
- * JE Sprache ein eigenes Ziel (250 / 500 / 1.000 / 2.000 oder freie Zahl) —
- * angezeigt wird vorhanden / Ziel / fehlt, erzeugt werden nur die fehlenden
- * Wörter, in Paketen (z. B. 50) mit optionalem Thema. Keine CEFR-Stufenwahl
- * mehr (Nutzerwunsch 15.09.: „ich will nicht 2.000 Wörter A1 erstellen") —
- * der Prompt verlangt grundlegende, hochfrequente Alltagswörter.
- *
- * Anbieter UND Modell für die ERZEUGUNG sind hier wählbar (eigene Gruppe
- * `vocabulary`, getrennt von den Dialogen); das PRÜF-MODELL ebenfalls — der
- * Prüf-ANBIETER bleibt bei der Kreuzregel „der jeweils andere Anbieter".
- *
- * „Alle Sprachen“ (Nutzerwunsch 15.09., wie bei den anderen Generatoren):
- * EIN Kettenlauf über alle vier Sprachen (th/en/es/de) mit EINER
- * Kostenbestätigung — je Sprache nur die fehlenden Wörter bis zum
- * Sprach-Ziel (im Alle-Modus je Sprache einstellbar), Veröffentlichen
- * einmal am Ende; Sprachen mit erreichtem Ziel werden übersprungen. Der
- * Lauf zeigt den LIVE-Fortschritt (dasselbe ProgressPanel wie die
- * anderen Generatoren).
- *
- * Der Lauf schlägt die neuen Begriffe als Katalog-Art `vocabulary` über
- * Stage UND catalog.json ein (dieselbe Regel wie für Clips); geprüfte
- * Begriffe landen mit dem nächsten App-Bundle im Lernbestand
- * (GEBUENDELTE-Regel).
- *
- * Der Lauf ist KOSTENPFLICHTIG: Anzahl, Anbieter und Kostenschätzung
- * stehen vor dem Start, der erste Knopfdruck bestätigt nur.
- */
-
-// Deutsch ist seit dem Nutzerwunsch vom 15.09. eine VOLLWERTIGE Auswahl:
-// eigene Chip, eigenes Ziel, im „Alle Sprachen“-Lauf dabei. de-Nomen
-// brauchen im Schema germanNoun — der Prompt verlangt es mit (unten).
+/** Vier Wortschatz-Ziele; Erzeugung und Prüfung starten mit einem Klick. */
 const SPRACHEN: { code: VocabSprache; label: string }[] = [
   ...(LANGUAGE_CODES as readonly LanguageCode[]).map((code) => ({
     code,
@@ -89,11 +56,52 @@ type LaufErgebnis = {
   kreuzAbgelehnt: number;
   duplikate: number;
   aussortiert: number;
+  /** Begriffe, die auf der Blacklist bereits abgelehnter Wörter standen. */
+  schwarzgelistet: number;
   /** Einträge, die aus einer am Token-Limit abgeschnittenen Antwort gerettet wurden. */
   gerettet: number;
   /** Weiche Fehler (z. B. ein kaputtes Prüfpaket) — der Lauf läuft weiter. */
   fehler: string[];
+  /** Geschätzte Ausgaben dieses Pakets in USD (Stichtagspreise, s. u.). */
+  usd: number;
 };
+
+/** Kapazität der Blacklist je Sprache — die neuesten Ablehnungen bleiben liegen. */
+const BLACKLIST_CAP = 2000;
+
+async function ladeBlacklist(code: VocabSprache): Promise<string[]> {
+  try {
+    const liste = await readMeta<string[]>(`vocabBlacklist-${code}`, []);
+    return Array.isArray(liste) ? liste.filter((begriff) => typeof begriff === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+async function speichereBlacklist(code: VocabSprache, liste: string[]): Promise<void> {
+  await writeMeta(`vocabBlacklist-${code}`, liste.slice(-BLACKLIST_CAP));
+}
+
+/**
+ * Stichtagspreise (09/2026) in USD pro Mio. Tokens für die Budget-Schätzung
+ * des Loops — bewusst grob; sie ist kein Abrechnungsersatz. Unbekannte
+ * Modelle rechnen wir konservativ TEURER, damit das Budget eher früher als
+ * zu spät stoppt.
+ */
+const TOKEN_PREISE: { muster: RegExp; input: number; output: number }[] = [
+  { muster: /gpt-4o-mini/, input: 0.15, output: 0.6 },
+  { muster: /gpt-4\.1-mini/, input: 0.4, output: 1.6 },
+  { muster: /gpt-5-mini/, input: 0.25, output: 2 },
+  { muster: /flash/, input: 0.3, output: 2.5 },
+];
+const PREIS_OHNE_TREFFER = { input: 0.5, output: 3 };
+
+function paketUsd(modell: string, inputTokens: number, outputTokens: number): number {
+  const preis = TOKEN_PREISE.find((eintrag) => eintrag.muster.test(modell)) ?? PREIS_OHNE_TREFFER;
+  return (inputTokens * preis.input + outputTokens * preis.output) / 1_000_000;
+}
+
+const usdText = (usd: number) => `${usd.toFixed(2).replace('.', ',')} $`;
 
 /** Sieben Zeichen stabiler Hash für KI-Vokabel-IDs. */
 function kurzHash(text: string): string {
@@ -111,8 +119,9 @@ function baueWortschatzPrompt(options: {
   anzahl: number;
   thema: string;
   bekannte: string[];
+  abgelehnt: string[];
 }): string {
-  const { sprache, anzahl, thema, bekannte } = options;
+  const { sprache, anzahl, thema, bekannte, abgelehnt } = options;
   const sprachRegeln: Record<string, string> = {
     th: '- "term" in thailändischer Schrift; "syllables" mit JEDER Silbe als { "roman": Umschrift, "tone": "mid"|"low"|"falling"|"high"|"rising" }; "romanization" als Paiboon-artige Umschrift des ganzen Wortes.',
     en: '- "ipa" mit IPA-Lautschrift (RP); "syllables" als [{ "roman": "/" + IPA + "/" }]; bei passenden Wörtern "englishSpelling" { "grapheme": "ea", "sound": "iː" } mit der tatsächlichen IPA-Lesart dieser Buchstabenfolge im Wort (z. B. ea in eat iː, bread e, great eɪ); Verben mit "englishVerb" { "past": "…", "participle": "…", "irregular": true|false } — bei regelmäßigen Verben irregular false, unregelmäßige mit ihren echten Formen (die Übungen „Unregelmäßige Verben"/„Dritte Form" lesen genau dieses Feld).',
@@ -130,6 +139,7 @@ function baueWortschatzPrompt(options: {
     '    "term": "Wort in der Zielsprache",',
     '    "romanization": "Lesehilfe",',
     '    "german": "deutsche Bedeutung",',
+    '    "translations": { "th": "Bedeutung auf Thai", "en": "English meaning", "es": "significado en español", "de": "deutsche Bedeutung", "…": "weitere App-Sprachen" },',
     '    "partOfSpeech": "noun|verb|adjective|adverb|pronoun|numeral|particle|preposition|conjunction|interjection",',
     '    "register": "neutral"|"formal"|"informal",',
     '    "isConcrete": true|false,',
@@ -143,14 +153,40 @@ function baueWortschatzPrompt(options: {
     '',
     `Sprachregeln für ${sprache}:`,
     sprachRegeln[sprache] ?? '',
+    `translations enthält für JEDEN dieser Sprachcodes eine kurze passende Bedeutung: ${UI_LANGUAGES.join(', ')}. Für ${sprache} ist die Übersetzung identisch mit term.`,
     '',
     `Ausschlussliste — diese Begriffe existieren bereits und dürfen NICHT vorkommen:`,
-    bekannte.slice(0, 300).join(' | '),
+    bekannte.slice(0, 3000).join(' | '),
+    '',
+    `BLACKLIST — diese Begriffe wurden bereits geprüft und ABGELEHNT. Schläge sie NIEMALS wieder vor:`,
+    abgelehnt.slice(0, 1000).join(' | '),
   ].join('\n');
 }
 
-export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
+type StudioDokument = { language?: string; term?: string };
+type StudioBestand = { zahlen: Partial<Record<string, number>>; dokumente: StudioDokument[] };
+
+/** Zustand vom HELPER (Katalog auf der Platte + Stage) — der gebündelte
+ * Katalog im Browser bleibt sonst hinter Publishes zurück (Lektion 16.09.:
+ * „Thai 16 vorhanden", obwohl längst 68 auf der Platte lagen). */
+async function leseStudioBestand(): Promise<StudioBestand> {
+  const zustand = await studioRequest<{
+    shipped?: { entries?: { kind: string; id: string; document: StudioDokument }[] };
+    stage?: { entries?: { kind: string; id: string; document: StudioDokument }[] };
+  }>('/state');
+  const eindeutig = new Map<string, StudioDokument>();
+  for (const eintrag of [...(zustand.shipped?.entries ?? []), ...(zustand.stage?.entries ?? [])]) {
+    if (eintrag.kind === 'vocabulary' && eintrag.document) eindeutig.set(String(eintrag.id), eintrag.document);
+  }
+  const dokumente = [...eindeutig.values()];
+  const zahlen: Partial<Record<string, number>> = {};
+  for (const { code } of SPRACHEN) zahlen[code] = dokumente.filter((d) => d.language === code).length;
+  return { zahlen, dokumente };
+}
+
+export function VocabZieleCard({ onFinished, onRunningChange, blocked = false }: { onFinished: () => void; onRunningChange?: (running: boolean) => void; blocked?: boolean }) {
   const theme = useTheme();
+  const toneColor = useToneColor();
   const [sprache, setSprache] = useState<VocabSprache>('th');
   const [alleSprachen, setAlleSprachen] = useState(false);
   const [ziele, setZiele] = useState<Partial<Record<string, number>>>({});
@@ -159,11 +195,14 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const [thema, setThema] = useState('');
   const [wahl, setWahl] = useState<GeneratorChoice>(() => defaultChoiceFor('vocabulary'));
   const [running, setRunning] = useState(false);
-  const [phase, setPhase] = useState<'idle' | 'confirm'>('idle');
+  const starting = useRef(false);
+  const [deleteScope, setDeleteScope] = useState<string | null>(null);
   const [meldung, setMeldung] = useState('');
   const [ergebnis, setErgebnis] = useState<LaufErgebnis | null>(null);
   /** Live-Fortschritt während des Laufs — bleibt nach dem Lauf stehen (wie bei den anderen Karten). */
   const [fortschritt, setFortschritt] = useState<BatchProgress | null>(null);
+  /** Fehler des letzten Laufs — prominent unterm Fortschritt, nicht nur in der grauen Meldung unten. */
+  const [laufFehler, setLaufFehler] = useState<string[]>([]);
 
   useEffect(() => {
     // Gespeicherte Wahl der Gruppe `vocabulary` — ohne Stand bleibt die
@@ -182,18 +221,15 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     setWahl(next.vocabulary);
   }, []);
 
-  const ladeBestand = useCallback(async () => {
-    const alle = await loadVocabulary();
-    const zahlen: Partial<Record<string, number>> = {};
-    for (const code of LANGUAGE_CODES) zahlen[code] = alle.filter((e) => e.language === code).length;
-    // Deutsch: der abgeleitete Pool trägt language 'de' (KI) — zählen, wenn da.
-    zahlen.de = alle.filter((e) => (e as { language: string }).language === 'de').length;
-    setBestand(zahlen);
-    return zahlen;
+  const ladeBestand = useCallback(async (): Promise<StudioBestand> => {
+    const bestand = await leseStudioBestand();
+    setBestand(bestand.zahlen);
+    return bestand;
   }, []);
 
   useEffect(() => {
-    void ladeBestand();
+    void Promise.resolve().then(ladeBestand).catch(error => setMeldung(error instanceof Error ? error.message : String(error)));
+    void Promise.all(SPRACHEN.map(async ({ code }) => [code, await readMeta(`vocabZiel-${code}`, 250)] as const)).then(values => setZiele(Object.fromEntries(values)));
   }, [ladeBestand]);
 
   const ziel = ziele[sprache] ?? 250;
@@ -201,9 +237,9 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
   const fehlt = Math.max(0, ziel - vorhanden);
 
   /** Im „Alle Sprachen“-Lauf zählt jede Sprache mit ihrem eigenen Ziel. */
-  const aktiveSprachen: readonly VocabSprache[] = alleSprachen
+  const aktiveSprachen: readonly VocabSprache[] = useMemo(() => alleSprachen
     ? SPRACHEN.map((eintrag) => eintrag.code)
-    : [sprache];
+    : [sprache], [alleSprachen, sprache]);
   const gesamtFehlt = aktiveSprachen.reduce(
     (summe, code) => summe + Math.max(0, (ziele[code] ?? 250) - (bestand?.[code] ?? 0)),
     0
@@ -229,30 +265,33 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
    */
   const laufeFuer = useCallback(async (
     code: VocabSprache,
-    tick: (term: string, ausgang: 'ok' | 'failed' | 'skipped') => void
+    tick: (term: string, ausgang: 'ok' | 'failed' | 'skipped') => void,
+    status: (text: string) => void
   ): Promise<LaufErgebnis | null> => {
+      const label = SPRACHEN.find(sprache => sprache.code === code)?.label ?? code;
+      status(`${label}: Bestand wird geladen …`);
       const bestandJetzt = await ladeBestand();
-      const vorhandenJetzt = bestandJetzt[code] ?? 0;
+      const vorhandenJetzt = bestandJetzt.zahlen[code] ?? 0;
       const zielJetzt = ziele[code] ?? 250;
       const anzahl = Math.min(paket, Math.max(0, zielJetzt - vorhandenJetzt));
       if (anzahl <= 0) return null;
 
       const settings = await loadGeneratorSettings();
-      const { provider, model, checkModel, checkProvider } = settings.vocabulary;
+      const { provider, model, checkModel } = settings.vocabulary;
+      const checkProvider = settings.vocabulary.checkProvider ?? provider;
       const apiKey = (await loadApiKey(provider)) ?? '';
+      if (!apiKey) throw Error('Bitte unter Anbieter & Schlüssel den Erzeuger-Schlüssel hinterlegen.');
       const client = createTextClient(provider, apiKey, model);
-      // Kreuzprüfung vorbereiten (Phase 2, Schritt 5): der ANDERE Anbieter
-      // prüft; fehlt dessen Schlüssel, prüft der Erzeuger selbst zweimal
-      // („einfach geprüft“). Das Prüf-Modell ist wählbar (checkModel); ohne
-      // Eintrag gilt der Text-Vorschlag des jeweiligen Prüfers.
+      // Der ausgewählte Prüfer und sein Modell gelten verbindlich.
       const schluessel: Partial<Record<string, string | null>> = {
         gemini: await loadApiKey('gemini'),
         chatgpt: await loadApiKey('chatgpt'),
         'chatgpt-helper': 'serverseitig',
       };
+      if (!schluessel[checkProvider]) throw Error('Bitte unter Anbieter & Schlüssel den Prüfer-Schlüssel hinterlegen.');
       const hatSchluessel = (anbieter: string): boolean => Boolean(schluessel[anbieter]);
       const pruefModellFuer = (anbieter: ProviderId) =>
-        checkModel?.trim() || defaultModelFor(anbieter, 'text');
+        checkModel?.trim() || (anbieter === provider ? model : defaultModelFor(anbieter, 'text'));
       const clientFuer = (anbieter: ReturnType<typeof defaultModelFor> extends never ? never : Parameters<typeof defaultModelFor>[0]) =>
         createTextClient(
           anbieter,
@@ -260,38 +299,55 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           pruefModellFuer(anbieter)
         );
 
-      const alle = await loadVocabulary();
-      const bekannte = alle
-        .filter((e) => (e as { language: string }).language === code)
-        .map((e) => e.term);
-
-      const antwort = await client.complete({
-        system:
-          'Du erzeugst Lernwortschatz als JSON und hältst dich EXAKT an das geforderte Schema. Keine Duplikate, keine Eigennamen, häufige Wörter zuerst.',
-        user: baueWortschatzPrompt({ sprache: code, anzahl, thema, bekannte }),
-        maxTokens: 32768,
+      // Echte Tokenzahlen je Aufruf sammeln (Erzeugung UND Prüfung) — daraus
+      // schätzt der Loop die Ausgaben und stoppt am Budget.
+      const verbrauch = { usd: 0 };
+      const zaehl = (basis: TextClient): TextClient => ({
+        ...basis,
+        complete: async (request) => {
+          const antwort = await basis.complete(request);
+          if (antwort.usage) verbrauch.usd += paketUsd(basis.model, antwort.usage.inputTokens, antwort.usage.outputTokens);
+          return antwort;
+        },
       });
 
-      const vorhandenSchluessel = new Set(
-        alle.filter((e) => (e as { language: string }).language === code)
-          .map((e) => vocabSchluessel(e.term, code))
-      );
-      // Phase 2, Schritt 6: auch der STAGE zählt als vorhanden — Einträge,
-      // die im nächsten Export ohnehin übernommen würden, sind Duplikate.
+      // Bestand + Stage + Blacklist VOR dem Erzeugungsaufruf lesen — die
+      // Ausschlussliste im Prompt muss auch Stage-Wörter kennen, sonst
+      // schlägt das Modell sie laufend wieder vor (27 Duplikate, 16.09.).
+      const eigene = bestandJetzt.dokumente.filter((d) => d.language === code);
+      const bekannte = eigene.map((d) => d.term).filter((term): term is string => Boolean(term));
+      const vorhandenSchluessel = new Set(eigene.map((d) => vocabSchluessel(String(d.term ?? ''), code)));
       try {
-        const zustand = await studioRequest<{
-          stage: { entries: { kind: string; document: { term?: string } }[] };
-        }>('/state');
-        for (const eintrag of zustand.stage.entries) {
-          if (eintrag.kind === 'vocabulary' && typeof eintrag.document?.term === 'string') {
+        const zustand = await studioRequest<{ stage?: { entries?: { kind: string; document: { term?: string; language?: string } }[] } }>('/state');
+        for (const eintrag of zustand.stage?.entries ?? []) {
+          if (eintrag.kind === 'vocabulary' && eintrag.document?.language === code && typeof eintrag.document?.term === 'string') {
+            bekannte.push(eintrag.document.term);
             vorhandenSchluessel.add(vocabSchluessel(eintrag.document.term, code));
           }
         }
       } catch {
         // Ohne Helper bleibt der Vergleich beim lokalen Bestand.
       }
+      const blacklistBegriffe = await ladeBlacklist(code);
+      const blacklist = new Set(blacklistBegriffe.map((begriff) => vocabSchluessel(begriff, code)));
+      // Fehlerprotokoll dieses Pakets — landet als JSON-Zeilen in
+      // pipeline/logs/studio-failures.ndjson (Nutzerwunsch: Datei statt
+      // Debug-Ausgabe in der GUI). Senden ist Feuer-und-Vergessen: Das Log
+      // darf den Lauf NIE aufhalten.
+      const protokoll: { kind: string; language: string; term?: string; gruende?: string[] }[] = [];
+
+      status(`${label}: ${model} erzeugt ${anzahl} Wörter — warte auf KI-Antwort …`);
+      const antwort = await zaehl(client).complete({
+        system:
+          'Du erzeugst Lernwortschatz als JSON und hältst dich EXAKT an das geforderte Schema. Keine Duplikate, keine Eigennamen, häufige Wörter zuerst.',
+        user: baueWortschatzPrompt({ sprache: code, anzahl, thema, bekannte, abgelehnt: blacklistBegriffe }),
+        maxTokens: 32768,
+      });
+
+      status(`${label}: Antwort erhalten — Wörter werden vorbereitet …`);
       const laufSchluessel = new Set<string>();
-      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0, fehler: [] };
+      const resultat: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, schwarzgelistet: 0, gerettet: 0, fehler: [], usd: 0 };
+      const abgelehntNeu: string[] = [];
 
       // 32700 statt 8000: 50 reiche Einträge (Thai-Schrift, Silben, Beispiele)
       // sprengten das alte Limit — die Antwort brach mitten im JSON ab
@@ -301,8 +357,8 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
       const { woerter, abgeschnitten } = listeAusAntwort(antwort.text);
       if (abgeschnitten) resultat.gerettet = woerter.length;
 
-      // Phase A — sammeln: Duplikate und Schemamängel fliegen sofort raus,
-      // die übrigen Kandidaten gehen als PAKET in die Kreuzprüfung.
+      // Phase A — sammeln: Duplikate, Blacklist und Schemamängel fliegen
+      // sofort raus, die übrigen Kandidaten gehen als PAKET in die Prüfung.
       const kandidaten: { eintrag: VocabEntry; schluessel: string }[] = [];
       for (const rohEintrag of woerter) {
         const kandidat = rohEintrag as Record<string, unknown>;
@@ -313,37 +369,50 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           tick(term, 'skipped');
           continue;
         }
+        if (blacklist.has(schluessel)) {
+          // Schon einmal von der Prüfung abgelehnt — nicht nochmal bezahlen.
+          resultat.schwarzgelistet += 1;
+          protokoll.push({ kind: 'blacklist', language: code, term });
+          tick(term, 'skipped');
+          continue;
+        }
         const eintrag: VocabEntry = {
           ...(kandidat as unknown as VocabEntry),
           id: `ki-${code}-${kurzHash(schluessel)}`,
+          generatedAt: Date.now(),
           // 'de' trägt die Laufzeit längst (de-Pool; vocab-schema liest die
           // Sprache als string) — nur der Typ kennt es noch nicht: Cast.
           language: code as VocabEntry['language'],
           concept: `ki-${code}-${kurzHash(schluessel)}`,
           register: (kandidat.register as VocabEntry['register']) ?? 'neutral',
           isConcrete: Boolean(kandidat.isConcrete),
+          // NIE true: das Feld bedeutet „quellengeprüft" und verlangt eine
+          // Quellenangabe — sonst lehnt der Publish das Wort ab (52
+          // steckengebliebene Wörter, 16.09.). Die Kreuzprüfung steht in
+          // der verificationNote, und das Wort läuft als „ungeprüft".
           sourceVerified: false,
           verificationNote: 'KI-Erzeugung, einfach geprüft (Schema + Schrift + Regeln).',
           syllables: Array.isArray(kandidat.syllables) ? (kandidat.syllables as VocabEntry['syllables']) : [],
         };
         const pruefung = pruefeVocabDoc(eintrag);
+        if (UI_LANGUAGES.some(language => typeof eintrag.translations?.[language] !== 'string' || !eintrag.translations[language]!.trim())) {
+          pruefung.ok = false;
+          pruefung.fehler.push('Bedeutungen für App-Sprachen fehlen.');
+        }
         if (!pruefung.ok) {
           resultat.aussortiert += 1;
+          protokoll.push({ kind: 'schema', language: code, term, gruende: pruefung.fehler });
           tick(term, 'skipped');
           continue;
         }
         kandidaten.push({ eintrag, schluessel });
+        laufSchluessel.add(schluessel);
       }
 
-      // Phase B — Phase 2, Schritt 5 als PAKETprüfung (15.09.): EIN
-      // Prüfaufruf je ~10 Einträge statt einem je Wort; der erste Kettenlauf
-      // verbrachte die Zeit mit 200 nacheinander laufenden Reasoning-Aufrufen.
-      // Der ANDERE Anbieter prüft Übersetzung, Grammatik, Umschrift/Ton,
-      // Natürlichkeit und Passung; ohne zweiten Schlüssel läuft die
-      // Selbstprüfung (zweite Runde nur über die Bestandenen) und der
-      // Eintrag bleibt „einfach geprüft“ — Durchgefallene werden verworfen.
+      // Paketweise prüfen; gleicher Anbieter prüft die Bestandenen zweimal.
       for (let start = 0; start < kandidaten.length; start += PRUEF_BATCH_GROESSE) {
         const paket = kandidaten.slice(start, start + PRUEF_BATCH_GROESSE);
+        status(`${label}: Prüfpaket ${Math.floor(start / PRUEF_BATCH_GROESSE) + 1} / ${Math.ceil(kandidaten.length / PRUEF_BATCH_GROESSE)} — ${pruefModellFuer(checkProvider)} prüft ${paket.length} Wörter …`);
         let resultate: KreuzResultat[];
         try {
           resultate = await pruefeVocabKreuzBatch(
@@ -351,9 +420,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
             undefined,
             provider,
             hatSchluessel,
-            clientFuer,
-            // Nutzerwunsch 15.09.: hinterlegter Prüf-Anbieter schlägt die
-            // Kreuzregel; undefined lässt die Regel „der jeweils andere“ laufen.
+            (anbieter) => zaehl(clientFuer(anbieter)),
             checkProvider
           );
         } catch (error) {
@@ -361,17 +428,17 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           // den Sprachlauf — bereits geprüfte Pakete zählen und werden
           // veröffentlicht, der Fehler steht in der Meldung.
           const nummer = Math.floor(start / PRUEF_BATCH_GROESSE) + 1;
-          resultat.fehler.push(
-            `Prüfpaket ${nummer}: ${error instanceof Error ? error.message : String(error)}`
-          );
+          const meldung = `Prüfpaket ${nummer}: ${error instanceof Error ? error.message : String(error)}`;
+          resultat.fehler.push(meldung);
+          protokoll.push({ kind: 'paket', language: code, gruende: [meldung] });
+          for (const kandidat of paket) tick(kandidat.eintrag.term, 'failed');
           continue;
         }
         for (const [position, kandidat] of paket.entries()) {
           const kreuz = resultate[position];
           const eintrag = kandidat.eintrag;
           if (kreuz.kreuz && kreuz.geprueft) {
-            eintrag.sourceVerified = true;
-            eintrag.verificationNote = `KI-Kreuzprüfung bestanden (${provider} erzeugt, zweiter Anbieter geprüft).`;
+            eintrag.verificationNote = `KI-Kreuzprüfung bestanden (${provider} erzeugt, ${checkProvider} mit ${pruefModellFuer(checkProvider)} geprüft).`;
             resultat.kreuzGeprueft += 1;
           } else if (kreuz.geprueft || kreuz.urteile.every((urteil) => urteil.bestanden)) {
             eintrag.verificationNote =
@@ -379,30 +446,57 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
             resultat.einfachGeprueft += 1;
           } else {
             resultat.kreuzAbgelehnt += 1;
+            abgelehntNeu.push(eintrag.term);
+            protokoll.push({
+              kind: 'kreuzpruefung',
+              language: code,
+              term: eintrag.term,
+              gruende: kreuz.gruende.length > 0 ? kreuz.gruende : kreuz.urteile.flatMap((urteil) => urteil.gruende),
+            });
             tick(eintrag.term, 'failed');
             continue;
           }
-          await studioRequest('/stage', { kind: 'vocabulary', document: { ...eintrag } });
+          try {
+            status(`${label}: „${eintrag.term}“ wird gespeichert …`);
+            await studioRequest('/stage', { kind: 'vocabulary', document: { ...eintrag } });
+          } catch (error) {
+            resultat.fehler.push(`${eintrag.term}: ${error instanceof Error ? error.message : String(error)}`);
+            tick(eintrag.term, 'failed');
+            continue;
+          }
           laufSchluessel.add(kandidat.schluessel);
           resultat.erzeugt += 1;
           tick(eintrag.term, 'ok');
         }
       }
+      // Abgelehnte Begriffe dauerhaft merken — der nächste Lauf schlägt sie
+      // weder vor (Blacklist im Prompt) noch prüft sie erneut (Phase A).
+      if (abgelehntNeu.length > 0) {
+        await speichereBlacklist(code, [...blacklistBegriffe, ...abgelehntNeu]).catch(() => {});
+      }
+      if (protokoll.length > 0) {
+        void studioRequest('/log', { entries: protokoll }).catch(() => {});
+      }
+      resultat.usd = verbrauch.usd;
       return resultat;
   }, [ziele, paket, thema, ladeBestand]);
 
-  const erzeugen = useCallback(async () => {
+  const erzeugen = async () => {
+    if (starting.current || blocked) return;
+    starting.current = true;
     setRunning(true);
+    onRunningChange?.(true);
     setMeldung('');
-    setPhase('idle');
     // Altes Ergebnis weg — sonst sieht es nach einem fehlgeschlagenen Vorlauf
     // so aus, als hätte der NEUE Lauf nichts getan (Verwirrung 15.09.).
     setErgebnis(null);
+    setLaufFehler([]);
     setFortschritt({
-      total: Math.max(1, gesamtMenge), processed: 0, ok: 0, failed: 0, skipped: 0,
-      current: 'Modell schreibt das Paket — der erste Aufruf dauert gern 1–3 Minuten.',
+      total: Math.max(1, gesamtFehlt || gesamtMenge), processed: 0, ok: 0, failed: 0, skipped: 0,
+      current: 'Wortschatz-Loop wird vorbereitet …',
       errors: [], done: false, cancelled: false,
     });
+    const status = (current: string) => setFortschritt(alt => alt ? { ...alt, current } : alt);
     const tick = (term: string, ausgang: 'ok' | 'failed' | 'skipped') => {
       setFortschritt((alt) => {
         if (!alt) return alt;
@@ -420,82 +514,107 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
     };
     try {
       const codes = alleSprachen ? [...aktiveSprachen] : [sprache];
-      const teile: Partial<Record<string, LaufErgebnis>> = {};
-      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, gerettet: 0, fehler: [] };
+      const gesamt: LaufErgebnis = { erzeugt: 0, kreuzGeprueft: 0, einfachGeprueft: 0, kreuzAbgelehnt: 0, duplikate: 0, aussortiert: 0, schwarzgelistet: 0, gerettet: 0, fehler: [], usd: 0 };
       const fehler: string[] = [];
-      let uebersprungen = 0;
+      const ohneFortschrittIn: string[] = [];
+      let pakete = 0;
+      let zielErreicht = 0;
       for (const code of codes) {
-        try {
-          const teil = await laufeFuer(code, tick);
-          if (!teil) {
-            uebersprungen += 1;
-            continue;
+        const label = SPRACHEN.find((eintrag) => eintrag.code === code)?.label ?? code;
+        for (let paketNummer = 1; ; paketNummer++) {
+          status(`${label}: Paket ${paketNummer} — bisher ${usdText(gesamt.usd)} geschätzt …`);
+          let teil: LaufErgebnis | null;
+          try {
+            teil = await laufeFuer(code, tick, status);
+          } catch (error) {
+            // Hart gescheitert (Schlüssel, Netz, Verstümmelung) — das nächste
+            // Paket DIESER Sprache würde genauso enden: weiter zur nächsten.
+            fehler.push(`${label} (Paket ${paketNummer}): ${error instanceof Error ? error.message : String(error)}`);
+            break;
           }
-          teile[code] = teil;
-          for (const feld of ['erzeugt', 'kreuzGeprueft', 'einfachGeprueft', 'kreuzAbgelehnt', 'duplikate', 'aussortiert', 'gerettet'] as const) {
+          if (!teil) { zielErreicht += 1; break; }
+          pakete += 1;
+          for (const feld of ['erzeugt', 'kreuzGeprueft', 'einfachGeprueft', 'kreuzAbgelehnt', 'duplikate', 'aussortiert', 'schwarzgelistet', 'gerettet'] as const) {
             gesamt[feld] += teil[feld];
           }
           gesamt.fehler.push(...teil.fehler);
-        } catch (error) {
-          // Ein Sprachlauf reißt die Kette nicht mit — der Fehler wird
-          // gemeldet, die restlichen Sprachen laufen weiter.
-          fehler.push(error instanceof Error ? error.message : String(error));
+          gesamt.usd += teil.usd;
+          if (teil.erzeugt > 0) {
+            // JE Paket veröffentlichen — ein Abbruch (Seite neu laden) darf
+            // die bereits bezahlten Wörter nicht auf der Stage festsitzen
+            // lassen (Lektion „partial"-Publish, 16.09.).
+            status(`${label}: ${teil.erzeugt} Wörter werden in den Grundstock übernommen …`);
+            try {
+              await studioRequest('/publish', {});
+              await ladeBestand();
+            } catch (error) {
+              fehler.push(`Publish: ${error instanceof Error ? error.message : String(error)}`);
+              break;
+            }
+          } else {
+            // Ein GANZES Paket ohne einen einzigen neuen Treffer — in DIESER
+            // Sprache erschöpft sich das Modell gerade in Bekanntem. Die
+            // KETTE läuft mit der nächsten Sprache weiter (früher brach hier
+            // alles ab: Thai-„kein Fortschritt" ließ en/es/de unberührt,
+            // 16.09.). Nur die Sprache wird vermerkt.
+            ohneFortschrittIn.push(label);
+            break;
+          }
         }
       }
-      if (gesamt.erzeugt > 0) {
-        await studioRequest('/publish', {});
-        await ladeBestand();
-        onFinished();
-      }
+      onFinished();
       setErgebnis(gesamt);
-      const gerettetHinweis = (zahl: number) =>
-        zahl > 0
-          ? ` Antwort war am Token-Limit abgeschnitten — ${zahl} Einträge gerettet; beim nächsten Lauf Paketgröße senken.`
-          : '';
-      if (!alleSprachen) {
-        const teil = teile[sprache];
-        if (fehler.length > 0) {
-          setMeldung(fehler[0]);
-        } else if (teil) {
-          setMeldung(
-            `Lauf beendet: ${teil.erzeugt} erzeugt · ${teil.kreuzGeprueft} kreuzgeprüft · ${teil.einfachGeprueft} einfach geprüft · ${teil.kreuzAbgelehnt} von der Kreuzprüfung abgelehnt · ${teil.duplikate} Duplikate verworfen · ${teil.aussortiert} aussortiert.${gerettetHinweis(teil.gerettet)}${teil.fehler.length > 0 ? ` Fehler: ${teil.fehler[0]}${teil.fehler.length > 1 ? ` (+${teil.fehler.length - 1} weitere)` : ''}` : ''}`
-          );
-        } else {
-          setMeldung('Nichts zu erzeugen — das Ziel ist erreicht.');
-        }
+      setLaufFehler(fehler);
+      const verteilung = codes
+        .map((code) => `${SPRACHEN.find((eintrag) => eintrag.code === code)?.label ?? code} ${bestand?.[code] ?? '…'}`)
+        .join(' · ');
+      const gruende = [
+        ohneFortschrittIn.length > 0 ? `kein Fortschritt bei ${ohneFortschrittIn.join(', ')} (Thema wechseln hilft)` : '',
+      ].filter(Boolean).join(' · ');
+      const fehlerZusatz = fehler.length > 0
+        ? ` · Fehler: ${fehler[0]}${fehler.length > 1 ? ` (+${fehler.length - 1} weitere)` : ''}`
+        : '';
+      const logHinweis = (gesamt.kreuzAbgelehnt + gesamt.aussortiert + gesamt.schwarzgelistet) > 0
+        ? ' · Einzelheiten je abgelehntem Wort: pipeline/logs/studio-failures.ndjson'
+        : '';
+      if (pakete === 0 && fehler.length === 0 && zielErreicht > 0) {
+        setMeldung('Das Ziel ist bereits erreicht — nichts zu erzeugen.');
       } else {
-        const verteilung = codes
-          .map((code) => `${SPRACHEN.find((eintrag) => eintrag.code === code)?.label ?? code} ${teile[code]?.erzeugt ?? 0}`)
-          .join(' · ');
-        const zusatz = [
-          uebersprungen > 0 ? `${uebersprungen} Sprache(n) mit erreichtem Ziel übersprungen` : '',
-          gesamt.gerettet > 0 ? `${gesamt.gerettet} Einträge aus abgeschnittenen Antworten gerettet` : '',
-          gesamt.fehler.length > 0
-            ? `Fehler: ${gesamt.fehler[0]}${gesamt.fehler.length > 1 ? ` (+${gesamt.fehler.length - 1} weitere)` : ''}`
-            : '',
-          fehler.length > 0 ? `Sprachfehler: ${fehler[0]}${fehler.length > 1 ? ` (+${fehler.length - 1} weitere)` : ''}` : '',
-        ].filter(Boolean).join(' · ');
         setMeldung(
-          `Kettenlauf beendet: ${verteilung} — ${gesamt.erzeugt} erzeugt · ${gesamt.kreuzGeprueft} kreuzgeprüft · ${gesamt.einfachGeprueft} einfach geprüft · ${gesamt.kreuzAbgelehnt} abgelehnt · ${gesamt.duplikate} Duplikate verworfen · ${gesamt.aussortiert} aussortiert${zusatz ? ` · ${zusatz}` : ''}.`
+          `Loop beendet: ${pakete} Paket/Pakete · ${gesamt.erzeugt} erzeugt · ${gesamt.kreuzGeprueft} kreuzgeprüft · ${gesamt.einfachGeprueft} einfach geprüft · ${gesamt.kreuzAbgelehnt} abgelehnt · ${gesamt.duplikate} Duplikate · ${gesamt.schwarzgelistet} Blacklist-Treffer · ${gesamt.aussortiert} aussortiert · Ausgaben geschätzt ${usdText(gesamt.usd)} — Bestand: ${verteilung}${gruende ? ` · ${gruende} — erneut drücken füllt den Rest` : ' · Ziel erreicht'}${logHinweis}${fehlerZusatz}`
         );
       }
     } catch (error) {
-      setMeldung(error instanceof Error ? error.message : String(error));
+      const nachricht = error instanceof Error ? error.message : String(error);
+      setLaufFehler([nachricht]);
+      setMeldung(nachricht);
     } finally {
       setFortschritt((alt) => (alt ? { ...alt, done: true, current: null } : alt));
-      setRunning(false);
+      starting.current = false;
+      setRunning(false); onRunningChange?.(false);
     }
-  }, [alleSprachen, aktiveSprachen, sprache, gesamtMenge, laufeFuer, ladeBestand, onFinished]);
+  };
 
-  const prueferAnbieter: ProviderId =
-    wahl.checkProvider ?? (wahl.provider === 'gemini' ? 'chatgpt' : 'gemini');
-  const pruefModellFuer = (anbieter: ProviderId) =>
-    wahl.checkModel?.trim() || defaultModelFor(anbieter, 'text');
-  const kostenSchätzung =
-    estimateRunCost('vocabulary', wahl.provider, wahl.model, Array.from({ length: Math.max(1, gesamtMenge) }, () => ({ text: '' })));
-  const wahlText = `Erzeugung: ${PROVIDER_INFO[wahl.provider].label} (${wahl.model}) · Prüfer: ${prueferAnbieter} · Prüfmodell: ${pruefModellFuer(prueferAnbieter)} · geschätzte Kosten ${
-    kostenSchätzung.usd === null ? 'ohne Tarif hinterlegt' : `≈ ${kostenSchätzung.usd.toFixed(4)} $`
-  }`;
+  const prueferAnbieter: ProviderId = wahl.checkProvider ?? wahl.provider;
+  const scope = aktiveSprachen.join(',');
+  const loeschen = async () => {
+    if (deleteScope !== scope) { setDeleteScope(scope); return; }
+    if (starting.current || blocked) return;
+    starting.current = true;
+    setRunning(true);
+    onRunningChange?.(true);
+    try {
+      await clearContentSelection('vocabulary', [...aktiveSprachen]);
+      await ladeBestand();
+      setErgebnis(null);
+      setFortschritt(null);
+      setLaufFehler([]);
+      setDeleteScope(null);
+      setMeldung('Erzeugte Wörter der Auswahl gelöscht.');
+      onFinished();
+    } catch (error) { setMeldung(error instanceof Error ? error.message : String(error)); }
+    finally { starting.current = false; setRunning(false); onRunningChange?.(false); }
+  };
 
   return (
     <ThemedView type="backgroundElement" style={styles.card}>
@@ -506,12 +625,13 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           <Pressable
             key={code}
             accessibilityRole="button"
+            accessibilityLabel={label}
             accessibilityState={{ selected: !alleSprachen && sprache === code }}
             onPress={() => {
               setSprache(code);
               setAlleSprachen(false);
             }}
-            disabled={running}
+            disabled={running || blocked}
             style={({ pressed }) => [
               styles.chip,
               pressed && styles.pressed,
@@ -524,9 +644,10 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         ))}
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel="Alle Sprachen"
           accessibilityState={{ selected: alleSprachen }}
           onPress={() => setAlleSprachen(true)}
-          disabled={running}
+          disabled={running || blocked}
           style={({ pressed }) => [
             styles.chip,
             pressed && styles.pressed,
@@ -546,7 +667,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
             accessibilityRole="button"
             accessibilityState={{ selected: ziel === preset }}
             onPress={() => zielSetzen(preset)}
-            disabled={running}
+            disabled={running || blocked}
             style={({ pressed }) => [
               styles.chip,
               pressed && styles.pressed,
@@ -632,7 +753,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
               accessibilityRole="button"
               accessibilityState={{ selected: wahl.provider === info.id }}
               onPress={() => void wahlAendern({ provider: info.id })}
-              disabled={running}
+              disabled={running || blocked}
               style={({ pressed }) => [
                 styles.chip,
                 pressed && styles.pressed,
@@ -657,33 +778,19 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         />
         <ThemedText type="small">KI — Prüfung: Anbieter</ThemedText>
         <View style={styles.zeile}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: wahl.checkProvider === undefined }}
-            onPress={() => void wahlAendern({ checkProvider: undefined })}
-            disabled={running}
-            style={({ pressed }) => [
-              styles.chip,
-              pressed && styles.pressed,
-              wahl.checkProvider === undefined && { borderColor: theme.accent, borderWidth: 1 },
-            ]}>
-            <ThemedText type="small" themeColor={wahl.checkProvider === undefined ? 'text' : 'textSecondary'}>
-              Kreuzregel
-            </ThemedText>
-          </Pressable>
           {providersForGroup('vocabulary').map((info) => (
             <Pressable
               key={info.id}
               accessibilityRole="button"
-              accessibilityState={{ selected: wahl.checkProvider === info.id }}
-              onPress={() => void wahlAendern({ checkProvider: info.id })}
-              disabled={running}
+              accessibilityState={{ selected: prueferAnbieter === info.id }}
+              onPress={() => void wahlAendern({ checkProvider: info.id, checkModel: info.id === wahl.provider ? wahl.model : defaultModelFor(info.id, 'text') })}
+              disabled={running || blocked}
               style={({ pressed }) => [
                 styles.chip,
                 pressed && styles.pressed,
-                wahl.checkProvider === info.id && { borderColor: theme.accent, borderWidth: 1 },
+                prueferAnbieter === info.id && { borderColor: theme.accent, borderWidth: 1 },
               ]}>
-              <ThemedText type="small" themeColor={wahl.checkProvider === info.id ? 'text' : 'textSecondary'}>
+              <ThemedText type="small" themeColor={prueferAnbieter === info.id ? 'text' : 'textSecondary'}>
                 {info.label}
               </ThemedText>
             </Pressable>
@@ -693,7 +800,7 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         <TextInput
           value={wahl.checkModel ?? ''}
           onChangeText={(wert) => void wahlAendern({ checkModel: wert })}
-          placeholder={defaultModelFor(prueferAnbieter, 'text')}
+          placeholder={prueferAnbieter === wahl.provider ? wahl.model : defaultModelFor(prueferAnbieter, 'text')}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
@@ -701,52 +808,30 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
           accessibilityLabel="Modellname für die Wortschatz-Prüfung"
           style={[styles.input, { color: theme.text, borderColor: Colors.dark.backgroundSelected }]}
         />
-        <ThemedText type="small" themeColor="textSecondary">
-          „Kreuzregel“ nimmt automatisch den jeweils anderen Anbieter ({prueferAnbieter});
-          ein eigener Anbieter und Modell wird GENAU so benutzt (Nutzerwunsch 15.09.).
-          Modell freitext, leer lassen nimmt den Vorschlag des Prüfer-Anbieters. Fehlt
-          der Schlüssel des Prüfers, prüft der Erzeuger sich selbst zweimal
-          („einfach geprüft“).
-        </ThemedText>
       </View>
-
-      {phase === 'idle' ? (
-        <View style={styles.zeile}>
-          <Button
-            label={alleSprachen ? 'Alle Sprachen erzeugen …' : 'Fehlende Wörter erzeugen …'}
-            onPress={() => setPhase('confirm')}
-            disabled={running || (alleSprachen ? gesamtMenge === 0 : fehlt === 0)}
-          />
-          <ThemedText type="small" themeColor="textSecondary">
-            {alleSprachen
-              ? gesamtMenge === 0
-                ? 'Alle Ziele erreicht.'
-                : `${gesamtMenge} Wörter im nächsten Lauf (alle Sprachen)`
-              : fehlt === 0
-                ? 'Ziel erreicht.'
-                : `${Math.min(paket, fehlt)} Wörter im nächsten Lauf`}
-          </ThemedText>
-        </View>
-      ) : (
-        <ThemedView type="backgroundSelected" style={styles.confirmBox}>
-          <ThemedText selectable type="small">
-            {alleSprachen
-              ? `Alle Sprachen: ${aktiveSprachen.map((code) => `${SPRACHEN.find((eintrag) => eintrag.code === code)?.label ?? code} ${mengeFuer(code)}`).join(' · ')} (Σ ${gesamtMenge}) · ${wahlText}`
-              : `Sprache: ${sprache} · Menge: ${Math.min(paket, fehlt)} · ${wahlText}`}
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary">{kostenSchätzung.basis}</ThemedText>
-          <View style={styles.zeile}>
-            <Button label="Kosten bestätigen und erzeugen" onPress={erzeugen} disabled={running} />
-            <Button label="Abbrechen" onPress={() => setPhase('idle')} disabled={running} />
-          </View>
-        </ThemedView>
-      )}
-
       {fortschritt ? <ProgressPanel progress={fortschritt} /> : null}
+      {laufFehler.length > 0 ? (
+        <ThemedText type="smallBold" accessibilityLiveRegion="polite" style={{ color: toneColor('falling') }}>
+          {`Der Lauf ist fehlgeschlagen: ${laufFehler[0]}${laufFehler.length > 1 ? ` (+${laufFehler.length - 1} weitere)` : ''}`}
+        </ThemedText>
+      ) : null}
+
+      <View style={styles.zeile}>
+        <Button label={running ? 'Wörter werden erzeugt …' : 'Fehlende Wörter erzeugen …'} onPress={erzeugen} disabled={running || blocked || gesamtMenge === 0} />
+      </View>
+      <ThemedText type="small" themeColor="textSecondary">
+        {alleSprachen
+          ? `${paket} Wörter je Sprache und Durchlauf (${gesamtMenge} gesamt) · der Loop läuft, bis ${gesamtFehlt.toLocaleString('de-DE')} fehlende Wörter erzeugt sind — Seite neu laden bricht ihn ab (je Paket veröffentlicht).`
+          : `${paket} Wörter je Paket · der Loop läuft, bis ${gesamtFehlt.toLocaleString('de-DE')} fehlende Wörter erzeugt sind — Seite neu laden bricht ihn ab (je Paket veröffentlicht).`}
+      </ThemedText>
+      <View style={styles.zeile}>
+        <Button label={deleteScope === scope ? 'Ausgewählte Wörter wirklich löschen?' : 'Erzeugte Wörter löschen'} onPress={loeschen} disabled={running || blocked} />
+        {deleteScope === scope ? <Button label="Abbrechen" onPress={() => setDeleteScope(null)} disabled={running || blocked} /> : null}
+      </View>
 
       {ergebnis ? (
         <ThemedText type="smallBold" accessibilityLiveRegion="polite">
-          {`Ergebnis: ${ergebnis.erzeugt} erzeugt · ${ergebnis.kreuzGeprueft} kreuzgeprüft · ${ergebnis.einfachGeprueft} einfach geprüft · ${ergebnis.kreuzAbgelehnt} abgelehnt · ${ergebnis.duplikate} Duplikate verworfen · ${ergebnis.aussortiert} aussortiert.`}
+          {`Ergebnis: ${ergebnis.erzeugt} erzeugt · ${ergebnis.kreuzGeprueft} kreuzgeprüft · ${ergebnis.einfachGeprueft} einfach geprüft · ${ergebnis.kreuzAbgelehnt} abgelehnt · ${ergebnis.duplikate} Duplikate verworfen · ${ergebnis.schwarzgelistet} Blacklist-Treffer · ${ergebnis.aussortiert} aussortiert · ${usdText(ergebnis.usd)} geschätzt.`}
         </ThemedText>
       ) : null}
 
@@ -754,11 +839,6 @@ export function VocabZieleCard({ onFinished }: { onFinished: () => void }) {
         {meldung}
       </ThemedText>
 
-      <ThemedText type="small" themeColor="textSecondary">
-        Erzeugte Wörter sind einfach geprüft (Schema + Schrift + Regeln) und
-        gekennzeichnet. Die KI-Kreuzprüfung (zweiter Anbieter) hebt sie auf
-        „geprüft“ — Brücken-Anker der 20 App-Sprachen ziehen separat nach.
-      </ThemedText>
     </ThemedView>
   );
 }

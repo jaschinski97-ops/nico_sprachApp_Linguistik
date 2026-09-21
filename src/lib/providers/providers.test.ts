@@ -1,3 +1,4 @@
+import { UI_LANGUAGES } from '../i18n/types';
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
@@ -588,10 +589,11 @@ describe('Die Generatoren hinter der Abstraktion', () => {
     title: 'Am Marktstand',
     setting: 'Auf einem Markt in Bangkok.',
     scriptTurns: [
-      { speaker: 'partner', thai: 'สวัสดีครับ', roman: 'sà-wàt-dii kráp', german: 'Guten Tag.' },
-      { speaker: 'learner', thai: 'สวัสดีครับ', roman: 'sà-wàt-dii kráp', german: 'Guten Tag.' },
+      { speaker: 'partner', targetText: 'สวัสดีครับ', thai: 'สวัสดีครับ', roman: 'sà-wàt-dii kráp', german: 'Guten Tag.' },
+      { speaker: 'learner', targetText: 'สวัสดีครับ', thai: 'สวัสดีครับ', roman: 'sà-wàt-dii kráp', german: 'Guten Tag.' },
     ],
     corrections: [{ issue: 'Ton', explanation: 'Die erste Silbe ist tief.' }],
+    translations: Object.fromEntries(UI_LANGUAGES.map(code => [code, { title: 'Titel', setting: 'Szene', turns: ['Hallo', 'Hallo'], corrections: [{ issue: 'Ton', explanation: 'Hinweis' }] }])),
   });
 
   it('schickt denselben Prompt an jeden Anbieter', async () => {

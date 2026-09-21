@@ -20,12 +20,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.MAX_F0_ANALYSIS_SAMPLE_RATE = exports.CONTOUR_EDGE_TRIM = exports.OCTAVE_RATIO = exports.F0_MIN_RELATIVE_RMS = exports.F0_MAX_STEP_SEMITONES = exports.F0_CONTINUATION_CORRELATION = exports.F0_MIN_CORRELATION = exports.F0_MAX_HZ = exports.F0_MIN_HZ = exports.F0_HOP_SECONDS = exports.F0_WINDOW_SECONDS = void 0;
 exports.downsampleForF0 = downsampleForF0;
 exports.autocorrF0 = autocorrF0;
+exports.voicedRuns = voicedRuns;
 exports.longestRun = longestRun;
 exports.octaveCorrect = octaveCorrect;
 exports.trimEdges = trimEdges;
 exports.semitones = semitones;
 exports.medianReferenceHz = medianReferenceHz;
 exports.summarizeContour = summarizeContour;
+exports.konturBewegung = konturBewegung;
 exports.matchesTone = matchesTone;
 exports.matchesToneShape = matchesToneShape;
 exports.analyzeToneContour = analyzeToneContour;
@@ -167,6 +169,32 @@ function autocorrF0(samples, sampleRate, recoverWeakVoicing = true) {
     }
     return frames;
 }
+/**
+ * Alle zusammenhaengenden stimmhaften Strecken, jede mindestens `minFrames` lang.
+ *
+ * Gegenstueck zu `longestRun` fuer mehrsilbige Clips: Thai-Silben sind im
+ * F0-Track oft eigene Zuege, weil stimmlose Plosive und Aspirate die
+ * Periodizitaet unterbrechen. Die Reihenfolge folgt der Zeit — Silbe i der
+ * Schrift gehoert zum i-ten Zug, solange die Zahl der Zuege zur Zahl der
+ * Soll-Silben passt (Zuordnung ausserhalb des Tor-Moduls, AE-7/AE-8 bleiben
+ * fail-closed: bei keiner uebereinstimmenden Zahl wird nichts geraten).
+ */
+function voicedRuns(frames, minFrames = 4) {
+    const runs = [];
+    let current = [];
+    for (const frame of frames) {
+        if (frame.f0 > 0) {
+            current.push(frame);
+        }
+        else if (current.length) {
+            runs.push(current);
+            current = [];
+        }
+    }
+    if (current.length)
+        runs.push(current);
+    return runs.filter((run) => run.length >= minFrames);
+}
 /** Laengste zusammenhaengende stimmhafte Strecke, mindestens vier Fenster. */
 function longestRun(frames) {
     const runs = [];
@@ -245,6 +273,26 @@ function summarizeContour(span, referenceHz) {
         mean,
         slope: pts[5] - pts[0],
         durMs: Math.round((span[n - 1].t - span[0].t) * 1000),
+    };
+}
+function konturBewegung(summary) {
+    const pts = summary.pts;
+    const letzte = pts.length - 1;
+    let gipfel = 0;
+    let tal = 0;
+    for (let i = 1; i < pts.length; i++) {
+        if (pts[i] > pts[gipfel])
+            gipfel = i;
+        if (pts[i] < pts[tal])
+            tal = i;
+    }
+    const nachGipfel = pts.slice(gipfel + 1);
+    const nachTal = pts.slice(tal + 1);
+    return {
+        fall: nachGipfel.length ? pts[gipfel] - Math.min(...nachGipfel) : 0,
+        gipfelBei: gipfel / letzte,
+        stieg: nachTal.length ? Math.max(...nachTal) - pts[tal] : 0,
+        talBei: tal / letzte,
     };
 }
 /**

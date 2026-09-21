@@ -63,11 +63,26 @@ async function handleTtsProxy(req, res, {
   logRun = tryWriteProtocol,
   allowRequest = () => ({ ok: true }),
   limits = TTS_LIMITS,
+  sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 } = {}) {
   const json = (code, value) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
   const log = (result, notes) => { try { logRun({ script: 'studio-helper', action: 'openai-tts', items: 1, result, notes }); } catch { /* Protokoll darf nie die Antwort blockieren */ } };
   try {
-    const gate = allowRequest();
+    // 17.09. Nacht: Ein volles eigenes 30/min-Fenster ist kein Fehler, sondern
+    // eine Wartezeit — der Helper stellt den Aufruf nach der vom Fenster
+    // genannten Sekundenzahl selbst durch (der Lauf arbeitet damit AM Limit,
+    // statt Fehlschläge zu produzieren; der erste Parallelversuch verlor so
+    // 139 Aufrufe). Erst nach drei vergeblichen Wartedurchläufen oder über
+    // 15 s Wartezeit bleibt es beim ehrlichen 429 an den Lauf.
+    let gate = allowRequest();
+    let gewartetSekunden = 0;
+    for (let versuch = 0; !gate.ok && versuch < 3; versuch += 1) {
+      const warteMs = (gate.retryAfterSeconds ?? 1) * 1000;
+      if (warteMs > 15000) break;
+      gewartetSekunden += Math.round(warteMs / 1000);
+      await sleep(warteMs);
+      gate = allowRequest();
+    }
     if (!gate.ok) throw ttsRequestError(429, `Rate-Limit: maximal ${limits.maxRequestsPerMinute} Aufrufe pro Minute. In ${gate.retryAfterSeconds}s wiederholen.`);
     if (req.headers['content-type'] !== 'application/json') throw ttsRequestError(400, 'Content-Type application/json erwartet.');
     let size = 0;
@@ -125,7 +140,7 @@ async function handleTtsProxy(req, res, {
       res.destroy();
       throw ttsRequestError(502, `Übertragung abgebrochen: ${error.message}`, true);
     }
-    try { logRun({ script: 'studio-helper', action: 'openai-tts', model, voice, items: 1, result: 'ok', notes: `${purpose ? `Zweck ${purpose}; ` : ''}${bytes} Byte Audio` }); } catch { /* siehe oben */ }
+    try { logRun({ script: 'studio-helper', action: 'openai-tts', model, voice, items: 1, result: 'ok', notes: `${purpose ? `Zweck ${purpose}; ` : ''}${bytes} Byte Audio${gewartetSekunden > 0 ? `; nach ${gewartetSekunden}s Limit-Warte` : ''}` }); } catch { /* siehe oben */ }
   } catch (error) {
     const code = error.statusCode ?? 500;
     if (res.headersSent) res.destroy();
@@ -172,7 +187,33 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         await handleTtsProxy(req, res, { getApiKey, openaiFetch, logRun, allowRequest });
         return;
       }
-      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete','/catalog/clear-generated'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
+      // Fehlerprotokoll der Generatoren (Nutzerwunsch 16.09.: was failt, gehört
+      // in eine DATEI, nicht als Debug-Ausgabe in die GUI). Hängt JSON-Zeilen
+      // an pipeline/logs/studio-failures.ndjson — reines Anhängen, ohne
+      // Einfluss auf Stage/Publish, deshalb bewusst NICHT in der Warteschlange.
+      if (req.method === 'POST' && req.url === '/log') {
+        if (!originAllowed(req.headers.origin) || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
+        let size = 0; const parts = [];
+        for await (const chunk of req) {
+          size += chunk.length;
+          if (size > 256 * 1024) { json(413, { error: 'Log-Paket zu groß.' }); return; }
+          parts.push(chunk);
+        }
+        const data = JSON.parse(Buffer.concat(parts).toString('utf8'));
+        const eintraege = Array.isArray(data?.entries) ? data.entries.slice(0, 200) : [];
+        if (eintraege.length === 0) { json(400, { error: 'entries[] erforderlich.' }); return; }
+        const zeilen = eintraege.map((eintrag) => JSON.stringify({
+          loggedAt: new Date().toISOString(),
+          kind: String(eintrag.kind ?? 'unbekannt').slice(0, 40),
+          language: typeof eintrag.language === 'string' ? eintrag.language.slice(0, 8) : undefined,
+          term: typeof eintrag.term === 'string' ? eintrag.term.slice(0, 120) : undefined,
+          gruende: Array.isArray(eintrag.gruende) ? eintrag.gruende.map(String).join(' | ').slice(0, 500) : undefined,
+        }));
+        await fs.appendFile(path.join(root, 'pipeline', 'logs', 'studio-failures.ndjson'), zeilen.join('\n') + '\n', 'utf8');
+        json(200, { written: zeilen.length });
+        return;
+      }
+      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete','/catalog/clear-generated','/catalog/clear-selection'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
       if (!originAllowed(req.headers.origin) || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
       let size = 0; const parts = [];
       for await (const chunk of req) {
@@ -181,6 +222,7 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         parts.push(chunk);
       }
       const data = JSON.parse(Buffer.concat(parts).toString('utf8'));
+      if (req.url === '/catalog/clear-selection' && (!data || !['vocabulary','situations','images','audio'].includes(data.kind) || !Array.isArray(data.languages) || !data.languages.length)) throw Error('Inhaltsart und Sprachauswahl sind erforderlich.');
       // Phase 2, Schritt 1: die Lösch-Endpunkte des Prüfberichts. /stage/delete
       // nimmt einen Entwurf aus dem Stage, /catalog/delete löscht einen
       // ausgelieferten Eintrag (inkl. Stage-Zwilling und verwaistem Asset) —
@@ -190,6 +232,7 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         req.url === '/publish' ? pipeline.publish({ vocabularyIds: data.vocabularyIds }) :
         req.url === '/stage/delete' ? pipeline.deleteFromStage(data.kind, data.id) :
         req.url === '/catalog/clear-generated' ? pipeline.clearGenerated() :
+        req.url === '/catalog/clear-selection' ? pipeline.clearGenerated({ kind: data.kind, languages: data.languages, includeBase: true }) :
         pipeline.deleteFromCatalog(data.kind, data.id);
       const operation = queue.then(action);
       queue = operation.catch(() => {});

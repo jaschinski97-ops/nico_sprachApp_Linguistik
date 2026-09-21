@@ -17,7 +17,7 @@ test('full plan is partitioned before payment without treating eligibility as su
     const one = previewAudioDelivery([spec]);
     const tone = checkThaiTone(spec as AudioClip, silence, 8000);
     expect(tone.status).not.toBe('passed');
-    if (one.toneCheckable) expect(['falling', 'rising']).toContain(tone.targetTone);
+    if (one.toneCheckable) expect(tone.targetTones?.some(tone => ['falling', 'rising'].includes(tone))).toBe(true);
   }
   expect(preview.excluded).toBe(0);
   expect(preview.toneCheckable).toBeGreaterThan(0);

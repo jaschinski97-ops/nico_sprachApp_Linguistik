@@ -24,6 +24,7 @@ import { PROVIDER_INFO } from '../providers/types';
 import { clearAudioClips, countAudioClips, loadAudioClips, sumAudioClipBytes } from '../repository';
 import { DataStore, MemoryDataStore } from '../storage';
 
+import { runBatch } from '../generation/batch';
 import { runClipBatch } from './batch';
 import {
   base64ToBytes,
@@ -47,7 +48,6 @@ import {
   AUDIO_BLOB_CONFIG,
   AudioBlobStore,
   AudioClip,
-  AudioClipSpec,
   clipIdFor,
   GeneratedClip,
   isValidAudioClip,
@@ -354,6 +354,33 @@ describe('Der Clip-Lauf — vierter Nutzer des Batch-Läufers', () => {
     expect(doc.provider).toBe('gemini');
     expect(await blobs.has(doc.blobKey)).toBe(true);
     expect(await sumAudioClipBytes(store)).toBe(specs.length * (44 + 4800));
+  });
+
+  it('kann mehrere Clips GLEICHZEITIG erzeugen, wenn der Anbieter es hergibt (17.09.)', async () => {
+    // OpenAI deckelt TTS auf 30 Aufrufe/Minute (gemessen, siehe
+    // CLIP_CONCURRENCY) — der Clip-Lauf fährt deshalb wieder seriell. Der
+    // Worker-Pool in runBatch bleibt für Anbieter ohne solches Limit; dieser
+    // Test hält die Fähigkeit fest, unabhängig vom Produktivwert.
+    let aktiv = 0;
+    let hoechsteGleichzeit = 0;
+    const specs = planClipTestRun().map((spec) => ({ id: spec.id }));
+    const result = await runBatch({
+      specs,
+      task: {
+        exists: async () => false,
+        produce: async () => {
+          aktiv += 1;
+          hoechsteGleichzeit = Math.max(hoechsteGleichzeit, aktiv);
+          await new Promise((resolve) => setTimeout(resolve, 40));
+          aktiv -= 1;
+        },
+      },
+      concurrency: 3,
+    });
+
+    expect(result.ok).toBe(specs.length);
+    expect(result.failed).toBe(0);
+    expect(hoechsteGleichzeit).toBeGreaterThan(1);
   });
 
   it('überlebt Fehler mitten im Lauf und überspringt beim zweiten Mal, was da ist', async () => {

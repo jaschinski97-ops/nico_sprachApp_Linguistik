@@ -1,47 +1,24 @@
-import { type TextClient } from '../providers/types';
-import type { ProviderId } from '../providers/types';
+import type { TextClient, ProviderId } from '../providers/types';
 import type { Provider } from '@/lib/api-key';
 import type { VocabEntry } from '@/data/vocab-types';
 
-/**
- * KI-Kreuzprüfung (Phase 2, Schritt 5).
- *
- * DIE REGEL: Was ein Anbieter erzeugt, prüft der jeweils ANDERE (Übersetzung,
- * Grammatik, Umschrift/Ton/Betonung, Natürlichkeit, Stufe). Nur was beide
- * Prüfungen bestehen, gilt als „geprüft" (`sourceVerified: true` — die
- * Pipeline stufte es dann als passed ein). Unklare Fälle fallen als
- * „ungeprüft" mit Grund durch.
- *
- * FALLBACK (nur ein Schlüssel): Selbstprüfung mit einem ZWEITEN Durchlauf
- * desselben Anbieters und einem kritischen Prüfprompt — das Ergebnis wird
- * als „einfach geprüft" markiert (`sourceVerified` bleibt false).
- *
- * Der Prüfer sieht den Erzeugungs-Kontext NICHT — er bekommt nur den Eintrag
- * und das geforderte Urteils-JSON, damit er nicht höflich zustimmt.
+/** Der gewählte Anbieter prüft Übersetzung, Grammatik und Natürlichkeit.
+ * Ein anderer Anbieter ergibt eine Kreuzprüfung; beim selben Anbieter
+ * bestehen Einträge zwei getrennte Prüfrunden. Fehler werden verworfen.
  */
 
 export type KreuzUrteil = { bestanden: boolean; gruende: string[] };
 
-/** Der Prüfer-Anbieter: der jeweils andere; wenn dessen Schlüssel fehlt, Selbstprüfung.
- *
- * `wahl` (Nutzerwunsch 15.09.) überschreibt die Kreuzregel: Wer einen
- * Prüf-Anbieter hinterlegt hat, bekommt ihn — sofern dessen Schlüssel
- * vorhanden ist. Wahl = Erzeuger gilt bewusst als Selbstprüfung (zwei
- * Runden, „einfach geprüft"), denn dieselbe KI prüft sich dann selbst.
- */
+/** Ohne gespeicherte Prüferwahl gilt der Erzeuger. Kein stiller Anbieterwechsel. */
 export function gegenStueck(
   erzeuger: ProviderId,
   hatSchluessel: (anbieter: ProviderId) => boolean,
   wahl?: ProviderId
 ): { anbieter: ProviderId; selbstpruefung: boolean } {
-  if (wahl && wahl !== 'chatgpt-helper' && hatSchluessel(wahl)) {
-    return { anbieter: wahl, selbstpruefung: wahl === erzeuger };
-  }
-  const anderer: ProviderId = erzeuger === 'gemini' ? 'chatgpt' : 'gemini';
-  if (erzeuger === 'chatgpt-helper' || hatSchluessel(anderer)) {
-    return { anbieter: anderer, selbstpruefung: false };
-  }
-  return { anbieter: erzeuger, selbstpruefung: true };
+  const anbieter = wahl ?? erzeuger;
+  if (!hatSchluessel(anbieter)) throw Error(`Schlüssel für den Prüfer ${anbieter} fehlt.`);
+  const familie = (p: ProviderId) => p === 'chatgpt-helper' ? 'chatgpt' : p;
+  return { anbieter, selbstpruefung: familie(anbieter) === familie(erzeuger) };
 }
 
 const URTEILS_FORMAT = [
@@ -61,13 +38,13 @@ export const PRUEF_BATCH_GROESSE = 10;
 export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe?: string): string {
   return [
     'Prüfe diesen Lern-Vokabeleintrag kritisch in fünf Punkten:',
-    '1. Übersetzung: stimmt die deutsche Bedeutung zum Begriff (und umgekehrt)?',
+    '1. Übersetzung: stimmen die deutsche Bedeutung und alle vorhandenen translations zum Begriff (und umgekehrt)? Es genügt EINE korrekte Hauptbedeutung — nicht alle Bedeutungsnuancen.',
     '2. Grammatik/Rechtschreibung in der Zielsprache und im Deutschen.',
-    `3. Umschrift/Ton/Betonung: ${eintrag.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintrag.language === 'es' ? 'ist die Silbentrennung mit korrekter Betonungssilbe?' : 'ist die Lautschrift plausibel?'}`,
+    `3. Umschrift/Ton/Betonung: ${eintrag.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintrag.language === 'es' ? 'stimmt die im Feld "syllables" als "stressed" markierte Silbe mit den spanischen Betonungsregeln? Eine Betonungsmarkierung in der Umschrift ist nicht erforderlich.' : 'ist die Lautschrift plausibel?'}`,
     '4. Natürlichkeit: klingt der Beispielsatz wie ein echter Satz der Zielsprache?',
     stufe
       ? `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`
-      : '5. Passung: ist das Wort ein grundlegender, hochfrequenter Alltagsbegriff (ohne feste Niveaustufe)?',
+      : '5. Passung: ist das Wort ein grundlegender, hochfrequenter Alltagsbegriff (ohne feste Niveaustufe)? Mehrdeutigkeit schließt hohe Frequenz nicht aus.',
     '',
     'Eintrag:',
     JSON.stringify(eintrag, null, 2),
@@ -80,13 +57,13 @@ export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe?: string): strin
 export function baueVocabBatchPruefPrompt(eintraege: VocabEntry[], stufe?: string): string {
   const punkte = [
     'Prüfe diese Lern-Vokabeleinträge kritisch — JEDEN in denselben fünf Punkten:',
-    '1. Übersetzung: stimmt die deutsche Bedeutung zum Begriff (und umgekehrt)?',
+    '1. Übersetzung: stimmt die deutsche Bedeutung zum Begriff (und umgekehrt)? Es genügt EINE korrekte Hauptbedeutung — nicht alle Bedeutungsnuancen.',
     `2. Grammatik/Rechtschreibung in der Zielsprache und im Deutschen.`,
-    `3. Umschrift/Ton/Betonung: ${eintraege[0]?.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintraege[0]?.language === 'es' ? 'ist die Silbentrennung mit korrekter Betonungssilbe?' : 'ist die Lautschrift plausibel?'}`,
+    `3. Umschrift/Ton/Betonung: ${eintraege[0]?.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintraege[0]?.language === 'es' ? 'stimmt die im Feld "syllables" als "stressed" markierte Silbe mit den spanischen Betonungsregeln? Eine Betonungsmarkierung in der Umschrift ist nicht erforderlich.' : 'ist die Lautschrift plausibel?'}`,
     '4. Natürlichkeit: klingt der Beispielsatz wie ein echter Satz der Zielsprache?',
     stufe
       ? `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`
-      : '5. Passung: ist das Wort ein grundlegender, hochfrequenter Alltagsbegriff (ohne feste Niveaustufe)?',
+      : '5. Passung: ist das Wort ein grundlegender, hochfrequenter Alltagsbegriff (ohne feste Niveaustufe)? Mehrdeutigkeit schließt hohe Frequenz nicht aus.',
   ];
   return [
     ...punkte,
@@ -225,8 +202,8 @@ export type KreuzResultat = {
 /**
  * Ein GANZES Paket kreuzprüfen — ein Prüfaufruf je Runde statt einem je
  * Eintrag. Semantik je Eintrag identisch zum früheren Einzelweg: echte
- * Kreuzprüfung genügt ein Durchlauf; bei der Selbstprüfung (nur ein
- * Schlüssel) bekommen die Bestandenen eine ZWEITE Runde — und zwar nur
+ * Kreuzprüfung genügt ein Durchlauf; bei der Selbstprüfung (gleicher
+ * Anbieter) bekommen die Bestandenen eine ZWEITE Runde — und zwar nur
  * sie, nicht das ganze Paket noch einmal.
  */
 export async function pruefeVocabKreuzBatch(
@@ -260,7 +237,7 @@ export async function pruefeVocabKreuzBatch(
       baueVocabBatchPruefPrompt(durchgelassen.map(({ index }) => eintraege[index]), stufe),
       durchgelassen.length
     );
-    for (const [position, { resultat, index }] of durchgelassen.entries()) {
+    for (const [position, { resultat }] of durchgelassen.entries()) {
       const zweites = wiederholung[position];
       resultat.urteile = [resultat.urteile[0], zweites];
       if (!zweites.bestanden) {

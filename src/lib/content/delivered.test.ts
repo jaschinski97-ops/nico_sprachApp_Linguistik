@@ -26,7 +26,7 @@ test('every shipped media entry resolves in production with no network, draft st
   installClipLookup();
   try {
     const entries = (catalog as ContentCatalog).entries;
-    expect(entries.length).toBeGreaterThan(0);
+    expect(Object.keys(CONTENT_ASSETS).sort()).toEqual([...new Set(entries.flatMap(entry => entry.asset ? [entry.asset] : []))].sort());
     const audio = entries.filter(entry => entry.kind === 'audio');
     const images = entries.filter(entry => entry.kind === 'images');
     expect(await loadAudioClips()).toEqual(audio.map(entry => entry.document));

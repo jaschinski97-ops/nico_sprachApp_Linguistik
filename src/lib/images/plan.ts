@@ -1,5 +1,5 @@
 import { VocabEntry } from '@/data/vocab-types';
-import { VOCABULARY, vocabularyFor } from '@/data/vocabulary';
+import { activeVocabulary, activeVocabularyFor as vocabularyFor } from '@/data/active-vocabulary';
 
 import { LanguageCode } from '../languages/types';
 
@@ -28,7 +28,7 @@ export function canHaveImage(entry: VocabEntry): boolean {
   // Spanisch kommt es ueber den gemeinsamen Begriff aus dem Thai-Eintrag
   // (AE-46); wo keines hinterlegt ist, gibt es kein Bild statt eines
   // geratenen.
-  return entry.isConcrete === true && hasMotif(motifKey(entry));
+  return entry.isConcrete === true && (hasMotif(motifKey(entry)) || entry.id.startsWith('ki-'));
 }
 
 /**
@@ -55,7 +55,7 @@ export function imageSpecFor(entry: VocabEntry): ImageSpec {
     partOfSpeech: entry.partOfSpeech,
     // Wirft, wenn kein Motiv hinterlegt ist - lieber ein sichtbarer Fehler
     // beim Planen als ein geratenes Bild.
-    motif: motifFor(motifKey(entry)),
+    motif: hasMotif(motifKey(entry)) ? motifFor(motifKey(entry)) : `One clear everyday depiction of ${entry.german} (${entry.term}), without written labels or text.`,
     isConcrete: true,
   };
 }
@@ -67,7 +67,7 @@ export function imageSpecFor(entry: VocabEntry): ImageSpec {
  * kommen kann; dort ist der Literaltyp `isConcrete: true` längst verloren.
  */
 export function assertConcreteSpec(spec: ImageSpec): void {
-  const entry = VOCABULARY.find((candidate) => candidate.id === spec.vocabId);
+  const entry = activeVocabulary().find((candidate) => candidate.id === spec.vocabId);
   if (!entry) {
     throw new Error(`Unbekannte Vokabel "${spec.vocabId}" — kein Bild ohne geprüften Eintrag.`);
   }

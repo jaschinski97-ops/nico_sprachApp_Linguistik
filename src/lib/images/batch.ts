@@ -1,4 +1,5 @@
 import { BatchProgress, missingFrom, runBatch } from '../generation/batch';
+import { bundledEntry, isDeletedDraft } from '../content/bundled';
 import { BatchTask } from '../generation/types';
 import { DataStore, getStore } from '../storage';
 
@@ -41,8 +42,9 @@ export type ImageRunOptions = {
 function imageExists(db: DataStore, blobs: ImageBlobStore) {
   return {
     async exists(spec: ImageSpec) {
+      if (bundledEntry('images', spec.id)?.asset) return true;
       const doc = await db.get<VocabImage>('images', spec.id);
-      if (!doc) return false;
+      if (!doc || isDeletedDraft('images', doc)) return false;
       return blobs.has(doc.blobKey);
     },
   };

@@ -143,6 +143,32 @@ test('Rate-Limiter: gleitendes Fenster lässt Maximalzahl zu, Rest mit Retry-Aft
   assert.match(message.error, /Rate-Limit/);
 });
 
+test('Rate-Limit-Warte: volles Fenster ist Wartezeit — der Helper stellt nach Ablauf selbst durch (17.09.)', async () => {
+  const wartendeMs = [];
+  const sleep = async (ms) => { wartendeMs.push(ms); };
+  let gateAufrufe = 0;
+  const allowRequest = () => (gateAufrufe++ === 0 ? { ok: false, retryAfterSeconds: 2 } : { ok: true });
+  const openaiFetch = async () => ({ ok: true, status: 200, headers: { get: () => 'audio/mpeg' }, body: webStream([Buffer.from('y'.repeat(120))]) });
+  const logs = collectLogsSimple();
+  const res = fakeResponse();
+  await handleTtsProxy(jsonRequest({ text: 'eins' }), res, { ...base, allowRequest, openaiFetch, sleep, logRun: logs.logRun });
+  assert.equal(res.state.statusCode, 200);
+  assert.deepEqual(wartendeMs, [2000]);
+  assert.match(logs.list.at(-1).notes, /nach 2s Limit-Warte/);
+});
+
+test('Rate-Limit-Warte: nach drei vergeblichen Wartedurchläufen bleibt der ehrliche 429', async () => {
+  const wartendeMs = [];
+  const sleep = async (ms) => { wartendeMs.push(ms); };
+  const allowRequest = () => ({ ok: false, retryAfterSeconds: 1 });
+  const res = fakeResponse();
+  await handleTtsProxy(jsonRequest({ text: 'eins' }), res, { ...base, allowRequest, sleep });
+  assert.equal(res.state.statusCode, 429);
+  assert.deepEqual(wartendeMs, [1000, 1000, 1000]);
+  const message = JSON.parse(Buffer.concat(res.state.body).toString('utf8'));
+  assert.match(message.error, /Rate-Limit/);
+});
+
 test('Formatfragen: kein JSON, kaputtes JSON, fehlender/leerer Text — jeweils 400/413', async () => {
   for (const [request, expected] of [
     [fakeRequest('hallo', { 'content-type': 'text/plain' }), 400],

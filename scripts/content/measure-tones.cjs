@@ -70,6 +70,17 @@ if (fs.existsSync(stageFile)) {
   }
 }
 
+// 18.09.: Solltöne je Silbe aus dem Wortschatz von Katalog und Stage — das
+// Grundstock-VOCABULARY bleibt vorne, damit die Fixture-Manifeste (มา & Co.)
+// weiter ihren Einsilber-Bezug finden.
+const toneWortschatz = [...VOCABULARY];
+for (const quelle of [catalogFile, stageFile]) {
+  if (!fs.existsSync(quelle)) continue;
+  for (const entry of JSON.parse(fs.readFileSync(quelle, 'utf8')).entries) {
+    if (entry.kind === 'vocabulary') toneWortschatz.push(entry.document);
+  }
+}
+
 const manifest = process.argv[2];
 if (manifest) {
   for (const item of JSON.parse(fs.readFileSync(manifest))) {
@@ -103,7 +114,8 @@ const report = { measuredAt: new Date().toISOString(), decoder: 'FFmpeg mono 24 
     return { file: path.basename(file), sha256: actualHash,
       text: document.text, provider: document.provider, voice: document.voice,
       before: summary(analyzeToneContour(pcm, 24000, undefined, false)),
-      after: summary(analyzeToneContour(pcm, 24000)), check: checkThaiTone(document, pcm, 24000) };
+      after: summary(analyzeToneContour(pcm, 24000)),
+      check: checkThaiTone(document, pcm, 24000, { woerter: toneWortschatz }, { track: true }) };
   }) };
 const reportsDir = path.join(root, 'pipeline/reports');
 fs.mkdirSync(reportsDir, { recursive: true });
@@ -125,6 +137,6 @@ console.log('Thai nach Gate-Status:', JSON.stringify(counts));
 console.log('Nicht bestanden / ungeprueft (Thai):');
 for (const entry of thai) {
   if (entry.check.status === 'passed') continue;
-  console.log(`  ${entry.check.status.padEnd(9)} ${entry.text}  ${entry.check.targetTone ?? '-'}  slope=${entry.after.summary ? entry.after.summary.slope.toFixed(2) : '-'}  ${entry.file}  ${entry.check.reason}`);
+  console.log(`  ${entry.check.status.padEnd(9)} ${entry.text}  ${entry.check.targetTone ?? entry.check.targetTones?.join('/') ?? '-'}  slope=${entry.after.summary ? entry.after.summary.slope.toFixed(2) : '-'}  ${entry.file}  ${entry.check.reason}`);
 }
 console.log('Bestanden (Thai): ' + thai.filter(entry => entry.check.status === 'passed').map(entry => entry.text).join(', '));

@@ -1,6 +1,6 @@
 import type { VocabEntry } from '@/data/vocab-types';
 
-import { baueVocabPruefPrompt, gegenStueck, parseUrteil, parseUrteile, pruefeVocabKreuz, pruefeVocabKreuzBatch } from './kreuzpruefung';
+import { baueVocabBatchPruefPrompt, baueVocabPruefPrompt, gegenStueck, parseUrteil, parseUrteile, pruefeVocabKreuz, pruefeVocabKreuzBatch } from './kreuzpruefung';
 
 const vocab = {
   id: 'ki-th-abc12345',
@@ -31,33 +31,16 @@ const client = (urteil: string) => ({
 
 const keyImmer = () => () => true;
 
-describe('gegenStück — der jeweils andere Anbieter prüft', () => {
-  it('wählt Gemini ↔ ChatGPT kreuzweise', () => {
-    const a = gegenStueck('gemini', keyImmer());
-    expect(a.anbieter).toBe('chatgpt');
-    expect(a.selbstpruefung).toBe(false);
-    const b = gegenStueck('chatgpt', keyImmer());
-    expect(b.anbieter).toBe('gemini');
+describe('Prüferwahl ohne automatische Anbieterwechsel', () => {
+  it('verwendet ohne alte Auswahl den Erzeuger selbst', () => {
+    expect(gegenStueck('gemini', () => true)).toEqual({ anbieter: 'gemini', selbstpruefung: true });
   });
-
-  it('fällt in die Selbstprüfung, wenn der Schlüssel des anderen fehlt', () => {
-    const { anbieter, selbstpruefung } = gegenStueck('gemini', (p) => p !== 'chatgpt');
-    expect(anbieter).toBe('gemini');
-    expect(selbstpruefung).toBe(true);
+  it('prüft bei unterschiedlicher expliziter Auswahl automatisch kreuzweise', () => {
+    expect(gegenStueck('gemini', () => true, 'chatgpt')).toEqual({ anbieter: 'chatgpt', selbstpruefung: false });
+    expect(gegenStueck('chatgpt', () => true, 'gemini')).toEqual({ anbieter: 'gemini', selbstpruefung: false });
   });
-
-  it('NUTZERWAHL schlägt die Kreuzregel — und Wahl = Erzeuger ist Selbstprüfung', () => {
-    // Der Prüfer ist der HINTERLEGTE, nicht automatisch der andere.
-    const a = gegenStueck('gemini', keyImmer(), 'gemini');
-    expect(a.anbieter).toBe('gemini');
-    expect(a.selbstpruefung).toBe(true);
-    const b = gegenStueck('gemini', keyImmer(), 'chatgpt');
-    expect(b.anbieter).toBe('chatgpt');
-    expect(b.selbstpruefung).toBe(false);
-    // Fehlt dem gewählten Prüfer der Schlüssel, greift die Kreuzregel weiter.
-    const c = gegenStueck('gemini', (p) => p === 'gemini', 'chatgpt');
-    expect(c.anbieter).toBe('gemini');
-    expect(c.selbstpruefung).toBe(true);
+  it('wechselt bei fehlendem Prüfer-Schlüssel niemals still den Anbieter', () => {
+    expect(() => gegenStueck('gemini', p => p === 'gemini', 'chatgpt')).toThrow(/Schlüssel/);
   });
 });
 
@@ -88,6 +71,46 @@ describe('baueVocabPruefPrompt — Stufe optional', () => {
     const prompt = baueVocabPruefPrompt(vocab, undefined);
     expect(prompt).toContain('hochfrequenter Alltagsbegriff');
     expect(prompt).not.toContain('Stufe undefined');
+  });
+});
+
+describe('Prüfprompt — Spanisch-Betonung über das stressed-Feld (17.09.)', () => {
+  // Lauf 2 lehnte >1100 es-Wörter ab, weil der Prüfer einen Betonungs-
+  // Apostroph IN der Umschrift verlangte ('be-nir' → 'be-''nir') — die
+  // Betonung steht aber korrekt in syllables[].stressed (kein bestandener
+  // Eintrag trägt einen Apostroph). Der Prompt muss das eindeutig sagen.
+  const esVocab = {
+    id: 'ki-es-abc12345',
+    language: 'es',
+    concept: 'ki-es-abc12345',
+    term: 'venir',
+    romanization: 'be-nir',
+    german: 'kommen',
+    syllables: [
+      { text: 'be', stressed: false },
+      { text: 'nir', stressed: true },
+    ],
+    exampleTerm: 'Vengo mañana.',
+    exampleGerman: 'Ich komme morgen.',
+  } as unknown as VocabEntry;
+
+  it('Single-Prompt prüft die stressed-Silbe und verlangt KEINE Umschrift-Markierung', () => {
+    const prompt = baueVocabPruefPrompt(esVocab);
+    expect(prompt).toContain('"stressed"');
+    expect(prompt).toContain('nicht erforderlich');
+    expect(prompt).not.toContain('Betonungssilbe');
+  });
+
+  it('Batch-Prompt genauso', () => {
+    const prompt = baueVocabBatchPruefPrompt([esVocab]);
+    expect(prompt).toContain('"stressed"');
+    expect(prompt).toContain('nicht erforderlich');
+    expect(prompt).not.toContain('Betonungssilbe');
+  });
+
+  it('Punkt 1 verlangt nur EINE korrekte Hauptbedeutung', () => {
+    expect(baueVocabBatchPruefPrompt([esVocab])).toContain('EINE korrekte Hauptbedeutung');
+    expect(baueVocabPruefPrompt(esVocab)).toContain('EINE korrekte Hauptbedeutung');
   });
 });
 
@@ -144,7 +167,7 @@ describe('pruefeVocabKreuzBatch — Paketprüfung', () => {
           { index: 0, urteil: 'bestehen', gruende: [] },
           { index: 1, urteil: 'mangel', gruende: ['Übersetzung schief'] },
         ])() as never;
-      }
+      }, 'chatgpt'
     );
     expect(aufrufe).toBe(1);
     expect(resultate[0].geprueft).toBe(true);
@@ -185,7 +208,7 @@ describe('pruefeVocabKreuzBatch — Paketprüfung', () => {
           }
           return { text: JSON.stringify({ urteile: [{ index: 0, urteil: 'bestehen', gruende: [] }] }), model: 'test' };
         },
-      }) as never
+      }) as never, 'chatgpt'
     );
     expect(aufrufe).toBe(2);
     expect(resultate[0].geprueft).toBe(true);
@@ -205,7 +228,7 @@ describe('prüfeVocabKreuz — die Fallback-Regel', () => {
   it('echte Kreuzprüfung bestanden → geprüft', async () => {
     const resultat = await pruefeVocabKreuz(
       vocab, 'A1', 'gemini', keyImmer(),
-      (anbieter) => client('{"urteil":"bestehen","gruende":[]}') as never
+      (anbieter) => client('{"urteil":"bestehen","gruende":[]}') as never, 'chatgpt'
     );
     expect(resultat.geprueft).toBe(true);
     expect(resultat.kreuz).toBe(true);

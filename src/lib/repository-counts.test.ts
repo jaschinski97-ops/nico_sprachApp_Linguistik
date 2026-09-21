@@ -77,7 +77,6 @@ describe('countImagesByLanguage', () => {
     const store = await freshStore();
     const thId = vocabularyFor('th')[0].id;
     const enId = vocabularyFor('en')[0].id;
-    const esId = vocabularyFor('es')[0].id;
     await store.put('images', thId, bild(thId));
     await store.put('images', enId, bild(enId));
     // Ein Bild ohne zugehörigen Grundstock-Eintrag wird ausgelassen statt
@@ -98,7 +97,7 @@ describe('countSituationsByDirection', () => {
     await store.put('situations', 'b', situation('b', 'de_to_th'));
     await store.put('situations', 'c', situation('c', 'th_to_de'));
 
-    expect(await countSituationsByDirection(store)).toEqual({ de_to_th: 2, th_to_de: 1 });
+    expect(await countSituationsByDirection(store)).toEqual({ de_to_th: 2, th_to_de: 1, de_to_en: 0, de_to_es: 0 });
   });
 });
 

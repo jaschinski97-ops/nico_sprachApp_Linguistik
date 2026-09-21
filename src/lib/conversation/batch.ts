@@ -1,6 +1,7 @@
 import { BatchProgress, missingFrom, runBatch } from '../generation/batch';
 import { BatchTask } from '../generation/types';
 import { DataStore, getStore } from '../storage';
+import { bundledDocuments, isDeletedDraft } from '../content/bundled';
 
 import { GenerationClient } from './generator';
 import { ConversationSituation, SituationSpec } from './types';
@@ -29,7 +30,9 @@ export type RunOptions = {
 function situationExists(db: DataStore) {
   return {
     async exists(spec: SituationSpec) {
-      return (await db.get<ConversationSituation>('situations', spec.id)) !== null;
+      if (bundledDocuments('situations').some(item => item.id === spec.id)) return true;
+      const doc = await db.get<ConversationSituation>('situations', spec.id);
+      return doc !== null && !isDeletedDraft('situations', doc);
     },
   };
 }

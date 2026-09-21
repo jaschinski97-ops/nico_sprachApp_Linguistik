@@ -44,7 +44,13 @@ export type BatchProgress = {
    * Clip (`passed`/`failed`; alles Übrige — ungeprüft, nicht anwendbar,
    * ohne Decoder — zählt unter `other`). Die anderen Läufe lassen das Feld weg.
    */
-  tone?: { passed: number; failed: number; other: number };
+  tone?: {
+    passed: number;
+    failed: number;
+    other: number;
+    /** Register-Laufprobe der Thai-Stimme (20.09.): Abstand hoch−tief in Halbtönen. */
+    register?: { low: number; mid: number; high: number; abstand: number; silben: number; genug: boolean };
+  };
 };
 
 export type BatchOptions<S extends GenerationSpec> = {
@@ -55,6 +61,15 @@ export type BatchOptions<S extends GenerationSpec> = {
   shouldCancel?: () => boolean;
   /** Pause zwischen Aufrufen in Millisekunden, um Rate-Limits zu schonen. */
   delayMs?: number;
+  /**
+   * Wie viele Einträge GLEICHZEITIG bearbeitet werden dürfen (17.09.: nur der
+   * Audio-Lauf nutzt das mit 3 — TTS-Aufrufe sind kurz und unabhängig, der
+   * serielle Lauf brauchte für 15.000 Clips gut 14 Stunden). Default 1 ist das
+   * bisherige, streng sequenzielle Verhalten, das alle übrigen Läufe behalten:
+   * Dialoge und Wortschatz bleiben bewusst seriell (Ratenlimit- und
+   * Fehlerlage einfach halten).
+   */
+  concurrency?: number;
 };
 
 function initialProgress(total: number): BatchProgress {
@@ -81,43 +96,53 @@ export async function runBatch<S extends GenerationSpec>(
 ): Promise<BatchProgress> {
   const progress = initialProgress(options.specs.length);
   const report = () => options.onProgress?.({ ...progress, errors: [...progress.errors] });
+  // Ein Arbeiter = das bisherige serielle Verhalten (Reihenfolge, Reports und
+  // Abbruchlogik unverändert); mehrere Arbeiter teilen sich dieselbe Warteschlange.
+  const arbeiterZahl = Math.max(1, Math.min(options.concurrency ?? 1, options.specs.length || 1));
 
   report();
 
-  for (const spec of options.specs) {
-    if (options.shouldCancel?.()) {
-      progress.cancelled = true;
-      break;
-    }
+  let zeiger = 0;
+  const arbeiter = Array.from({ length: arbeiterZahl }, async () => {
+    while (!options.shouldCancel?.()) {
+      const index = zeiger;
+      zeiger += 1;
+      if (index >= options.specs.length) return;
+      const spec = options.specs[index];
 
-    progress.current = spec.id;
-    report();
+      progress.current = spec.id;
+      report();
 
-    try {
-      if (await options.task.exists(spec)) {
-        // Regel 3: nichts anfragen, was schon da ist.
-        progress.skipped += 1;
-        progress.processed += 1;
-        report();
-        continue;
+      try {
+        if (await options.task.exists(spec)) {
+          // Regel 3: nichts anfragen, was schon da ist — auch keine Pause dahinter.
+          progress.skipped += 1;
+          progress.processed += 1;
+          report();
+          continue;
+        }
+
+        // Regel 1: `produce` legt sofort ab, nicht erst am Ende des Laufs.
+        await options.task.produce(spec);
+        progress.ok += 1;
+      } catch (error) {
+        // Regel 2: zählen, festhalten, weitermachen.
+        progress.failed += 1;
+        progress.errors.push({ id: spec.id, message: messageOf(error) });
       }
 
-      // Regel 1: `produce` legt sofort ab, nicht erst am Ende des Laufs.
-      await options.task.produce(spec);
-      progress.ok += 1;
-    } catch (error) {
-      // Regel 2: zählen, festhalten, weitermachen.
-      progress.failed += 1;
-      progress.errors.push({ id: spec.id, message: messageOf(error) });
-    }
+      progress.processed += 1;
+      report();
 
-    progress.processed += 1;
-    report();
-
-    if (options.delayMs && options.delayMs > 0) {
-      await new Promise((resolve) => setTimeout(resolve, options.delayMs));
+      if (options.delayMs && options.delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, options.delayMs));
+      }
     }
-  }
+    // Hierher kommt ein Arbeiter nur, wenn shouldCancel den Lauf stoppte —
+    // eine leere Warteschlange beendet ihn oben per return.
+    progress.cancelled = true;
+  });
+  await Promise.all(arbeiter);
 
   progress.current = null;
   progress.done = true;

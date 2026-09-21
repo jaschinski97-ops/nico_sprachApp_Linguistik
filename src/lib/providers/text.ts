@@ -1,6 +1,9 @@
 import { fieldNamesOf, postJson } from './http';
 import { ProviderId, TextClient, TextRequest, TextResponse, unsupported } from './types';
 
+// Umfangreiche Wort-/Dialogpakete und ihre Prüfung brauchen mehrere Minuten.
+const TEXT_REQUEST_TIMEOUT_MS = 5 * 60_000;
+
 /**
  * Die Textanbieter hinter einer Schnittstelle.
  *
@@ -54,10 +57,12 @@ export function parseOpenAiText(payload: unknown, fallbackModel: string): TextRe
   const message = first.message as Record<string, unknown> | undefined;
   const content = message?.content;
   const text = typeof content === 'string' ? content : '';
+  const usage = data?.usage as Record<string, unknown> | undefined;
 
   return {
     text: textOrThrow(text, 'chatgpt', `finish_reason: ${String(first.finish_reason)}`),
     model: typeof data?.model === 'string' ? data.model : fallbackModel,
+    usage: verbrauch({ input: usage?.prompt_tokens, output: usage?.completion_tokens }),
   };
 }
 
@@ -68,6 +73,7 @@ export function createOpenAiTextClient(apiKey: string, model: string): TextClien
     async complete(request: TextRequest): Promise<TextResponse> {
       const payload = await postJson({
         url: OPENAI_CHAT_ENDPOINT,
+        timeoutMs: TEXT_REQUEST_TIMEOUT_MS,
         headers: { Authorization: `Bearer ${apiKey}` },
         body: {
           model,
@@ -129,11 +135,27 @@ export function parseGeminiText(payload: unknown, fallbackModel: string): TextRe
     .map((part) => (typeof part.text === 'string' ? part.text : ''))
     .join('')
     .trim();
+  const zähler = data?.usageMetadata as Record<string, unknown> | undefined;
 
   return {
     text: textOrThrow(text, 'gemini', `finishReason: ${String(first.finishReason)}`),
     model: typeof data?.modelVersion === 'string' ? data.modelVersion : fallbackModel,
+    usage: verbrauch({
+      input: zähler?.promptTokenCount,
+      // candidatesTokenCount zählt nur die Antwort; das Denken steht in
+      // thoughtsTokenCount und ist ebenso bezahlt — also dazunehmen.
+      output: Number(zähler?.candidatesTokenCount ?? 0) +
+        Number(zähler?.thoughtsTokenCount ?? 0) || undefined,
+    }),
   };
+}
+
+/** Formt die Anbieter-Felder in die kleine Verbrauchs-Angabe — oder lässt sie weg. */
+function verbrauch(werte: { input?: unknown; output?: unknown }): TextResponse['usage'] {
+  const input = Number(werte.input);
+  const output = Number(werte.output);
+  if (!Number.isFinite(input) || !Number.isFinite(output) || input < 0 || output < 0) return undefined;
+  return { inputTokens: input, outputTokens: output };
 }
 
 export function createGeminiTextClient(apiKey: string, model: string): TextClient {
@@ -143,6 +165,7 @@ export function createGeminiTextClient(apiKey: string, model: string): TextClien
     async complete(request: TextRequest): Promise<TextResponse> {
       const payload = await postJson({
         url: geminiEndpoint(model, 'generateContent'),
+        timeoutMs: TEXT_REQUEST_TIMEOUT_MS,
         // Schluessel im HEADER, nicht als `?key=` im Pfad. Beides kommt laut
         // Messung durch CORS; der Header ist der bessere Weg, weil eine URL
         // in Verlaufslisten, Protokollen und Fehlermeldungen landet.

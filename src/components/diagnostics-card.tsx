@@ -5,7 +5,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { vocabularyFor } from '@/data/vocabulary';
+import { activeVocabularyFor as vocabularyFor } from '@/data/active-vocabulary';
 import { getActiveAudioBlobBackend, getAudioBlobStore } from '@/lib/clips/blob-store';
 import { getActiveBlobBackend, getImageBlobStore } from '@/lib/images/blob-store';
 import { LANGUAGE_ORDER, languageOf } from '@/lib/languages/registry';

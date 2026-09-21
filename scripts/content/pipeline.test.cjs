@@ -95,6 +95,15 @@ test('failed tones stay out; unchecked clips ship with their original status and
   const measurements = JSON.parse(await fs.readFile(pipeline.reportFile));
   assert.equal(measurements.entries.find(entry => entry.id === wrong.id).tone.targetTone, 'falling');
 });
+test('chatgpt-helper-Clips bestehen den audio-Vertrag (17.09.: 141 Nutzer-Clips verworfen)', async (t) => {
+  const { pipeline } = await setup(t);
+  const word = VOCABULARY.find(word => word.id === 'sawatdii');
+  const vorlage = audio(wav(), word);
+  const helperClip = { ...vorlage, document: { ...vorlage.document, provider: 'chatgpt-helper', model: 'gpt-4o-mini-tts-2025-12-15' } };
+  assert.equal((await pipeline.stage(helperClip)).check.status, 'unchecked');
+  const fremd = { ...vorlage, document: { ...vorlage.document, provider: 'nicht-da' } };
+  await assert.rejects(pipeline.stage(fremd), /audio-Vertrag/);
+});
 test('budget overflow leaves the complete previous catalog unchanged', async (t) => {
   const { pipeline } = await setup(t);
   await pipeline.stage({ kind: 'situations', document: situation }); await pipeline.publish();

@@ -25,7 +25,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
   if (catalog.version !== 2 || !Array.isArray(catalog.entries)) throw Error('Unbekannte Katalogversion.');
   for (const entry of catalog.entries) {
     try {
-      assertDocument(entry.kind, entry.document);
+      assertDocument(entry.kind, entry.document, [...VOCABULARY, ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
       if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
       seen.add(keyOf(entry));
       // Phase 2, Schritt 6: inhaltliche Duplikate im Wortschatz — derselbe
@@ -49,7 +49,9 @@ function checkContent(root, { integrityOnly = false } = {}) {
         if (entry.document.format !== 'mp3' || !entry.asset.endsWith('.mp3')) throw Error('Unkomprimiertes Audio.');
         audioSourceBytes += entry.sourceBytes;
         audioCompressedBytes += bytes.length;
-        const tone = checkThaiTone(entry.document, decodeAudio(path.join(root, 'assets/content', entry.asset)), 24000);
+        // 18.09.: Solltöne aus dem Katalogwortschatz — das Tor findet die ki-*-Woerter nur so.
+        const toneWortschatz = [...VOCABULARY, ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)];
+        const tone = checkThaiTone(entry.document, decodeAudio(path.join(root, 'assets/content', entry.asset)), 24000, { woerter: toneWortschatz });
         if (entry.check.tone?.status !== tone.status || tone.status === 'failed') throw Error('Thai-Tontor nicht bestanden oder Status verändert: ' + tone.reason);
         if (entry.document.language === 'th' && tone.status === 'unchecked') uncheckedThaiDelivered++;
       } else if (entry.kind === 'images') {
@@ -75,20 +77,15 @@ function checkContent(root, { integrityOnly = false } = {}) {
   if (contentBytes > BUDGET) errors.push(`Inhaltsbudget von ${Math.round(BUDGET / (1024 * 1024))} MiB überschritten. Keine automatische Kürzung zulässig.`);
   const situations = catalog.entries.filter((entry) => entry.kind === 'situations').map((entry) => entry.document);
   const exams = [...BUILTIN_EXAM_MODULES, ...catalog.entries.filter((entry) => entry.kind === 'exam').map((entry) => entry.document)];
-  const neededAudio = planDeliveryAudio(situations, exams);
+  const words = [...(catalog.vocabularySource === 'generated' ? [] : VOCABULARY), ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)];
+  const neededAudio = planDeliveryAudio(situations, exams, undefined, words);
   const missingAudio = neededAudio.filter((spec) => !seen.has(`audio:${spec.id}`));
-  const missingImages = VOCABULARY.filter((entry) => entry.isConcrete && !seen.has(`images:${entry.id}`));
-  const missingSituations = planSituations(FULL_RUN).filter((spec) => !seen.has(`situations:${spec.id}`));
+  const missingImages = words.filter((entry) => entry.isConcrete && !seen.has(`images:${entry.id}`));
+  const missingSituations = ['th', 'en', 'es', 'de'].flatMap(targetLanguage => planSituations({ ...FULL_RUN, targetLanguage })).filter((spec) => !seen.has(`situations:${spec.id}`));
   if (!integrityOnly) {
     if (missingAudio.length) errors.push(`${missingAudio.length}/${neededAudio.length} benötigte Hörclips fehlen (auch Deutsch und Prüfungen). System-TTS ist kein garantierter Offline-Ersatz.`);
     if (missingImages.length) errors.push(`${missingImages.length} konkrete Vokabeln ohne automatisch geprüftes Bild.`);
-    if (missingSituations.length) errors.push(`${missingSituations.length} Situationen des vollständigen Thai-Plans fehlen. Keine Teilmenge als Vollmenge ausgeben.`);
-    // The existing EN/ES situation prompt is intentionally Thai-only (AE-48).
-    // Keep this visible as a completeness blocker instead of silently treating
-    // an empty conversation tab as an offline-complete product.
-    for (const language of ['en', 'es']) {
-      if (!situations.some((situation) => situation.direction === `de_to_${language}`)) errors.push(`Gespräche für ${language} fehlen (AE-48; eigener geprüfter Sprachinhalt erforderlich).`);
-    }
+    if (missingSituations.length) errors.push(`${missingSituations.length} Situationen des vollständigen Plans für Thai, Englisch, Spanisch und Deutsch fehlen. Keine Teilmenge als Vollmenge ausgeben.`);
   }
   return { checkedAt: new Date().toISOString(), integrityOnly, entries: catalog.entries.length, contentBytes,
     audioSourceBytes, audioCompressedBytes, uncheckedThaiDelivered, missing: { audio: missingAudio.map((spec) => spec.id), images: missingImages.map((entry) => entry.id), situations: missingSituations.map((spec) => spec.id) }, errors };

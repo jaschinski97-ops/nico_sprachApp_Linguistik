@@ -1,7 +1,7 @@
 import { VocabEntry } from '@/data/vocab-types';
-import { vocabularyFor } from '@/data/vocabulary';
+import { activeVocabularyFor as vocabularyFor } from '@/data/active-vocabulary';
 
-import { ConversationSituation } from '../conversation/types';
+import { ConversationSituation, spokenText, SITUATION_SPRACHEN } from '../conversation/types';
 import { assertUniqueIds, limitPlan } from '../generation/plan';
 import { ProviderId } from '../providers/types';
 
@@ -69,7 +69,8 @@ export function planClips(options: ClipPlanOptions = {}): AudioClipSpec[] {
   }
   for (const situation of options.situations ?? []) {
     situation.scriptTurns.forEach((turn, index) => {
-      add({ language: 'th', text: turn.thai, kind: 'turn', sourceId: `${situation.id}#${index + 1}` });
+      const language = SITUATION_SPRACHEN.find(item => item.direction === situation.direction)!.sprache;
+      add({ language, text: spokenText(situation, turn), kind: 'turn', sourceId: `${situation.id}#${index + 1}` });
     });
   }
 

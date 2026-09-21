@@ -1,4 +1,4 @@
-import { type ConversationSituation } from './conversation/types';
+import { spokenText, type ConversationSituation } from './conversation/types';
 import { seededRandom, shuffled } from './drills/random';
 import { type FSRSCardState } from './fsrs/types';
 import { type PairDirection } from './languages/types';
@@ -131,7 +131,7 @@ export function poolWoerterDerSzene(
   pool: VocabEntry[],
   latin: boolean
 ): VocabEntry[] {
-  const text = situation.scriptTurns.map((t) => t.thai).join(' ');
+  const text = situation.scriptTurns.map((t) => spokenText(situation, t)).join(' ');
   if (latin) {
     const woerter = new Set(
       text
@@ -154,7 +154,7 @@ export function verstaendnisFragen(
   seed: number,
   anzahl = 3
 ): VerstaendnisFrage[] {
-  const zeilen = situation.scriptTurns.filter((t) => t.thai.trim().length > 0);
+  const zeilen = situation.scriptTurns.map(t => ({ ...t, thai: spokenText(situation, t) })).filter((t) => t.thai.trim().length > 0);
   if (zeilen.length < 3) return [];
   const random = seededRandom(seed);
   const reihen = shuffled(zeilen, random).slice(0, anzahl);
@@ -198,7 +198,7 @@ export function lesestoffeFuerRichtung(options: {
   latin: boolean;
 }): LeseStoff[] {
   const { direction, situationen, pool, cards, latin } = options;
-  const passend = situationen.filter((s) => s.direction === direction);
+  const passend = situationen.filter((s) => s.direction.split('_to_')[1] === direction.split('_to_')[1]);
   const stoffe = passend.map((situation) => {
     const woerter = poolWoerterDerSzene(situation, pool, latin);
     const vocabIds = new Set(woerter.map((w) => w.id));

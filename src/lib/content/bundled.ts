@@ -1,23 +1,34 @@
 import { Asset } from 'expo-asset';
 import { Platform } from 'react-native';
 
-import catalog from '../../content/catalog.json';
 import { CONTENT_ASSETS } from '../../content/assets';
 import type { ContentCatalog, ContentDocuments, ContentKind } from './types';
 import { isDeliverableEntry } from './audio-policy';
+import { VOCABULARY } from '@/data/vocabulary';
+import { currentCatalog, setCurrentCatalog } from './catalog-state';
 
-const entries = (catalog as unknown as ContentCatalog).entries.filter(isDeliverableEntry);
+/** Developer mutations are visible immediately, before Metro reloads the bundle. */
+export function setLiveCatalog(value: ContentCatalog) { setCurrentCatalog(value); }
+function currentEntries() { return currentCatalog().entries.filter(isDeliverableEntry); }
+export function isDeletedDraft(kind: ContentKind, doc: { id: string; generatedAt?: number; language?: string; direction?: string; vocabId?: string }, source: ContentCatalog = currentCatalog()) {
+  if (kind === 'vocabulary' && !doc.id.startsWith('ki-')) return false;
+  const language = doc.language ?? doc.direction?.split('_to_')[1] ?? (kind === 'images'
+    ? [...VOCABULARY, ...source.entries.filter(entry => entry.kind === 'vocabulary').map(entry => entry.document as ContentDocuments['vocabulary'])].find(word => word.id === doc.vocabId)?.language
+    : undefined);
+  const cutoff = Math.max(source.deleted?.[`${kind}:${doc.id}`] ?? -1, source.clearedBefore?.[kind] ?? -1, source.clearedBefore?.[`${kind}:${language}`] ?? -1);
+  return cutoff >= 0 && (doc.generatedAt ?? 0) <= cutoff;
+}
 
 export function bundledEntry(kind: ContentKind, id: string) {
-  return entries.find(entry => entry.kind === kind && entry.id === id);
+  return currentEntries().find(entry => entry.kind === kind && entry.id === id);
 }
 
 export function bundledDocuments<K extends ContentKind>(kind: K): ContentDocuments[K][] {
-  return entries.filter((entry) => entry.kind === kind).map((entry) => entry.document as ContentDocuments[K]);
+  return currentEntries().filter((entry) => entry.kind === kind).map((entry) => entry.document as ContentDocuments[K]);
 }
 
 export async function bundledAssetUri(kind: 'audio' | 'images', id: string): Promise<string | null> {
-  const entry = entries.find((item) => item.kind === kind && item.id === id);
+  const entry = currentEntries().find((item) => item.kind === kind && item.id === id);
   if (!entry?.asset) return null;
   // WEB: URL statt require. Der Web-Bundle enthält die Binärdateien nicht
   // (assets.web.ts gegen den EMFILE-Kaltstart) — seitdem blieb jede
@@ -42,7 +53,7 @@ export async function bundledAssetUri(kind: 'audio' | 'images', id: string): Pro
 
 /** Shipped content wins over old local drafts, without touching learner state. */
 export function preferBundled<K extends ContentKind>(kind: K, local: ContentDocuments[K][]): ContentDocuments[K][] {
-  const combined = new Map(local.map((doc) => [doc.id, doc]));
+  const combined = new Map(local.filter(doc => !isDeletedDraft(kind, doc)).map((doc) => [doc.id, doc]));
   for (const doc of bundledDocuments(kind)) combined.set(doc.id, doc);
   return [...combined.values()].sort((a, b) => a.id.localeCompare(b.id));
 }

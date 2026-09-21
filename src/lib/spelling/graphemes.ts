@@ -1,5 +1,5 @@
 import { VocabEntry } from '@/data/vocab-types';
-import { vocabularyFor } from '@/data/vocabulary';
+import { activeVocabularyFor as vocabularyFor } from '@/data/active-vocabulary';
 
 /**
  * Das englische Merkmal: gleiche Schreibung, andere Aussprache (Phase 16).

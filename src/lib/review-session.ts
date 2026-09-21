@@ -2,6 +2,8 @@ import { bridgePoolFor } from '@/data/bridge-pools';
 import { VocabEntry } from '@/data/vocabulary';
 import { BridgeEntry } from '@/data/vocab-types';
 import { VOCABULARY_DE } from '@/data/vocabulary-de';
+import { usesGeneratedVocabulary } from '@/data/active-vocabulary';
+import type { UiLanguage } from './i18n/types';
 
 import { createCardState, dueCards, retrievability } from './fsrs/fsrs';
 import { Direction, FSRSCardState } from './fsrs/types';
@@ -230,7 +232,10 @@ export async function ensureCardStates(
   // kommt aus den german-Feldern. (Inline statt Konstante: nur so narrowt
   // `isForeignBridge` die Quelle bis in den Zweig.)
   let entries: VocabEntry[];
-  if (paar && isForeignBridge(paar.source) && paar.target === 'de') {
+  if (usesGeneratedVocabulary() && paar) {
+    entries = alle.filter(entry => String(entry.language) === paar.target)
+      .map(entry => paar.target === 'de' ? { ...entry, german: entry.term } : entry);
+  } else if (paar && isForeignBridge(paar.source) && paar.target === 'de') {
     entries = fremdNachDeStoff(paar.source);
   } else if (istKreuz && paar) {
     entries = kreuzStoff(alle, brueckenPoolFuer(alle, paar.source), sprache).entries;
@@ -301,7 +306,10 @@ export async function buildReviewQueue(
       // aus dem Brücken-Pool (gleiche Begriffs-ID) — derselbe Grundsatz wie
       // bei den Kreuzrichtungen.
       let bridgeEntry: VocabEntry | BridgeEntry | null = null;
-      if (paar && isForeignBridge(paar.source) && paar.target === 'de') {
+      if (usesGeneratedVocabulary() && paar) {
+        bridgeEntry = { id: `${entry.id}:${paar.source}`, concept: entry.concept ?? entry.id,
+          term: entry.translations?.[paar.source as UiLanguage] ?? entry.german };
+      } else if (paar && isForeignBridge(paar.source) && paar.target === 'de') {
         bridgeEntry = fremdBrueckeVon(paar.source, entry.concept ?? entry.id);
       } else if (istKreuz) {
         bridgeEntry = brueckeVon(entry, brueckeNachId, brueckeNachConcept);

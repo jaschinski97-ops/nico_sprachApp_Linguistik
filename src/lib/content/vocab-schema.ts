@@ -1,4 +1,4 @@
-import { LANGUAGE_CODES, type LanguageCode } from '../languages/types';
+import { LANGUAGE_CODES } from '../languages/types';
 import type { VocabEntry } from '@/data/vocab-types';
 
 /**
@@ -77,6 +77,8 @@ export function isValidVocabEntry(value: unknown): value is VocabEntry {
     return false;
   }
   if (d.concept !== undefined && typeof d.concept !== 'string') return false;
+  if (d.generatedAt !== undefined && (typeof d.generatedAt !== 'number' || !Number.isFinite(d.generatedAt))) return false;
+  if (d.translations !== undefined && (!d.translations || typeof d.translations !== 'object' || Array.isArray(d.translations) || Object.values(d.translations).some(text => typeof text !== 'string' || !text.trim()))) return false;
   // Beispiel: ganz oder gar nicht.
   const beispiel = [d.exampleTerm, d.exampleRoman, d.exampleGerman].filter((f) => f !== undefined);
   if (beispiel.length > 0 && beispiel.some((f) => typeof f !== 'string' || !f.trim())) return false;

@@ -1,5 +1,5 @@
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import { Pressable, TextInput } from 'react-native';
+import { TextInput } from 'react-native';
 import { Button, GeneratorCard, type StartArgs } from './generator-card';
 
 jest.mock('@/lib/api-key', () => ({
@@ -7,7 +7,34 @@ jest.mock('@/lib/api-key', () => ({
   clearApiKey: jest.fn(), looksLikeApiKey: () => true, saveApiKey: jest.fn(),
 }));
 
-test('one cost confirmation precedes every provider call; cancel costs nothing', async () => {
+test('conversation starts directly and its deletion applies to the selected target or all four', async () => {
+  const provider = jest.fn(async () => {});
+  const remove = jest.fn(async () => {});
+  let tree!: ReactTestRenderer;
+  await act(async () => { tree = create(<GeneratorCard heading="Dialoge" description="Dialoge" group="situations"
+    managedKeys language="de" onLanguageChange={() => {}}
+    choice={{ provider: 'gemini', model: 'test' }} onChoiceChange={() => {}} statusLine="Test"
+    runOptions={[{ id: 'full', label: 'Vollständig', hint: 'Test' }]}
+    onStart={async ({ confirmRun }) => { if (await confirmRun({ count: 1, usd: null, basis: 'Test' })) await provider(); }}
+    onFinished={() => {}} onDelete={remove} canDelete deleteLabel="Erzeugte Situationen löschen"
+    allRun={{ label: 'Alle Sprachen', steps: [] }} />); });
+  const press = (label: string) => tree.root.findAllByType(Button).find(node => node.props.label === label)!.props.onPress();
+  await act(async () => { await press('Start'); });
+  expect(provider).toHaveBeenCalledTimes(1);
+  expect(JSON.stringify(tree.toJSON())).not.toContain('Kosten bestätigen');
+  expect(tree.root.findAllByType(Button).some(node => node.props.label === 'Anbieter & Schlüssel')).toBe(false);
+  await act(async () => { await press('Erzeugte Situationen löschen'); });
+  expect(remove).not.toHaveBeenCalled();
+  await act(async () => { await press('Wirklich löschen: Deutsch?'); });
+  expect(remove).toHaveBeenLastCalledWith(['de']);
+  await act(async () => { await press('Alle Sprachen'); });
+  await act(async () => { await press('Erzeugte Situationen löschen'); });
+  await act(async () => { await press('Wirklich löschen: Alle Sprachen?'); });
+  expect(remove).toHaveBeenLastCalledWith(['th', 'en', 'es', 'de']);
+  await act(async () => { tree.unmount(); });
+});
+
+test('Lauf startet ohne Kostenbestätigung direkt — keine Box, kein Zwischen-Knopf (Nutzerwunsch 17.09.)', async () => {
   const provider = jest.fn(async () => {});
   const automaticExport = jest.fn(async () => {});
   const onStart = async ({ confirmRun }: StartArgs) => {
@@ -28,19 +55,17 @@ test('one cost confirmation precedes every provider call; cancel costs nothing',
     button.props.onPress();
   };
   await act(async () => { press('Start'); });
-  expect(provider).not.toHaveBeenCalled();
-  expect(JSON.stringify(tree.toJSON())).toContain('Auslieferungsvorschau');
-  expect(JSON.stringify(tree.toJSON())).toContain('66.7');
-  expect(JSON.stringify(tree.toJSON())).toContain('Ungeprüftes Satzaudio');
-  await act(async () => { press('Kosten bestätigen und Lauf starten'); });
-  expect(provider).toHaveBeenCalledTimes(2); expect(automaticExport).toHaveBeenCalledTimes(1);
-  await act(async () => { press('Start'); });
-  await act(async () => { press('Abbrechen'); });
+  // Der Lauf läuft sofort — der frühere „Kosten bestätigen"-Knopf existiert
+  // nicht mehr, auch der Auslieferungsvorschau-Block erscheint nie.
   expect(provider).toHaveBeenCalledTimes(2);
+  expect(automaticExport).toHaveBeenCalledTimes(1);
+  const json = JSON.stringify(tree.toJSON());
+  expect(json).not.toContain('Kosten bestätigen');
+  expect(json).not.toContain('Auslieferungsvorschau');
   await act(async () => { tree.unmount(); });
 });
 
-test('„Alle Sprachen“ übergibt die Kette, zeigt den Schritt und bestätigt genau einmal', async () => {
+test('„Alle Sprachen“ übergibt die Kette und startet direkt (eine Bestätigung im Vertrag, immer wahr)', async () => {
   const schritte = [{ key: 'th', label: 'Thai' }, { key: 'es', label: 'Spanisch' }];
   const erhalteneKette: ({ key: string; label: string }[] | undefined)[] = [];
   let bestaetigungen = 0;
@@ -68,20 +93,19 @@ test('„Alle Sprachen“ übergibt die Kette, zeigt den Schritt und bestätigt 
   // Phase 2, Schritt 2: „Alle Sprachen“ ist Teil der Sprachwahl — erst der
   // Auswahlknopf „Alle“, dann startet der Haupt-Knopf (jetzt als
   // „Alle Sprachen erzeugen“ beschriftet) die Kette.
-  await act(async () => { press('Alle'); });
+  await act(async () => { press('Alle Sprachen'); });
   await act(async () => { press('Alle Sprachen erzeugen'); });
-  // Während der Kette läuft: kein zweiter Start, keine zweite „Alle“-Wahl.
-  expect(JSON.stringify(tree.toJSON())).toContain('Anhalten');
-  expect(tree.root.findAllByType(Button).find(node => node.props.label === 'Alle Sprachen'))
-    .toBeUndefined();
-  await act(async () => { press('Kosten bestätigen und Lauf starten'); });
-  // EINE kombinierte Bestätigung für die ganze Kette — nicht eine je Schritt.
+  // Direkt gestartet, ohne Zwischen-Knopf — und genau EIN confirmRun-Aufruf
+  // für die ganze Kette, nicht einer je Schritt.
   expect(bestaetigungen).toBe(1);
   expect(erhalteneKette[0]).toEqual(schritte);
+  expect(JSON.stringify(tree.toJSON())).toContain('Anhalten');
+  expect(tree.root.findAllByType(Button).find(node => node.props.label === 'Alle Sprachen')
+    ?.props.disabled).toBe(true);
   // Mitten im Kettenlauf steht, welcher Schritt von wie vielen läuft.
   const json = JSON.stringify(tree.toJSON());
   expect(json).toContain('Schritt 2 / 2 · Spanisch');
-  expect(json).toContain('Anhalten');
+  expect(json).not.toContain('Kosten bestätigen');
   await act(async () => { ketteFortsetzen(); });
   await act(async () => { tree.unmount(); });
 });

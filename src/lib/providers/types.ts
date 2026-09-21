@@ -204,6 +204,12 @@ export type TextResponse = {
    * Nachhinein nachvollziehbar, womit ein Inhalt entstanden ist.
    */
   model: string;
+  /**
+   * Verbrauchsangabe des Anbieters, wenn er sie mitliefert (OpenAI: `usage`,
+   * Gemini: `usageMetadata`). Ohne diese Zahlen schätzt das Budget des
+   * Wortschatz-Loops grob paketweise statt aus echten Tokenzahlen.
+   */
+  usage?: { inputTokens: number; outputTokens: number };
 };
 
 export type TextClient = {
