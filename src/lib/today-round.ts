@@ -1,7 +1,7 @@
 import { SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 
 import { dictationTasksFor } from './dictation/tasks';
-import { type PairDirection } from './languages/types';
+import { anchorOf, type PairDirection } from './languages/types';
 import { zielSprache } from './production/tasks';
 import { loadReviewLog, type ReviewDayLog } from './review-log';
 import { buildReviewQueue, type ReviewItem } from './review-session';
@@ -189,7 +189,10 @@ export function bereichVerfuegbar(direction: PairDirection, kind: Exclude<RoundK
       return sprache !== 'de';
     case 'satz':
     case 'shadowing':
-      return (SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? []).length > 0;
+      // Der Satzbestand trägt Bedeutungen nur auf Deutsch (exampleGerman) —
+      // auf anderen Brücken gibt es den Bereich ehrlich nicht (21.09.2026),
+      // die Runde springt ihn übersichtlich mit „emptySkip“.
+      return anchorOf(direction) === 'de' && (SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? []).length > 0;
     case 'diktat':
       try {
         return dictationTasksFor(sprache, direction).length > 0;

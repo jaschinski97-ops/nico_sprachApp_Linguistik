@@ -16,7 +16,8 @@ import { VocabEntry } from '@/data/vocabulary';
 import { BridgeEntry } from '@/data/vocab-types';
 import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
 import { PairDirection } from '@/lib/fsrs/types';
-import { useLocale } from '@/lib/i18n';
+import { anchorOf } from '@/lib/languages/types';
+import { useLocale, type TranslationKey, type UiLanguage } from '@/lib/i18n';
 import { useTheme } from '@/hooks/use-theme';
 
 /**
@@ -71,6 +72,9 @@ export function Flashcard({ entry, direction, revealed, bridgeEntry = null }: Pr
   // Richtungen gleich gelaufen.
   const { t, languageName } = useLocale();
   const targetFirst = direction.endsWith('_to_de');
+  // Die Ankerseite der Richtung entscheidet, WELCHE Erklärtexte auf die Karte
+  // dürfen (21.09.2026): Deutsch nur für de-geankerte Richtungen.
+  const anchor = anchorOf(direction);
   const anhoeren = t('flashcard.listenA11y', { language: languageName(entry.language) });
 
   if (bridgeEntry) {
@@ -101,7 +105,7 @@ export function Flashcard({ entry, direction, revealed, bridgeEntry = null }: Pr
             />
           </>
         ) : null}
-        {revealed ? <ExampleBlock entry={entry} /> : null}
+        {revealed ? <ExampleBlock entry={entry} anchor={anchor} /> : null}
         {revealed ? <VerificationBadge entry={entry} /> : null}
       </ThemedView>
     );
@@ -163,7 +167,7 @@ export function Flashcard({ entry, direction, revealed, bridgeEntry = null }: Pr
         </>
       )}
 
-      {revealed ? <ExampleBlock entry={entry} /> : null}
+      {revealed ? <ExampleBlock entry={entry} anchor={anchor} /> : null}
       {revealed ? <VerificationBadge entry={entry} /> : null}
     </ThemedView>
   );
@@ -218,7 +222,7 @@ function GermanBlock({ entry, headline = false }: { entry: VocabEntry; headline?
  * Fuer Englisch und Spanisch gibt es keine erfundenen Saetze; die Karte zeigt
  * dort stattdessen nichts, statt eine leere Zeile mit Lautsprechersymbol.
  */
-function ExampleBlock({ entry }: { entry: VocabEntry }) {
+function ExampleBlock({ entry, anchor }: { entry: VocabEntry; anchor: UiLanguage }) {
   const { t } = useLocale();
   if (!entry.exampleTerm) return null;
   return (
@@ -229,7 +233,10 @@ function ExampleBlock({ entry }: { entry: VocabEntry }) {
           {entry.exampleRoman && entry.exampleRoman !== entry.exampleTerm ? (
             <ThemedText type="small" themeColor="textSecondary">{entry.exampleRoman}</ThemedText>
           ) : null}
-          {entry.exampleGerman && entry.exampleGerman !== entry.exampleTerm && entry.exampleGerman !== entry.exampleRoman ? (
+          {/* Die Satzübersetzung existiert nur als `exampleGerman` — sie gehört
+              daher auf die de-Brücke und nirgendwohin sonst (21.09.2026, en-UI
+              zeigte „Ich habe zehn Euro …" unter englischer Oberfläche). */}
+          {anchor === 'de' && entry.exampleGerman && entry.exampleGerman !== entry.exampleTerm && entry.exampleGerman !== entry.exampleRoman ? (
             <ThemedText type="small" themeColor="textSecondary">{entry.exampleGerman}</ThemedText>
           ) : null}
         </View>
@@ -278,6 +285,9 @@ function SpeakButton({
   const [played, setPlayed] = useState<{ text: string; result: PlaybackResult } | null>(null);
   const playback = played?.text === text ? played.result : null;
   const colors = useTheme();
+  // `playback.label` trägt den Wörterbuchschlüssel der Quellen-Zeile
+  // (KI-Stimme/Systemstimme) — hier übersetzt (21.09.2026).
+  const { t } = useLocale();
 
   return (
     <View style={compact ? undefined : styles.speakColumn}>
@@ -292,7 +302,7 @@ function SpeakButton({
         }}
         accessibilityRole="button"
         accessibilityLabel={`${spokenLabel ?? label}: ${text}${
-          playback ? ` (${playback.label})` : ''
+          playback ? ` (${t(playback.label as TranslationKey)})` : ''
         }`}
         style={({ pressed }) => pressed && styles.pressed}>
         <ThemedView
@@ -324,7 +334,7 @@ function SpeakButton({
           ohnehin als solche erkennbar ist. */}
       {playback ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.syntheticNote}>
-          {playback.label}
+          {t(playback.label as TranslationKey)}
         </ThemedText>
       ) : null}
     </View>

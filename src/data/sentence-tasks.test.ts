@@ -74,7 +74,7 @@ describe('buildSentenceTasks', () => {
     const tasks = buildSentenceTasks([
       vokabel({ id: 'a', term: 'Bahnhof', exampleTerm: 'Der Bahnhof ist groß.', language: 'de', german: 'Bahnhof', translations: { th: 'สถานีรถไฟ' } }),
       vokabel({ id: 'b', term: 'mesa', exampleTerm: 'La mesa es nueva.', language: 'es', german: 'Tisch' }),
-    ]);
+    ], 'th');
     expect(tasks[0].focus).toBe('Bahnhof · สถานีรถไฟ');
     expect(tasks[1].focus).toBe('mesa · Tisch');
   });

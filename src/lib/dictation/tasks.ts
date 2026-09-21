@@ -1,10 +1,10 @@
 import { dictationConfigFor } from '@/data/dictation-config';
 
-import { SENTENCE_TASKS_BY_LANGUAGE, sentenceFootnote, type SatzSprache } from '@/data/sentence-tasks';
+import { satzaufgabenFuer, sentenceFootnote, type SatzSprache } from '@/data/sentence-tasks';
 
 import { seededRandom, shuffled } from '@/lib/drills/random';
 
-import { type PairDirection } from '@/lib/languages/types';
+import { anchorOf, type PairDirection } from '@/lib/languages/types';
 
 /**
  * Diktat-Aufgaben aus den Satz-Daten der Zielsprache — NICHT aus einem
@@ -46,7 +46,10 @@ export function dictationTasksFor(language: SatzSprache, direction: PairDirectio
   // Der Konfigurationseintrag ist die Fachlichkeit-Prüfung: Eine Sprache
   // ohne Diktat-Regeln kann keine Diktate urteilen.
   dictationConfigFor(language);
-  return SENTENCE_TASKS_BY_LANGUAGE[language]
+  // Der Anker steuert dieRegistry (21.09.2026): Das Diktat tippt immer die
+  // ZIELsprache — der Anker ändert hier nur, welche Aufgabenbasis der
+  // Registry-Cache liefert (de-Brücke: Bedeutungsstoff, sonst derselbe).
+  return satzaufgabenFuer(language, anchorOf(direction))
     .filter((task) => task.text.trim().length > 0)
     .map((task) => ({
       id: `dictation-${task.vocabId}`,

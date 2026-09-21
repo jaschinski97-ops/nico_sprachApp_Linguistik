@@ -8,7 +8,27 @@ import {
   WEAK_VOWELS,
 } from '@/data/spanish-stress';
 
-import { DerivationStep } from '../reading/syllable';
+import type { TranslationKey } from '../i18n/keys';
+import type { TParams } from '../i18n/types';
+
+/**
+ * Ein Herleitungsschritt ALS WÖRTERBUCHSCHLÜSSEL (21.09.2026, Nutzerbefund
+ * en-UI): Bisher trug `steps` deutsche Sätze, die auf jeder Oberfläche
+ * erschienen. Jetzt trägt der Schritt Schlüssel + Parameter, und der Aufrufer
+ * (`buildStressQuestion` kennt die UI-Sprache) übersetzt. Die THAI-
+ * Herleitung (`reading/syllable.ts`) bleibt einstweilen deutsch — ihre
+ * Satzbauten setzen klassenweise Fragmente zusammen und brauchen einen
+ * eigenen Übersetzungslauf.
+ */
+export type KeyedStep = {
+  labelKey: TranslationKey;
+  value: string;
+  detailKey: TranslationKey;
+  detailParams?: TParams;
+};
+
+/** Ein übersetzbarer Textbaustein (hier: die benannte Unsicherheit). */
+export type KeyedText = { key: TranslationKey; params?: TParams };
 
 /**
  * Die spanische Betonung aus der Schreibung herleiten (Phase 16).
@@ -50,14 +70,14 @@ export type StressAnalysis = {
   stressedIndex: number;
   /** Wie die Regel heißt, die hier gegriffen hat. */
   rule: 'acute' | 'monosyllable' | 'penultimate' | 'final';
-  steps: DerivationStep[];
+  steps: KeyedStep[];
   /**
    * Benannte Unsicherheit — die Antwort steht, aber die Begründung ist eine
    * andere als die Regel nahelegt. Betrifft die Wörter mit unterscheidendem
    * Akut (`dónde`, `sí`, `té`): Dort verschiebt der Akut die Betonung nicht,
    * er trennt zwei gleich geschriebene Wörter.
    */
-  uncertain: string | null;
+  uncertain: KeyedText | null;
 };
 
 export type StressFailure = { ok: false; word: string; reason: string };
@@ -209,15 +229,12 @@ export function analyzeStress(word: string): StressResult {
 
   const lower = word.toLowerCase().trim();
   const syllables = split.syllables;
-  const steps: DerivationStep[] = [
+  const steps: KeyedStep[] = [
     {
-      label: 'Silben',
+      labelKey: 'stress.stepSyllables',
       value: syllables.join('·'),
-      detail:
-        syllables.length === 1
-          ? 'Ein Silbenkern, also eine Silbe.'
-          : `${syllables.length} Silbenkerne. Diphthonge zählen als einer, ` +
-            'ein Akut auf „i" oder „u" trennt sie wieder.',
+      detailKey: syllables.length === 1 ? 'stress.detailOneNucleus' : 'stress.detailNuclei',
+      detailParams: syllables.length === 1 ? undefined : { count: syllables.length },
     },
   ];
 
@@ -225,13 +242,9 @@ export function analyzeStress(word: string): StressResult {
   if (acuteAt >= 0) {
     const differential = DIFFERENTIAL_ACCENTS.includes(lower);
     steps.push({
-      label: 'Akut',
+      labelKey: 'stress.stepAcute',
       value: syllables[acuteAt],
-      detail: differential
-        ? 'Hier unterscheidet der Akut zwei gleich geschriebene Wörter — die ' +
-          'Betonung läge auch ohne ihn auf dieser Silbe.'
-        : 'Ein geschriebener Akut steht immer auf der betonten Silbe. Damit ist ' +
-          'die Grundregel außer Kraft.',
+      detailKey: differential ? 'stress.detailAcuteDifferential' : 'stress.detailAcute',
     });
     return {
       ok: true,
@@ -241,17 +254,16 @@ export function analyzeStress(word: string): StressResult {
       rule: 'acute',
       steps,
       uncertain: differential
-        ? 'Der Akut steht hier nicht für die Betonung, sondern zur Unterscheidung ' +
-          '(etwa „sí" gegen „si"). Die Antwort stimmt, die Begründung ist eine andere.'
+        ? { key: 'stress.uncertainDifferential' }
         : null,
     };
   }
 
   if (syllables.length === 1) {
     steps.push({
-      label: 'Einsilbig',
+      labelKey: 'stress.stepMonosyllable',
       value: syllables[0],
-      detail: 'Es gibt nur eine Silbe — sie trägt die Betonung.',
+      detailKey: 'stress.detailOnlySyllable',
     });
     return { ok: true, word, syllables, stressedIndex: 0, rule: 'monosyllable', steps, uncertain: null };
   }
@@ -264,16 +276,15 @@ export function analyzeStress(word: string): StressResult {
 
   if (endsInVowel || nsAfterVowel) {
     steps.push({
-      label: 'Wortende',
+      labelKey: 'stress.stepWordEnd',
       value: last,
-      detail: endsInVowel
-        ? 'Das Wort endet auf einen Vokal.'
-        : `Das Wort endet auf „${last}" nach einem Vokal.`,
+      detailKey: endsInVowel ? 'stress.detailEndVowel' : 'stress.detailEndNOrS',
+      detailParams: endsInVowel ? undefined : { letter: last },
     });
     steps.push({
-      label: 'Grundregel',
+      labelKey: 'stress.stepBasicRule',
       value: syllables[syllables.length - 2],
-      detail: 'Endet ein Wort auf Vokal, „n" oder „s", liegt die Betonung auf der vorletzten Silbe.',
+      detailKey: 'stress.detailRulePenultimate',
     });
     return {
       ok: true,
@@ -287,16 +298,15 @@ export function analyzeStress(word: string): StressResult {
   }
 
   steps.push({
-    label: 'Wortende',
+    labelKey: 'stress.stepWordEnd',
     value: endsInNS ? `${beforeLast}${last}` : last,
-    detail: endsInNS
-      ? `„${last}" steht hier hinter einem Konsonanten — dann greift die Ausnahme nicht.`
-      : `Das Wort endet auf „${last}", also weder auf Vokal noch auf „n" oder „s".`,
+    detailKey: endsInNS ? 'stress.detailNAfterConsonant' : 'stress.detailEndOther',
+    detailParams: { letter: last },
   });
   steps.push({
-    label: 'Grundregel',
+    labelKey: 'stress.stepBasicRule',
     value: syllables[syllables.length - 1],
-    detail: 'Bei jedem anderen Schlusslaut liegt die Betonung auf der letzten Silbe.',
+    detailKey: 'stress.detailRuleFinal',
   });
   return {
     ok: true,

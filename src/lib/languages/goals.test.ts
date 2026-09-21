@@ -32,6 +32,20 @@ describe('Lernziele — Deutsch als eigene Wahl (Brücke de, Bestand)', () => {
     expect(directionForBridge('th', 'th_to_de')).toBe('th_to_de');
   });
 
+  it('hält gemerkte Ziele anderer Brücken auf der Zielsprache fest (Nutzerbefund 21.09.)', () => {
+    // Gemerkt aus der deutschen Oberfläche: „Spanisch“ (de_to_es). Auf der
+    // englischen Brücke soll der Blick bei Spanisch bleiben, nicht zum ersten
+    // Ziel (Thai) springen, während das Radio Spanisch anzeigt.
+    expect(directionForBridge('en', 'de_to_es')).toBe('en_to_es');
+    expect(directionForBridge('en', 'de_to_th')).toBe('en_to_th');
+    expect(directionForBridge('es', 'de_to_th')).toBe('es_to_th');
+    // „Englisch lernen“ gibt es auf der englischen Brücke nicht — das
+    // Selbstpaar wird bewusst übersprungen, es gilt das erste Ziel.
+    expect(directionForBridge('en', 'de_to_en')).toBe('en_to_th');
+    // Fremd-Brücke: dieselbe Regel über die generierten Pools.
+    expect(directionForBridge('ar', 'de_to_es')).toBe('ar_to_es');
+  });
+
   it('gibt zu jeder Ziel-Richtung genau dieses Ziel zurück', () => {
     for (const ziel of LERNZIELE) {
       expect(zielFuerDirection(ziel.direction)).toBe(ziel);

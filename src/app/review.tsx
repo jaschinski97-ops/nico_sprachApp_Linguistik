@@ -27,6 +27,7 @@ import {
   type Lernziel,
 } from '@/lib/languages/goals';
 import {
+  anchorOf,
   isDeAnchored,
   isPairDirection,
   pairLanguageOf,
@@ -320,7 +321,7 @@ function ReviewBody({
           <DirectionBar onSwitch={onSwitch} />
 
           {mode === 'cards' ? (
-        <CardSession direction={direction} key={direction} />
+        <CardSession direction={direction} onExit={onExit} key={direction} />
       ) : mode === 'writing' ? (
         // Freies Schreiben ist de-geankert (siehe `modesForDirection`); der
         // Typvertrag des Runners bleibt beim Bestand.
@@ -343,6 +344,7 @@ function ReviewBody({
           key={`${direction}:${mode}`}
           mode={mode}
           language={zielSprache(direction)}
+          anchor={anchorOf(direction)}
           onExit={onExit}
         />
       ) : mode === 'lesestoffe' ? (
@@ -587,7 +589,7 @@ function DirectionBar({ onSwitch }: { onSwitch: () => void }) {
   );
 }
 
-function CardSession({ direction }: { direction: PairDirection }) {
+function CardSession({ direction, onExit }: { direction: PairDirection; onExit: () => void }) {
   const { t } = useLocale();
   const colors = useTheme();
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
@@ -696,6 +698,9 @@ function CardSession({ direction }: { direction: PairDirection }) {
         <ThemedText type="small" themeColor="textSecondary">
           {t('cards.progress', { index: index + 1, total: queue.length })}
         </ThemedText>
+        {/* Verlassen mitten in der Runde — der Karten-Runner war der einzige
+            Übungsfluss ohne Rückweg zur Übungsliste (Nutzerbefund 21.09.). */}
+        <ThemedButton label={t('common.back')} onPress={onExit} />
       </View>
 
       <Flashcard

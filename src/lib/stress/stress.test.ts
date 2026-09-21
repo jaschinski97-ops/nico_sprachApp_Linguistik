@@ -108,13 +108,15 @@ describe('Betonung herleiten', () => {
     expect(cafeOhne.ok && cafeOhne.stressedIndex).toBe(0);
   });
 
-  it('erklärt jeden Schritt, nicht nur das Ergebnis', () => {
+  it('erklärt jeden Schritt als Schlüssel, nicht nur das Ergebnis', () => {
+    // SEIT DEM 21.09.2026 trägt die Herleitung Wörterbuchschlüssel statt
+    // deutscher Sätze — der Aufrufer übersetzt mit der UI-Sprache.
     const medico = analyzeStress('médico');
     expect(medico.ok).toBe(true);
     if (!medico.ok) return;
-    expect(medico.steps.map((step) => step.label)).toEqual(['Silben', 'Akut']);
+    expect(medico.steps.map((step) => step.labelKey)).toEqual(['stress.stepSyllables', 'stress.stepAcute']);
     expect(medico.steps[0].value).toBe('mé·di·co');
-    expect(medico.steps[1].detail).toContain('betonten Silbe');
+    expect(medico.steps[1].detailKey).toBe('stress.detailAcute');
   });
 
   it('benennt den Vorbehalt, wo der Akut gar nicht die Betonung meint', () => {
@@ -123,7 +125,7 @@ describe('Betonung herleiten', () => {
     // eine andere - das steht dann ausdruecklich da.
     const donde = analyzeStress('dónde');
     expect(donde.ok && donde.stressedIndex).toBe(0);
-    expect(donde.ok && donde.uncertain).toContain('Unterscheidung');
+    expect(donde.ok && donde.uncertain?.key).toBe('stress.uncertainDifferential');
     expect(DIFFERENTIAL_ACCENTS).toContain('dónde');
 
     const casa = analyzeStress('casa');

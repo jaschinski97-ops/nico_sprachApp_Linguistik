@@ -1,6 +1,7 @@
 import type { CapturedPcm } from './microphone-capture';
 import { analyzeToneContour, type ToneContourMeasurement } from './analysis';
-import { SENTENCE_TASKS_BY_LANGUAGE, type SatzSprache, type SentenceTask } from '@/data/sentence-tasks';
+import { satzaufgabenFuer, type SatzSprache, type SentenceTask } from '@/data/sentence-tasks';
+import type { UiLanguage } from '@/lib/i18n/types';
 import { shuffled, seededRandom } from '../drills/random';
 
 export const SENTENCE_PREPARATION_MS = 15_000;
@@ -16,9 +17,17 @@ export type SentenceMode = 'shadowing' | 'sentenceRepeat' | 'sentenceListening';
  * in `data/sentence-tasks.ts` allein. Seit dem 18.09.2026 umfasst der
  * Schlüssel auch `de` — der Deutsch-Kurs (th_to_de) produziert deutsche
  * Sätze aus demselben generierten Bestand.
+ *
+ * SEIT DEM 21.09.2026 AUCH ANKERBEWUSST: Auf der de-Brücke fragt „Satz
+ * verstehen" deutsche Bedeutungen ab, auf jeder anderen Brücke erkennt man
+ * den gehört Zielsatz in der Schrift (siehe `buildSentenceTasks`).
  */
-export function sentenceSession(language: SatzSprache, seed: number): SentenceTask[] {
-  return shuffled(SENTENCE_TASKS_BY_LANGUAGE[language] ?? [], seededRandom(seed));
+export function sentenceSession(
+  language: SatzSprache,
+  seed: number,
+  anchor: UiLanguage = 'de'
+): SentenceTask[] {
+  return shuffled(satzaufgabenFuer(language, anchor) ?? [], seededRandom(seed));
 }
 export function sentenceAnswers(task: SentenceTask, seed: number): string[] {
   return shuffled(task.answers, seededRandom(seed));

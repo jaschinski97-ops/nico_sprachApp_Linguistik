@@ -1,10 +1,23 @@
 import { ZAEHLER_ITEMS, ZAEHLER_OPTIONEN, type ZaehlerItem } from '@/data/grammar-th-counters';
 import { POLITE_ITEMS, type PoliteItem } from '@/data/grammar-th';
 import { SER_ESTAR_ITEMS, type SerEstarItem } from '@/data/grammar-es';
-import { CONSONANT_CLASS_LABEL, THAI_CONSONANTS, type ThaiConsonant } from '@/data/thai-script';
+import { THAI_CONSONANTS, type ThaiConsonant } from '@/data/thai-script';
 
+import type { UiLanguage } from '../i18n/types';
+import { translate } from '../i18n';
 import { Random, shuffled } from './random';
 import { directionForDrill, DrillOption, DrillQuestion } from './types';
+
+/**
+ * Die kleinen Grammatik-Datensätze tragen ihre Erklärtexte NUR auf Deutsch
+ * (`german`, `reason`, Sprecher-Hinweise). Auf anderen Brücken gibt es
+ * keine ehrliche Übersetzung — dort bleibt der Hinweis weg (21.09.2026,
+ * en-UI: deutsche Sätze unter englischer Oberfläche). `de` liefert das
+ * bisherige Verhalten.
+ */
+function deutscheErklaerung(anker: UiLanguage): boolean {
+  return anker === 'de';
+}
 
 /**
  * Aufgaben aus den kleinen Grammatik-Datensätzen (`data/grammar-th.ts`,
@@ -30,28 +43,32 @@ const POLITE_OPTIONS: DrillOption[] = [
   { label: 'ค่ะ' },
 ];
 
-export function buildPoliteQuestion(item: PoliteItem): DrillQuestion {
+export function buildPoliteQuestion(item: PoliteItem, anchor: UiLanguage = 'de', ui: UiLanguage = 'de'): DrillQuestion {
   return {
     id: `polite:${item.id}`,
     drill: 'polite',
     direction: directionForDrill('polite', 'th'),
     vocabId: item.id,
     visible: `${item.text} ___`,
-    visibleHint: item.speaker === 'male' ? 'Sprecher: ein Mann (ผม …)' : 'Sprecherin: eine Frau (ฉัน …)',
+    visibleHint: item.speaker === 'male'
+      ? translate(ui, 'grammar.speakerMale')
+      : translate(ui, 'grammar.speakerFemale'),
     // Bewusst kein Audio vor der Antwort: Der gesprochene Satz ENDET mit der
     // Partikel — er würde die Lösung vorlesen.
     speak: null,
     options: POLITE_OPTIONS,
     correctIndex: item.answer === 'ครับ' ? 0 : 1,
     solution: `${item.text} ${item.answer}`,
-    explanation: `${item.german} · Die Partikel hängt am Geschlecht des Sprechers, nicht am Satz.`,
+    explanation: deutscheErklaerung(anchor)
+      ? `${item.german} · ${translate(ui, 'grammar.particleGender')}`
+      : translate(ui, 'grammar.particleGender'),
   };
 }
 
 /** Die dritte Form für die Lösung: ser → es, estar → está. */
 const SER_ESTAR_FORMS: Record<SerEstarItem['answer'], string> = { ser: 'es', estar: 'está' };
 
-export function buildSerEstarQuestion(item: SerEstarItem): DrillQuestion {
+export function buildSerEstarQuestion(item: SerEstarItem, anchor: UiLanguage = 'de'): DrillQuestion {
   const options: DrillOption[] = [{ label: 'ser' }, { label: 'estar' }];
   return {
     id: `serEstar:${item.id}`,
@@ -59,56 +76,62 @@ export function buildSerEstarQuestion(item: SerEstarItem): DrillQuestion {
     direction: directionForDrill('serEstar', 'es'),
     vocabId: item.id,
     visible: item.text,
-    visibleHint: item.german,
+    // Der Satz-Träger des Datensatzes ist deutsch (`item.german`) — auf
+    // anderen Brücken ehrlich weg, die Aufgabe (ser/estar) bleibt lesbar.
+    visibleHint: deutscheErklaerung(anchor) ? item.german : '',
     speak: null,
     options,
     correctIndex: item.answer === 'ser' ? 0 : 1,
     solution: item.text.replace('___', SER_ESTAR_FORMS[item.answer]),
-    explanation: item.reason,
+    explanation: deutscheErklaerung(anchor) ? item.reason : '',
   };
 }
 
 /* ---------- Zählwörter (de_to_th, Schritt 5) ---------- */
 
-export function buildZaehlerQuestion(item: ZaehlerItem): DrillQuestion {
+export function buildZaehlerQuestion(item: ZaehlerItem, anchor: UiLanguage = 'de', ui: UiLanguage = 'de'): DrillQuestion {
   const options: DrillOption[] = ZAEHLER_OPTIONEN.map((label) => ({ label }));
   return {
     id: `zaehler:${item.id}`,
     drill: 'zaehlerwort',
     direction: directionForDrill('zaehlerwort', 'th'),
     vocabId: item.id,
-    visible: `${item.nomen} (${item.german})`,
+    // Die deutsche Bedeutung in Klammern nur auf der de-Brücke — andere
+    // Anker haben keine Übersetzung des Datensatzes (21.09.2026).
+    visible: deutscheErklaerung(anchor) ? `${item.nomen} (${item.german})` : item.nomen,
     visibleHint: `Zahl + ___ : หนึ่ง ${item.nomen}`,
     speak: null,
     options,
     correctIndex: ZAEHLER_OPTIONEN.indexOf(item.answer),
-    solution: `${item.nomen} หนึ่ง ${item.answer} — ein ${item.german}`,
-    explanation: 'Das Zählwort steht zwischen Zahl und Nomen und hängt an der Wortklasse.',
+    solution: deutscheErklaerung(anchor)
+      ? `${item.nomen} หนึ่ง ${item.answer} — ein ${item.german}`
+      : `${item.nomen} หนึ่ง ${item.answer}`,
+    explanation: translate(ui, 'grammar.counterBetween'),
   };
 }
 
 /* ---------- Konsonantenklassen (de_to_th, Schritt 5) ---------- */
 
-const KLASSEN_OPTIONEN: DrillOption[] = (
-  ['mid', 'high', 'low'] as const
-).map((klasse) => ({ label: CONSONANT_CLASS_LABEL[klasse] }));
-
-export function buildKonsonantenklasseQuestion(konsonant: ThaiConsonant): DrillQuestion {
+export function buildKonsonantenklasseQuestion(konsonant: ThaiConsonant, anchor: UiLanguage = 'de', ui: UiLanguage = 'de'): DrillQuestion {
+  const klassenLabel = (klasse: 'mid' | 'high' | 'low'): string => translate(ui, `consonantClass.${klasse}`);
+  const optionen = (['mid', 'high', 'low'] as const).map((klasse) => ({ label: klassenLabel(klasse) }));
+  const richtige = klassenLabel(konsonant.consonantClass);
   return {
     id: `konsonantenklasse:${konsonant.symbol}`,
     drill: 'konsonantenklasse',
     direction: directionForDrill('konsonantenklasse', 'th'),
     vocabId: konsonant.symbol,
     visible: konsonant.name,
-    visibleHint: `${konsonant.meaning} · ${konsonant.nameRtgs}`,
+    // Die Bedeutung des Konsonanten steht nur auf Deutsch im Datensatz — auf
+    // anderen Brücken bleibt die Lesehilfe bei der RTGS-Umschrift.
+    visibleHint: deutscheErklaerung(anchor)
+      ? `${konsonant.meaning} · ${konsonant.nameRtgs}`
+      : konsonant.nameRtgs,
     speak: null,
-    options: KLASSEN_OPTIONEN,
-    correctIndex: KLASSEN_OPTIONEN.findIndex(
-      (option) => option.label === CONSONANT_CLASS_LABEL[konsonant.consonantClass]
-    ),
-    solution: `${konsonant.name} — ${CONSONANT_CLASS_LABEL[konsonant.consonantClass]}`,
-    explanation:
-      'Die Klasse ist der erste Eingang der Ton-Herleitung — wer sie kennt, kann jeden Ton aus der Schrift ableiten.',
+    options: optionen,
+    correctIndex: optionen.findIndex((option) => option.label === richtige),
+    solution: `${konsonant.name} — ${richtige}`,
+    explanation: translate(ui, 'grammar.classIntro'),
   };
 }
 
@@ -116,23 +139,25 @@ export function buildKonsonantenklasseQuestion(konsonant: ThaiConsonant): DrillQ
 export function buildGrammarSession(
   drill: 'polite' | 'serEstar' | 'zaehlerwort' | 'konsonantenklasse',
   random: Random,
-  size: number
+  size: number,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): { questions: DrillQuestion[]; available: number } {
   if (drill === 'polite') {
     return {
-      questions: shuffled([...POLITE_ITEMS], random).slice(0, size).map(buildPoliteQuestion),
+      questions: shuffled([...POLITE_ITEMS], random).slice(0, size).map((item) => buildPoliteQuestion(item, anchor, ui)),
       available: POLITE_ITEMS.length,
     };
   }
   if (drill === 'serEstar') {
     return {
-      questions: shuffled([...SER_ESTAR_ITEMS], random).slice(0, size).map(buildSerEstarQuestion),
+      questions: shuffled([...SER_ESTAR_ITEMS], random).slice(0, size).map((item) => buildSerEstarQuestion(item, anchor)),
       available: SER_ESTAR_ITEMS.length,
     };
   }
   if (drill === 'zaehlerwort') {
     return {
-      questions: shuffled([...ZAEHLER_ITEMS], random).slice(0, size).map(buildZaehlerQuestion),
+      questions: shuffled([...ZAEHLER_ITEMS], random).slice(0, size).map((item) => buildZaehlerQuestion(item, anchor, ui)),
       available: ZAEHLER_ITEMS.length,
     };
   }
@@ -144,7 +169,7 @@ export function buildGrammarSession(
   return {
     questions: shuffled(konsonanten, random)
       .slice(0, size)
-      .map(buildKonsonantenklasseQuestion),
+      .map((konsonant) => buildKonsonantenklasseQuestion(konsonant, anchor, ui)),
     available: konsonanten.length,
   };
 }

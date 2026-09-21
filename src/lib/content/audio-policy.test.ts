@@ -24,7 +24,7 @@ test('catalog status must agree with the measurement; delivery never relabels un
   const entry = { kind: 'audio', document: { language: 'th' }, check: { status: 'unchecked', tone: { status: 'unchecked' } } } as ContentEntry;
   expect(isDeliverableEntry(entry)).toBe(true);
   expect(isDeliverableEntry({ ...entry, check: { ...entry.check!, status: 'passed' } })).toBe(false);
-  expect(clipToneLabel('unchecked')).toBe('KI-Stimme, Ton nicht geprüft');
+  expect(clipToneLabel('unchecked')).toBe('audio.toneUnchecked');
   expect(clipToneLabel('passed')).not.toBe(clipToneLabel('unchecked'));
 });
 
@@ -41,11 +41,11 @@ test('real catalog resolver blocks unchecked and raw asset bypass for tone recog
     }
     expect(speak).not.toHaveBeenCalled(); expect(playAsset).not.toHaveBeenCalled();
     const checked = await playPronunciationWithStatus({ text: 'passed', language: 'th', purpose: 'tone' });
-    expect(checked.toneStatus).toBe('passed'); expect(checked.label).toBe('KI-Stimme, Ton automatisch geprüft');
+    expect(checked.toneStatus).toBe('passed'); expect(checked.label).toBe('audio.tonePassed');
     for (const purpose of ['vocabulary', 'sentence'] as const) {
       const unchecked = await playPronunciationWithStatus({ text: 'unchecked', language: 'th', purpose });
       expect(unchecked.kind).toBe('asset'); expect(unchecked.toneStatus).toBe('unchecked');
-      expect(unchecked.label).toBe('KI-Stimme, Ton nicht geprüft');
+      expect(unchecked.label).toBe('audio.toneUnchecked');
       expect(unchecked.clipId).toBeDefined(); expect(playAsset).toHaveBeenLastCalledWith('file:///clip-2');
     }
     expect(speak).not.toHaveBeenCalled();

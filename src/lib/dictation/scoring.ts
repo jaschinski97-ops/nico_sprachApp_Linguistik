@@ -5,6 +5,8 @@ import {
 } from '@/data/dictation-config';
 
 import { type Rating } from '@/lib/fsrs/types';
+import type { TranslationKey } from '@/lib/i18n/keys';
+import type { TParams } from '@/lib/i18n/types';
 
 /**
  * Diktat-Bewertung: Gehörtes gegen Getipptes — vollständig offline, reine
@@ -60,8 +62,12 @@ export type DictationScore = {
   toneWarning: boolean;
   /** Leere Eingabe — wird nie als Diktat gewertet. */
   empty: boolean;
-  /** Ein ehrlicher Satz zur Abweichung; `null` nur bei `exact`. */
-  message: string | null;
+  /**
+   * Ein ehrlicher Satz zur Abweichung; `null` nur bei `exact`. SEIT DEM
+   * 21.09.2026 ALS WÖRTERBUCHSCHLÜSSEL: Der Runner übersetzt ihn in der
+   * App-Sprache — vorher standen hier deutsche Sätze auf jeder Oberfläche.
+   */
+  message: { key: TranslationKey; params?: TParams } | null;
   /** Zieltext (plus zu viel Getipptes) für die Farb-Anzeige. */
   diff: DictationDiffToken[];
 };
@@ -432,15 +438,15 @@ function messageFor(
   toneWarning: boolean,
   empty: boolean,
   config: DictationLanguageConfig
-): string | null {
-  if (empty) return 'Noch nichts eingetragen.';
+): { key: TranslationKey; params?: TParams } | null {
+  if (empty) return { key: 'dictation.msgEmpty' };
   if (exact) return null;
-  if (passed && toneWarning) return 'Basisschrift korrekt — Töne/Tonzeichen prüfen.';
-  if (passed) return 'Bestanden — die markierten Wörter saßen nicht ganz sauber.';
+  if (passed && toneWarning) return { key: 'dictation.msgToneWarning' };
+  if (passed) return { key: 'dictation.msgPassedImpure' };
   if (config.script === 'thai' && baseScore >= config.passThreshold) {
-    return `Basisschrift korrekt, aber die Tonzeichen weichen zu stark ab (${diacriticScore} %).`;
+    return { key: 'dictation.msgToneMarksOff', params: { score: diacriticScore } };
   }
-  return 'Die Basisschrift weicht noch zu stark ab.';
+  return { key: 'dictation.msgBaseOff' };
 }
 
 /**

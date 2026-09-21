@@ -43,7 +43,7 @@ test('X_to_de-Karte: Brückenseite stumm; aufgedeckt liest die Gerätestimme das
   const knoepfe = () => tree.root.findAll(node => typeof node.props.onPress === 'function' && node.props.accessibilityRole === 'button');
   expect(knoepfe().filter(node => String(node.props.accessibilityLabel ?? '').includes('anhören'))).toHaveLength(0);
   await act(async () => { tree.update(<Flashcard entry={word} direction="th_to_de" revealed={true} />); });
-  mockPlayback.mockResolvedValueOnce({ kind: 'tts', label: 'Gerätestimme' });
+  mockPlayback.mockResolvedValueOnce({ kind: 'tts', label: 'audio.systemVoice' });
   // Der Deutsch-Knopf trägt das listenGermanA11y-Label (a11y-Label = Label + Text).
   const deutschKnopf = () => tree.root.findAll(node => typeof node.props.onPress === 'function' && String(node.props.accessibilityLabel ?? '').startsWith('Deutsch anhören'))[0];
   await act(async () => deutschKnopf().props.onPress());
@@ -51,8 +51,8 @@ test('X_to_de-Karte: Brückenseite stumm; aufgedeckt liest die Gerätestimme das
 });
 
 test('vocabulary playback displays this clip status and clears the previous clip label when the word changes', async () => {
-  mockPlayback.mockResolvedValueOnce({ kind: 'asset', toneStatus: 'unchecked', label: 'KI-Stimme, Ton nicht geprüft' })
-    .mockResolvedValueOnce({ kind: 'asset', toneStatus: 'passed', label: 'KI-Stimme, Ton automatisch geprüft' });
+  mockPlayback.mockResolvedValueOnce({ kind: 'asset', toneStatus: 'unchecked', label: 'audio.toneUnchecked' })
+    .mockResolvedValueOnce({ kind: 'asset', toneStatus: 'passed', label: 'audio.tonePassed' });
   await act(async () => { tree = create(<Flashcard entry={word} direction="de_to_th" revealed={true} />); });
   const press = async () => act(async () => tree.root.findAll(node => typeof node.props.onPress === 'function' && node.props.accessibilityRole === 'button')[0].props.onPress());
   await press();
@@ -85,7 +85,7 @@ test('tone answers stay blocked until a passed clip actually starts', async () =
   expect(option().props.disabled).toBe(true);
   await act(async () => option().props.onPress()); expect(mockRecord).not.toHaveBeenCalled();
   expect(mockPlayback).toHaveBeenCalledWith(expect.objectContaining({ purpose: 'tone' }));
-  await act(async () => finish({ kind: 'asset', toneStatus: 'passed', label: 'KI-Stimme, Ton automatisch geprüft' }));
+  await act(async () => finish({ kind: 'asset', toneStatus: 'passed', label: 'audio.tonePassed' }));
   expect(option().props.disabled).toBe(false);
   await act(async () => option().props.onPress()); expect(mockRecord).toHaveBeenCalledTimes(1);
 });

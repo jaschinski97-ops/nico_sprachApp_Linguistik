@@ -6,6 +6,7 @@ import { ThemedText, displayLineHeight } from './themed-text';
 import { Spacing } from '@/constants/theme';
 import { syllablesOf } from '@/data/vocab-helpers';
 import { VocabEntry } from '@/data/vocab-types';
+import { useLocale } from '@/lib/i18n';
 
 /**
  * Das fremdsprachige Wort mit seiner Auszeichnung (Phase 16).
@@ -34,10 +35,15 @@ export function TermWord({
   entry: VocabEntry;
   size?: 'large' | 'medium';
 }) {
+  const { t } = useLocale();
   if (entry.language === 'th') return <ThaiWord entry={entry} size={size} />;
 
   const syllables = syllablesOf(entry);
   const showsStress = syllables.some((syllable) => syllable.stressed);
+  // Einsilbler: Die Silbenzeile würde das Wort wiederholen und „betont: X“
+  // ist bei einer einzigen Silbe keine Information mehr (Nutzerbefund
+  // 21.09.2026: „diez“ dreimal auf der Karte).
+  const showsStressLine = showsStress && syllables.length > 1;
   // Wie bei `ThaiWord`: sehr große Fassung begrenzt, mittlere großzügiger;
   // Zeilenhöhe wächst mit (UI-Review 2026-09-07). Die Größen selbst bleiben
   // bewusst eigene Stufen — lateinische Schrift braucht weniger Kopffreiheit
@@ -79,9 +85,9 @@ export function TermWord({
         </ThemedText>
       ) : null}
 
-      {showsStress ? (
+      {showsStressLine ? (
         <ThemedText type="small" themeColor="textSecondary">
-          betont: {syllables.find((syllable) => syllable.stressed)?.roman}
+          {t('termWord.stressed', { syllable: syllables.find((syllable) => syllable.stressed)?.roman ?? '' })}
         </ThemedText>
       ) : null}
     </View>

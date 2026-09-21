@@ -7,13 +7,63 @@ import type { PairDirection } from '../languages/types';
 import type { UiLanguage } from '../i18n/types';
 import { HUB_LANGUAGE } from '../languages/types';
 import { analyzeSyllable } from '../reading/syllable';
+import { type DerivationStep } from '../reading/syllable';
 import { ACUTE_TO_PLAIN } from '@/data/spanish-stress';
 
 import { GraphemeGroup, graphemeGroups, groupFor } from '../spelling/graphemes';
 import { analyzeStress } from '../stress/syllables';
+import { type KeyedStep } from '../stress/syllables';
 
 import { Random, shuffled } from './random';
 import { DRILL_META, DrillOption, DrillQuestion } from './types';
+import { translate } from '../i18n';
+import { bridgeText } from '../languages/bridge';
+
+/**
+ * Anker-Kontext einer Aufgabe (21.09.2026, Nutzerbefund en-UI): Hints und
+ * Lösungen durften ihre Bedeutungsseite nicht länger stillschweigend auf
+ * Deutsch lesen. Auf der eigenen Ankerseite (etwa th_to_de mit Grundstock)
+ * ist das Wort selbst der Kontext, sonst der Brückentext.
+ */
+function kontextFuer(entry: VocabEntry, anchor: UiLanguage): string {
+  if (anchor === String(entry.language)) {
+    return entry.romanization && entry.romanization !== entry.term
+      ? `${entry.term} · ${entry.romanization}`
+      : entry.term;
+  }
+  return bridgeText(entry, anchor).text;
+}
+
+/**
+ * Lösungszeile ohne Dubletten: Form und Umschrift nur, wenn sie verschieden
+ * sind, Bedeutung nur, wenn sie nicht das Wort selbst wiederholt — vorher
+ * stand bei erzeugten Einträgen gern „diez · diez — diez“ oder für Deutsch
+ * „Bis gleich · Bis glykh · Bis gleich“.
+ */
+function losungForm(entry: VocabEntry, anchor: UiLanguage): string {
+  const form = entry.romanization && entry.romanization !== entry.term
+    ? `${entry.term} · ${entry.romanization}`
+    : entry.term;
+  const bedeutung = bridgeText(entry, anchor).text;
+  return bedeutung && bedeutung !== entry.term ? `${form} — ${bedeutung}` : form;
+}
+
+/** Schlüssel-Schritte der Betonungsherkunft in der UI-Sprache ausgeben. */
+function uebersetzteSchritte(steps: KeyedStep[], ui: UiLanguage): DerivationStep[] {
+  return steps.map((step) => ({
+    label: translate(ui, step.labelKey),
+    value: step.value,
+    detail: translate(ui, step.detailKey, step.detailParams),
+  }));
+}
+
+/** Die Regel-Sätze der Betonung — dieselben Schlüssel wie die Legende zeigt. */
+const STRESS_REGEL_KEYS = {
+  acute: 'legend.stressDetailAcute',
+  monosyllable: 'legend.stressDetailPenultimate',
+  penultimate: 'legend.stressDetailPenultimate',
+  final: 'legend.stressDetailFinal',
+} as const;
 
 /**
  * Die Richtung, in der eine Aufgabe zu diesem Eintrag steht.
@@ -65,7 +115,11 @@ export function canBuildToneQuestion(entry: VocabEntry): boolean {
   return entry.language === 'th' && entry.syllables?.length === 1 && Boolean(entry.syllables[0].tone);
 }
 
-export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
+export function buildToneQuestion(
+  entry: VocabEntry,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
+): DrillQuestion {
   if (!canBuildToneQuestion(entry)) {
     throw new Error(
       `"${entry.id}" (${entry.term}) ist mehrsilbig — jede Silbe hat einen eigenen Ton, ` +
@@ -77,9 +131,10 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
   // Feste Reihenfolge, nicht gemischt: die fünf Töne sind ein festes
   // Inventar, und wer sie übt, baut sich eine Ordnung im Kopf auf (mittel,
   // tief, fallend, hoch, steigend). Wechselnde Positionen wären zusätzliche
-  // Arbeit, die mit dem Hören nichts zu tun hat.
+  // Arbeit, die mit dem Hören nichts zu tun hat. Die Tonnamen kommen aus den
+  // Wörterbüchern — auf jeder Oberfläche in ihrer Sprache.
   const options: DrillOption[] = TONE_KEYS.map((key) => ({
-    label: TONES[key].label,
+    label: translate(ui, `tone.${key}`),
     tone: key,
   }));
 
@@ -89,15 +144,15 @@ export function buildToneQuestion(entry: VocabEntry): DrillQuestion {
     direction: toTarget(entry),
     vocabId: entry.id,
     // Bewusst nichts sichtbar: Die Thai-Schrift trägt das Tonzeichen und wäre
-    // die halbe Lösung, die deutsche Bedeutung erlaubt es, die Antwort aus dem
+    // die halbe Lösung, die Bedeutung erlaubt es, die Antwort aus dem
     // Gedächtnis abzurufen statt sie zu hören. Genau das soll die Übung nicht.
     visible: null,
     visibleHint: null,
     speak: { text: entry.term, language: 'th' },
     options,
     correctIndex: TONE_KEYS.indexOf(tone),
-    solution: `${entry.term} · ${entry.romanization} — ${entry.german}`,
-    explanation: `${TONES[tone].adjective} Ton.`,
+    solution: losungForm(entry, anchor),
+    explanation: translate(ui, 'drill.toneIs', { tone: translate(ui, `tone.${tone}`) }),
   };
 }
 
@@ -124,7 +179,11 @@ export function canBuildToneRuleQuestion(entry: VocabEntry): boolean {
   return analysis.ok && analysis.tone === entry.syllables[0].tone;
 }
 
-export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
+export function buildToneRuleQuestion(
+  entry: VocabEntry,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
+): DrillQuestion {
   const analysis = analyzeSyllable(entry.term);
   if (!analysis.ok) {
     throw new Error(`"${entry.id}" (${entry.term}): ${analysis.reason}`);
@@ -138,9 +197,10 @@ export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
   }
 
   // Dieselbe feste Reihenfolge wie bei der Hoer-Uebung: Wer beide uebt, soll
-  // nicht zwei verschiedene Ordnungen im Kopf behalten muessen.
+  // nicht zwei verschiedene Ordnungen im Kopf behalten muessen. Tonnamen aus
+  // den Wörterbüchern — s. buildToneQuestion.
   const options: DrillOption[] = TONE_KEYS.map((key) => ({
-    label: TONES[key].label,
+    label: translate(ui, `tone.${key}`),
     tone: key,
   }));
 
@@ -157,8 +217,8 @@ export function buildToneRuleQuestion(entry: VocabEntry): DrillQuestion {
     speak: null,
     options,
     correctIndex: TONE_KEYS.indexOf(tone),
-    solution: `${entry.term} · ${entry.romanization} — ${entry.german}`,
-    explanation: `${TONES[tone].adjective} Ton.`,
+    solution: losungForm(entry, anchor),
+    explanation: translate(ui, 'drill.toneIs', { tone: translate(ui, `tone.${tone}`) }),
     derivation: analysis.steps,
     uncertain: analysis.uncertain,
   };
@@ -190,7 +250,7 @@ export function canBuildArticleQuestion(entry: VocabEntry): boolean {
   return Boolean(entry.germanNoun) && bareNoun(entry).length > 0;
 }
 
-export function buildArticleQuestion(entry: VocabEntry): DrillQuestion {
+export function buildArticleQuestion(entry: VocabEntry, anchor: UiLanguage = 'de'): DrillQuestion {
   const noun = entry.germanNoun;
   if (!noun) {
     throw new Error(`"${entry.id}" ist kein Substantiv — kein Artikel zu üben.`);
@@ -209,9 +269,10 @@ export function buildArticleQuestion(entry: VocabEntry): DrillQuestion {
     direction: toHub(entry),
     vocabId: entry.id,
     visible: `___ ${word}`,
-    // Das thailändische Wort als Kontext: die lernende Person spricht Thai,
-    // und ohne Kontext wäre bei mehrdeutigen Woertern unklar, was gemeint ist.
-    visibleHint: `${entry.term} · ${entry.romanization}`,
+    // Der Kontext gehört der ANKERSEITE (21.09.2026): Für th_to_de das Thai-
+    // Wort mit Umschrift, für en_to_de die englische Bedeutung — vorher
+    // wiederholte der Hint bei erzeugten de-Einträgen nur das Fragewort.
+    visibleHint: kontextFuer(entry, anchor),
     speak: null,
     options,
     correctIndex: ARTICLES.indexOf(noun.article),
@@ -252,7 +313,9 @@ export function canBuildVerbFormQuestion(entry: VocabEntry): boolean {
 export function buildVerbFormQuestion(
   entry: VocabEntry,
   pool: VocabEntry[],
-  random: Random
+  random: Random,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): DrillQuestion {
   const verb = entry.germanVerb;
   if (!verb) {
@@ -283,7 +346,9 @@ export function buildVerbFormQuestion(
   const options = shuffled([correct, ...distractors], random).map((label) => ({ label }));
 
   const stems = `${entry.german.split(',')[0].trim()} — ${verb.thirdPerson} — ${verb.praeteritum} — ${verb.perfekt}`;
-  const parts = [stems, verb.irregular ? 'unregelmäßig' : 'regelmäßig'];
+  // „unregelmäßig/regelmäßig" ist Übersichts-Chrome, nicht Stoff — localized
+  // über die Wörterbücher (21.09.2026, en-UI).
+  const parts = [stems, verb.irregular ? translate(ui, 'drill.irregular') : translate(ui, 'drill.regular')];
   if (entry.note) parts.push(entry.note);
 
   return {
@@ -292,7 +357,7 @@ export function buildVerbFormQuestion(
     direction: toHub(entry),
     vocabId: entry.id,
     visible: entry.german.split(',')[0].trim(),
-    visibleHint: `${entry.term} · ${entry.romanization}`,
+    visibleHint: kontextFuer(entry, anchor),
     speak: null,
     options,
     correctIndex: options.findIndex((option) => option.label === correct),
@@ -344,8 +409,16 @@ export function buildDeutschLesenQuestion(
     throw new Error(`"${entry.id}" hat keinen Ablenker-Bestand — Pool zu klein.`);
   }
 
-  const parts = [`${entry.term} · ${entry.romanization}`, entry.german];
-  if (entry.note) parts.push(entry.note);
+  // Erklärzeile ohne Dubletten (Nutzerbefund 21.09.: „Bis gleich · Bis glykh
+  // · Bis gleich"): Form und Bedeutung nur, wenn sie etwas Neues sagen.
+  const form = entry.romanization && entry.romanization !== entry.term
+    ? `${entry.term} · ${entry.romanization}`
+    : entry.term;
+  const parts = [
+    form,
+    entry.german !== entry.term ? entry.german : '',
+    entry.note ?? '',
+  ].filter((teil) => teil.length > 0);
 
   return {
     id: `deutschLesen:${entry.id}`,
@@ -453,7 +526,9 @@ export function canBuildPraesensEndungQuestion(entry: VocabEntry): boolean {
 export function buildPraesensEndungQuestion(
   entry: VocabEntry,
   pool: VocabEntry[],
-  random: Random
+  random: Random,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): DrillQuestion {
   const verb = entry.spanishVerb;
   if (!verb) throw new Error(`"${entry.id}" ist kein spanisches Verb.`);
@@ -474,7 +549,7 @@ export function buildPraesensEndungQuestion(
 
   const parts = [
     `${entry.term} → ${stamm}${richtig}`,
-    `Klasse: -${klasse}`,
+    translate(ui, 'drill.verbClass', { klasse: `-${klasse}` }),
   ];
   if (entry.note) parts.push(entry.note);
 
@@ -484,7 +559,9 @@ export function buildPraesensEndungQuestion(
     direction: toTarget(entry),
     vocabId: entry.id,
     visible: `${PERSONEN[personIndex]} · ${entry.term}`,
-    visibleHint: entry.german,
+    // Bedeutung in der Ankersprache statt stur Deutsch (21.09.2026, en-UI:
+    // „miauen“ unter englischer Oberfläche).
+    visibleHint: kontextFuer(entry, anchor),
     speak: null,
     options: optionenListe.map((label) => ({ label })),
     correctIndex: optionenListe.findIndex((label) => label === richtig),
@@ -573,7 +650,11 @@ export function canBuildStressQuestion(entry: VocabEntry): boolean {
   return analysis.stressedIndex === entry.syllables.findIndex((syllable) => syllable.stressed);
 }
 
-export function buildStressQuestion(entry: VocabEntry): DrillQuestion {
+export function buildStressQuestion(
+  entry: VocabEntry,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
+): DrillQuestion {
   const analysis = analyzeStress(entry.term);
   if (!analysis.ok) throw new Error(`"${entry.id}" (${entry.term}): ${analysis.reason}`);
   const abgelegt = entry.syllables.findIndex((syllable) => syllable.stressed);
@@ -586,18 +667,17 @@ export function buildStressQuestion(entry: VocabEntry): DrillQuestion {
 
   // Die Antworten sind die Silben DIESES Wortes - keine ausgedachte Auswahl.
   // Ihre Zahl haengt damit am Wort, anders als bei den fuenf Toenen, die ein
-  // festes Inventar sind.
+  // festes Inventar sind. Die Silbennummer ist Chrome — Wörterbuchschlüssel.
   const options: DrillOption[] = analysis.syllables.map((syllable, index) => ({
     label: syllable,
-    hint: `${index + 1}. Silbe`,
+    hint: translate(ui, 'drill.syllableOrdinal', { index: index + 1 }),
   }));
 
-  const regel = {
-    acute: 'Der geschriebene Akut steht auf der betonten Silbe.',
-    monosyllable: 'Einsilbig - es gibt nur eine Silbe.',
-    penultimate: 'Endet auf Vokal, n oder s: vorletzte Silbe.',
-    final: 'Endet auf einen anderen Konsonanten: letzte Silbe.',
-  }[analysis.rule];
+  // Der Regeltext kommt aus den LEGENDEN-Schlüsseln — dieselben Sätze, die
+  // die Betonungs-Legende zeigt, in der UI-Sprache (21.09.2026). Die
+  // Herleitungsschritte trägt `analyzeStress` als Schlüssel und werden hier
+  // übersetzt.
+  const regel = STRESS_REGEL_KEYS[analysis.rule];
 
   return {
     id: `stressRule:${entry.id}`,
@@ -607,14 +687,14 @@ export function buildStressQuestion(entry: VocabEntry): DrillQuestion {
     // Die Schreibung IST die Aufgabe: Genau aus ihr soll die Betonung folgen.
     // Die Silbentrennung steht bewusst nicht dabei - sie waere der halbe Weg.
     visible: entry.term,
-    visibleHint: entry.german,
+    visibleHint: kontextFuer(entry, anchor),
     speak: null,
     options,
     correctIndex: analysis.stressedIndex,
-    solution: `${analysis.syllables.join('-')} - ${entry.german}`,
-    explanation: regel,
-    derivation: analysis.steps,
-    uncertain: analysis.uncertain,
+    solution: `${analysis.syllables.join('-')} - ${bridgeText(entry, anchor).text}`,
+    explanation: translate(ui, regel),
+    derivation: uebersetzteSchritte(analysis.steps, ui),
+    uncertain: analysis.uncertain ? translate(ui, analysis.uncertain.key, analysis.uncertain.params) : null,
   };
 }
 
@@ -721,7 +801,11 @@ export function canBuildStressHearQuestion(entry: VocabEntry): boolean {
   return entry.syllables.some((syllable) => syllable.stressed);
 }
 
-export function buildStressHearQuestion(entry: VocabEntry): DrillQuestion {
+export function buildStressHearQuestion(
+  entry: VocabEntry,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
+): DrillQuestion {
   const syllables = syllablesOf(entry);
   const stressed = syllables.findIndex((syllable) => syllable.stressed);
   if (stressed < 0) {
@@ -730,7 +814,7 @@ export function buildStressHearQuestion(entry: VocabEntry): DrillQuestion {
 
   const options: DrillOption[] = syllables.map((syllable, index) => ({
     label: withoutAccent(syllable.roman),
-    hint: `${index + 1}. Silbe`,
+    hint: translate(ui, 'drill.syllableOrdinal', { index: index + 1 }),
   }));
 
   const geschrieben = syllables.some((syllable) => syllable.roman !== withoutAccent(syllable.roman));
@@ -741,18 +825,18 @@ export function buildStressHearQuestion(entry: VocabEntry): DrillQuestion {
     direction: toTarget(entry),
     vocabId: entry.id,
     // Das Wort selbst bleibt unsichtbar: Die Schreibung traegt den Akut, und
-    // die deutsche Bedeutung erlaubte es, die Antwort aus dem Gedaechtnis
-    // abzurufen statt sie zu hoeren. Dieselbe Ueberlegung wie bei der
-    // Thai-Ton-Uebung aus Phase 6.
+    // die Bedeutung erlaubte es, die Antwort aus dem Gedaechtnis abzurufen
+    // statt sie zu hoeren. Dieselbe Ueberlegung wie bei der Thai-Ton-Uebung
+    // aus Phase 6.
     visible: null,
     visibleHint: null,
     speak: { text: entry.term, language: 'es' },
     options,
     correctIndex: stressed,
-    solution: `${entry.term} · ${entry.romanization} — ${entry.german}`,
+    solution: losungForm(entry, anchor),
     explanation: geschrieben
-      ? 'Die Betonung steht hier auch geschrieben da: Der Akut sitzt auf der betonten Silbe.'
-      : 'Ohne Akzentzeichen — die Betonung folgt der Grundregel aus „Betonung herleiten".',
+      ? translate(ui, 'drill.stressHearWritten')
+      : translate(ui, 'drill.stressHearNoAccent'),
   };
 }
 

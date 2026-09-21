@@ -165,7 +165,13 @@ export default function DashboardScreen() {
           {t('home.sectionLanguages')}
         </ThemedText>
         <LanguagePicker
-          selected={language}
+          // Die Markierung folgt dem AKTIVEN Ziel, nicht der gemerkten Profil-
+          // Sprache: Fällt die Richtung auf ein anderes Ziel zurück (gemerktes
+          // en_to_de auf der de-Brücke — dort ist Deutsch ausgeblendet),
+          // wanderen sonst Radio und Blick (Held/Legende/Beschreibung)
+          // auseinander (Nutzerbefund 21.09., Fund 2). `ziel.language` ist
+          // genau der Zeilenschlüssel des Pickers (beim Deutsch-Ziel 'th').
+          selected={aktivesZiel.language}
           selectedDirection={selectedDirection}
           onSelect={chooseGoal}
           onStart={startGoal}

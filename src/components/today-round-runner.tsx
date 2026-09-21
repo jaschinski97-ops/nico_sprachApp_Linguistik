@@ -15,13 +15,13 @@ import {
 } from '@/lib/audio';
 import { dictationConfigFor } from '@/data/dictation-config';
 import { dictationTasksFor } from '@/lib/dictation/tasks';
-import { SENTENCE_TASKS_BY_LANGUAGE, type SatzSprache, type SentenceTask } from '@/data/sentence-tasks';
+import { satzaufgabenFuer, type SatzSprache, type SentenceTask } from '@/data/sentence-tasks';
 import { buildDrillSession } from '@/lib/drills/session';
 import { seededRandom, shuffled } from '@/lib/drills/random';
 import { type DrillId, type DrillQuestion } from '@/lib/drills/types';
 import { type Rating } from '@/lib/fsrs/types';
-import { TranslationKey, useLocale } from '@/lib/i18n';
-import { type PairDirection } from '@/lib/languages/types';
+import { TranslationKey, useLocale, type UiLanguage } from '@/lib/i18n';
+import { anchorOf, type PairDirection } from '@/lib/languages/types';
 import { zielSprache } from '@/lib/production/tasks';
 import { loadOrCreateCardState, rateCard } from '@/lib/repository';
 import { recordDrill } from '@/lib/review-log';
@@ -263,6 +263,7 @@ export function TodayRoundRunner({
       ) : segment.kind === 'satz' ? (
         <SatzSegment
           sprache={sprache}
+          anchor={anchorOf(direction)}
           anzahl={segment.items}
           position={position}
           onAnswered={() => setErledigt((value) => value + 1)}
@@ -278,6 +279,7 @@ export function TodayRoundRunner({
       ) : (
         <ShadowingSegment
           sprache={sprache}
+          anchor={anchorOf(direction)}
           anzahl={segment.items}
           position={position}
           onDone={() => setErledigt((value) => value + 1)}
@@ -488,17 +490,20 @@ function HoerenSegment({
 
 function SatzSegment({
   sprache,
+  anchor,
   anzahl,
   position,
   onAnswered,
 }: {
   sprache: SatzSprache;
+  /** Anker-/Bedeutungsseite der Richtung (21.09.2026). */
+  anchor: UiLanguage;
   anzahl: number;
   position: number;
   onAnswered: () => void;
 }) {
   const { t } = useLocale();
-  const stoff = SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? [];
+  const stoff = anchor === 'de' ? satzaufgabenFuer(sprache, anchor) : [];
   const aufgaben = useMemo(
     () => satzAufgaben(stoff, anzahl, anzahl + sprache.length),
     [stoff, anzahl, sprache]
@@ -678,17 +683,20 @@ function DiktatSegment({
 
 function ShadowingSegment({
   sprache,
+  anchor,
   anzahl,
   position,
   onDone,
 }: {
   sprache: SatzSprache;
+  /** Anker-/Bedeutungsseite der Richtung (21.09.2026). */
+  anchor: UiLanguage;
   anzahl: number;
   position: number;
   onDone: () => void;
 }) {
   const { t } = useLocale();
-  const stoff = SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? [];
+  const stoff = anchor === 'de' ? satzaufgabenFuer(sprache, anchor) : [];
   const aufgaben = useMemo(
     () => satzAufgaben(stoff, anzahl, anzahl * 2 + 31),
     [stoff, anzahl]

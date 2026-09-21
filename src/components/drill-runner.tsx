@@ -11,8 +11,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus } from '@/lib/audio';
 import { buildDrillSession, DrillSession, scoreAnswers } from '@/lib/drills/session';
 import { DRILL_META, DrillAnswer, DrillId, DrillQuestion } from '@/lib/drills/types';
-import { useLocale, type TranslationKey } from '@/lib/i18n';
-import { PairDirection, LanguageCode } from '@/lib/languages/types';
+import { useLocale, type TranslationKey, type UiLanguage } from '@/lib/i18n';
+import { PairDirection, LanguageCode, anchorOf } from '@/lib/languages/types';
 import { DerivationStep } from '@/lib/reading/syllable';
 import { recordDrill } from '@/lib/review-log';
 
@@ -83,7 +83,12 @@ export function DrillRunner({
 }) {
   const meta = DRILL_META[drill];
   const theme = useTheme();
-  const { t } = useLocale();
+  const { t, uiLanguage } = useLocale();
+  // Anker = die Brückenseite der Richtung (21.09.2026): Bedeutungen/Hints
+  // lesen in der Sprache der Oberfläche, nicht mehr stur Deutsch.
+  const anchor: UiLanguage = direction
+    ? anchorOf(direction)
+    : (uiLanguage as UiLanguage);
 
   const [session, setSession] = useState<DrillSession | null>(null);
   const [buildFailed, setBuildFailed] = useState<string | null>(null);
@@ -102,7 +107,7 @@ export function DrillRunner({
     setChosen(null);
     setAnswers([]);
     setHeardId(null);
-    buildDrillSession({ drill, language, direction, ...(drill === 'tone' ? {
+    buildDrillSession({ drill, language, direction, anchor, uiLanguage, ...(drill === 'tone' ? {
       isEligible: (entry: import('@/data/vocab-types').VocabEntry) => hasPronunciationClip({ text: entry.term, language: 'th', purpose: 'tone' }),
     } : {}) }).then((built) => {
       if (!cancelled) setSession(built);
@@ -114,7 +119,7 @@ export function DrillRunner({
     return () => {
       cancelled = true;
     };
-  }, [drill, language, direction, round]);
+  }, [drill, language, direction, anchor, uiLanguage, round]);
 
   // Jede HOERuebung braucht eine Stimme - seit Phase 18 sind das drei statt
   // einer. Gewarnt wird ausschliesslich bei einem eindeutigen "nein"; siehe
@@ -333,9 +338,13 @@ export function DrillRunner({
                 : t('drill.wrong')}
             </ThemedText>
             <ThemedText type="small">{question.solution}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {question.explanation}
-            </ThemedText>
+            {/* Leer = die Erklärung lebt in der Herleitung bzw. gehört dem
+                Datensatz der de-Brücke (ser/estar) — dann keine leere Zeile. */}
+            {question.explanation ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {question.explanation}
+              </ThemedText>
+            ) : null}
             {question.derivation ? (
               <DerivationBlock steps={question.derivation} uncertain={question.uncertain} />
             ) : null}
@@ -404,7 +413,10 @@ function PlayBlock({
           <ThemedText type="smallBold">{t('drill.playAgain')}</ThemedText>
         </ThemedView>
       </Pressable>
-      {label ? <ThemedText type="small">{label}</ThemedText> : null}
+      {/* `label` trägt den Wörterbuchschlüssel der Quellen-Zeile (KI-Stimme/
+          Systemstimme) — übersetzt im Render, damit auch ein Sprachwechsel
+          stimmt (21.09.2026). */}
+      {label ? <ThemedText type="small">{t(label as TranslationKey)}</ThemedText> : null}
       {voiceMissing && !hasClip ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.center}>
           {t('drill.voiceMissing', { skill: t('skill.lesen') })}

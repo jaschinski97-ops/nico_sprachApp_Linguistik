@@ -1,5 +1,6 @@
 import { bridgePoolFor } from '@/data/bridge-pools';
 import { vocabularyFor } from '@/data/vocabulary';
+import { activeVocabulary, usesGeneratedVocabulary } from '@/data/active-vocabulary';
 import { DE_CONCEPTS } from '@/data/vocabulary-de';
 
 import { languageOf } from './registry';
@@ -138,10 +139,28 @@ export function zieleFuerBruecke(bridge: Lang | ForeignBridge): Lernziel[] {
  */
 export const LERNZIELE: readonly Lernziel[] = zieleFuerBruecke('de');
 
-/** Alte oder fremde Profilziele fallen auf das erste Ziel der aktuellen Brücke. */
+/**
+ * Alte oder fremde Profilziele fallen auf das erste Ziel der aktuellen Brücke.
+ *
+ * SEIT DEM 21.09.2026 NICHT MEHR STUMF: Ein gemerktes Ziel einer ANDEREN
+ * Brücke (etwa `de_to_es` aus der deutschen Oberfläche) landet auf der
+ * englischen Brücke auf dem Ziel mit DENSELBEN Zielsprachen (`en_to_es`) —
+ * vorher sprang der aktive Blick (Held, Legende, Beschreibung) still zum
+ * ERSTEN Ziel (Thai), während das Radio weiter Spanisch anzeigte
+ * (Nutzerbefund 21.09., en-UI). Gibt es die Zielsprache auf der Brücke nicht
+ * („Englisch lernen“ auf der englischen Oberfläche) oder wäre es das
+ * Selbstpaar, gilt weiterhin das erste Ziel.
+ */
 export function directionForBridge(bridge: Lang | ForeignBridge, direction: PairDirection): PairDirection {
   const goals = zieleFuerBruecke(bridge);
-  return goals.find(goal => goal.direction === direction)?.direction ?? goals[0].direction;
+  const direkt = goals.find(goal => goal.direction === direction);
+  if (direkt) return direkt.direction;
+  const ziel = direction.split('_to_')[1];
+  if (ziel && ziel !== bridge) {
+    const passend = goals.find(goal => goal.language === ziel);
+    if (passend) return passend.direction;
+  }
+  return goals[0].direction;
 }
 
 /**
@@ -225,6 +244,7 @@ export function goalEndonym(ziel: Lernziel): string {
  * de-Pool — vorher bewusst 0 (Stufe 2), siehe `zieleFuerBruecke`.
  */
 export function wortschatzFuerZiel(ziel: Lernziel): number {
+  if (usesGeneratedVocabulary()) return activeVocabulary().filter(word => String(word.language) === ziel.direction.split('_to_')[1]).length;
   if (isDeAnchored(ziel.direction)) return languageOf(ziel.language).entryCount;
   // Für Kreuz- und ar-Richtungen steht die Brücke im Richtungs-Präfix —
   // `ziel.language` ist die Zielseite.

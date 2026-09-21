@@ -1,4 +1,4 @@
-import { Lang } from './types';
+import { ForeignBridge, Lang } from './types';
 
 /**
  * Der Brückentext einer Vokabel — und ob er wirklich eine Brücke war.
@@ -33,8 +33,8 @@ export type BridgeTextSource = {
   german: string;
   /** Die fremdsprachige Form — letzte Rückfallebene. */
   term?: string;
-  /** Brückentexte, siehe `VocabEntry.translations`. */
-  translations?: Partial<Record<Lang, string>>;
+  /** Brückentexte — seit dem 21.09.2026 in allen 20 App-Sprachen lesbar. */
+  translations?: Partial<Record<Lang | ForeignBridge, string>>;
 };
 
 /** Der aufgelöste Brückentext samt Ehrlichkeits-Kennzeichen. */
@@ -58,8 +58,13 @@ export type BridgeText = {
  *   JSDoc am Feld); Deutsch IST der Quelltext.
  * - Ein leerer Eintrag liefert den Leerstring statt zu werfen. Eine fehlende
  *   Übersetzung darf die Karteikarte nicht zum Absturz bringen.
+ *
+ * SEIT DEM 21.09.2026 NIMMT DIE FUNKTION ALLE 20 APP-SPRACHEN ALS BRÜCKE:
+ * Die generierten Vokabeln tragen `translations` für alle — die Übungen
+ * lesen ihre Bedeutungsseite über `anchorOf(direction)` und damit auch über
+ * Fremd-Brücken (`ar_to_es` & Co.).
  */
-export function bridgeText(entry: BridgeTextSource, bridge: Lang): BridgeText {
+export function bridgeText(entry: BridgeTextSource, bridge: Lang | ForeignBridge): BridgeText {
   const direct = entry.translations?.[bridge];
   if (direct) return { text: direct, usedFallback: false };
 

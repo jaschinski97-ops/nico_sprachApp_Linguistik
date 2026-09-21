@@ -234,7 +234,8 @@ async function playPronunciationNow(
 
   if (request.concurrentRecording) await backend.speak(text, LOCALE[request.language], RATE[request.language], true);
   else await backend.speak(text, LOCALE[request.language], RATE[request.language]);
-  return { kind: 'tts', label: request.language === 'th' ? 'Systemstimme, Ton nicht geprüft' : 'Systemstimme' };
+  // Wörterbuchschlüssel statt deutscher Sätze — die Runner übersetzen (21.09.2026).
+  return { kind: 'tts', label: request.language === 'th' ? 'audio.systemVoiceUnchecked' : 'audio.systemVoice' };
 }
 
 export function playPronunciation(request: PronunciationRequest): Promise<PlaybackKind> {

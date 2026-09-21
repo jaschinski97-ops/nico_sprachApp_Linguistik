@@ -12,7 +12,7 @@ import {
   playPronunciationWithStatus,
   stopPronunciation,
 } from '@/lib/audio';
-import { type ConversationSituation, type ConversationTurn } from '@/lib/conversation/types';
+import { localizedSituation, type ConversationSituation, type ConversationTurn } from '@/lib/conversation/types';
 import { type Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
 import { type PairDirection } from '@/lib/languages/types';
@@ -53,7 +53,7 @@ export function RoleplayRunner({
   direction: PairDirection;
   onExit: () => void;
 }) {
-  const { t } = useLocale();
+  const { t, uiLanguage } = useLocale();
   const colors = useTheme();
   const sprache = zielSprache(direction);
   const naht = useMemo(() => spracherkennung(), []);
@@ -68,7 +68,7 @@ export function RoleplayRunner({
     let cancelled = false;
     loadSituations()
       .then((alle) => {
-        if (!cancelled) setSzenen(alle.filter((s) => s.direction === direction));
+        if (!cancelled) setSzenen(alle.filter((s) => s.direction.endsWith(`_to_${sprache}`)).map(s => localizedSituation(s, uiLanguage)));
       })
       .catch(() => {
         if (!cancelled) setSzenen([]);
@@ -77,7 +77,7 @@ export function RoleplayRunner({
       cancelled = true;
       void stopPronunciation();
     };
-  }, [direction]);
+  }, [sprache, uiLanguage]);
 
   if (szenen === null) {
     return (
@@ -122,6 +122,11 @@ export function RoleplayRunner({
               {t('roleplay.random')}
             </ThemedText>
           </Pressable>
+        </View>
+        {/* Verlassen auch hier: Die Szenenliste war der einzige Runner-Zweig
+            ohne Rückweg (Nutzerbefund 21.09.2026). */}
+        <View style={styles.actions}>
+          <ThemedButton label={t('common.back')} onPress={onExit} />
         </View>
         <View style={styles.szeneListe}>
           {szenen.slice(0, 40).map((situation) => (
@@ -181,7 +186,9 @@ export function RoleplayRunner({
         {t('roleplay.score', { done: eigene, correct: sichere })}
       </ThemedText>
       <SzeneZeile
+        key={`${szene.id}:${stufe}`}
         zeile={zeile}
+        sprache={sprache}
         erkenne={naht.erkennen}
         hatErkennung={naht.verfuegbar}
         onWeiter={(sicher2) => {
@@ -195,17 +202,24 @@ export function RoleplayRunner({
       <ThemedText type="small" themeColor="textSecondary">
         {t('roleplay.note')}
       </ThemedText>
+      {/* Abbrechen mitten in der Szene — vorher gab es hier keinen Rückweg
+          (Nutzerbefund 21.09.2026). */}
+      <View style={styles.actions}>
+        <ThemedButton label={t('common.back')} onPress={() => { void stopPronunciation(); onExit(); }} />
+      </View>
     </>
   );
 }
 
 function SzeneZeile({
   zeile,
+  sprache,
   erkenne,
   hatErkennung,
   onWeiter,
 }: {
   zeile: ConversationTurn;
+  sprache: ReturnType<typeof zielSprache>;
   erkenne?: ErkennungsNaht['erkennen'];
   hatErkennung: boolean;
   onWeiter: (sicher: Rating | null) => void;
@@ -221,14 +235,12 @@ function SzeneZeile({
   const spiele = useCallback(() => {
     void (async () => {
       try {
-        // Szenendialoge sind immer Thai (Feld `thai`, beide Richtungen) —
-        // `german` ist die Bedeutung, nicht eine zweite Zielsprache.
         const request = {
           text: zeile.thai,
-          language: 'th' as const,
+          language: sprache,
           purpose: 'sentence' as const,
         };
-        if (!await hasPronunciationClip(request) && await isLanguageAvailable('th') === false) {
+        if (!await hasPronunciationClip(request) && await isLanguageAvailable(sprache) === false) {
           return;
         }
         await playPronunciationWithStatus(request);
@@ -236,20 +248,17 @@ function SzeneZeile({
         // Ohne Ton bleibt der Text sichtbar — die Szene läuft weiter.
       }
     })();
-  }, [zeile.thai]);
+  }, [zeile.thai, sprache]);
 
   useEffect(() => {
-    setEingabe('');
-    setErgebnis(null);
-    setSelbstOffen(false);
     if (!anDerReihe) spiele();
-  }, [zeile]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [anDerReihe, spiele]);
 
   const sprechenStarten = () => {
     if (!erkenne) return;
     void (async () => {
-      const text = await erkenne({ language: 'th-TH', onHoeren: setHoert });
-      if (text) setErgebnis(vergleicheProduktion(text, zeile.thai, 'th'));
+      const text = await erkenne({ language: { th: 'th-TH', en: 'en-US', es: 'es-ES', de: 'de-DE' }[sprache], onHoeren: setHoert });
+      if (text) setErgebnis(vergleicheProduktion(text, zeile.thai, sprache));
       else setHoert(false);
     })();
   };
@@ -295,7 +304,7 @@ function SzeneZeile({
               <View style={styles.actions}>
                 <ThemedButton
                   label={t('dictation.check')}
-                  onPress={() => setErgebnis(vergleicheProduktion(eingabe, zeile.thai, 'th'))}
+                  onPress={() => setErgebnis(vergleicheProduktion(eingabe, zeile.thai, sprache))}
                 />
                 {hatErkennung ? (
                   <ThemedButton

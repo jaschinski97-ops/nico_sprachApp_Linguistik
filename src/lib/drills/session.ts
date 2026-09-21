@@ -75,6 +75,15 @@ export type DrillSessionOptions = {
    */
   language: TargetLanguage;
   direction?: PairDirection;
+  /**
+   * ANKER- UND UI-SPRACHE (21.09.2026): Der Anker entscheidet, in welcher
+   * Sprache Bedeutungen/Hints stehen (`translations[anchor]`), die UI-Sprache
+   * welche Chrome-Sätze (Erklärungen, Ordnungszahlen) — beides Default 'de'
+   * für Bestandsaufrufer. Der Runner reicht beides aus der aktuellen
+   * Oberfläche durch.
+   */
+  anchor?: UiLanguage;
+  uiLanguage?: UiLanguage;
   store?: DataStore;
   now?: number;
   size?: number;
@@ -132,31 +141,33 @@ function buildQuestion(
   entry: VocabEntry,
   pool: VocabEntry[],
   random: Random,
-  direction: PairDirection
+  direction: PairDirection,
+  anchor: UiLanguage,
+  ui: UiLanguage
 ): DrillQuestion {
   switch (drill) {
     case 'tone':
-      return buildToneQuestion(entry);
+      return buildToneQuestion(entry, anchor, ui);
     case 'toneRule':
-      return buildToneRuleQuestion(entry);
+      return buildToneRuleQuestion(entry, anchor, ui);
     case 'article':
-      return buildArticleQuestion(entry);
+      return buildArticleQuestion(entry, anchor);
     case 'verbForms':
-      return buildVerbFormQuestion(entry, pool, random);
+      return buildVerbFormQuestion(entry, pool, random, anchor, ui);
     case 'deutschLesen':
       return buildDeutschLesenQuestion(entry, pool, random, direction);
     case 'irregularPast':
       return buildIrregularPastQuestion(entry, pool, random);
     case 'stressRule':
-      return buildStressQuestion(entry);
+      return buildStressQuestion(entry, anchor, ui);
     case 'spelling':
       return buildSpellingQuestion(entry);
     case 'stressHear':
-      return buildStressHearQuestion(entry);
+      return buildStressHearQuestion(entry, anchor, ui);
     case 'soundSpelling':
       return buildSoundSpellingQuestion(entry, undefined, random);
     case 'praesensEndung':
-      return buildPraesensEndungQuestion(entry, pool, random);
+      return buildPraesensEndungQuestion(entry, pool, random, anchor, ui);
     case 'partizip':
       return buildPartizipQuestion(entry, pool, random);
     case 'polite':
@@ -177,6 +188,8 @@ function weakness(card: FSRSCardState | undefined, now: number): number {
 export async function buildDrillSession(options: DrillSessionOptions): Promise<DrillSession> {
   const drill = options.drill;
   const direction = options.direction ?? directionForDrill(drill, options.language);
+  const anchor = options.anchor ?? 'de';
+  const ui = options.uiLanguage ?? 'de';
   const now = options.now ?? Date.now();
   const size = options.size ?? DRILL_SESSION_SIZE;
   const random = seededRandom(options.seed ?? now);
@@ -192,7 +205,7 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
     drill === 'zaehlerwort' ||
     drill === 'konsonantenklasse'
   ) {
-    const { questions, available } = buildGrammarSession(drill, random, size);
+    const { questions, available } = buildGrammarSession(drill, random, size, anchor, ui);
     return { drill, questions, available };
   }
 
@@ -213,7 +226,7 @@ export async function buildDrillSession(options: DrillSessionOptions): Promise<D
 
   return {
     drill,
-    questions: chosen.map((entry) => buildQuestion(drill, entry, candidates, random, direction)),
+    questions: chosen.map((entry) => buildQuestion(drill, entry, candidates, random, direction, anchor, ui)),
     available: candidates.length,
   };
 }

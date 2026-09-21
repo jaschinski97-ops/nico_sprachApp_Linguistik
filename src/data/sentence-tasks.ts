@@ -4,6 +4,7 @@ import { LanguageCode } from '@/lib/languages/types';
 import { VOCABULARY_TH } from './vocabulary';
 import { activeVocabulary, usesGeneratedVocabulary } from './active-vocabulary';
 import type { VocabEntry } from './vocab-types';
+import { bridgeText } from '@/lib/languages/bridge';
 
 /** Rule-based review of existing examples, not a claim of verbatim corpus attestation. */
 export const SENTENCE_SOURCES = {
@@ -136,10 +137,22 @@ export type SatzSprache = 'th' | 'en' | 'es' | 'de';
  * Schema-Vertrag). Diese Funktion macht daraus Aufgaben: Bedeutung aus dem
  * Satz, Ablenker aus den Nachbarn im Bestand (deterministisch — die Sitzung
  * mischt später mit ihrer Aussaat), Fokus-Hinweis = das Kernwort mit seiner
- * Bedeutung (im Deutsch-Ziel die Thai-Bedeutung, denn Thai ist dort die
- * Ankerseite).
+ * Bedeutung.
+ *
+ * DER ANKER BESTIMMT DIE BEDEUTUNGSSEITE (21.09.2026, Nutzerbefund en-UI):
+ * Bis hierher las alles stillschweigend Deutsch — auf der englischen
+ * Oberfläche zeigten die Satzübungen deutsche Bedeutungen. Seitdem gilt:
+ *
+ *   - `anchor: 'de'` (bisheriges Verhalten): „Satz verstehen" fragt die
+ *     deutsche Bedeutung ab (`exampleGerman` ist der einzige Satzbestand).
+ *   - `anchor ≠ 'de'`: Eine Satz-Übersetzung in der Ankersprache gibt es im
+ *     Datenbestand NICHT — die Übung wechselt ehrlich in den
+ *     **Erkennungsmodus**: gehört wird der Satz der Zielsprache, gewählt
+ *     wird seine geschriebenene Form (dasselbe Design wie beim Deutsch-Ziel,
+ *     dessen Optionen immer schon die Zielsätze waren). Der Fokus-Hinweis
+ *     bleibt WORTweise übersetzt (`translations[anchor]`).
  */
-export function buildSentenceTasks(words: VocabEntry[]): SentenceTask[] {
+export function buildSentenceTasks(words: VocabEntry[], anchor: UiLanguage = 'de'): SentenceTask[] {
   const gesehen = new Set<string>();
   const basis: VocabEntry[] = [];
   for (const word of words) {
@@ -150,19 +163,24 @@ export function buildSentenceTasks(words: VocabEntry[]): SentenceTask[] {
     gesehen.add(text);
     basis.push(word);
   }
+  const ablenkerFeld = anchor === 'de'
+    ? (word: VocabEntry) => (word.exampleGerman ?? '').trim()
+    : (word: VocabEntry) => (word.exampleTerm ?? '').trim();
   return basis.map((word, index) => {
     const german = (word.exampleGerman ?? '').trim();
+    const loesung = anchor === 'de' ? german : (word.exampleTerm ?? '').trim();
     const ablenker: string[] = [];
     for (let schritt = 1; ablenker.length < 2 && schritt < basis.length; schritt += 1) {
       const andere = basis[(index + schritt) % basis.length];
-      const vorschlag = (andere.exampleGerman ?? '').trim();
-      if (!vorschlag || vorschlag === german || ablenker.includes(vorschlag)) continue;
+      const vorschlag = ablenkerFeld(andere);
+      if (!vorschlag || vorschlag === loesung || ablenker.includes(vorschlag)) continue;
       ablenker.push(vorschlag);
     }
-    // Deutsch-Ziel: Thai ist die Anker-/Bedeutungsseite des Paars.
-    const bedeutung = String(word.language) === 'de'
-      ? (word.translations?.th ?? word.german)
-      : word.german;
+    // Fokus-Hinweis: das Kernwort mit seiner Bedeutung in der ANKERSPRACHE —
+    // wortweise gibt es sie für alle 20 Sprachen (satzebene nicht).
+    const bedeutung = anchor === String(word.language)
+      ? word.term
+      : bridgeText(word, anchor).text;
     return {
       id: `sentence-${word.id}`,
       vocabId: word.id,
@@ -170,19 +188,39 @@ export function buildSentenceTasks(words: VocabEntry[]): SentenceTask[] {
       german,
       roman: (word.exampleRoman ?? '').trim(),
       focus: `${word.term} · ${bedeutung}`,
-      answers: [german, ...ablenker],
+      answers: [loesung, ...ablenker],
       reason: 'KI-erzeugter Beispielsatz des generierten Wortschatzbestands; mit dem Worteintrag erzeugt und kreuzgeprüft.',
       reviewMethod: 'KI-Erzeugung mit Kreuzprüfung (Studio-Pipeline)',
     };
   });
 }
 
-function generierteSatzTasks(language: SatzSprache): SentenceTask[] {
-  return buildSentenceTasks(activeVocabulary().filter(word => String(word.language) === language));
+/**
+ * Satzaufgaben je Zielsprache UND Ankersprache (21.09.2026).
+ *
+ * Die Registry ist seit dem Anker-Umbau eine Funktion: Dieselbe Zielsprache
+ * trägt VERSCHIEDENE Aufgaben je Brücke (de-Brücke: Bedeutungen abfragen;
+ * andere Brücken: Zielsatz erkennen). Bewusst OHNE Cache — der Bestand kann
+ * sich zwischen zwei Aufrufen ändern (Studio-Publish im laufenden Betrieb),
+ * und der Aufbau über die aktive Vokabelliste kostet Millisekunden.
+ */
+export function satzaufgabenFuer(language: SatzSprache, anchor: UiLanguage = 'de'): SentenceTask[] {
+  if (!usesGeneratedVocabulary()) {
+    return language === 'th' ? SENTENCE_TASKS : [];
+  }
+  return buildSentenceTasks(
+    activeVocabulary().filter(word => String(word.language) === language),
+    anchor
+  );
 }
 
 /**
  * Satzaufgaben je Sprache (AE-66, 18.09. erweitert).
+ *
+ * SEIT DEM 21.09.2026 NUR NOCH DER DE-GEANKERTE STAND (Rückfall für
+ * Bestandsaufrufer ohne Richtung): die lebende registry ist
+ * `satzaufgabenFuer(language, anchor)` — die Satzübungen, das Diktat, „Sag
+ * es" und die Heutige Runde rufen sie mit dem Anker ihrer Richtung.
  *
  * LEGACY-Katalog (fester Grundstock): Thai liefert die hand-auditierten
  * Satzlesarten, die anderen Sprachen bleiben ehrlich leer.
@@ -192,10 +230,10 @@ function generierteSatzTasks(language: SatzSprache): SentenceTask[] {
  * die Erzeugung lief; der Leerzustand bleibt der ehrliche Hinweis.
  */
 export const SENTENCE_TASKS_BY_LANGUAGE: Record<SatzSprache, SentenceTask[]> = {
-  get th() { return usesGeneratedVocabulary() ? generierteSatzTasks('th') : SENTENCE_TASKS; },
-  get en() { return usesGeneratedVocabulary() ? generierteSatzTasks('en') : []; },
-  get es() { return usesGeneratedVocabulary() ? generierteSatzTasks('es') : []; },
-  get de() { return usesGeneratedVocabulary() ? generierteSatzTasks('de') : []; },
+  get th() { return satzaufgabenFuer('th'); },
+  get en() { return satzaufgabenFuer('en'); },
+  get es() { return satzaufgabenFuer('es'); },
+  get de() { return satzaufgabenFuer('de'); },
 };
 
 /** Der ehrliche Fußtext je Sprache — Thai zählt den Bestand, die anderen sagen, was fehlt. */

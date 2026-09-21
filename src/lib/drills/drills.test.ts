@@ -1,4 +1,5 @@
 import { TONE_KEYS, TONES } from '@/constants/tones';
+import { translate } from '../i18n';
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
@@ -80,7 +81,8 @@ describe('Ton-Uebung', () => {
     // faelschlich als "falling" fuehrte.
     const question = buildToneQuestion(entryById('gai'));
     expect(question.options[question.correctIndex].tone).toBe('low');
-    expect(question.explanation).toContain(TONES.low.adjective);
+    // SEIT DEM 21.09.2026 Chrome-Satz mit Wörterbuch-Tonnamen (UI-Sprache).
+    expect(question.explanation).toBe(translate('de', 'drill.toneIs', { tone: TONES.low.label }));
   });
 
   it('trifft fuer jedes einsilbige Wort den Ton aus den Daten', () => {
@@ -117,7 +119,9 @@ describe('Artikel-Uebung', () => {
   });
 
   it('zeigt die Luecke und den thailaendischen Kontext', () => {
-    const question = buildArticleQuestion(entryById('baan'));
+    // Anker Thai: das Wort selbst (mit Umschrift) ist der Kontext — die
+    // Bedeutung steht auf der Rückseite (Vertrag 21.09.2026).
+    const question = buildArticleQuestion(entryById('baan'), 'th');
     expect(question.visible).toBe('___ Haus');
     expect(question.visibleHint).toContain('บ้าน');
   });

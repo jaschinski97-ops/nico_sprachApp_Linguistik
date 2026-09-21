@@ -8,7 +8,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { sentenceFootnote, type SatzSprache } from '@/data/sentence-tasks';
 import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
-import { useLocale } from '@/lib/i18n';
+import { useLocale, type UiLanguage } from '@/lib/i18n';
 import type { CapturedPcm } from '@/lib/speaking';
 import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession,
   SENTENCE_WINDOWS_MS, type SentenceMeasurement, type SentenceMode } from '@/lib/speaking/sentence-session';
@@ -26,13 +26,15 @@ export function SentenceAction({ label, onPress, disabled = false }: {
 }
 
 
-export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode; language: SatzSprache; onExit: () => void }) {
+export function SentenceRunner({ mode, language, anchor = 'de', onExit }: {
+  mode: SentenceMode; language: SatzSprache; /** Anker-/Bedeutungsseite der Richtung (21.09.2026). */ anchor?: UiLanguage; onExit: () => void;
+}) {
   const { t, uiLanguage, languageName } = useLocale();
   // Die Aussaat ist ein eigener Zustand: „Neue Runde“ würfelt sie neu, damit
   // nicht dieselbe Satzfolge und Antwortmischung wie in der Runde davor
   // herauskommt.
   const [seed, setSeed] = useState(() => Date.now());
-  const tasks = useMemo(() => sentenceSession(language, seed), [language, seed]);
+  const tasks = useMemo(() => sentenceSession(language, seed, anchor), [language, seed, anchor]);
   const [index, setIndex] = useState(0);
   const [round, setRound] = useState(0);
   const [preparedAt, setPreparedAt] = useState(() => Date.now());
@@ -199,7 +201,10 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
         : t('sentence.hintShadowing')}</ThemedText>}
     </>}
     {!listening && <>
-      <ThemedText type="smallBold">{task.german}</ThemedText>
+      {/* Die deutsche Satzbedeutung nur auf der de-Brücke: Andere Anker haben
+          keine Satzübersetzung im Bestand — der Fokus-Hinweis (wortweise
+          übersetzt) bleibt die ehrliche Verständnishilfe (21.09.2026). */}
+      {anchor === 'de' && <ThemedText type="smallBold">{task.german}</ThemedText>}
       {/* Der Thai-Satz in Displaygröße: Skalierungsdeckel wie überall, sonst
           schneiden Zeilenhöhe und Tonzeichen einander (UI-Review 2026-09-07). */}
       {(stage !== 'record' || mode === 'shadowing') && <><ThemedText type="subtitle" maxFontSizeMultiplier={2} style={{ lineHeight: displayLineHeight(32, 2) }}>{task.text}</ThemedText>{task.roman && task.roman !== task.text && <ThemedText>{task.roman}</ThemedText>}</>}
@@ -209,7 +214,10 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
       </>}
     </>}
     {(listening || stage === 'prepare') && <SentenceAction label={heard ? t('sentence.listenAgain') : t('sentence.listen')} onPress={() => void listen()} disabled={busy} />}
-    <ThemedText type="small">{t('sentence.exampleNote')}</ThemedText>
+    {/* Die ehrliche Quellen-Zeile nur, solange keine Aussage der Wiedergabe
+        danebensteht — sonst stand hier zweimal fast dasselbe (Nutzerbefund
+        21.09.2026, en-UI). */}
+    {!notice && <ThemedText type="small">{t('sentence.exampleNote')}</ThemedText>}
     <ThemedText accessibilityLiveRegion="polite" type="small">{capture.error?.message || notice}</ThemedText>
     {!listening && stage === 'prepare' && <>
       {mode === 'shadowing' && <SentenceAction label={headphones ? t('sentence.headphonesOk') : t('sentence.headphones')} onPress={() => setHeadphones(value => !value)} />}
@@ -229,10 +237,13 @@ export function SentenceRunner({ mode, language, onExit }: { mode: SentenceMode;
     </>}
     {listening && <>
       <ThemedText type="smallBold">{t('sentence.questionPrompt')}</ThemedText>
+      {/* Die erste Antwort ist IMMER die Lösung — auf der de-Brücke die
+          deutsche Bedeutung, auf anderen Brücken der gehörte Zielsatz
+          (Erkennungsmodus, 21.09.2026). */}
       {sentenceAnswers(task, seed + index).map(option => <SentenceAction key={option} label={option} disabled={!heard || answer !== null || busy}
-        onPress={() => { if (!heard || answer !== null) return; setAnswer(option); if (option === task.german) setCorrect(value => value + 1); void stopPronunciation(); }} />)}
+        onPress={() => { if (!heard || answer !== null) return; setAnswer(option); if (option === task.answers[0]) setCorrect(value => value + 1); void stopPronunciation(); }} />)}
       {answer !== null && <>
-        <ThemedText accessibilityLiveRegion="polite">{answer === task.german ? t('sentence.correct') : t('sentence.meant', { answer: task.german })}</ThemedText>
+        <ThemedText accessibilityLiveRegion="polite">{answer === task.answers[0] ? t('sentence.correct') : t('sentence.meant', { answer: task.answers[0] })}</ThemedText>
         <ThemedText>{task.text}</ThemedText>
         {task.roman && task.roman !== task.text ? <ThemedText>{task.roman}</ThemedText> : null}
         <ThemedText type="small">{task.focus}</ThemedText>

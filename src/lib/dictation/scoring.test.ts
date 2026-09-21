@@ -51,7 +51,7 @@ describe('Thai — die zweistufige Bewertung', () => {
     expect(score.passed).toBe(true);
     expect(score.exact).toBe(false);
     expect(score.toneWarning).toBe(true);
-    expect(score.message).toContain('Töne/Tonzeichen prüfen');
+    expect(score.message?.key).toBe('dictation.msgToneWarning');
     expect(ratingForScore(score)).toBe(2);
   });
 
@@ -70,7 +70,7 @@ describe('Thai — die zweistufige Bewertung', () => {
     expect(score.diacriticScore).toBe(0);
     expect(score.passed).toBe(false);
     expect(score.toneWarning).toBe(false);
-    expect(score.message).toContain('Tonzeichen weichen zu stark ab');
+    expect(score.message?.key).toBe('dictation.msgToneMarksOff');
     expect(ratingForScore(score)).toBeNull();
   });
 
@@ -109,7 +109,7 @@ describe('Thai — die zweistufige Bewertung', () => {
     const score = scoreDictation('   ', SATZ, th);
     expect(score.empty).toBe(true);
     expect(score.passed).toBe(false);
-    expect(score.message).toContain('Noch nichts eingetragen');
+    expect(score.message?.key).toBe('dictation.msgEmpty');
     expect(ratingForScore(score)).toBeNull();
   });
 
@@ -220,7 +220,7 @@ describe('Lateinische Sprachen — case-folding, Akzente, Schwellen', () => {
     const score = scoreDictation('', 'I do not understand.', en);
     expect(score.empty).toBe(true);
     expect(score.passed).toBe(false);
-    expect(score.message).toContain('Noch nichts eingetragen');
+    expect(score.message?.key).toBe('dictation.msgEmpty');
   });
 
   it('zählt ein zusätzliches Wort als Fehler', () => {

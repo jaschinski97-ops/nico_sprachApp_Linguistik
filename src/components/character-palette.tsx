@@ -7,6 +7,7 @@ import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { THAI_CONSONANTS, TONE_MARKS, TONE_MARK_KEYS } from '@/data/thai-script';
 import { useToneColor } from '@/hooks/use-theme';
+import { useLocale, type TranslationKey } from '@/lib/i18n';
 
 /**
  * Zeicheneingabe ohne Systemtastatur (Phase 14, AE-39).
@@ -180,27 +181,28 @@ export function ThaiPalette({ onInsert, disabled }: PaletteProps) {
  * Strenge unfair.
  */
 const GERMAN_SPECIALS = [
-  { character: 'ä', name: 'a Umlaut' },
-  { character: 'ö', name: 'o Umlaut' },
-  { character: 'ü', name: 'u Umlaut' },
-  { character: 'ß', name: 'scharfes s' },
-  { character: 'Ä', name: 'großes A Umlaut' },
-  { character: 'Ö', name: 'großes O Umlaut' },
-  { character: 'Ü', name: 'großes U Umlaut' },
+  { character: 'ä', name: 'palette.umlaut', letter: 'a' },
+  { character: 'ö', name: 'palette.umlaut', letter: 'o' },
+  { character: 'ü', name: 'palette.umlaut', letter: 'u' },
+  { character: 'ß', name: 'palette.sharpS', letter: 'ß' },
+  { character: 'Ä', name: 'palette.capitalUmlaut', letter: 'A' },
+  { character: 'Ö', name: 'palette.capitalUmlaut', letter: 'O' },
+  { character: 'Ü', name: 'palette.capitalUmlaut', letter: 'U' },
 ];
 
 export function GermanPalette({ onInsert, disabled }: PaletteProps) {
+  const { t } = useLocale();
   return (
     <View style={styles.palette}>
       <ThemedText type="small" themeColor="textSecondary">
-        Umlaute und ß — falls die Tastatur sie nicht hat:
+        {t('palette.germanHeading')}
       </ThemedText>
       <View style={styles.keys}>
         {GERMAN_SPECIALS.map((special) => (
           <Key
             key={special.character}
             label={special.character}
-            spokenLabel={special.name}
+            spokenLabel={t(special.name as TranslationKey, { letter: special.letter })}
             onPress={() => onInsert(special.character)}
             disabled={disabled}
           />
@@ -223,27 +225,28 @@ export function GermanPalette({ onInsert, disabled }: PaletteProps) {
  * Grundstocks braucht sie.
  */
 const SPANISH_SPECIALS = [
-  { character: 'á', name: 'a mit Akut' },
-  { character: 'é', name: 'e mit Akut' },
-  { character: 'í', name: 'i mit Akut' },
-  { character: 'ó', name: 'o mit Akut' },
-  { character: 'ú', name: 'u mit Akut' },
-  { character: 'ñ', name: 'n mit Tilde' },
-  { character: 'ü', name: 'u mit Trema' },
+  { character: 'á', name: 'palette.acute', letter: 'a' },
+  { character: 'é', name: 'palette.acute', letter: 'e' },
+  { character: 'í', name: 'palette.acute', letter: 'i' },
+  { character: 'ó', name: 'palette.acute', letter: 'o' },
+  { character: 'ú', name: 'palette.acute', letter: 'u' },
+  { character: 'ñ', name: 'palette.tilde', letter: 'n' },
+  { character: 'ü', name: 'palette.trema', letter: 'u' },
 ];
 
 export function SpanishPalette({ onInsert, disabled }: PaletteProps) {
+  const { t } = useLocale();
   return (
     <View style={styles.palette}>
       <ThemedText type="small" themeColor="textSecondary">
-        Akzentzeichen und ñ — falls die Tastatur sie nicht hat:
+        {t('palette.spanishHeading')}
       </ThemedText>
       <View style={styles.keys}>
         {SPANISH_SPECIALS.map((special) => (
           <Key
             key={special.character}
             label={special.character}
-            spokenLabel={special.name}
+            spokenLabel={t(special.name as TranslationKey, { letter: special.letter })}
             onPress={() => onInsert(special.character)}
             disabled={disabled}
           />

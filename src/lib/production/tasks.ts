@@ -4,7 +4,8 @@ import { SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 
 import { retrievability } from '../fsrs/fsrs';
 import { type FSRSCardState } from '../fsrs/types';
-import { type PairDirection, pairLanguageOf } from '../languages/types';
+import { type PairDirection, pairLanguageOf, anchorOf } from '../languages/types';
+import { bridgeText } from '../languages/bridge';
 import { ensureCardStates } from '../review-session';
 import { seededRandom, shuffled } from '../drills/random';
 import { type DataStore } from '../storage';
@@ -77,7 +78,11 @@ function wortAufgaben(
           id: `produktion-wort-${entry.id}`,
           vocabId: entry.id,
           art: 'wort' as const,
-          bedeutung: entry.german,
+          // Die Bedeutung in der ANKERSPRACHE (21.09.2026): Vorher stand hier
+          // stur `entry.german` — auf der englischen Oberfläche hieß es „Sag
+          // es auf Spanisch: wut" statt „anger". `bridgeText` fällt ehrlich
+          // auf Deutsch zurück, wo der Eintrag keine Übersetzung trägt.
+          bedeutung: bridgeText(entry, source).text,
           ziel: entry.term,
           roman: entry.romanization || undefined,
         }
@@ -95,8 +100,11 @@ export async function produktionsAufgaben(options: {
   const sprache = pairLanguageOf(options.direction);
   const produziertDeutsch = options.direction.endsWith('_to_de');
 
-  // Sätze zuerst — wo geprüfte Sätze liegen, werden sie gebildet.
-  if (!produziertDeutsch) {
+  // Sätze zuerst — wo geprüfte Sätze liegen, werden sie gebildet. Der
+  // Satzbestand trägt seine Bedeutungen NUR auf Deutsch (`exampleGerman`) —
+  // auf anderen Brücken gäbe es keinen ehrlichen Auftragsatz, dort springt
+  // die Wort-Ebene ein (21.09.2026, Nutzerbefund en-UI: deutsche Aufträge).
+  if (!produziertDeutsch && anchorOf(options.direction) === 'de') {
     const saetze = SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? [];
     if (saetze.length >= Math.min(anzahl, 4)) {
       return shuffled([...saetze], random)

@@ -1,5 +1,6 @@
 import type { ContentEntry } from './types';
 import type { ToneCheck } from './tone-gate';
+import type { TranslationKey } from '../i18n/keys';
 
 export type AudioPurpose = 'general' | 'tone' | 'vocabulary' | 'sentence';
 export type ToneStatus = ToneCheck['status'];
@@ -24,9 +25,14 @@ export function allowsThaiPlayback(status: ToneStatus | undefined, purpose: Audi
   return status === 'passed' || (status === 'unchecked' && (purpose === 'vocabulary' || purpose === 'sentence'));
 }
 
-export function clipToneLabel(status: ToneStatus | undefined): string {
-  if (status === 'passed') return 'KI-Stimme, Ton automatisch geprüft';
-  if (status === 'failed') return 'KI-Stimme, Tonprüfung nicht bestanden';
-  if (status === 'not-applicable') return 'KI-Stimme, keine Muttersprachler-Aufnahme';
-  return 'KI-Stimme, Ton nicht geprüft';
+/**
+ * Die ehrliche Quellen-Zeile je Tonprüfstand — ALS WÖRTERBUCHSCHLÜSSEL
+ * (21.09.2026, Nutzerbefund en-UI): Bisher standen hier deutsche Sätze, die
+ * auf jeder Oberfläche erschienen; die Runner übersetzen jetzt über `t()`.
+ */
+export function clipToneLabel(status: ToneStatus | undefined): TranslationKey {
+  if (status === 'passed') return 'audio.tonePassed';
+  if (status === 'failed') return 'audio.toneFailed';
+  if (status === 'not-applicable') return 'audio.toneNotApplicable';
+  return 'audio.toneUnchecked';
 }

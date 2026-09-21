@@ -303,6 +303,18 @@ export function pairLanguageOf(direction: PairDirection): LanguageCode {
 }
 
 /**
+ * Die ANKER-/Bedeutungsseite einer Richtung — die Sprache, die die lernende
+ * Person bereits spricht (die Brücke). `en_to_es` hat den Anker `'en'`:
+ * Bedeutungen, Hinweise und Aufträge dieser Richtung lesen sich dort, und die
+ * Übungen lokalisierten bisher stillschweigend nach Deutsch, weil der erste
+ * Bestand de-geankert war. Seit dem 21.09.2026 lesen die Übungen die
+ * Bedeutungsseite über `translations[anchorOf(direction)]`.
+ */
+export function anchorOf(direction: PairDirection): UiLanguage {
+  return direction.split('_to_')[0] as UiLanguage;
+}
+
+/**
  * Ist das eine de-geankerte Richtung (Deutsch auf einer Seite)?
  *
  * ALS TYPE PREDICATE, DAMIT BESTANDSSTELLEN SCHMALER LAUFEN: Wo ein
