@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Bengalisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Bengalisch in bengalischer Schrift, höflich und knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const bn = {
   "common.retry": "পুনরায় চেষ্টা করুন",
   "common.recheck": "পুনরায় পরীক্ষা করুন",
@@ -519,6 +519,37 @@ const bn = {
   "writing.ratingAgain": "শব্দটি শীঘ্রই আবার আসবে।",
   "writing.ratingHard": "সঠিক হিসেবে গণ্য হয়, কিন্তু অনিশ্চিত — শব্দটি ভুলমুক্ত উত্তর থেকে আগে আসবে।",
   "writing.ratingStable": "পরবর্তী পুনরাবৃত্তির মধ্যে ব্যবধান বাড়ছে।",
+  "derivation.stepInitial": "প্রাথমিক ব্যঞ্জনবর্ণ",
+  "derivation.leadingHo": "হ নিরব এবং {raised} ({from}) কে {to} এ নিয়ে যায় — হ นำ.",
+  "derivation.leadingO": "অ নিরব এবং {raised} কে {to} এ নিয়ে যায় — অ นำ, সূত্র অনুযায়ী এটি শুধুমাত্র চারটি শব্দে রয়েছে.",
+  "derivation.cluster": "সংযোগ {written}: শ্রেণীটি প্রথম অক্ষর {symbol} ({name}) থেকে এসেছে.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "ব্যঞ্জনবর্ণ শ্রেণী",
+  "derivation.classDetail": "এটি নির্ধারণ করে, কোন কলামের স্বরবর্ণ নিয়ম প্রযোজ্য.",
+  "derivation.stepVowel": "স্বরবর্ণ",
+  "derivation.vowelLong": "{ipa} — দীর্ঘ স্বরবর্ণ.",
+  "derivation.vowelLongImplicit": "{ipa} — দীর্ঘ স্বরবর্ণ, লেখা হয়নি (দুইটি ব্যঞ্জনবর্ণ স্বরবর্ণ চিহ্ন ছাড়া).",
+  "derivation.vowelShort": "{ipa} — স্বল্প স্বরবর্ণ.",
+  "derivation.vowelShortImplicit": "{ipa} — স্বল্প স্বরবর্ণ, লেখা হয়নি (দুইটি ব্যঞ্জনবর্ণ স্বরবর্ণ চিহ্ন ছাড়া).",
+  "derivation.stepFinal": "শেষ ব্যঞ্জনবর্ণ",
+  "derivation.finalPlosive": "{name} সিলেবলের শেষে {ipa} শোনায় — একটি বন্ধ ব্যঞ্জনবর্ণ.",
+  "derivation.finalSonorant": "{name} সিলেবলের শেষে {ipa} শোনায় — একটি ধ্বনিত শব্দ.",
+  "derivation.finalNone": "কোন শেষ ব্যঞ্জনবর্ণ নেই.",
+  "derivation.stepShape": "সিলেবলের প্রকার",
+  "derivation.shape.live": "জীবিত সিলেবল",
+  "derivation.shape.dead-short": "মৃত সিলেবল, সংক্ষিপ্ত",
+  "derivation.shape.dead-long": "মৃত সিলেবল, দীর্ঘ",
+  "derivation.explain.live": "দীর্ঘ স্বরবর্ণ, অথবা ধ্বনিত শেষ ব্যঞ্জনবর্ণ (ম, ন, ঙ, ও, য)",
+  "derivation.explain.dead-short": "শব্দের শেষে স্বল্প স্বরবর্ণ, অথবা বন্ধ ব্যঞ্জনবর্ণ সহ স্বল্প স্বরবর্ণ (ক, ত, প)",
+  "derivation.explain.dead-long": "বন্ধ ব্যঞ্জনবর্ণ সহ দীর্ঘ স্বরবর্ণ (ক, ত, প)",
+  "derivation.stepMark": "স্বরচিহ্ন",
+  "derivation.markNone": "কিছুই নেই",
+  "derivation.markPresent": "স্বরচিহ্ন সহ চিহ্নটি শ্রেণীর সাথে সিদ্ধান্ত নেয়; সিলেবলের প্রকার তখন আর গণনা হয় না.",
+  "derivation.markAbsent": "স্বরচিহ্ন ছাড়া শ্রেণী এবং সিলেবলের প্রকার সিদ্ধান্ত নেয়.",
+  "derivation.stepResult": "ফলাফল",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "দুইটি ব্যঞ্জনবর্ণ স্বরবর্ণ চিহ্ন ছাড়া: স্বল্প /o/ হিসাবে পড়া হয়। সূত্র একই লেখার জন্য একটি দীর্ঘ /ɔː/ জানায়; কোন পাঠ্যটি প্রযোজ্য, তা লেখায় নেই.",
+  "derivation.uncertainFinalLing": "শেষে /n/ অথবা /w/ শোনার বিষয়ে অস্পষ্ট — উত্স উভয় উচ্চারণ উল্লেখ করেছে; লেখা একা এটি নির্ধারণ করে না।",
 } as const;
 
 export default bn;

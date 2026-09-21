@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Marathi; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Marathi in Devanagari, höflich und knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const mr = {
   "common.retry": "पुन्हा प्रयत्न करा",
   "common.recheck": "पुन्हा तपासा",
@@ -519,6 +519,37 @@ const mr = {
   "writing.ratingAgain": "शब्द लवकरच पुन्हा येईल.",
   "writing.ratingHard": "हे योग्य मानले जाते, पण अनिश्चित आहे — शब्द चुकवलेल्या उत्तरापेक्षा लवकर येईल.",
   "writing.ratingStable": "पुन्हा पुनरावृत्ती करण्यासाठीचा अंतर वाढत आहे.",
+  "derivation.stepInitial": "प्रारंभिक व्यंजन",
+  "derivation.leadingHo": "ห चुप आहे आणि {raised} ({from}) ला {to} मध्ये उचलतो — ห นำ.",
+  "derivation.leadingO": "อ चुप आहे आणि {raised} ला {to} मध्ये नेतो — อ นำ, स्रोतानुसार फक्त चार शब्दांमध्ये.",
+  "derivation.cluster": "संयोग {written}: वर्ग पहिल्या अक्षर {symbol} ({name}) वरून येतो.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "व्यंजन वर्ग",
+  "derivation.classDetail": "हे ठरवते की कोणता स्तंभ ध्वनी नियम लागू आहे.",
+  "derivation.stepVowel": "स्वर",
+  "derivation.vowelLong": "{ipa} — दीर्घ स्वर.",
+  "derivation.vowelLongImplicit": "{ipa} — दीर्घ स्वर, लिहिलेले नाही (दोन व्यंजनांमध्ये स्वर चिन्ह नाही).",
+  "derivation.vowelShort": "{ipa} — लघु स्वर.",
+  "derivation.vowelShortImplicit": "{ipa} — लघु स्वर, लिहिलेले नाही (दोन व्यंजनांमध्ये स्वर चिन्ह नाही).",
+  "derivation.stepFinal": "समापन ध्वनी",
+  "derivation.finalPlosive": "{name} अक्षराच्या शेवटी {ipa} म्हणून ऐकू येतो — एक बंद ध्वनी.",
+  "derivation.finalSonorant": "{name} अक्षराच्या शेवटी {ipa} म्हणून ऐकू येतो — एक गूंजणारा ध्वनी.",
+  "derivation.finalNone": "कोणताही समापन व्यंजन नाही.",
+  "derivation.stepShape": "अक्षर प्रकार",
+  "derivation.shape.live": "जिवंत अक्षर",
+  "derivation.shape.dead-short": "मृत अक्षर, लघु",
+  "derivation.shape.dead-long": "मृत अक्षर, दीर्घ",
+  "derivation.explain.live": "दीर्घ स्वर, किंवा गूंजणाऱ्या समापन ध्वनीसह (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "शब्दाच्या शेवटी लघु स्वर, किंवा बंद ध्वनीसह लघु स्वर (k, t, p)",
+  "derivation.explain.dead-long": "बंद ध्वनीसह दीर्घ स्वर (k, t, p)",
+  "derivation.stepMark": "ध्वनी चिन्ह",
+  "derivation.markNone": "काहीही नाही",
+  "derivation.markPresent": "ध्वनी चिन्हासह चिन्ह वर्गासह निर्णय घेतो; अक्षर प्रकार आता महत्त्वाचा नाही.",
+  "derivation.markAbsent": "ध्वनी चिन्हाशिवाय वर्ग आणि अक्षर प्रकार निर्णय घेतात.",
+  "derivation.stepResult": "परिणाम",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "दोन व्यंजनांमध्ये स्वर चिन्ह नाही: लघु /o/ म्हणून वाचन. समान लेखनासाठी एक दीर्घ /ɔː/ देखील आहे; कोणती वाचन पद्धत लागू आहे, हे लेखनात नाही.",
+  "derivation.uncertainFinalLing": "अखेरीस /n/ किंवा /w/ कसे ऐकू येईल हे स्पष्ट नाही — स्रोत दोन्ही वाचनांचा उल्लेख करतो; लेखनाने एकटेच निर्णय घेतला नाही.",
 } as const;
 
 export default mr;

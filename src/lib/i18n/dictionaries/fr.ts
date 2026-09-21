@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Französisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Gegenwärtiges Standard-Französisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const fr = {
   "common.retry": "Réessayer",
   "common.recheck": "Vérifier à nouveau",
@@ -519,6 +519,37 @@ const fr = {
   "writing.ratingAgain": "Le vocabulaire reviendra bientôt.",
   "writing.ratingHard": "Compte comme correct, mais incertain — le vocabulaire reviendra plus tôt qu'avec une réponse sans faute.",
   "writing.ratingStable": "L'intervalle jusqu'à la prochaine répétition augmente.",
+  "derivation.stepInitial": "Consonne initiale",
+  "derivation.leadingHo": "ห est muet et élève {raised} ({from}) vers {to} — ห นำ.",
+  "derivation.leadingO": "อ est muet et conduit {raised} vers {to} — อ นำ, selon la source, seulement dans quatre mots.",
+  "derivation.cluster": "Connexion {written} : la classe provient de la première lettre {symbol} ({name}).",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "Classe de consonnes",
+  "derivation.classDetail": "Elle détermine quelle colonne de la règle tonale s'applique.",
+  "derivation.stepVowel": "Voyelle",
+  "derivation.vowelLong": "{ipa} — voyelle longue.",
+  "derivation.vowelLongImplicit": "{ipa} — voyelle longue, non écrite (deux consonnes sans signe vocalique).",
+  "derivation.vowelShort": "{ipa} — voyelle courte.",
+  "derivation.vowelShortImplicit": "{ipa} — voyelle courte, non écrite (deux consonnes sans signe vocalique).",
+  "derivation.stepFinal": "Consonne finale",
+  "derivation.finalPlosive": "{name} se prononce à la fin de la syllabe {ipa} — une consonne occlusive.",
+  "derivation.finalSonorant": "{name} se prononce à la fin de la syllabe {ipa} — un son résonnant.",
+  "derivation.finalNone": "Pas de consonne finale.",
+  "derivation.stepShape": "Type de syllabe",
+  "derivation.shape.live": "syllabe vivante",
+  "derivation.shape.dead-short": "syllabe morte, courte",
+  "derivation.shape.dead-long": "syllabe morte, longue",
+  "derivation.explain.live": "voyelle longue, ou voyelle avec consonne finale résonnante (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "voyelle courte à la fin du mot, ou voyelle courte avec consonne occlusive (k, t, p)",
+  "derivation.explain.dead-long": "voyelle longue avec consonne occlusive (k, t, p)",
+  "derivation.stepMark": "Signe tonal",
+  "derivation.markNone": "aucun",
+  "derivation.markPresent": "Avec un signe tonal, le signe décide avec la classe ; le type de syllabe ne compte plus.",
+  "derivation.markAbsent": "Sans signe tonal, la classe et le type de syllabe décident.",
+  "derivation.stepResult": "Résultat",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "Deux consonnes sans signe vocalique : lues comme un court /o/. La source connaît également un long /ɔː/ pour la même écriture ; quelle lecture est valable n'est pas précisé dans l'écrit.",
+  "derivation.uncertainFinalLing": "Incertain si cela se termine par /n/ ou /w/ — la source mentionne les deux prononciations ; l'écriture ne décide pas seule.",
 } as const;
 
 export default fr;

@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Portugiesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Brasilianisches Portugiesisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const pt = {
   "common.retry": "Tentar novamente",
   "common.recheck": "Rever novamente",
@@ -519,6 +519,37 @@ const pt = {
   "writing.ratingAgain": "A palavra aparecerá em breve novamente.",
   "writing.ratingHard": "Conta como correto, mas incerto — a palavra aparecerá mais cedo do que em uma resposta sem erros.",
   "writing.ratingStable": "O intervalo até a próxima repetição aumenta.",
+  "derivation.stepInitial": "Consoante inicial",
+  "derivation.leadingHo": "ห é mudo e eleva {raised} ({from}) para {to} — ห นำ.",
+  "derivation.leadingO": "อ é mudo e leva {raised} para {to} — อ นำ, segundo a fonte, apenas em quatro palavras.",
+  "derivation.cluster": "Conexão {written}: a classe vem da primeira letra {symbol} ({name}).",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "Classe de consoantes",
+  "derivation.classDetail": "Ela decide qual coluna da regra tonal se aplica.",
+  "derivation.stepVowel": "Vogal",
+  "derivation.vowelLong": "{ipa} — vogal longa.",
+  "derivation.vowelLongImplicit": "{ipa} — vogal longa, não escrita (duas consoantes sem sinal de vogal).",
+  "derivation.vowelShort": "{ipa} — vogal curta.",
+  "derivation.vowelShortImplicit": "{ipa} — vogal curta, não escrita (duas consoantes sem sinal de vogal).",
+  "derivation.stepFinal": "Consoante final",
+  "derivation.finalPlosive": "{name} soa no final da sílaba como {ipa} — uma consoante oclusiva.",
+  "derivation.finalSonorant": "{name} soa no final da sílaba como {ipa} — um som sonoro.",
+  "derivation.finalNone": "Nenhuma consoante final.",
+  "derivation.stepShape": "Tipo de sílaba",
+  "derivation.shape.live": "sílaba viva",
+  "derivation.shape.dead-short": "sílaba morta, curta",
+  "derivation.shape.dead-long": "sílaba morta, longa",
+  "derivation.explain.live": "vogal longa, ou vogal com consoante sonora final (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "vogal curta no final da palavra, ou vogal curta com consoante oclusiva (k, t, p)",
+  "derivation.explain.dead-long": "vogal longa com consoante oclusiva (k, t, p)",
+  "derivation.stepMark": "Sinal tonal",
+  "derivation.markNone": "nenhum",
+  "derivation.markPresent": "Com sinal tonal, o sinal decide junto com a classe; o tipo de sílaba não conta mais.",
+  "derivation.markAbsent": "Sem sinal tonal, a classe e o tipo de sílaba decidem.",
+  "derivation.stepResult": "Resultado",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "Duas consoantes sem sinal de vogal: lidas como /o/ curto. A fonte também reconhece uma leitura longa /ɔː/ para a mesma escrita; qual leitura é válida não está especificado na escrita.",
+  "derivation.uncertainFinalLing": "Incerteza se no final soa /n/ ou /w/ — a fonte menciona ambas as leituras; a escrita sozinha não decide.",
 } as const;
 
 export default pt;

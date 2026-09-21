@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Urdu; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Urdu (Pakistan) in arabischer Schrift (Nastaliq-Lautung), höflich und knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const ur = {
   "common.retry": "دوبارہ کوشش کریں",
   "common.recheck": "دوبارہ چیک کریں",
@@ -519,6 +519,37 @@ const ur = {
   "writing.ratingAgain": "یہ الفاظ جلد دوبارہ آئیں گے۔",
   "writing.ratingHard": "یہ درست سمجھا جاتا ہے، لیکن غیر یقینی ہے — یہ الفاظ غلطی سے پاک جواب کی نسبت جلد آئیں گے۔",
   "writing.ratingStable": "اگلی بار دہرانے کا فاصلہ بڑھتا جا رہا ہے۔",
+  "derivation.stepInitial": "ابتدائی حرف",
+  "derivation.leadingHo": "ห خاموش ہے اور {raised} کو {to} میں لے جاتا ہے — ห นำ.",
+  "derivation.leadingO": "อ خاموش ہے اور {raised} کو {to} میں لے جاتا ہے — อ นำ، ماخذ کے مطابق صرف چار الفاظ میں.",
+  "derivation.cluster": "ملنا {written}: یہ کلاس پہلے حرف {symbol} ({name}) سے آتی ہے.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "حروف کی کلاس",
+  "derivation.classDetail": "یہ طے کرتی ہے کہ کون سا کالم صوتی قاعدے پر لاگو ہوتا ہے.",
+  "derivation.stepVowel": "حرف علت",
+  "derivation.vowelLong": "{ipa} — طویل حرف علت.",
+  "derivation.vowelLongImplicit": "{ipa} — طویل حرف علت، لکھا نہیں گیا (دو حروف بغیر حرف علت کے).",
+  "derivation.vowelShort": "{ipa} — مختصر حرف علت.",
+  "derivation.vowelShortImplicit": "{ipa} — مختصر حرف علت، لکھا نہیں گیا (دو حروف بغیر حرف علت کے).",
+  "derivation.stepFinal": "آخری حرف",
+  "derivation.finalPlosive": "{name} آخری سیلاب میں {ipa} کی طرح سنائی دیتا ہے — ایک بندش حرف.",
+  "derivation.finalSonorant": "{name} آخری سیلاب میں {ipa} کی طرح سنائی دیتا ہے — ایک گونجدار حرف.",
+  "derivation.finalNone": "کوئی آخری حرف نہیں.",
+  "derivation.stepShape": "سیلاب کی قسم",
+  "derivation.shape.live": "زندہ سیلاب",
+  "derivation.shape.dead-short": "مردہ سیلاب، مختصر",
+  "derivation.shape.dead-long": "مردہ سیلاب، طویل",
+  "derivation.explain.live": "طویل حرف علت، یا گونجدار آخری حرف (m, n, ng, w, j) کے ساتھ حرف علت",
+  "derivation.explain.dead-short": "لفظ کے آخر میں مختصر حرف علت، یا بندش حرف کے ساتھ مختصر حرف علت (k, t, p)",
+  "derivation.explain.dead-long": "بندش حرف کے ساتھ طویل حرف علت (k, t, p)",
+  "derivation.stepMark": "صوتی نشان",
+  "derivation.markNone": "کوئی نہیں",
+  "derivation.markPresent": "صوتی نشان کے ساتھ نشان کلاس کے ساتھ فیصلہ کرتا ہے؛ پھر سیلاب کی قسم اہم نہیں رہتی.",
+  "derivation.markAbsent": "بغیر صوتی نشان کے کلاس اور سیلاب کی قسم فیصلہ کرتی ہیں.",
+  "derivation.stepResult": "نتیجہ",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "دو حروف بغیر حرف علت کے: مختصر /o/ کے طور پر پڑھا جاتا ہے۔ ماخذ اسی تحریر کے لیے طویل /ɔː/ بھی جانتا ہے؛ کون سا پڑھنے کا طریقہ درست ہے، یہ تحریر میں نہیں ہے.",
+  "derivation.uncertainFinalLing": "یہ واضح نہیں ہے کہ آخر میں /n/ یا /w/ کی آواز آتی ہے — ماخذ دونوں پڑھائیوں کا ذکر کرتا ہے؛ صرف تحریر اس کا فیصلہ نہیں کرتی.",
 } as const;
 
 export default ur;

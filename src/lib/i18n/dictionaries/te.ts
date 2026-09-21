@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Telugu; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Telugu in Telugu-Schrift, höflich und knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const te = {
   "common.retry": "మరలా ప్రయత్నించండి",
   "common.recheck": "మరలా తనిఖీ చేయండి",
@@ -519,6 +519,37 @@ const te = {
   "writing.ratingAgain": "ఈ పదం త్వరలో మళ్లీ వస్తుంది.",
   "writing.ratingHard": "సరైనదిగా పరిగణించబడుతుంది, కానీ అనిశ్చితంగా — ఈ పదం తప్పులేని సమాధానంతో కంటే త్వరగా వస్తుంది.",
   "writing.ratingStable": "తదుపరి పునరావృతానికి మధ్య దూరం పెరుగుతుంది.",
+  "derivation.stepInitial": "ప్రారంభ కంసోనెంట్",
+  "derivation.leadingHo": "ห మౌనంగా ఉంది మరియు {raised} ({from}) ను {to} కు తీసుకువెళ్తుంది — ห นำ.",
+  "derivation.leadingO": "อ మౌనంగా ఉంది మరియు {raised} ను {to} కు తీసుకువెళ్తుంది — อ นำ, మూలం ప్రకారం నాలుగు పదాలలో మాత్రమే.",
+  "derivation.cluster": "సంబంధం {written}: తరగతి మొదటి అక్షరం {symbol} ({name}) నుండి వస్తుంది.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "కంసోనెంట్ తరగతి",
+  "derivation.classDetail": "ఇది శబ్ద నియమానికి ఏ కాలమ్ వర్తించాలో నిర్ణయిస్తుంది.",
+  "derivation.stepVowel": "స్వరం",
+  "derivation.vowelLong": "{ipa} — పొడవైన స్వరం.",
+  "derivation.vowelLongImplicit": "{ipa} — పొడవైన స్వరం, రాయబడలేదు (రెండు కంసోనెంట్లు స్వరం చిహ్నం లేకుండా).",
+  "derivation.vowelShort": "{ipa} — చిన్న స్వరం.",
+  "derivation.vowelShortImplicit": "{ipa} — చిన్న స్వరం, రాయబడలేదు (రెండు కంసోనెంట్లు స్వరం చిహ్నం లేకుండా).",
+  "derivation.stepFinal": "చివరి శబ్దం",
+  "derivation.finalPlosive": "{name} అక్షరాంతంలో {ipa} గా వినిపిస్తుంది — ఒక మూస శబ్దం.",
+  "derivation.finalSonorant": "{name} అక్షరాంతంలో {ipa} గా వినిపిస్తుంది — ఒక కింగింగ్ శబ్దం.",
+  "derivation.finalNone": "ఏ చివరి కంసోనెంట్ లేదు.",
+  "derivation.stepShape": "అక్షర రకం",
+  "derivation.shape.live": "జీవిత అక్షరం",
+  "derivation.shape.dead-short": "మరణించిన అక్షరం, చిన్నది",
+  "derivation.shape.dead-long": "మరణించిన అక్షరం, పొడవైనది",
+  "derivation.explain.live": "పొడవైన స్వరం, లేదా కింగింగ్ చివరి శబ్దంతో (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "పదాంతంలో చిన్న స్వరం, లేదా మూస శబ్దంతో (k, t, p) చిన్న స్వరం",
+  "derivation.explain.dead-long": "మూస శబ్దంతో (k, t, p) పొడవైన స్వరం",
+  "derivation.stepMark": "శ్రేణి చిహ్నం",
+  "derivation.markNone": "ఏదీ లేదు",
+  "derivation.markPresent": "శ్రేణి చిహ్నం ఉన్నప్పుడు, చిహ్నం తరగతితో కలిసి నిర్ణయిస్తుంది; అక్షర రకం ఇకపై లెక్కించదు.",
+  "derivation.markAbsent": "శ్రేణి చిహ్నం లేకుండా, తరగతి మరియు అక్షర రకం నిర్ణయిస్తాయి.",
+  "derivation.stepResult": "ఫలితం",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "స్వర చిహ్నం లేకుండా రెండు కంసోనెంట్లు: చిన్న /o/ గా చదువుతారు. అదే రాయబడిన పదానికి పొడవైన /ɔː/ కూడా ఉంది; ఏ పఠనం వర్తించాలో, అది రాతలో లేదు.",
+  "derivation.uncertainFinalLing": "చివరలో /n/ లేదా /w/ ఎలా వినబడుతుందో స్పష్టంగా లేదు — మూలం రెండు పఠనాలను సూచిస్తుంది; కేవలం వ్రాత మాత్రమే నిర్ణయించదు.",
 } as const;
 
 export default te;

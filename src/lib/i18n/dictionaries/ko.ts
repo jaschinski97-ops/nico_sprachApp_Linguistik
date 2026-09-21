@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Koreanisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Koreanisch im höflichen 해요체, knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const ko = {
   "common.retry": "다시 시도하기",
   "common.recheck": "다시 확인하기",
@@ -519,6 +519,37 @@ const ko = {
   "writing.ratingAgain": "어휘가 곧 다시 나옵니다.",
   "writing.ratingHard": "올바른 것으로 간주되지만 불확실합니다 — 어휘가 오류 없는 답변보다 빨리 나옵니다.",
   "writing.ratingStable": "다음 반복까지의 간격이 늘어납니다.",
+  "derivation.stepInitial": "초기 자음",
+  "derivation.leadingHo": "ห는 묵음이며 {raised}를 {to}로 올립니다 — ห นำ.",
+  "derivation.leadingO": "อ는 묵음이며 {raised}를 {to}로 이끕니다 — อ นำ, 출처에 따르면 네 단어에서만 사용됩니다.",
+  "derivation.cluster": "연결 {written}: 클래스는 첫 번째 글자 {symbol} ({name})에서 옵니다.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "자음 클래스",
+  "derivation.classDetail": "어떤 음조 규칙이 적용되는지를 결정합니다.",
+  "derivation.stepVowel": "모음",
+  "derivation.vowelLong": "{ipa} — 긴 모음.",
+  "derivation.vowelLongImplicit": "{ipa} — 긴 모음, 쓰이지 않음 (모음 기호 없이 두 자음).",
+  "derivation.vowelShort": "{ipa} — 짧은 모음.",
+  "derivation.vowelShortImplicit": "{ipa} — 짧은 모음, 쓰이지 않음 (모음 기호 없이 두 자음).",
+  "derivation.stepFinal": "종결 자음",
+  "derivation.finalPlosive": "{name}는 음절 끝에서 {ipa}로 들립니다 — 파열음.",
+  "derivation.finalSonorant": "{name}는 음절 끝에서 {ipa}로 들립니다 — 유음.",
+  "derivation.finalNone": "종결 자음 없음.",
+  "derivation.stepShape": "음절 유형",
+  "derivation.shape.live": "살아있는 음절",
+  "derivation.shape.dead-short": "죽은 음절, 짧음",
+  "derivation.shape.dead-long": "죽은 음절, 김",
+  "derivation.explain.live": "긴 모음 또는 유음으로 끝나는 모음 (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "단어 끝의 짧은 모음 또는 파열음과 함께하는 짧은 모음 (k, t, p)",
+  "derivation.explain.dead-long": "파열음과 함께하는 긴 모음 (k, t, p)",
+  "derivation.stepMark": "음조 기호",
+  "derivation.markNone": "없음",
+  "derivation.markPresent": "음조 기호가 있을 경우, 기호가 클래스와 함께 결정합니다; 음절 유형은 더 이상 중요하지 않습니다.",
+  "derivation.markAbsent": "음조 기호가 없을 경우, 클래스와 음절 유형이 결정합니다.",
+  "derivation.stepResult": "결과",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "모음 기호 없이 두 자음: 짧은 /o/로 읽습니다. 출처는 같은 철자에 대해 긴 /ɔː/도 알고 있으며, 어떤 읽기가 적용되는지는 문서에 명시되어 있지 않습니다.",
+  "derivation.uncertainFinalLing": "끝에서 /n/ 또는 /w/로 들리는지 불확실합니다 — 출처는 두 가지 발음을 모두 언급합니다; 글자만으로는 결정할 수 없습니다.",
 } as const;
 
 export default ko;

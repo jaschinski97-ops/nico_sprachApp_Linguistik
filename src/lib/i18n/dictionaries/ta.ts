@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Tamil; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Tamil in tamilischer Schrift, höflich und knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const ta = {
   "common.retry": "மீண்டும் முயற்சி செய்",
   "common.recheck": "மீண்டும் சரிபார்க்கவும்",
@@ -519,6 +519,37 @@ const ta = {
   "writing.ratingAgain": "இந்த சொல் விரைவில் மீண்டும் வரும்.",
   "writing.ratingHard": "சரியாகக் கருதப்படுகிறது, ஆனால் உறுதியாக இல்லை — இந்த சொல் தவறில்லாத பதிலுக்கு முந்தையதாக விரைவில் வரும்.",
   "writing.ratingStable": "அடுத்த முறை மீண்டும் செய்யும் இடைவெளி அதிகரிக்கிறது.",
+  "derivation.stepInitial": "ஆரம்ப ஒலியெழுத்து",
+  "derivation.leadingHo": "ห அமைதியானது மற்றும் {raised} ({from}) ஐ {to} க்கு உயர்த்துகிறது — ห นำ.",
+  "derivation.leadingO": "อ அமைதியானது மற்றும் {raised} ஐ {to} க்கு கொண்டு செல்கிறது — อ นำ, மூலத்தில் நான்கு சொற்களில் மட்டுமே உள்ளது.",
+  "derivation.cluster": "இணைப்பு {written}: வகுப்பு முதல் எழுத்து {symbol} ({name}) இல் இருந்து வருகிறது.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "ஒலியெழுத்து வகுப்பு",
+  "derivation.classDetail": "இது ஒலியியல் விதியின் எந்த நெடுவரிசை பொருந்தும் என்பதை தீர்மானிக்கிறது.",
+  "derivation.stepVowel": "உயிரெழுத்து",
+  "derivation.vowelLong": "{ipa} — நீண்ட உயிரெழுத்து.",
+  "derivation.vowelLongImplicit": "{ipa} — நீண்ட உயிரெழுத்து, எழுதப்படவில்லை (இரு ஒலியெழுத்துகள் உயிரெழுத்து குறியீடு இல்லாமல்).",
+  "derivation.vowelShort": "{ipa} — குறுகிய உயிரெழுத்து.",
+  "derivation.vowelShortImplicit": "{ipa} — குறுகிய உயிரெழுத்து, எழுதப்படவில்லை (இரு ஒலியெழுத்துகள் உயிரெழுத்து குறியீடு இல்லாமல்).",
+  "derivation.stepFinal": "முடிவொலி",
+  "derivation.finalPlosive": "{name} மந்திரத்தின் முடிவில் {ipa} எனக் கேட்கிறது — ஒரு அடைப்பொலி.",
+  "derivation.finalSonorant": "{name} மந்திரத்தின் முடிவில் {ipa} எனக் கேட்கிறது — ஒரு ஒலியான ஒலி.",
+  "derivation.finalNone": "முடிவொலியெழுத்து இல்லை.",
+  "derivation.stepShape": "மந்திர வகை",
+  "derivation.shape.live": "வாழும் மந்திரம்",
+  "derivation.shape.dead-short": "இறந்த மந்திரம், குறுகியது",
+  "derivation.shape.dead-long": "இறந்த மந்திரம், நீண்டது",
+  "derivation.explain.live": "நீண்ட உயிரெழுத்து, அல்லது ஒலியான முடிவொலியுடன் (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "சொல்லின் முடிவில் குறுகிய உயிரெழுத்து, அல்லது அடைப்பொலியுடன் குறுகிய உயிரெழுத்து (k, t, p)",
+  "derivation.explain.dead-long": "அடைப்பொலியுடன் நீண்ட உயிரெழுத்து (k, t, p)",
+  "derivation.stepMark": "ஒலி குறியீடு",
+  "derivation.markNone": "எதுவும் இல்லை",
+  "derivation.markPresent": "ஒலி குறியீடு உள்ள போது, குறியீடு வகுப்புடன் சேர்ந்து தீர்மானிக்கிறது; மந்திர வகை அப்போது முக்கியமல்ல.",
+  "derivation.markAbsent": "ஒலி குறியீடு இல்லாமல், வகுப்பு மற்றும் மந்திர வகை தீர்மானிக்கின்றன.",
+  "derivation.stepResult": "முடிவு",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "உயிரெழுத்து குறியீடு இல்லாமல் இரண்டு ஒலியெழுத்துகள்: குறுகிய /o/ எனக் காணப்படுகிறது. ஒரே எழுத்துக்கு நீண்ட /ɔː/ என்பதற்கான மூலத்தில் உள்ளது; எந்த வாசிப்பு பொருந்துகிறது என்பது எழுத்தில் இல்லை.",
+  "derivation.uncertainFinalLing": "இறுதியில் /n/ அல்லது /w/ ஒலிக்குமா என்பது தெளிவல்ல - மூலத்தில் இரு வாசிப்புகளும் குறிப்பிடப்பட்டுள்ளது; எழுத்து மட்டும் இதை தீர்மானிக்காது.",
 } as const;
 
 export default ta;

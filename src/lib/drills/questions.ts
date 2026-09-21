@@ -184,7 +184,7 @@ export function buildToneRuleQuestion(
   anchor: UiLanguage = 'de',
   ui: UiLanguage = 'de'
 ): DrillQuestion {
-  const analysis = analyzeSyllable(entry.term);
+  const analysis = analyzeSyllable(entry.term, ui);
   if (!analysis.ok) {
     throw new Error(`"${entry.id}" (${entry.term}): ${analysis.reason}`);
   }

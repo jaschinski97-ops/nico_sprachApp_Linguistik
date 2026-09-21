@@ -342,7 +342,11 @@ function buildValue(
  * der richtige Stand.
  */
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [setting, setSettingState] = useState<LanguageSetting>(SYSTEM_LANGUAGE_SETTING);
+  // NULL bis der Speicherstand da ist: Der erste Render wartet, statt die
+  // App kurz in der Fallback-Sprache aufblitzen zu lassen (Kaltstart-Blitz,
+  // Nutzerbefund 21.09.). Der Ladevorgang ist derselbe Speicher, den das
+  // Profil eh liest — die Verzögerung ist die erste weiße Sekunde.
+  const [setting, setSettingState] = useState<LanguageSetting | null>(null);
   const systemLanguage = useMemo(() => detectSystemLocale(), []);
 
   useEffect(() => {
@@ -353,6 +357,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         // Ohne Speicherstand gilt das System — wie beim Initialwert.
+        if (!cancelled) setSettingState(SYSTEM_LANGUAGE_SETTING);
       });
     return () => {
       cancelled = true;
@@ -367,7 +372,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => buildValue(setting, systemLanguage, setSetting),
+    () => buildValue(setting ?? SYSTEM_LANGUAGE_SETTING, systemLanguage, setSetting),
     [setting, systemLanguage, setSetting]
   );
 
@@ -381,6 +386,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     document.documentElement.dir = value.uiLanguage === 'ar' ? 'rtl' : 'ltr';
   }, [value.uiLanguage]);
 
+  // Ohne geladenen Stand noch nichts rendern — der Host-Splash bleibt
+  // stehen, und danach erscheint die App direkt in der richtigen Sprache.
+  if (setting === null) return null;
   return createElement(I18nContext.Provider, { value }, children);
 }
 

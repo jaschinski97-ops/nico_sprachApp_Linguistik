@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Japanisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Gegenwärtiges Standard-Japanisch im höflichen です/ます-Stil, knapp.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const ja = {
   "common.retry": "再試行",
   "common.recheck": "再確認",
@@ -519,6 +519,37 @@ const ja = {
   "writing.ratingAgain": "その単語はすぐに再登場します。",
   "writing.ratingHard": "正解と見なされますが、不確かです — 誤りのない回答より早くその単語が再登場します。",
   "writing.ratingStable": "次の復習までの間隔が広がります。",
+  "derivation.stepInitial": "初声",
+  "derivation.leadingHo": "หは無声で、{raised}を{to}に上げます — ห นำ。",
+  "derivation.leadingO": "อは無声で、{raised}を{to}に導きます — อ นำ、出典によれば四つの単語のみ。",
+  "derivation.cluster": "接続{written}: クラスは最初の文字{symbol}（{name}）から来ます。",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "子音クラス",
+  "derivation.classDetail": "どの音調規則の列が適用されるかを決定します。",
+  "derivation.stepVowel": "母音",
+  "derivation.vowelLong": "{ipa} — 長母音。",
+  "derivation.vowelLongImplicit": "{ipa} — 書かれていない長母音（母音記号なしの二つの子音）。",
+  "derivation.vowelShort": "{ipa} — 短母音。",
+  "derivation.vowelShortImplicit": "{ipa} — 書かれていない短母音（母音記号なしの二つの子音）。",
+  "derivation.stepFinal": "終声",
+  "derivation.finalPlosive": "{name}は音節の終わりで{ipa}として聞こえます — 閉鎖音。",
+  "derivation.finalSonorant": "{name}は音節の終わりで{ipa}として聞こえます — 響音。",
+  "derivation.finalNone": "終子音なし。",
+  "derivation.stepShape": "音節の種類",
+  "derivation.shape.live": "生きた音節",
+  "derivation.shape.dead-short": "死んだ音節、短い",
+  "derivation.shape.dead-long": "死んだ音節、長い",
+  "derivation.explain.live": "長母音、または響音の終声（m、n、ng、w、j）を持つ母音",
+  "derivation.explain.dead-short": "単語の終わりの短母音、または閉鎖音（k、t、p）を持つ短母音",
+  "derivation.explain.dead-long": "閉鎖音（k、t、p）を持つ長母音",
+  "derivation.stepMark": "音調記号",
+  "derivation.markNone": "なし",
+  "derivation.markPresent": "音調記号がある場合、記号はクラスと共に決定します; 音節の種類はもう重要ではありません。",
+  "derivation.markAbsent": "音調記号がない場合、クラスと音節の種類が決定します。",
+  "derivation.stepResult": "結果",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "母音記号なしの二つの子音: 短い/o/として読む。出典では同じ書き方に長い/ɔː/もある; どの読み方が正しいかは文書に記載されていません。",
+  "derivation.uncertainFinalLing": "最後が/n/または/w/の音になるか不明です — 出典は両方の読み方を示していますが、文字だけでは決まりません。",
 } as const;
 
 export default ja;

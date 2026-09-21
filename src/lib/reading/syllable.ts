@@ -1,4 +1,6 @@
 import { Tone, TONES } from '@/constants/tones';
+import { translate } from '../i18n';
+import type { UiLanguage } from '../i18n/types';
 import {
   CLUSTER_BY_SPELLING,
   CONSONANT_BY_SYMBOL,
@@ -260,67 +262,101 @@ export function toneFrom(
   return TONE_RULES.marked[mark][consonantClass];
 }
 
-function buildSteps(analysis: Omit<SyllableAnalysis, 'steps'>): DerivationStep[] {
+/**
+ * Die Herleitungsschritte in der UI-SPRACHE (21.09.2026): Bisher standen
+ * hier deutsche Sätze, die auf jeder Oberfläche erschienen. Die Bausteine
+ * (Klassen-, Silbenart-, Tonnamen) kommen als übersetzte Parameter in
+ * Schablonen — dieselbe Technik wie bei der spanischen Betonungsherkunft.
+ * Default 'de' hält alle Bestandsaufrufer unverändert.
+ */
+/**
+ * Die Herleitungsschablonen tragen EIN-Klammern-Parameter ({name}) — die
+ * Wörterbücher behalten diese Form bewusst, weil die Übersetzungspipeline
+ * sie 1:1 durchreicht. Diese kleine Füllung ersetzt sie lokal; das
+ * {{doppel}}-Format des UI-Interpolators wäre hier doppelt gemoppelt.
+ */
+function fuelle(schablone: string, params: Record<string, string>): string {
+  return schablone.replace(/\{(\w+)\}/g, (ganz, name: string) =>
+    name in params ? params[name] : ganz
+  );
+}
+
+function buildSteps(analysis: Omit<SyllableAnalysis, 'steps'>, ui: UiLanguage): DerivationStep[] {
   const { initial, vowel, final, toneMark, shape, tone } = analysis;
   const steps: DerivationStep[] = [];
+  const klasse = (c: ConsonantClass) => translate(ui, `consonantClass.${c}`);
+  const satz = (key: Parameters<typeof translate>[1], params: Record<string, string>) =>
+    fuelle(translate(ui, key), params);
 
   steps.push({
-    label: 'Anfangskonsonant',
+    label: translate(ui, 'derivation.stepInitial'),
     value: initial.written,
     detail:
       initial.leading === 'ho-nam'
-        ? `${HO} ist stumm und hebt ${initial.soundFrom.symbol} (${CONSONANT_CLASS_LABEL[initial.soundFrom.consonantClass]}) in die ${CONSONANT_CLASS_LABEL.high} — ห นำ.`
+        ? satz('derivation.leadingHo', {
+            raised: initial.soundFrom.symbol,
+            from: klasse(initial.soundFrom.consonantClass),
+            to: klasse('high'),
+          })
         : initial.leading === 'o-nam'
-          ? `อ ist stumm und fuehrt ${initial.soundFrom.symbol} in die ${CONSONANT_CLASS_LABEL.mid} — อ นำ, laut Quelle nur in vier Woertern.`
+          ? satz('derivation.leadingO', { raised: initial.soundFrom.symbol, to: klasse('mid') })
           : initial.cluster
-            ? `Verbindung ${initial.written}: die Klasse kommt vom ersten Buchstaben ${initial.classFrom.symbol} (${initial.classFrom.name}).`
-            : `${initial.classFrom.name}, ${initial.classFrom.initialIpa}.`,
+            ? satz('derivation.cluster', {
+                written: initial.written,
+                symbol: initial.classFrom.symbol,
+                name: initial.classFrom.name,
+              })
+            : satz('derivation.initialPlain', {
+                name: initial.classFrom.name,
+                ipa: initial.classFrom.initialIpa,
+              }),
   });
 
   steps.push({
-    label: 'Konsonantenklasse',
-    value: CONSONANT_CLASS_LABEL[initial.consonantClass],
-    detail: 'Sie entscheidet, welche Spalte der Tonregel gilt.',
+    label: translate(ui, 'derivation.stepClass'),
+    value: klasse(initial.consonantClass),
+    detail: translate(ui, 'derivation.classDetail'),
   });
 
   steps.push({
-    label: 'Vokal',
+    label: translate(ui, 'derivation.stepVowel'),
     value: vowel.display,
-    detail: `${vowel.ipa} — ${vowel.length === 'long' ? 'langer' : 'kurzer'} Vokal${
-      vowel.implicit ? ', nicht geschrieben (zwei Konsonanten ohne Vokalzeichen)' : ''
-    }.`,
+    detail: vowel.implicit
+      ? satz(vowel.length === 'long' ? 'derivation.vowelLongImplicit' : 'derivation.vowelShortImplicit', { ipa: vowel.ipa })
+      : satz(vowel.length === 'long' ? 'derivation.vowelLong' : 'derivation.vowelShort', { ipa: vowel.ipa }),
   });
 
   steps.push({
-    label: 'Schlusslaut',
+    label: translate(ui, 'derivation.stepFinal'),
     value: final ? final.written : '—',
     detail: final
-      ? `${final.consonant.name} klingt am Silbenende ${final.consonant.finalIpa} — ${
-          final.kind === 'plosive' ? 'Verschlusslaut' : 'klingender Laut'
-        }.`
-      : 'Kein Schlusskonsonant.',
+      ? satz(final.kind === 'plosive' ? 'derivation.finalPlosive' : 'derivation.finalSonorant', {
+          name: final.consonant.name,
+          ipa: final.consonant.finalIpa ?? '',
+        })
+      : translate(ui, 'derivation.finalNone'),
   });
 
   steps.push({
-    label: 'Silbenart',
-    value: SYLLABLE_SHAPE_LABEL[shape],
-    detail: SYLLABLE_SHAPE_EXPLANATION[shape],
+    label: translate(ui, 'derivation.stepShape'),
+    value: translate(ui, `derivation.shape.${shape}`),
+    detail: translate(ui, `derivation.explain.${shape}`),
   });
 
   steps.push({
-    label: 'Tonzeichen',
-    value: toneMark ? `${toneMark} (${TONE_MARKS[toneMark].nameRtgs})` : 'keins',
-    detail: toneMark
-      ? 'Mit Tonzeichen entscheidet das Zeichen zusammen mit der Klasse; die Silbenart zaehlt dann nicht mehr.'
-      : 'Ohne Tonzeichen entscheiden Klasse und Silbenart.',
+    label: translate(ui, 'derivation.stepMark'),
+    value: toneMark ? `${toneMark} (${TONE_MARKS[toneMark].nameRtgs})` : translate(ui, 'derivation.markNone'),
+    detail: translate(ui, toneMark ? 'derivation.markPresent' : 'derivation.markAbsent'),
   });
 
   steps.push({
-    label: 'Ergebnis',
-    value: TONES[tone].label,
-    detail: toneMark
-      ? `${CONSONANT_CLASS_LABEL[initial.consonantClass]} + ${TONE_MARKS[toneMark].nameRtgs} → ${TONES[tone].label}.`
-      : `${CONSONANT_CLASS_LABEL[initial.consonantClass]} + ${SYLLABLE_SHAPE_LABEL[shape]} → ${TONES[tone].label}.`,
+    label: translate(ui, 'derivation.stepResult'),
+    value: translate(ui, `tone.${tone}`),
+    detail: satz('derivation.resultFormula', {
+      a: klasse(initial.consonantClass),
+      b: toneMark ? TONE_MARKS[toneMark].nameRtgs : translate(ui, `derivation.shape.${shape}`),
+      tone: translate(ui, `tone.${tone}`),
+    }),
   });
 
   return steps;
@@ -333,7 +369,7 @@ function buildSteps(analysis: Omit<SyllableAnalysis, 'steps'>): DerivationStep[]
  * Grund. Es wird nie geraten: Was sich nicht eindeutig lesen laesst, faellt
  * durch.
  */
-export function analyzeSyllable(word: string): SyllableResult {
+export function analyzeSyllable(word: string, ui: UiLanguage = 'de'): SyllableResult {
   const trimmed = word.trim();
   if (!trimmed) return { ok: false, word, reason: 'Leere Eingabe.' };
 
@@ -412,9 +448,11 @@ export function analyzeSyllable(word: string): SyllableResult {
     };
   }
 
+  // Die beiden Datennotizen (implizites Vokalzeichen, ล-Ausnahme) sind im
+  // Datensatz deutsch — übersetzt hier über Schlüssel (21.09.2026).
   const uncertainParts: string[] = [];
-  if (match.implicit) uncertainParts.push(IMPLICIT_VOWEL.ambiguityNote);
-  if (match.final?.consonant.uncertainNote) uncertainParts.push(match.final.consonant.uncertainNote);
+  if (match.implicit) uncertainParts.push(translate(ui, 'derivation.uncertainImplicit'));
+  if (match.final?.consonant.uncertainNote) uncertainParts.push(translate(ui, 'derivation.uncertainFinalLing'));
 
   const base: Omit<SyllableAnalysis, 'steps'> = {
     ok: true,
@@ -435,7 +473,7 @@ export function analyzeSyllable(word: string): SyllableResult {
     uncertain: uncertainParts.length > 0 ? uncertainParts.join(' ') : null,
   };
 
-  return { ...base, steps: buildSteps(base) };
+  return { ...base, steps: buildSteps(base, ui) };
 }
 
 /** Alle Vokalzeichen, die in den Mustern vorkommen — fuer die Eingabepruefung. */

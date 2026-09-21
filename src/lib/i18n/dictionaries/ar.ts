@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Ägyptisch-Arabisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Ägyptisches Arabisch, wie in Kairo gesprochen, leicht formal für eine App-Oberfläche.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const ar = {
   "common.retry": "حاول مرة تانية",
   "common.recheck": "راجع مرة تانية",
@@ -519,6 +519,37 @@ const ar = {
   "writing.ratingAgain": "الكلمة هترجع قريب.",
   "writing.ratingHard": "يعتبر صحيح، لكن مش متأكد — الكلمة هترجع أسرع من الإجابة الصحيحة.",
   "writing.ratingStable": "الفترة بين التكرار الجاي بتزيد.",
+  "derivation.stepInitial": "حرف البداية",
+  "derivation.leadingHo": "ح هو ساكن ويعلي {raised} ({from}) إلى {to} — ح نَام.",
+  "derivation.leadingO": "أ هو ساكن ويقود {raised} إلى {to} — أ نَام، حسب المصدر فقط في أربع كلمات.",
+  "derivation.cluster": "ترابط {written}: الفئة تأتي من الحرف الأول {symbol} ({name}).",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "فئة الحروف الساكنة",
+  "derivation.classDetail": "تحدد أي عمود من قاعدة النغمة ينطبق.",
+  "derivation.stepVowel": "حرف العلة",
+  "derivation.vowelLong": "{ipa} — حرف علة طويل.",
+  "derivation.vowelLongImplicit": "{ipa} — حرف علة طويل، غير مكتوب (حرفين ساكنين بدون علامة حرف علة).",
+  "derivation.vowelShort": "{ipa} — حرف علة قصير.",
+  "derivation.vowelShortImplicit": "{ipa} — حرف علة قصير، غير مكتوب (حرفين ساكنين بدون علامة حرف علة).",
+  "derivation.stepFinal": "حرف النهاية",
+  "derivation.finalPlosive": "{name} يُسمع في نهاية المقطع {ipa} — صوت مغلق.",
+  "derivation.finalSonorant": "{name} يُسمع في نهاية المقطع {ipa} — صوت رنان.",
+  "derivation.finalNone": "لا يوجد حرف ساكن في النهاية.",
+  "derivation.stepShape": "نوع المقطع",
+  "derivation.shape.live": "مقطع حي",
+  "derivation.shape.dead-short": "مقطع ميت، قصير",
+  "derivation.shape.dead-long": "مقطع ميت، طويل",
+  "derivation.explain.live": "حرف علة طويل، أو حرف علة مع صوت رنان في النهاية (م، ن، نغ، و، ي)",
+  "derivation.explain.dead-short": "حرف علة قصير في نهاية الكلمة، أو حرف علة قصير مع صوت مغلق (ك، ت، ب)",
+  "derivation.explain.dead-long": "حرف علة طويل مع صوت مغلق (ك، ت، ب)",
+  "derivation.stepMark": "علامة النغمة",
+  "derivation.markNone": "لا شيء",
+  "derivation.markPresent": "مع علامة النغمة، تحدد العلامة مع الفئة؛ نوع المقطع لا يُعتبر بعد الآن.",
+  "derivation.markAbsent": "بدون علامة النغمة، تحدد الفئة ونوع المقطع.",
+  "derivation.stepResult": "النتيجة",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "حرفين ساكنين بدون علامة حرف علة: يُقرأ كقصير /o/. المصدر يعرف لنفس الكتابة أيضًا طويل /ɔː/؛ أي قراءة صحيحة، غير موجودة في الكتابة.",
+  "derivation.uncertainFinalLing": "مش واضح إذا في الآخر بيطلع /n/ أو /w/ — المصدر ذكر الاتنين؛ الكتابة لوحدها مش هتحدد.",
 } as const;
 
 export default ar;

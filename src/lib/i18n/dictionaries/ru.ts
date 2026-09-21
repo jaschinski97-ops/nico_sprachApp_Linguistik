@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Russisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Russisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const ru = {
   "common.retry": "Попробовать снова",
   "common.recheck": "Проверить снова",
@@ -519,6 +519,37 @@ const ru = {
   "writing.ratingAgain": "Слово скоро появится снова.",
   "writing.ratingHard": "Считается правильным, но неуверенно — слово появится раньше, чем при безошибочном ответе.",
   "writing.ratingStable": "Интервал до следующего повторения увеличивается.",
+  "derivation.stepInitial": "Начальный согласный",
+  "derivation.leadingHo": "ห немой и поднимает {raised} ({from}) в {to} — ห นำ.",
+  "derivation.leadingO": "อ немой и приводит {raised} в {to} — อ นำ, по источнику только в четырех словах.",
+  "derivation.cluster": "Связка {written}: класс происходит от первой буквы {symbol} ({name}).",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "Класс согласных",
+  "derivation.classDetail": "Он определяет, какой столбец тонального правила применяется.",
+  "derivation.stepVowel": "Гласный",
+  "derivation.vowelLong": "{ipa} — длинный гласный.",
+  "derivation.vowelLongImplicit": "{ipa} — длинный гласный, не написанный (две согласные без знака гласного).",
+  "derivation.vowelShort": "{ipa} — короткий гласный.",
+  "derivation.vowelShortImplicit": "{ipa} — короткий гласный, не написанный (две согласные без знака гласного).",
+  "derivation.stepFinal": "Конечный звук",
+  "derivation.finalPlosive": "{name} звучит в конце слога как {ipa} — взрывной звук.",
+  "derivation.finalSonorant": "{name} звучит в конце слога как {ipa} — сонорный звук.",
+  "derivation.finalNone": "Нет конечного согласного.",
+  "derivation.stepShape": "Тип слога",
+  "derivation.shape.live": "живой слог",
+  "derivation.shape.dead-short": "мертвый слог, короткий",
+  "derivation.shape.dead-long": "мертвый слог, длинный",
+  "derivation.explain.live": "длинный гласный или гласный с сонорным конечным звуком (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "короткий гласный в конце слова или короткий гласный с взрывным звуком (k, t, p)",
+  "derivation.explain.dead-long": "длинный гласный с взрывным звуком (k, t, p)",
+  "derivation.stepMark": "Знак тона",
+  "derivation.markNone": "нет",
+  "derivation.markPresent": "С знаком тона знак решает вместе с классом; тип слога больше не учитывается.",
+  "derivation.markAbsent": "Без знака тона класс и тип слога решают.",
+  "derivation.stepResult": "Результат",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "Две согласные без знака гласного: читается как короткое /o/. Источник также знает для той же записи длинное /ɔː/; какая версия верна, не указано в записи.",
+  "derivation.uncertainFinalLing": "Неясно, звучит ли в конце /n/ или /w/ — источник упоминает оба варианта; одно лишь написание не решает.",
 } as const;
 
 export default ru;

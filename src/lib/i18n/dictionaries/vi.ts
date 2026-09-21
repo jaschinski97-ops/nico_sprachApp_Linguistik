@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Vietnamesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Vietnamesisch mit voller Diakritik, knapp und höflich.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const vi = {
   "common.retry": "Thử lại",
   "common.recheck": "Kiểm tra lại",
@@ -519,6 +519,37 @@ const vi = {
   "writing.ratingAgain": "Từ vựng sẽ xuất hiện lại sớm.",
   "writing.ratingHard": "Được tính là đúng, nhưng không chắc chắn — từ vựng sẽ xuất hiện lại sớm hơn so với câu trả lời không sai.",
   "writing.ratingStable": "Khoảng cách đến lần lặp lại tiếp theo tăng lên.",
+  "derivation.stepInitial": "Phụ âm đầu",
+  "derivation.leadingHo": "ห là âm câm và nâng {raised} ({from}) lên {to} — ห นำ.",
+  "derivation.leadingO": "อ là âm câm và dẫn {raised} đến {to} — อ นำ, theo nguồn chỉ có trong bốn từ.",
+  "derivation.cluster": "Kết hợp {written}: lớp này đến từ chữ cái đầu tiên {symbol} ({name}).",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "Lớp phụ âm",
+  "derivation.classDetail": "Nó quyết định cột nào của quy tắc âm thanh áp dụng.",
+  "derivation.stepVowel": "Nguyên âm",
+  "derivation.vowelLong": "{ipa} — nguyên âm dài.",
+  "derivation.vowelLongImplicit": "{ipa} — nguyên âm dài, không viết (hai phụ âm không có dấu nguyên âm).",
+  "derivation.vowelShort": "{ipa} — nguyên âm ngắn.",
+  "derivation.vowelShortImplicit": "{ipa} — nguyên âm ngắn, không viết (hai phụ âm không có dấu nguyên âm).",
+  "derivation.stepFinal": "Âm cuối",
+  "derivation.finalPlosive": "{name} phát âm ở cuối âm tiết {ipa} — một phụ âm ngắt.",
+  "derivation.finalSonorant": "{name} phát âm ở cuối âm tiết {ipa} — một âm vang.",
+  "derivation.finalNone": "Không có phụ âm cuối.",
+  "derivation.stepShape": "Loại âm tiết",
+  "derivation.shape.live": "âm tiết sống",
+  "derivation.shape.dead-short": "âm tiết chết, ngắn",
+  "derivation.shape.dead-long": "âm tiết chết, dài",
+  "derivation.explain.live": "nguyên âm dài, hoặc nguyên âm với âm vang cuối (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "nguyên âm ngắn ở cuối từ, hoặc nguyên âm ngắn với âm ngắt (k, t, p)",
+  "derivation.explain.dead-long": "nguyên âm dài với âm ngắt (k, t, p)",
+  "derivation.stepMark": "Dấu âm",
+  "derivation.markNone": "không có",
+  "derivation.markPresent": "Với dấu âm, dấu quyết định cùng với lớp; loại âm tiết không còn quan trọng.",
+  "derivation.markAbsent": "Không có dấu âm, lớp và loại âm tiết quyết định.",
+  "derivation.stepResult": "Kết quả",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "Hai phụ âm không có dấu nguyên âm: đọc là ngắn /o/. Nguồn cũng biết đến một cách viết dài /ɔː/; cách đọc nào đúng không được ghi trong văn bản.",
+  "derivation.uncertainFinalLing": "Không rõ âm cuối là /n/ hay /w/ — nguồn tài liệu đề cập cả hai cách đọc; chữ viết không quyết định được.",
 } as const;
 
 export default vi;

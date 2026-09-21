@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Indonesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Indonesisch (Bahasa Indonesia), knapp und für eine App-Oberfläche leicht formell.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 3 als Deutsch-Fallback.
 const id = {
   "common.retry": "Coba lagi",
   "common.recheck": "Periksa lagi",
@@ -519,6 +519,37 @@ const id = {
   "writing.ratingAgain": "Kata ini akan muncul lagi segera.",
   "writing.ratingHard": "Dianggap benar, tetapi tidak yakin — kata ini akan muncul lebih cepat daripada jawaban yang benar.",
   "writing.ratingStable": "Jarak hingga pengulangan berikutnya semakin besar.",
+  "derivation.stepInitial": "Konsonan Awal",
+  "derivation.leadingHo": "ห tidak bersuara dan mengangkat {raised} ({from}) ke {to} — ห นำ.",
+  "derivation.leadingO": "อ tidak bersuara dan membawa {raised} ke {to} — อ นำ, menurut sumber hanya dalam empat kata.",
+  "derivation.cluster": "Kombinasi {written}: kelas berasal dari huruf pertama {symbol} ({name}).",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "Kelas Konsonan",
+  "derivation.classDetail": "Ini menentukan kolom mana dari aturan nada yang berlaku.",
+  "derivation.stepVowel": "Vokal",
+  "derivation.vowelLong": "{ipa} — vokal panjang.",
+  "derivation.vowelLongImplicit": "{ipa} — vokal panjang, tidak tertulis (dua konsonan tanpa tanda vokal).",
+  "derivation.vowelShort": "{ipa} — vokal pendek.",
+  "derivation.vowelShortImplicit": "{ipa} — vokal pendek, tidak tertulis (dua konsonan tanpa tanda vokal).",
+  "derivation.stepFinal": "Konsonan Akhir",
+  "derivation.finalPlosive": "{name} terdengar di akhir suku kata {ipa} — konsonan plosif.",
+  "derivation.finalSonorant": "{name} terdengar di akhir suku kata {ipa} — konsonan sonorant.",
+  "derivation.finalNone": "Tidak ada konsonan akhir.",
+  "derivation.stepShape": "Jenis Suku Kata",
+  "derivation.shape.live": "suku kata hidup",
+  "derivation.shape.dead-short": "suku kata mati, pendek",
+  "derivation.shape.dead-long": "suku kata mati, panjang",
+  "derivation.explain.live": "vokal panjang, atau vokal dengan konsonan akhir sonorant (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "vokal pendek di akhir kata, atau vokal pendek dengan konsonan plosif (k, t, p)",
+  "derivation.explain.dead-long": "vokal panjang dengan konsonan plosif (k, t, p)",
+  "derivation.stepMark": "Tanda Nada",
+  "derivation.markNone": "tidak ada",
+  "derivation.markPresent": "Dengan tanda nada, tanda tersebut bersama dengan kelas menentukan; jenis suku kata tidak lagi dihitung.",
+  "derivation.markAbsent": "Tanpa tanda nada, kelas dan jenis suku kata yang menentukan.",
+  "derivation.stepResult": "Hasil",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "Dua konsonan tanpa tanda vokal: dibaca sebagai vokal pendek /o/. Sumber juga mengenal untuk penulisan yang sama vokal panjang /ɔː/; mana yang berlaku tidak tercantum dalam tulisan.",
+  "derivation.uncertainFinalLing": "Tidak jelas apakah di akhir terdengar /n/ atau /w/ — sumber menyebutkan kedua pengucapan; tulisan saja tidak memutuskan.",
 } as const;
 
 export default id;

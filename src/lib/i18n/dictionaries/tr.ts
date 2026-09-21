@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Türkisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Türkisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const tr = {
   "common.retry": "Tekrar dene",
   "common.recheck": "Tekrar kontrol et",
@@ -519,6 +519,37 @@ const tr = {
   "writing.ratingAgain": "Kelime yakında tekrar gelecek.",
   "writing.ratingHard": "Doğru sayılır, ancak belirsiz — kelime hatasız bir cevaptan daha erken gelecek.",
   "writing.ratingStable": "Bir sonraki tekrar için süre uzuyor.",
+  "derivation.stepInitial": "Başlangıç ünlüsü",
+  "derivation.leadingHo": "ห sessizdir ve {raised} ({from})'i {to}'ya yükseltir — ห นำ.",
+  "derivation.leadingO": "อ sessizdir ve {raised}'i {to}'ya götürür — อ นำ, kaynağa göre sadece dört kelimede.",
+  "derivation.cluster": "Bağlantı {written}: sınıf, {symbol} ({name})'den gelir.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "Ünlü sınıfı",
+  "derivation.classDetail": "Hangi ton kuralının geçerli olduğunu belirler.",
+  "derivation.stepVowel": "Ünlü",
+  "derivation.vowelLong": "{ipa} — uzun ünlü.",
+  "derivation.vowelLongImplicit": "{ipa} — uzun ünlü, yazılmamış (iki ünsüz arasında ünlü işareti yok).",
+  "derivation.vowelShort": "{ipa} — kısa ünlü.",
+  "derivation.vowelShortImplicit": "{ipa} — kısa ünlü, yazılmamış (iki ünsüz arasında ünlü işareti yok).",
+  "derivation.stepFinal": "Son ünlü",
+  "derivation.finalPlosive": "{name} hece sonunda {ipa} olarak duyulur — bir patlayıcı ünlü.",
+  "derivation.finalSonorant": "{name} hece sonunda {ipa} olarak duyulur — bir sesli ünlü.",
+  "derivation.finalNone": "Hiçbir son ünlü yok.",
+  "derivation.stepShape": "Hece türü",
+  "derivation.shape.live": "canlı hece",
+  "derivation.shape.dead-short": "ölü hece, kısa",
+  "derivation.shape.dead-long": "ölü hece, uzun",
+  "derivation.explain.live": "uzun ünlü veya sesli son ünlü ile (m, n, ng, w, j)",
+  "derivation.explain.dead-short": "kelime sonunda kısa ünlü veya patlayıcı ünlü ile (k, t, p)",
+  "derivation.explain.dead-long": "patlayıcı ünlü ile uzun ünlü (k, t, p)",
+  "derivation.stepMark": "Ton işareti",
+  "derivation.markNone": "hiçbiri",
+  "derivation.markPresent": "Ton işareti ile işaret, sınıf ile birlikte karar verir; hece türü artık geçerli değildir.",
+  "derivation.markAbsent": "Ton işareti olmadan sınıf ve hece türü karar verir.",
+  "derivation.stepResult": "Sonuç",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "İki ünsüz arasında ünlü işareti yok: kısa /o/ olarak okunur. Aynı yazım için uzun /ɔː/ de biliniyor; hangi okuma geçerli olduğu yazıda belirtilmemiş.",
+  "derivation.uncertainFinalLing": "Sonunda /n/ veya /w/ sesinin belirsiz olduğu — kaynak her iki okuma biçimini de belirtmektedir; yazı tek başına karar vermez.",
 } as const;
 
 export default tr;

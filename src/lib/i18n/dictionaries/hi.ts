@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Hindi; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Hindi in Devanagari, höflich und knapp für eine App-Oberfläche.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const hi = {
   "common.retry": "फिर से प्रयास करें",
   "common.recheck": "फिर से जांचें",
@@ -519,6 +519,37 @@ const hi = {
   "writing.ratingAgain": "शब्द जल्द ही फिर से आएगा।",
   "writing.ratingHard": "सही माना जाता है, लेकिन असुरक्षित — शब्द बिना गलती के उत्तर की तुलना में जल्दी आएगा।",
   "writing.ratingStable": "अगली पुनरावृत्ति तक का अंतर बढ़ रहा है।",
+  "derivation.stepInitial": "प्रारंभिक व्यंजन",
+  "derivation.leadingHo": "ห मौन है और {raised} ({from}) को {to} में उठाता है — ห นำ.",
+  "derivation.leadingO": "อ मौन है और {raised} को {to} में ले जाता है — อ นำ, स्रोत के अनुसार केवल चार शब्दों में.",
+  "derivation.cluster": "संयोग {written}: वर्ग पहले अक्षर {symbol} ({name}) से आता है.",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "व्यंजन वर्ग",
+  "derivation.classDetail": "यह तय करता है कि ध्वनि नियम का कौन सा स्तंभ लागू होता है.",
+  "derivation.stepVowel": "स्वर",
+  "derivation.vowelLong": "{ipa} — लंबा स्वर.",
+  "derivation.vowelLongImplicit": "{ipa} — लंबा स्वर, लिखा नहीं गया (दो व्यंजन बिना स्वर चिह्न के).",
+  "derivation.vowelShort": "{ipa} — छोटा स्वर.",
+  "derivation.vowelShortImplicit": "{ipa} — छोटा स्वर, लिखा नहीं गया (दो व्यंजन बिना स्वर चिह्न के).",
+  "derivation.stepFinal": "अंतिम ध्वनि",
+  "derivation.finalPlosive": "{name} अंतिम अक्षर में {ipa} की तरह सुनाई देता है — एक विस्फोटक ध्वनि.",
+  "derivation.finalSonorant": "{name} अंतिम अक्षर में {ipa} की तरह सुनाई देता है — एक गूंजती ध्वनि.",
+  "derivation.finalNone": "कोई अंतिम व्यंजन नहीं.",
+  "derivation.stepShape": "अक्षर प्रकार",
+  "derivation.shape.live": "जीवित अक्षर",
+  "derivation.shape.dead-short": "मृत अक्षर, छोटा",
+  "derivation.shape.dead-long": "मृत अक्षर, लंबा",
+  "derivation.explain.live": "लंबा स्वर, या गूंजती अंतिम ध्वनि (m, n, ng, w, j) के साथ स्वर",
+  "derivation.explain.dead-short": "शब्द के अंत में छोटा स्वर, या विस्फोटक ध्वनि (k, t, p) के साथ छोटा स्वर",
+  "derivation.explain.dead-long": "विस्फोटक ध्वनि (k, t, p) के साथ लंबा स्वर",
+  "derivation.stepMark": "स्वर चिह्न",
+  "derivation.markNone": "कोई नहीं",
+  "derivation.markPresent": "स्वर चिह्न के साथ, चिह्न वर्ग के साथ निर्णय लेता है; अक्षर प्रकार अब मायने नहीं रखता.",
+  "derivation.markAbsent": "स्वर चिह्न के बिना, वर्ग और अक्षर प्रकार निर्णय लेते हैं.",
+  "derivation.stepResult": "परिणाम",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "दो व्यंजन बिना स्वर चिह्न के: छोटे /o/ के रूप में पढ़ा जाता है. स्रोत के अनुसार इसी लेखन के लिए एक लंबा /ɔː/ भी है; कौन सा पाठ लागू होता है, यह लेखन में नहीं है.",
+  "derivation.uncertainFinalLing": "अंत में /n/ या /w/ की ध्वनि स्पष्ट नहीं है - स्रोत दोनों उच्चारणों का उल्लेख करता है; केवल लेखन इसे तय नहीं करता।",
 } as const;
 
 export default hi;

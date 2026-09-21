@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Mandarin-Chinesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Vereinfachtes Hochchinesisch, wie in Festlandchina gebräuchlich, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 548 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
 const zh = {
   "common.retry": "重试",
   "common.recheck": "重新检查",
@@ -519,6 +519,37 @@ const zh = {
   "writing.ratingAgain": "这个词很快会再出现。",
   "writing.ratingHard": "算作正确，但不确定 — 这个词会比无错误答案更早出现。",
   "writing.ratingStable": "到下次复习的间隔在增加。",
+  "derivation.stepInitial": "初始辅音",
+  "derivation.leadingHo": "ห 是哑音，将 {raised} 提升到 {to} — ห นำ。",
+  "derivation.leadingO": "อ 是哑音，将 {raised} 引入 {to} — อ นำ，来源仅在四个词中。",
+  "derivation.cluster": "连接 {written}：类别来自第一个字母 {symbol} ({name})。",
+  "derivation.initialPlain": "{name}, {ipa}.",
+  "derivation.stepClass": "辅音类别",
+  "derivation.classDetail": "它决定音调规则适用的列。",
+  "derivation.stepVowel": "元音",
+  "derivation.vowelLong": "{ipa} — 长元音。",
+  "derivation.vowelLongImplicit": "{ipa} — 长元音，未书写（两个辅音无元音符号）。",
+  "derivation.vowelShort": "{ipa} — 短元音。",
+  "derivation.vowelShortImplicit": "{ipa} — 短元音，未书写（两个辅音无元音符号）。",
+  "derivation.stepFinal": "结束音",
+  "derivation.finalPlosive": "{name} 在音节末尾发音为 {ipa} — 闭合音。",
+  "derivation.finalSonorant": "{name} 在音节末尾发音为 {ipa} — 清音。",
+  "derivation.finalNone": "没有结束辅音。",
+  "derivation.stepShape": "音节类型",
+  "derivation.shape.live": "活音节",
+  "derivation.shape.dead-short": "死音节，短",
+  "derivation.shape.dead-long": "死音节，长",
+  "derivation.explain.live": "长元音，或带清音的元音（m, n, ng, w, j）",
+  "derivation.explain.dead-short": "词尾短元音，或带闭合音的短元音（k, t, p）",
+  "derivation.explain.dead-long": "带闭合音的长元音（k, t, p）",
+  "derivation.stepMark": "音调符号",
+  "derivation.markNone": "无",
+  "derivation.markPresent": "有音调符号时，符号与类别共同决定；音节类型不再计入。",
+  "derivation.markAbsent": "无音调符号时，类别和音节类型共同决定。",
+  "derivation.stepResult": "结果",
+  "derivation.resultFormula": "{a} + {b} → {tone}.",
+  "derivation.uncertainImplicit": "两个辅音无元音符号：读作短 /o/。来源也知道相同拼写的长 /ɔː/；哪种读法有效，未在书写中说明。",
+  "derivation.uncertainFinalLing": "不确定结尾是/n/还是/w/ — 来源提到两种读音；仅凭文字无法决定。",
 } as const;
 
 export default zh;
