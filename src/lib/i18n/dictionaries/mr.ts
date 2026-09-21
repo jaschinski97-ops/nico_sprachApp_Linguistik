@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Marathi; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Marathi in Devanagari, höflich und knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const mr = {
   "common.retry": "पुन्हा प्रयत्न करा",
   "common.recheck": "पुन्हा तपासा",
@@ -505,6 +505,20 @@ const mr = {
   "dictation.msgPassedImpure": "उत्तीर्ण — चिन्हांकित शब्द नीट बसलेले नाहीत.",
   "dictation.msgToneMarksOff": "आधार लेखन योग्य आहे, पण ध्वनी चिन्हे खूप भिन्न आहेत ({{score}} %).",
   "dictation.msgBaseOff": "आधार लेखन अजून खूप भिन्न आहे.",
+  "writing.mistakeCase": "मोठे आणि लहान अक्षरे: जर्मनमध्ये संज्ञा मोठ्या अक्षराने लिहिल्या जातात.",
+  "writing.mistakeUmlaut": "उम्लॉट: ä, ö आणि ü अर्थ वेगळे करतात — schon म्हणजे सुंदर नाही.",
+  "writing.mistakeEszett": "ß विरुद्ध ss: हे टायपिंग चूक नाही, तर एक स्वतंत्र लेखन आहे.",
+  "writing.mistakeArticleMissing": "लेख गहाळ आहे. तो शब्दाचा भाग आहे.",
+  "writing.mistakeArticleWrong": "चुकीचा लेख.",
+  "writing.mistakeToneMark": "स्वरचिन्ह: यामुळे अर्थ येतो — चुकीचा किंवा गहाळ असल्यास हे दुसरे शब्द आहे.",
+  "writing.mistakeAccent": "अक्षरचिन्ह: यामुळे अर्थ येतो — hablo म्हणजे hablo नाही, आणि ano म्हणजे año नाही.",
+  "writing.mistakeDifferent": "हे एक वेगळे शब्द आहे.",
+  "writing.msgEmpty": "अजून काहीही नोंदवलेले नाही.",
+  "writing.msgTypo": "हे योग्य मानले जाते, पण एक टायपिंग चूक आहे: „{{answer}}“.",
+  "writing.correctArticle": "योग्य आहे „{{article}}“.",
+  "writing.ratingAgain": "शब्द लवकरच पुन्हा येईल.",
+  "writing.ratingHard": "हे योग्य मानले जाते, पण अनिश्चित आहे — शब्द चुकवलेल्या उत्तरापेक्षा लवकर येईल.",
+  "writing.ratingStable": "पुन्हा पुनरावृत्ती करण्यासाठीचा अंतर वाढत आहे.",
 } as const;
 
 export default mr;

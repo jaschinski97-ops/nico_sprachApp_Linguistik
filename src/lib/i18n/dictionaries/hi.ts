@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Hindi; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Hindi in Devanagari, höflich und knapp für eine App-Oberfläche.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const hi = {
   "common.retry": "फिर से प्रयास करें",
   "common.recheck": "फिर से जांचें",
@@ -505,6 +505,20 @@ const hi = {
   "dictation.msgPassedImpure": "उत्तीर्ण — चिह्नित शब्द पूरी तरह से सही नहीं थे।",
   "dictation.msgToneMarksOff": "बुनियादी लेखन सही है, लेकिन ध्वनि चिह्न बहुत भिन्न हैं ({{score}} %)।",
   "dictation.msgBaseOff": "बुनियादी लेखन अभी भी बहुत भिन्न है।",
+  "writing.mistakeCase": "बड़े और छोटे अक्षर: जर्मन में संज्ञाएँ बड़े अक्षरों से लिखी जाती हैं।",
+  "writing.mistakeUmlaut": "उम्लॉट: ä, ö और ü अर्थ को भिन्न करते हैं — schon सुंदर नहीं है।",
+  "writing.mistakeEszett": "ß के बजाय ss: यह टाइपिंग की गलती नहीं है, बल्कि एक अलग लेखन है।",
+  "writing.mistakeArticleMissing": "लेख गायब है। यह शब्द का हिस्सा है।",
+  "writing.mistakeArticleWrong": "गलत लेख।",
+  "writing.mistakeToneMark": "स्वर चिह्न: यह अर्थ को दर्शाता है — बिना या गलत के यह एक अलग शब्द है।",
+  "writing.mistakeAccent": "स्वर चिह्न: यह अर्थ को दर्शाता है — hablo का मतलब नहीं है habló, और ano का मतलब नहीं है año।",
+  "writing.mistakeDifferent": "यह एक अलग शब्द है।",
+  "writing.msgEmpty": "अभी तक कुछ नहीं लिखा गया।",
+  "writing.msgTypo": "सही माना जाता है, लेकिन इसमें एक टाइपिंग की गलती है: „{{answer}}“।",
+  "writing.correctArticle": "सही है „{{article}}“।",
+  "writing.ratingAgain": "शब्द जल्द ही फिर से आएगा।",
+  "writing.ratingHard": "सही माना जाता है, लेकिन असुरक्षित — शब्द बिना गलती के उत्तर की तुलना में जल्दी आएगा।",
+  "writing.ratingStable": "अगली पुनरावृत्ति तक का अंतर बढ़ रहा है।",
 } as const;
 
 export default hi;

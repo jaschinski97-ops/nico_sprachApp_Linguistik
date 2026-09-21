@@ -120,7 +120,7 @@ describe('Was beim Vergleich geschützt bleibt', () => {
     const verdict = compareWriting('medico', { language: 'es', targets: ['médico'] });
     expect(verdict.correct).toBe(false);
     expect(verdict.mistake).toBe('accent');
-    expect(verdict.message).toContain('habló');
+    expect(verdict.message?.key).toBe('writing.mistakeAccent');
   });
 
   it('nennt auch die fehlende Tilde beim Namen', () => {

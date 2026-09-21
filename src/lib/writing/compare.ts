@@ -58,13 +58,23 @@ export type WritingVerdict = {
   typo: boolean;
   /** Gesetzt, wenn die Antwort nicht zählt. */
   mistake: MistakeKind | null;
-  /** Ein Satz, der die Abweichung benennt. Immer gesetzt, außer bei `exact`. */
-  message: string | null;
+  /**
+   * Die Abweichung ALS WÖRTERBUCHSCHLÜSSEL (21.09.2026, en-UI-Befund):
+   * bisher standen hier deutsche Sätze auf jeder Oberfläche; der Runner
+   * übersetzt. `article` trägt den richtigen Artikel, wenn der Fehler am
+   * Artikel lag (`writing.correctArticle` hängt ihn an).
+   */
+  message: { key: TranslationKey; params?: TParams } | null;
+  /** Der richtige Artikel — nur wenn der Fehler der Artikel war. */
+  article?: string;
   /** Die Zielform, gegen die verglichen wurde (bei mehreren die beste). */
   matched: string;
   /** Editierabstand zur besten Zielform. */
   distance: number;
 };
+
+import type { TranslationKey } from '@/lib/i18n/keys';
+import type { TParams } from '@/lib/i18n/types';
 
 const THAI_TONE_MARKS = /[่-๋]/g;
 const GERMAN_ARTICLES = ['der', 'die', 'das'] as const;
@@ -143,16 +153,15 @@ function articleOf(text: string): string | null {
   return (GERMAN_ARTICLES as readonly string[]).includes(first ?? '') ? first! : null;
 }
 
-const MISTAKE_MESSAGE: Record<MistakeKind, string> = {
-  case: 'Groß- und Kleinschreibung: im Deutschen werden Substantive großgeschrieben.',
-  umlaut: 'Umlaut: ä, ö und ü unterscheiden Bedeutungen — schon ist nicht schön.',
-  eszett: 'ß gegen ss: das ist kein Tippfehler, sondern eine eigene Schreibung.',
-  'article-missing': 'Der Artikel fehlt. Er gehört zum Wort dazu.',
-  'article-wrong': 'Falscher Artikel.',
-  'tone-mark': 'Tonzeichen: es trägt die Bedeutung — ohne oder mit dem falschen ist es ein anderes Wort.',
-  accent:
-    'Akzentzeichen: er trägt die Bedeutung — hablo ist nicht habló, und ano ist nicht año.',
-  different: 'Das ist ein anderes Wort.',
+const MISTAKE_MESSAGE: Record<MistakeKind, TranslationKey> = {
+  case: 'writing.mistakeCase',
+  umlaut: 'writing.mistakeUmlaut',
+  eszett: 'writing.mistakeEszett',
+  'article-missing': 'writing.mistakeArticleMissing',
+  'article-wrong': 'writing.mistakeArticleWrong',
+  'tone-mark': 'writing.mistakeToneMark',
+  accent: 'writing.mistakeAccent',
+  different: 'writing.mistakeDifferent',
 };
 
 /**
@@ -211,7 +220,7 @@ export function compareWriting(given: string, options: CompareOptions): WritingV
       exact: false,
       typo: false,
       mistake: 'different',
-      message: 'Noch nichts eingetragen.',
+      message: { key: 'writing.msgEmpty' },
       matched: candidates[0],
       distance: candidates[0].length,
     };
@@ -235,7 +244,7 @@ export function compareWriting(given: string, options: CompareOptions): WritingV
       exact: false,
       typo: false,
       mistake,
-      message: MISTAKE_MESSAGE[mistake],
+      message: { key: MISTAKE_MESSAGE[mistake] },
       matched: protectedMatch,
       distance: editDistance(input, protectedMatch),
     };
@@ -263,7 +272,8 @@ export function compareWriting(given: string, options: CompareOptions): WritingV
         exact: false,
         typo: false,
         mistake,
-        message: `${MISTAKE_MESSAGE[mistake]} Richtig ist „${articleOf(articleIssue)}".`,
+        message: { key: MISTAKE_MESSAGE[mistake] },
+        article: articleOf(articleIssue)!,
         matched: articleIssue,
         distance: editDistance(input, articleIssue),
       };
@@ -287,7 +297,7 @@ export function compareWriting(given: string, options: CompareOptions): WritingV
       exact: false,
       typo: true,
       mistake: null,
-      message: `Zählt als richtig, hat aber einen Tippfehler: „${best}".`,
+      message: { key: 'writing.msgTypo', params: { answer: best } },
       matched: best,
       distance: bestDistance,
     };
@@ -298,7 +308,7 @@ export function compareWriting(given: string, options: CompareOptions): WritingV
     exact: false,
     typo: false,
     mistake: 'different',
-    message: MISTAKE_MESSAGE.different,
+    message: { key: MISTAKE_MESSAGE.different },
     matched: best,
     distance: bestDistance,
   };

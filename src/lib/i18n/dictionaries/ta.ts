@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Tamil; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Tamil in tamilischer Schrift, höflich und knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const ta = {
   "common.retry": "மீண்டும் முயற்சி செய்",
   "common.recheck": "மீண்டும் சரிபார்க்கவும்",
@@ -505,6 +505,20 @@ const ta = {
   "dictation.msgPassedImpure": "தரமானது — குறிக்கப்பட்ட சொற்கள் முழுமையாக இல்லை.",
   "dictation.msgToneMarksOff": "அடிப்படைத்தொகுப்பு சரியானது, ஆனால் ஒலி குறியீடுகள் மிகவும் மாறுபட்டுள்ளன ({{score}} %).",
   "dictation.msgBaseOff": "அடிப்படைத்தொகுப்பு இன்னும் மிகவும் மாறுபட்டுள்ளது.",
+  "writing.mistakeCase": "பெரிய மற்றும் சிறிய எழுத்து: ஜெர்மனியில் பெயர்ச்சொற்கள் பெரிய எழுத்தில் எழுதப்படுகின்றன.",
+  "writing.mistakeUmlaut": "உம்லாட்: ä, ö மற்றும் ü பொருள்களை வேறுபடுத்துகின்றன — schon அழகானது அல்ல.",
+  "writing.mistakeEszett": "ß ஐ ss க்கு மாற்றுவது: இது ஒரு தட்டச்சு பிழை அல்ல, இது தனிப்பட்ட எழுத்து.",
+  "writing.mistakeArticleMissing": "ஆர்டிக்கல் இல்லை. இது சொல்லுடன் சேர்ந்து இருக்க வேண்டும்.",
+  "writing.mistakeArticleWrong": "தவறான ஆர்டிக்கல்.",
+  "writing.mistakeToneMark": "சொல் குறியீடு: இது பொருளை கொண்டுள்ளது — தவறான அல்லது இல்லாமல் இது வேறு சொல்.",
+  "writing.mistakeAccent": "உயர்த்தல் குறியீடு: இது பொருளை கொண்டுள்ளது — hablo என்பது habló அல்ல, மற்றும் ano என்பது año அல்ல.",
+  "writing.mistakeDifferent": "இது வேறு சொல்.",
+  "writing.msgEmpty": "இன்னும் எதுவும் பதிவு செய்யப்படவில்லை.",
+  "writing.msgTypo": "சரியாகக் கருதப்படுகிறது, ஆனால் ஒரு தட்டச்சு பிழை உள்ளது: \"{{answer}}\".",
+  "writing.correctArticle": "சரியானது \"{{article}}\".",
+  "writing.ratingAgain": "இந்த சொல் விரைவில் மீண்டும் வரும்.",
+  "writing.ratingHard": "சரியாகக் கருதப்படுகிறது, ஆனால் உறுதியாக இல்லை — இந்த சொல் தவறில்லாத பதிலுக்கு முந்தையதாக விரைவில் வரும்.",
+  "writing.ratingStable": "அடுத்த முறை மீண்டும் செய்யும் இடைவெளி அதிகரிக்கிறது.",
 } as const;
 
 export default ta;

@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Vietnamesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Vietnamesisch mit voller Diakritik, knapp und höflich.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const vi = {
   "common.retry": "Thử lại",
   "common.recheck": "Kiểm tra lại",
@@ -505,6 +505,20 @@ const vi = {
   "dictation.msgPassedImpure": "Đã qua — các từ được đánh dấu không hoàn toàn chính xác.",
   "dictation.msgToneMarksOff": "Chữ viết cơ bản đúng, nhưng các dấu âm lệch quá nhiều ({{score}} %).",
   "dictation.msgBaseOff": "Chữ viết cơ bản vẫn lệch quá nhiều.",
+  "writing.mistakeCase": "Chữ hoa và chữ thường: trong tiếng Đức, danh từ được viết hoa.",
+  "writing.mistakeUmlaut": "Umlaut: ä, ö và ü phân biệt nghĩa — schon không phải là schön.",
+  "writing.mistakeEszett": "ß và ss: đây không phải là lỗi đánh máy, mà là cách viết riêng.",
+  "writing.mistakeArticleMissing": "Thiếu mạo từ. Nó thuộc về từ đó.",
+  "writing.mistakeArticleWrong": "Mạo từ sai.",
+  "writing.mistakeToneMark": "Dấu thanh: nó mang nghĩa — không có hoặc với dấu sai thì là từ khác.",
+  "writing.mistakeAccent": "Dấu nhấn: nó mang nghĩa — hablo không phải là habló, và ano không phải là año.",
+  "writing.mistakeDifferent": "Đây là một từ khác.",
+  "writing.msgEmpty": "Chưa có gì được ghi lại.",
+  "writing.msgTypo": "Được tính là đúng, nhưng có một lỗi đánh máy: „{{answer}}“.",
+  "writing.correctArticle": "Đúng là „{{article}}“.",
+  "writing.ratingAgain": "Từ vựng sẽ xuất hiện lại sớm.",
+  "writing.ratingHard": "Được tính là đúng, nhưng không chắc chắn — từ vựng sẽ xuất hiện lại sớm hơn so với câu trả lời không sai.",
+  "writing.ratingStable": "Khoảng cách đến lần lặp lại tiếp theo tăng lên.",
 } as const;
 
 export default vi;

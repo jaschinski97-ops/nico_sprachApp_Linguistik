@@ -297,7 +297,8 @@ function Feedback({
 
       {verdict.message ? (
         <ThemedText type="small" themeColor="textSecondary">
-          {verdict.message}
+          {t(verdict.message.key, verdict.message.params)}
+          {verdict.article ? ` ${t('writing.correctArticle', { article: verdict.article })}` : ''}
         </ThemedText>
       ) : null}
 
@@ -311,7 +312,7 @@ function Feedback({
       {/* Sichtbar machen, was die Antwort mit der Wiederholung macht - sonst
           bliebe unerklaerlich, warum eine Vokabel frueher wiederkommt. */}
       <ThemedText type="small" themeColor="textSecondary">
-        {t('rating.ratedAs', { rating: t(RATING_KEYS[rating]), explanation: ratingExplanation(rating) })}
+        {t('rating.ratedAs', { rating: t(RATING_KEYS[rating]), explanation: t(ratingExplanation(rating)) })}
       </ThemedText>
     </ThemedView>
   );

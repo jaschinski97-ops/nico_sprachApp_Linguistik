@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Ägyptisch-Arabisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Ägyptisches Arabisch, wie in Kairo gesprochen, leicht formal für eine App-Oberfläche.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const ar = {
   "common.retry": "حاول مرة تانية",
   "common.recheck": "راجع مرة تانية",
@@ -505,6 +505,20 @@ const ar = {
   "dictation.msgPassedImpure": "نجحت - الكلمات المميزة لم تكن دقيقة تمامًا.",
   "dictation.msgToneMarksOff": "الكتابة الأساسية صحيحة، لكن علامات النغمة تختلف بشكل كبير ({{score}} %).",
   "dictation.msgBaseOff": "الكتابة الأساسية لا تزال تختلف بشكل كبير.",
+  "writing.mistakeCase": "حروف كبيرة وصغيرة: في الألمانية، الأسماء تُكتب بحروف كبيرة.",
+  "writing.mistakeUmlaut": "تغيير الصوت: ä و ö و ü يفرقوا في المعاني — schon مش حلو.",
+  "writing.mistakeEszett": "ß ضد ss: ده مش خطأ مطبعي، ده كتابة خاصة.",
+  "writing.mistakeArticleMissing": "المقالة ناقصة. هي جزء من الكلمة.",
+  "writing.mistakeArticleWrong": "مقالة خاطئة.",
+  "writing.mistakeToneMark": "علامات النغمة: هي تحمل المعنى — من غيرها أو مع الخطأ، الكلمة بتبقى مختلفة.",
+  "writing.mistakeAccent": "علامات التشكيل: هي تحمل المعنى — hablo مش habló، و ano مش año.",
+  "writing.mistakeDifferent": "دي كلمة مختلفة.",
+  "writing.msgEmpty": "لسه مفيش حاجة مكتوبة.",
+  "writing.msgTypo": "يعتبر صحيح، لكن فيه خطأ مطبعي: „{{answer}}“.",
+  "writing.correctArticle": "الصحيح هو „{{article}}“.",
+  "writing.ratingAgain": "الكلمة هترجع قريب.",
+  "writing.ratingHard": "يعتبر صحيح، لكن مش متأكد — الكلمة هترجع أسرع من الإجابة الصحيحة.",
+  "writing.ratingStable": "الفترة بين التكرار الجاي بتزيد.",
 } as const;
 
 export default ar;

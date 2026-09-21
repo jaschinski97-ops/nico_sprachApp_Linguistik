@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Portugiesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Brasilianisches Portugiesisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const pt = {
   "common.retry": "Tentar novamente",
   "common.recheck": "Rever novamente",
@@ -505,6 +505,20 @@ const pt = {
   "dictation.msgPassedImpure": "Aprovado — as palavras marcadas não estavam totalmente corretas.",
   "dictation.msgToneMarksOff": "Escrita base correta, mas os sinais tonais estão muito diferentes ({{score}} %).",
   "dictation.msgBaseOff": "A escrita base ainda está muito diferente.",
+  "writing.mistakeCase": "Maiúsculas e minúsculas: em português, substantivos começam com letra maiúscula.",
+  "writing.mistakeUmlaut": "Acentos: ä, ö e ü mudam significados — já não é bonito.",
+  "writing.mistakeEszett": "ß e ss: isso não é um erro de digitação, mas uma grafia própria.",
+  "writing.mistakeArticleMissing": "O artigo está faltando. Ele faz parte da palavra.",
+  "writing.mistakeArticleWrong": "Artigo incorreto.",
+  "writing.mistakeToneMark": "Acento: ele muda o significado — sem ou com o errado é outra palavra.",
+  "writing.mistakeAccent": "Acento: ele muda o significado — hablo não é habló, e ano não é año.",
+  "writing.mistakeDifferent": "Essa é uma palavra diferente.",
+  "writing.msgEmpty": "Nada registrado ainda.",
+  "writing.msgTypo": "Conta como correto, mas tem um erro de digitação: „{{answer}}“.",
+  "writing.correctArticle": "O correto é „{{article}}“.",
+  "writing.ratingAgain": "A palavra aparecerá em breve novamente.",
+  "writing.ratingHard": "Conta como correto, mas incerto — a palavra aparecerá mais cedo do que em uma resposta sem erros.",
+  "writing.ratingStable": "O intervalo até a próxima repetição aumenta.",
 } as const;
 
 export default pt;

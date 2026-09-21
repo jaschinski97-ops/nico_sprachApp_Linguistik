@@ -603,6 +603,20 @@ const en: Partial<Record<TranslationKey, string>> = {
   "dictation.msgPassedImpure": "Passed — the highlighted words were not quite clean.",
   "dictation.msgToneMarksOff": "Base spelling correct, but the tone marks are too far off ({{score}} %).",
   "dictation.msgBaseOff": "The base spelling is still too far off.",
+  "writing.mistakeCase": "Capitalisation: in German, nouns start with a capital letter.",
+  "writing.mistakeUmlaut": "Umlaut: ä, ö and ü change meaning — “schon” is not “schön”.",
+  "writing.mistakeEszett": "ß versus ss: that is not a typo but a distinct spelling.",
+  "writing.mistakeArticleMissing": "The article is missing. It belongs to the word.",
+  "writing.mistakeArticleWrong": "Wrong article.",
+  "writing.mistakeToneMark": "Tone mark: it carries meaning — without it, or with the wrong one, it is a different word.",
+  "writing.mistakeAccent": "Accent mark: it carries meaning — hablo is not habló, and ano is not año.",
+  "writing.mistakeDifferent": "That is a different word.",
+  "writing.msgEmpty": "Nothing typed yet.",
+  "writing.msgTypo": "Counts as correct, but contains a typo: “{{answer}}”.",
+  "writing.correctArticle": "The correct one is “{{article}}”.",
+  "writing.ratingAgain": "The word will come back soon.",
+  "writing.ratingHard": "Counts as correct, but unsure — the word returns sooner than after a flawless answer.",
+  "writing.ratingStable": "The interval until the next review grows.",
 };
 
 export default en;

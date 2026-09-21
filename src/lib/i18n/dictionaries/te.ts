@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Telugu; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Telugu in Telugu-Schrift, höflich und knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const te = {
   "common.retry": "మరలా ప్రయత్నించండి",
   "common.recheck": "మరలా తనిఖీ చేయండి",
@@ -505,6 +505,20 @@ const te = {
   "dictation.msgPassedImpure": "పాసైనది — గుర్తించిన పదాలు పూర్తిగా శుద్ధంగా లేవు.",
   "dictation.msgToneMarksOff": "ప్రాథమిక వ్రాత సరైనది, కానీ టోన్ చిహ్నాలు చాలా భిన్నంగా ఉన్నాయి ({{score}} %).",
   "dictation.msgBaseOff": "ప్రాథమిక వ్రాత ఇంకా చాలా భిన్నంగా ఉంది.",
+  "writing.mistakeCase": "పెద్ద మరియు చిన్న అక్షరాలు: జర్మన్‌లో నామవాచకాలను పెద్ద అక్షరాలతో ప్రారంభిస్తారు.",
+  "writing.mistakeUmlaut": "ఉమ్లాట్: ä, ö మరియు ü అర్థాలను వేరుచేస్తాయి — schon అంటే అందంగా కాదు.",
+  "writing.mistakeEszett": "ß కు ss: ఇది టైప్ పొరపాటు కాదు, ఇది ప్రత్యేకమైన వ్రాయింపు.",
+  "writing.mistakeArticleMissing": "ఆర్టికల్ లేదు. ఇది పదానికి సంబంధించినది.",
+  "writing.mistakeArticleWrong": "తప్పు ఆర్టికల్.",
+  "writing.mistakeToneMark": "స్వరచిహ్నం: ఇది అర్థాన్ని కలిగి ఉంది — లేకపోతే లేదా తప్పు ఉంటే ఇది వేరే పదం.",
+  "writing.mistakeAccent": "అక్షర చిహ్నం: ఇది అర్థాన్ని కలిగి ఉంది — hablo అంటే hablò కాదు, మరియు ano అంటే año కాదు.",
+  "writing.mistakeDifferent": "ఇది వేరే పదం.",
+  "writing.msgEmpty": "ఇంకా ఏమి నమోదు చేయలేదు.",
+  "writing.msgTypo": "సరైనదిగా పరిగణించబడుతుంది, కానీ టైప్ పొరపాటు ఉంది: „{{answer}}“.",
+  "writing.correctArticle": "సరైనది „{{article}}“.",
+  "writing.ratingAgain": "ఈ పదం త్వరలో మళ్లీ వస్తుంది.",
+  "writing.ratingHard": "సరైనదిగా పరిగణించబడుతుంది, కానీ అనిశ్చితంగా — ఈ పదం తప్పులేని సమాధానంతో కంటే త్వరగా వస్తుంది.",
+  "writing.ratingStable": "తదుపరి పునరావృతానికి మధ్య దూరం పెరుగుతుంది.",
 } as const;
 
 export default te;

@@ -98,7 +98,7 @@ describe('Pflicht 3 — was Lernziel ist, gilt nie als Tippfehler', () => {
     expect(verdict.correct).toBe(false);
     expect(verdict.typo).toBe(false);
     expect(verdict.mistake).toBe('case');
-    expect(verdict.message).toContain('großgeschrieben');
+    expect(verdict.message?.key).toBe('writing.mistakeCase');
   });
 
   it('lässt einen fehlenden Umlaut nicht durchgehen — schon ist nicht schön', () => {
@@ -132,14 +132,14 @@ describe('Pflicht 3 — was Lernziel ist, gilt nie als Tippfehler', () => {
     const verdict = verdictFor('Haus', ['das Haus']);
     expect(verdict.correct).toBe(false);
     expect(verdict.mistake).toBe('article-missing');
-    expect(verdict.message).toContain('Artikel');
+    expect(verdict.message?.key?.startsWith('writing.mistakeArticle')).toBe(true);
   });
 
   it('lässt einen falschen Artikel nicht durchgehen', () => {
     const verdict = verdictFor('der Haus', ['das Haus']);
     expect(verdict.correct).toBe(false);
     expect(verdict.mistake).toBe('article-wrong');
-    expect(verdict.message).toContain('das');
+    expect(verdict.article).toBe('das');
   });
 
   it('lässt ein fehlendes Tonzeichen im Thai nicht durchgehen', () => {
@@ -209,7 +209,7 @@ describe('Tippfehler-Toleranz, wo sie kein Lernziel berührt', () => {
   it('meldet eine leere Eingabe als solche, statt sie zu bewerten', () => {
     const verdict = verdictFor('   ', ['das Haus']);
     expect(verdict.correct).toBe(false);
-    expect(verdict.message).toContain('Noch nichts');
+    expect(verdict.message?.key).toBe('writing.msgEmpty');
   });
 });
 

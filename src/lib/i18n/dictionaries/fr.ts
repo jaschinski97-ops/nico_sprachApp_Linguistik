@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Französisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Gegenwärtiges Standard-Französisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const fr = {
   "common.retry": "Réessayer",
   "common.recheck": "Vérifier à nouveau",
@@ -505,6 +505,20 @@ const fr = {
   "dictation.msgPassedImpure": "Réussi — les mots marqués n'étaient pas tout à fait corrects.",
   "dictation.msgToneMarksOff": "Écriture de base correcte, mais les signes tonals s'écartent trop ({{score}} %).",
   "dictation.msgBaseOff": "L'écriture de base s'écarte encore trop.",
+  "writing.mistakeCase": "Majuscules et minuscules : en allemand, les substantifs prennent une majuscule.",
+  "writing.mistakeUmlaut": "Umlaut : ä, ö et ü changent les significations — schon n'est pas schön.",
+  "writing.mistakeEszett": "ß contre ss : ce n'est pas une faute de frappe, mais une écriture propre.",
+  "writing.mistakeArticleMissing": "L'article est manquant. Il fait partie du mot.",
+  "writing.mistakeArticleWrong": "Article incorrect.",
+  "writing.mistakeToneMark": "Signe tonal : il porte le sens — sans ou avec le mauvais, c'est un autre mot.",
+  "writing.mistakeAccent": "Signe d'accent : il porte le sens — hablo n'est pas habló, et ano n'est pas año.",
+  "writing.mistakeDifferent": "C'est un autre mot.",
+  "writing.msgEmpty": "Rien n'a encore été saisi.",
+  "writing.msgTypo": "Compte comme correct, mais contient une faute de frappe : « {{answer}} ».",
+  "writing.correctArticle": "Correct : « {{article}} ».",
+  "writing.ratingAgain": "Le vocabulaire reviendra bientôt.",
+  "writing.ratingHard": "Compte comme correct, mais incertain — le vocabulaire reviendra plus tôt qu'avec une réponse sans faute.",
+  "writing.ratingStable": "L'intervalle jusqu'à la prochaine répétition augmente.",
 } as const;
 
 export default fr;

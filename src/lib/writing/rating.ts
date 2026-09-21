@@ -60,13 +60,15 @@ export function ratingForVerdict(verdict: WritingVerdict): Rating {
  * Ein Satz für die Oberfläche, der sagt, was die Bewertung mit der Karte
  * macht. Lernende sollen nicht raten müssen, warum eine Vokabel wiederkommt.
  */
-export function ratingExplanation(rating: Rating): string {
+import type { TranslationKey } from '../i18n/keys';
+
+export function ratingExplanation(rating: Rating): TranslationKey {
   switch (rating) {
     case 1:
-      return 'Die Vokabel kommt bald wieder.';
+      return 'writing.ratingAgain';
     case 2:
-      return 'Zählt als richtig, aber unsicher — die Vokabel kommt früher wieder als bei einer fehlerfreien Antwort.';
+      return 'writing.ratingHard';
     default:
-      return 'Der Abstand bis zur nächsten Wiederholung wächst.';
+      return 'writing.ratingStable';
   }
 }

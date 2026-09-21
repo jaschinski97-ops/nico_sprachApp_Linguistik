@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Indonesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Indonesisch (Bahasa Indonesia), knapp und für eine App-Oberfläche leicht formell.
-// Stand: 503 Keys (Parität zur Referenz), davon 1 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const id = {
   "common.retry": "Coba lagi",
   "common.recheck": "Periksa lagi",
@@ -505,6 +505,20 @@ const id = {
   "dictation.msgPassedImpure": "Lulus — kata-kata yang ditandai tidak sepenuhnya bersih.",
   "dictation.msgToneMarksOff": "Tulisan dasar benar, tetapi tanda nada terlalu menyimpang ({{score}} %).",
   "dictation.msgBaseOff": "Tulisan dasar masih terlalu menyimpang.",
+  "writing.mistakeCase": "Huruf besar dan kecil: dalam bahasa Jerman, kata benda ditulis dengan huruf besar.",
+  "writing.mistakeUmlaut": "Umlaut: ä, ö, dan ü membedakan arti — schon tidak sama dengan schön.",
+  "writing.mistakeEszett": "ß menjadi ss: ini bukan kesalahan ketik, melainkan penulisan yang berbeda.",
+  "writing.mistakeArticleMissing": "Artikel hilang. Itu bagian dari kata.",
+  "writing.mistakeArticleWrong": "Artikel salah.",
+  "writing.mistakeToneMark": "Tanda nada: ini membawa arti — tanpa atau dengan yang salah adalah kata yang berbeda.",
+  "writing.mistakeAccent": "Tanda aksen: ini membawa arti — hablo bukan berarti habló, dan ano bukan berarti año.",
+  "writing.mistakeDifferent": "Ini adalah kata yang berbeda.",
+  "writing.msgEmpty": "Belum ada yang dicatat.",
+  "writing.msgTypo": "Dianggap benar, tetapi ada kesalahan ketik: \"{{answer}}\".",
+  "writing.correctArticle": "Yang benar adalah \"{{article}}\".",
+  "writing.ratingAgain": "Kata ini akan muncul lagi segera.",
+  "writing.ratingHard": "Dianggap benar, tetapi tidak yakin — kata ini akan muncul lebih cepat daripada jawaban yang benar.",
+  "writing.ratingStable": "Jarak hingga pengulangan berikutnya semakin besar.",
 } as const;
 
 export default id;

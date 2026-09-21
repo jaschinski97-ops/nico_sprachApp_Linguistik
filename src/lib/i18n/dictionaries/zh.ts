@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Mandarin-Chinesisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Vereinfachtes Hochchinesisch, wie in Festlandchina gebräuchlich, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const zh = {
   "common.retry": "重试",
   "common.recheck": "重新检查",
@@ -505,6 +505,20 @@ const zh = {
   "dictation.msgPassedImpure": "通过 — 标记的单词不够准确。",
   "dictation.msgToneMarksOff": "基本书写正确，但音调符号偏差过大（{{score}} %）。",
   "dictation.msgBaseOff": "基本书写偏差仍然过大。",
+  "writing.mistakeCase": "大小写：在德语中，名词首字母大写。",
+  "writing.mistakeUmlaut": "变音符：ä、ö 和 ü 区分意义 — schon 不是 schön。",
+  "writing.mistakeEszett": "ß 和 ss：这不是打字错误，而是一种独特的拼写。",
+  "writing.mistakeArticleMissing": "缺少冠词。它是词的一部分。",
+  "writing.mistakeArticleWrong": "错误的冠词。",
+  "writing.mistakeToneMark": "声调符号：它承载意义 — 没有或错误的声调是另一个词。",
+  "writing.mistakeAccent": "重音符号：它承载意义 — hablo 不是 habló，ano 不是 año。",
+  "writing.mistakeDifferent": "这是另一个词。",
+  "writing.msgEmpty": "尚未输入任何内容。",
+  "writing.msgTypo": "算作正确，但有一个打字错误：‘{{answer}}’。",
+  "writing.correctArticle": "正确的是‘{{article}}’。",
+  "writing.ratingAgain": "这个词很快会再出现。",
+  "writing.ratingHard": "算作正确，但不确定 — 这个词会比无错误答案更早出现。",
+  "writing.ratingStable": "到下次复习的间隔在增加。",
 } as const;
 
 export default zh;

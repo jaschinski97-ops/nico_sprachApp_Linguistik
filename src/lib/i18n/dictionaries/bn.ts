@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Bengalisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Bengalisch in bengalischer Schrift, höflich und knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const bn = {
   "common.retry": "পুনরায় চেষ্টা করুন",
   "common.recheck": "পুনরায় পরীক্ষা করুন",
@@ -505,6 +505,20 @@ const bn = {
   "dictation.msgPassedImpure": "পাস হয়েছে — চিহ্নিত শব্দগুলি পুরোপুরি পরিষ্কার ছিল না।",
   "dictation.msgToneMarksOff": "মূল লেখন সঠিক, কিন্তু স্বর চিহ্নগুলি খুব বেশি বিচ্যুত ({{score}} %)।",
   "dictation.msgBaseOff": "মূল লেখন এখনও খুব বেশি বিচ্যুত।",
+  "writing.mistakeCase": "বড় এবং ছোট অক্ষর: জার্মান ভাষায় বিশেষ্য শব্দগুলি বড় অক্ষরে লেখা হয়।",
+  "writing.mistakeUmlaut": "উমলাউট: ä, ö এবং ü অর্থ পৃথক করে — schon সুন্দর নয়।",
+  "writing.mistakeEszett": "ß এর পরিবর্তে ss: এটি টাইপের ভুল নয়, বরং একটি স্বতন্ত্র লেখনী।",
+  "writing.mistakeArticleMissing": "নির্দেশক অনুপস্থিত। এটি শব্দের সাথে যুক্ত।",
+  "writing.mistakeArticleWrong": "ভুল নির্দেশক।",
+  "writing.mistakeToneMark": "স্বরচিহ্ন: এটি অর্থ বহন করে — অনুপস্থিত বা ভুল হলে এটি একটি ভিন্ন শব্দ।",
+  "writing.mistakeAccent": "অ্যাকসেন্ট চিহ্ন: এটি অর্থ বহন করে — hablo হল না habló, এবং ano হল না año।",
+  "writing.mistakeDifferent": "এটি একটি ভিন্ন শব্দ।",
+  "writing.msgEmpty": "এখনও কিছু লেখা হয়নি।",
+  "writing.msgTypo": "সঠিক হিসেবে গণ্য হয়, কিন্তু একটি টাইপের ভুল রয়েছে: \"{{answer}}\"।",
+  "writing.correctArticle": "সঠিক হলো \"{{article}}\"।",
+  "writing.ratingAgain": "শব্দটি শীঘ্রই আবার আসবে।",
+  "writing.ratingHard": "সঠিক হিসেবে গণ্য হয়, কিন্তু অনিশ্চিত — শব্দটি ভুলমুক্ত উত্তর থেকে আগে আসবে।",
+  "writing.ratingStable": "পরবর্তী পুনরাবৃত্তির মধ্যে ব্যবধান বাড়ছে।",
 } as const;
 
 export default bn;

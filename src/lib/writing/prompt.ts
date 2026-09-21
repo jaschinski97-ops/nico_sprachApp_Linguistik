@@ -76,7 +76,13 @@ function extrasFor(entry: VocabEntry): string[] {
     extras.push(`${entry.germanAdjective.comparative} · ${entry.germanAdjective.superlative}`);
   }
   if (entry.note) extras.push(entry.note);
-  if (entry.verificationNote) extras.push(`⚠ ${entry.verificationNote}`);
+  // C1 (Release-Texte): Die KI-Kreuzprüfung gehört NICHT in die
+  // Lernansicht — Erzeugungs-Metadaten (Anbieter-/Modellnamen) und das
+  // ⚠ auf jeder Karte sind dort Lärm. Nur echte Altbestands-Vorbehalte
+  // („UNSICHER: …") bleiben sichtbar.
+  if (entry.verificationNote && !entry.verificationNote.startsWith('KI-')) {
+    extras.push(`⚠ ${entry.verificationNote}`);
+  }
   return extras;
 }
 
@@ -112,6 +118,15 @@ function ankerwortFuer(entry: VocabEntry, direction: Direction): string {
   return (entry.translations?.[anchor] ?? '').trim();
 }
 
+function mitArtikel(zielFormen: string[], entry: VocabEntry): string[] {
+  const noun = entry.germanNoun;
+  if (!noun) return zielFormen;
+  const erweitert = zielFormen.flatMap((form) =>
+    form.toLowerCase().startsWith(`${noun.article} `) ? [form] : [form, `${noun.article} ${form}`]
+  );
+  return [...new Set(erweitert)];
+}
+
 export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
   if (writesGerman(direction)) {
     // Der generierte de-Pool trägt `german === term` — genau die tippbare
@@ -139,7 +154,11 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
       // Die Lesehilfe nur, wenn sie etwas Neues sagt: Beim generierten
       // de-Pool gibt es keine eigene Umschrift — dann keine Zeile.
       shownHint: umschrift,
-      targets: germanTargets(entry),
+      // Mit UND ohne Artikel als gültige Form: Der Prompt nennt den Artikel
+      // („con artículo, si lo hay"), der generierte de-Pool trägt ihn aber
+      // nicht im Stichwort — „der Eimer" gegen Lösung „Eimer" war sonst
+      // stets falsch (en-UI-Befund 21.09.).
+      targets: mitArtikel(germanTargets(entry), entry),
       solution: entry.german,
       extras: extrasFor(entry),
     };

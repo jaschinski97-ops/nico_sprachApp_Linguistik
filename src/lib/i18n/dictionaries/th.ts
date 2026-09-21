@@ -583,6 +583,23 @@ const th: Partial<Record<TranslationKey, string>> = {
   "dictation.msgPassedImpure": "ผ่าน — คำที่ระบุไว้ยังไม่เนี้ยบนัก",
   "dictation.msgToneMarksOff": "สะกดพื้นฐานถูก แต่วรรณยุกต์เบี่ยงเบนมากเกินไป ({{score}} %)",
   "dictation.msgBaseOff": "การสะกดพื้นฐานยังเบี่ยงเบนมากเกินไป",
+
+  // 21.09.2026: Writing-Feedback-Schlüssel (Handübersetzung —
+  // diese Datei ist bewusst außerhalb des Generators, weil sie geprüft ist).
+  "writing.mistakeCase": "ตัวพิมพ์ใหญ่-เล็ก: ภาษาเยอรมัน คำนามขึ้นต้นด้วยตัวพิมพ์ใหญ่",
+  "writing.mistakeUmlaut": "สระเปลี่ยนเสียง: ä, ö และ ü เปลี่ยนความหมาย — «schon» ไม่ใช่ «schön»",
+  "writing.mistakeEszett": "ß กับ ss: ไม่ใช่การพิมพ์ผิด แต่เป็นการสะกดคนละแบบ",
+  "writing.mistakeArticleMissing": "ยังไม่มีคำนำหน้า คำนำหน้าเป็นส่วนหนึ่งของคำ",
+  "writing.mistakeArticleWrong": "คำนำหน้าไม่ถูกต้อง",
+  "writing.mistakeToneMark": "วรรณยุกต์: มันมีความหมาย — ถ้าไม่มีหรือใช้ผิด กลายเป็นคำละคำ",
+  "writing.mistakeAccent": "เครื่องหมายเสียงหนัก: มันมีความหมาย — hablo ไม่ใช่ habló และ ano ไม่ใช่ año",
+  "writing.mistakeDifferent": "นั่นเป็นคำอื่น",
+  "writing.msgEmpty": "ยังไม่ได้พิมพ์อะไร",
+  "writing.msgTypo": "นับเป็นถูก แต่มีการพิมพ์ผิด: «{{answer}}»",
+  "writing.correctArticle": "ที่ถูกคือ «{{article}}»",
+  "writing.ratingAgain": "คำนี้จะกลับมาเร็ว ๆ นี้",
+  "writing.ratingHard": "นับเป็นถูก แต่ยังไม่มั่นใจ — คำจะกลับมาเร็วกว่าการตอบที่เนี้ยบ",
+  "writing.ratingStable": "ระยะห่างถึงการทบทวนครั้งถัดไปจะยาวขึ้น",
 };
 
 export default th;

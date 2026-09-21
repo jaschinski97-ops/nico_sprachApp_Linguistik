@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Russisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Russisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const ru = {
   "common.retry": "Попробовать снова",
   "common.recheck": "Проверить снова",
@@ -505,6 +505,20 @@ const ru = {
   "dictation.msgPassedImpure": "Сдано — выделенные слова не совсем чистые.",
   "dictation.msgToneMarksOff": "Базовый текст правильный, но тональные знаки слишком сильно отличаются ({{score}} %).",
   "dictation.msgBaseOff": "Базовый текст все еще слишком сильно отличается.",
+  "writing.mistakeCase": "Заглавные и строчные буквы: в немецком языке существительные пишутся с заглавной буквы.",
+  "writing.mistakeUmlaut": "Умлаут: ä, ö и ü различают значения — schon не значит schön.",
+  "writing.mistakeEszett": "ß вместо ss: это не опечатка, а собственное написание.",
+  "writing.mistakeArticleMissing": "Артикль отсутствует. Он относится к слову.",
+  "writing.mistakeArticleWrong": "Неправильный артикль.",
+  "writing.mistakeToneMark": "Тонкий знак: он несет значение — без него или с неправильным это другое слово.",
+  "writing.mistakeAccent": "Акцентный знак: он несет значение — hablo не равно habló, а ano не равно año.",
+  "writing.mistakeDifferent": "Это другое слово.",
+  "writing.msgEmpty": "Еще ничего не введено.",
+  "writing.msgTypo": "Считается правильным, но с опечаткой: „{{answer}}“.",
+  "writing.correctArticle": "Правильно: „{{article}}“.",
+  "writing.ratingAgain": "Слово скоро появится снова.",
+  "writing.ratingHard": "Считается правильным, но неуверенно — слово появится раньше, чем при безошибочном ответе.",
+  "writing.ratingStable": "Интервал до следующего повторения увеличивается.",
 } as const;
 
 export default ru;

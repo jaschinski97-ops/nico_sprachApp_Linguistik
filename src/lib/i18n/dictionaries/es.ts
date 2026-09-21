@@ -603,6 +603,23 @@ const es: Partial<Record<TranslationKey, string>> = {
   "dictation.msgPassedImpure": "Superado — las palabras marcadas no estaban del todo limpias.",
   "dictation.msgToneMarksOff": "Ortografía base correcta, pero los signos de tono se desvían demasiado ({{score}} %).",
   "dictation.msgBaseOff": "La ortografía base se desvía todavía demasiado.",
+
+  // 21.09.2026: Writing-Feedback-Schlüssel (Handübersetzung —
+  // diese Datei ist bewusst außerhalb des Generators, weil sie geprüft ist).
+  "writing.mistakeCase": "Mayúsculas: en alemán los sustantivos se escriben con mayúscula inicial.",
+  "writing.mistakeUmlaut": "Umlaut: ä, ö y ü cambian el significado — «schon» no es «schön».",
+  "writing.mistakeEszett": "ß frente a ss: no es una errata, sino una grafía propia.",
+  "writing.mistakeArticleMissing": "Falta el artículo. Pertenece a la palabra.",
+  "writing.mistakeArticleWrong": "Artículo incorrecto.",
+  "writing.mistakeToneMark": "Signo de tono: carga significado — sin él, o con el equivocado, es otra palabra.",
+  "writing.mistakeAccent": "La tilde carga significado — hablo no es habló, y ano no es año.",
+  "writing.mistakeDifferent": "Esa es otra palabra.",
+  "writing.msgEmpty": "Aún no has escrito nada.",
+  "writing.msgTypo": "Cuenta como correcta, pero contiene una errata: «{{answer}}».",
+  "writing.correctArticle": "La forma correcta es «{{article}}».",
+  "writing.ratingAgain": "La palabra volverá pronto.",
+  "writing.ratingHard": "Cuenta como correcta, pero con dudas — la palabra vuelve antes que tras una respuesta impecable.",
+  "writing.ratingStable": "El intervalo hasta la próxima repetición crece.",
 };
 
 export default es;

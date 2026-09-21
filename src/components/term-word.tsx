@@ -39,11 +39,10 @@ export function TermWord({
   if (entry.language === 'th') return <ThaiWord entry={entry} size={size} />;
 
   const syllables = syllablesOf(entry);
-  const showsStress = syllables.some((syllable) => syllable.stressed);
-  // Einsilbler: Die Silbenzeile würde das Wort wiederholen und „betont: X“
-  // ist bei einer einzigen Silbe keine Information mehr (Nutzerbefund
-  // 21.09.2026: „diez“ dreimal auf der Karte).
-  const showsStressLine = showsStress && syllables.length > 1;
+  // Einsilbler: Sowohl die Silbenzeile (sie würde das Wort wiederholen)
+  // als auch „betont: X“ (bei einer Silbe keine Information) entfallen —
+  // vorher stand „diez“ doppelt untereinander (Nutzerbefunde 21.09.).
+  const showsStress = syllables.some((syllable) => syllable.stressed) && syllables.length > 1;
   // Wie bei `ThaiWord`: sehr große Fassung begrenzt, mittlere großzügiger;
   // Zeilenhöhe wächst mit (UI-Review 2026-09-07). Die Größen selbst bleiben
   // bewusst eigene Stufen — lateinische Schrift braucht weniger Kopffreiheit
@@ -85,7 +84,7 @@ export function TermWord({
         </ThemedText>
       ) : null}
 
-      {showsStressLine ? (
+      {showsStress ? (
         <ThemedText type="small" themeColor="textSecondary">
           {t('termWord.stressed', { syllable: syllables.find((syllable) => syllable.stressed)?.roman ?? '' })}
         </ThemedText>

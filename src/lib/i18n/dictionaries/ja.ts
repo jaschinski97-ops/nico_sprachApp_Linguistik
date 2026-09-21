@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Japanisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Gegenwärtiges Standard-Japanisch im höflichen です/ます-Stil, knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const ja = {
   "common.retry": "再試行",
   "common.recheck": "再確認",
@@ -505,6 +505,20 @@ const ja = {
   "dictation.msgPassedImpure": "合格 — マークされた単語は完全ではありませんでした。",
   "dictation.msgToneMarksOff": "基本文字は正しいですが、音調記号が大きく異なります（{{score}} %）。",
   "dictation.msgBaseOff": "基本文字がまだ大きく異なります。",
+  "writing.mistakeCase": "大文字と小文字：ドイツ語では名詞は大文字で書かれます。",
+  "writing.mistakeUmlaut": "ウムラウト：ä、ö、üは意味を区別します — schonは美しくありません。",
+  "writing.mistakeEszett": "ßとss：これは誤字ではなく、独自の表記です。",
+  "writing.mistakeArticleMissing": "冠詞が欠けています。これは単語に含まれます。",
+  "writing.mistakeArticleWrong": "誤った冠詞です。",
+  "writing.mistakeToneMark": "音調記号：意味を持ちます — なしまたは間違っていると別の単語になります。",
+  "writing.mistakeAccent": "アクセント記号：意味を持ちます — habloはhablóではなく、anoはañoではありません。",
+  "writing.mistakeDifferent": "これは別の単語です。",
+  "writing.msgEmpty": "まだ何も入力されていません。",
+  "writing.msgTypo": "正解と見なされますが、誤字があります：「{{answer}}」。",
+  "writing.correctArticle": "正しいのは「{{article}}」です。",
+  "writing.ratingAgain": "その単語はすぐに再登場します。",
+  "writing.ratingHard": "正解と見なされますが、不確かです — 誤りのない回答より早くその単語が再登場します。",
+  "writing.ratingStable": "次の復習までの間隔が広がります。",
 } as const;
 
 export default ja;

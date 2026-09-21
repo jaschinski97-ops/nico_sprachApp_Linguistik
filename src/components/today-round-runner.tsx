@@ -229,6 +229,11 @@ export function TodayRoundRunner({
 
   return (
     <>
+      {/* Verlassen mitten in der Runde — die laufende Ansicht hatte nur
+          „Bereich überspringen“, aber keinen Rückweg (en-UI-Befund 21.09.). */}
+      <View style={styles.actions}>
+        <ThemedButton label={t('common.back')} onPress={onExit} />
+      </View>
       <View style={styles.headerRow}>
         <ThemedText type="small" themeColor="textSecondary">
           {t('round.segment', { index: segIndex + 1, total: runde.plan.length })} ·{' '}

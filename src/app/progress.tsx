@@ -43,7 +43,7 @@ export function tagLabel(date: string, language: UiLanguage): string {
 }
 
 export default function ProgressScreen() {
-  const { t, languageName } = useLocale();
+  const { t, languageName, uiLanguage } = useLocale();
   const [stats, setStats] = useState<LearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -225,13 +225,19 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
         {stats.loggedSince
           ? stats.totalDrills > 0
             ? t('chart.loggedSinceWithDrills', {
-                since: stats.loggedSince,
+                // Das ISO-Datum lesbar je UI-Sprache (21.09.: „2026-09-21" →
+                // „21. September 2026") statt des Rohwerts.
+                since: new Intl.DateTimeFormat(localeTagFor(uiLanguage), { dateStyle: 'long' }).format(
+                  new Date(stats.loggedSince)
+                ),
                 reviews: stats.totalReviews,
                 drills: stats.totalDrills,
                 correct: stats.totalDrillsCorrect,
               })
             : t('chart.loggedSince', {
-                since: stats.loggedSince,
+                since: new Intl.DateTimeFormat(localeTagFor(uiLanguage), { dateStyle: 'long' }).format(
+                  new Date(stats.loggedSince)
+                ),
                 reviews: stats.totalReviews,
               })
           : t('chart.empty')}

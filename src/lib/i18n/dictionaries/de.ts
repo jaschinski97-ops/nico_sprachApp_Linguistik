@@ -447,7 +447,7 @@ const de = {
   'dictation.promptTh': 'Schreib den Satz auf, den du hörst — mit Tonzeichen.',
   'dictation.promptDe': 'Schreib den Satz auf, den du hörst — mit Groß- und Kleinschreibung.',
   'dictation.promptEs': 'Schreib den Satz auf, den du hörst — mit Akzentzeichen.',
-  'dictation.promptEn': 'Write down the sentence you hear.',
+  'dictation.promptEn': 'Schreib den Satz auf, den du hörst.',
   'dictation.noVoice':
     'Kein Satzclip und keine {{language}}-Systemstimme verfügbar. Installiere eine {{language}}-Stimme oder nutze ein Gerät mit {{language}}-Sprachausgabe.',
   'dictation.slowClipOnly':
@@ -630,6 +630,21 @@ const de = {
   "dictation.msgPassedImpure": "Bestanden — die markierten Wörter saßen nicht ganz sauber.",
   "dictation.msgToneMarksOff": "Basisschrift korrekt, aber die Tonzeichen weichen zu stark ab ({{score}} %).",
   "dictation.msgBaseOff": "Die Basisschrift weicht noch zu stark ab.",
+
+  "writing.mistakeCase": "Groß- und Kleinschreibung: im Deutschen werden Substantive großgeschrieben.",
+  "writing.mistakeUmlaut": "Umlaut: ä, ö und ü unterscheiden Bedeutungen — schon ist nicht schön.",
+  "writing.mistakeEszett": "ß gegen ss: das ist kein Tippfehler, sondern eine eigene Schreibung.",
+  "writing.mistakeArticleMissing": "Der Artikel fehlt. Er gehört zum Wort dazu.",
+  "writing.mistakeArticleWrong": "Falscher Artikel.",
+  "writing.mistakeToneMark": "Tonzeichen: es trägt die Bedeutung — ohne oder mit dem falschen ist es ein anderes Wort.",
+  "writing.mistakeAccent": "Akzentzeichen: er trägt die Bedeutung — hablo ist nicht habló, und ano ist nicht año.",
+  "writing.mistakeDifferent": "Das ist ein anderes Wort.",
+  "writing.msgEmpty": "Noch nichts eingetragen.",
+  "writing.msgTypo": "Zählt als richtig, hat aber einen Tippfehler: „{{answer}}“.",
+  "writing.correctArticle": "Richtig ist „{{article}}“.",
+  "writing.ratingAgain": "Die Vokabel kommt bald wieder.",
+  "writing.ratingHard": "Zählt als richtig, aber unsicher — die Vokabel kommt früher wieder als bei einer fehlerfreien Antwort.",
+  "writing.ratingStable": "Der Abstand bis zur nächsten Wiederholung wächst.",
 } as const;
 
 export default de;

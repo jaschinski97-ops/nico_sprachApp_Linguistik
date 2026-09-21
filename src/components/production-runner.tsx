@@ -296,7 +296,7 @@ export function ProductionRunner({
                   : t('drill.exact')}
             </ThemedText>
             <ThemedText type="subtitle">{ergebnis.ziel}</ThemedText>
-            {aufgabe.roman ? (
+            {aufgabe.roman && aufgabe.roman !== ergebnis.ziel ? (
               <ThemedText type="small" themeColor="textSecondary">
                 {aufgabe.roman}
               </ThemedText>

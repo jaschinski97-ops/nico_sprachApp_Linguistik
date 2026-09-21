@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Koreanisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Koreanisch im höflichen 해요체, knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const ko = {
   "common.retry": "다시 시도하기",
   "common.recheck": "다시 확인하기",
@@ -505,6 +505,20 @@ const ko = {
   "dictation.msgPassedImpure": "합격 — 표시된 단어가 완전히 정확하지 않았습니다.",
   "dictation.msgToneMarksOff": "기본 문자 정확, 그러나 음표가 너무 많이 다릅니다 ({{score}} %).",
   "dictation.msgBaseOff": "기본 문자가 아직 너무 많이 다릅니다.",
+  "writing.mistakeCase": "대문자와 소문자: 독일어에서는 명사를 대문자로 씁니다.",
+  "writing.mistakeUmlaut": "우음: ä, ö, ü는 의미를 구분합니다 — schon은 schön이 아닙니다.",
+  "writing.mistakeEszett": "ß와 ss: 오타가 아니라 고유한 철자입니다.",
+  "writing.mistakeArticleMissing": "관사가 없습니다. 단어와 함께 있어야 합니다.",
+  "writing.mistakeArticleWrong": "잘못된 관사입니다.",
+  "writing.mistakeToneMark": "음조 기호: 의미를 지닙니다 — 없거나 잘못된 경우 다른 단어가 됩니다.",
+  "writing.mistakeAccent": "악센트 기호: 의미를 지닙니다 — hablo는 아닙니다, habló이고, ano는 아닙니다, año입니다.",
+  "writing.mistakeDifferent": "다른 단어입니다.",
+  "writing.msgEmpty": "아직 입력된 내용이 없습니다.",
+  "writing.msgTypo": "올바른 것으로 간주되지만 오타가 있습니다: „{{answer}}“.",
+  "writing.correctArticle": "올바른 것은 „{{article}}“입니다.",
+  "writing.ratingAgain": "어휘가 곧 다시 나옵니다.",
+  "writing.ratingHard": "올바른 것으로 간주되지만 불확실합니다 — 어휘가 오류 없는 답변보다 빨리 나옵니다.",
+  "writing.ratingStable": "다음 반복까지의 간격이 늘어납니다.",
 } as const;
 
 export default ko;

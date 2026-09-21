@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Urdu; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Urdu (Pakistan) in arabischer Schrift (Nastaliq-Lautung), höflich und knapp.
-// Stand: 503 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const ur = {
   "common.retry": "دوبارہ کوشش کریں",
   "common.recheck": "دوبارہ چیک کریں",
@@ -505,6 +505,20 @@ const ur = {
   "dictation.msgPassedImpure": "پاس ہوگیا — نشان زدہ الفاظ مکمل طور پر درست نہیں تھے۔",
   "dictation.msgToneMarksOff": "بنیادی تحریر درست ہے، لیکن آواز کے نشانات بہت زیادہ مختلف ہیں ({{score}} %).",
   "dictation.msgBaseOff": "بنیادی تحریر ابھی بھی بہت زیادہ مختلف ہے۔",
+  "writing.mistakeCase": "بڑے اور چھوٹے حروف: جرمن میں اسم بڑے حروف سے لکھے جاتے ہیں۔",
+  "writing.mistakeUmlaut": "اُملاؤٹ: ä، ö اور ü معنی میں فرق پیدا کرتے ہیں — 'schon' خوبصورت نہیں ہے۔",
+  "writing.mistakeEszett": "ß کے مقابلے میں ss: یہ کوئی ٹائپنگ کی غلطی نہیں ہے، بلکہ ایک الگ لکھائی ہے۔",
+  "writing.mistakeArticleMissing": "مضمون غائب ہے۔ یہ لفظ کا حصہ ہے۔",
+  "writing.mistakeArticleWrong": "غلط مضمون۔",
+  "writing.mistakeToneMark": "ٹون مارک: یہ معنی رکھتا ہے — بغیر یا غلط کے یہ ایک اور لفظ ہے۔",
+  "writing.mistakeAccent": "اکسنٹ مارک: یہ معنی رکھتا ہے — 'hablo' 'habló' نہیں ہے، اور 'ano' 'año' نہیں ہے۔",
+  "writing.mistakeDifferent": "یہ ایک اور لفظ ہے۔",
+  "writing.msgEmpty": "ابھی کچھ درج نہیں کیا گیا۔",
+  "writing.msgTypo": "یہ درست سمجھا جاتا ہے، لیکن اس میں ایک ٹائپنگ کی غلطی ہے: „{{answer}}“۔",
+  "writing.correctArticle": "درست ہے „{{article}}“۔",
+  "writing.ratingAgain": "یہ الفاظ جلد دوبارہ آئیں گے۔",
+  "writing.ratingHard": "یہ درست سمجھا جاتا ہے، لیکن غیر یقینی ہے — یہ الفاظ غلطی سے پاک جواب کی نسبت جلد آئیں گے۔",
+  "writing.ratingStable": "اگلی بار دہرانے کا فاصلہ بڑھتا جا رہا ہے۔",
 } as const;
 
 export default ur;

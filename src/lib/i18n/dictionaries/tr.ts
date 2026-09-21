@@ -1,6 +1,6 @@
 // GENERIERT von scripts/content/generate-ui-language.cjs — Türkisch; nicht von Hand editieren, Quelle ist de.ts
 // Stil: Standard-Türkisch, knapp und für eine App-Oberfläche leicht formell.
-// Stand: 503 Keys (Parität zur Referenz), davon 2 als Deutsch-Fallback.
+// Stand: 517 Keys (Parität zur Referenz), davon 0 als Deutsch-Fallback.
 const tr = {
   "common.retry": "Tekrar dene",
   "common.recheck": "Tekrar kontrol et",
@@ -505,6 +505,20 @@ const tr = {
   "dictation.msgPassedImpure": "Geçti — işaretli kelimeler tam olarak doğru değil.",
   "dictation.msgToneMarksOff": "Temel yazım doğru, ancak ton işaretleri çok fazla farklılık gösteriyor ({{score}} %).",
   "dictation.msgBaseOff": "Temel yazım hala çok fazla farklılık gösteriyor.",
+  "writing.mistakeCase": "Büyük ve küçük harf: Almanca'da isimler büyük harfle başlar.",
+  "writing.mistakeUmlaut": "Umlaut: ä, ö ve ü anlamları ayırır — schon güzel değildir.",
+  "writing.mistakeEszett": "ß yerine ss: bu bir yazım hatası değil, kendi yazımıdır.",
+  "writing.mistakeArticleMissing": "Artikel eksik. Kelimenin bir parçasıdır.",
+  "writing.mistakeArticleWrong": "Yanlış artikel.",
+  "writing.mistakeToneMark": "Ton işareti: anlam taşır — eksik veya yanlış olanı başka bir kelimedir.",
+  "writing.mistakeAccent": "Aksan işareti: anlam taşır — hablo, habló değildir; ano, año değildir.",
+  "writing.mistakeDifferent": "Bu başka bir kelimedir.",
+  "writing.msgEmpty": "Henüz bir şey yazılmadı.",
+  "writing.msgTypo": "Doğru sayılır, ancak bir yazım hatası var: „{{answer}}“.",
+  "writing.correctArticle": "Doğru olan „{{article}}“.",
+  "writing.ratingAgain": "Kelime yakında tekrar gelecek.",
+  "writing.ratingHard": "Doğru sayılır, ancak belirsiz — kelime hatasız bir cevaptan daha erken gelecek.",
+  "writing.ratingStable": "Bir sonraki tekrar için süre uzuyor.",
 } as const;
 
 export default tr;
