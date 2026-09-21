@@ -85,11 +85,19 @@ describe('Freies Schreiben in beide Richtungen der neuen Paare', () => {
   });
 
   it('nimmt in eine Sitzung nur Vokabeln der eigenen Sprache', () => {
-    for (const direction of ['de_to_es', 'es_to_de'] as const) {
-      const kandidaten = writingCandidates(direction);
-      expect(kandidaten.length).toBe(VOCABULARY_ES.length);
-      expect(kandidaten.every((entry) => entry.language === 'es')).toBe(true);
-    }
+    // de_to_es: die Zielseite (es) bleibt fest gefiltert.
+    const hin = writingCandidates('de_to_es');
+    expect(hin.length).toBe(VOCABULARY_ES.length);
+    expect(hin.every((entry) => entry.language === 'es')).toBe(true);
+    // es_to_de SEIT DEM 21.09.2026 OHNE SPRACHFILTER: Der Pool der Richtung
+    // entscheidet die Seite (Alt-Bestand: es-Einträge mit `german`,
+    // generierter de-Pool: `language: 'de'`) — die Kandidaten prüfen nur
+    // die Baubarkeit (Zielform + lesbares Ankerwort). Vorher filterte der
+    // Anker ('es') den generierten de-Pool leer und das Schreiben blieb
+    // beim Deutsch-Ziel für immer leer.
+    const zurueck = writingCandidates('es_to_de');
+    expect(VOCABULARY_ES.every((entry) => zurueck.includes(entry))).toBe(true);
+    expect(zurueck.every((entry) => canBuildWritingPrompt(entry, 'es_to_de'))).toBe(true);
   });
 
   it('kann für jeden Eintrag beider neuer Sprachen eine Aufgabe bauen', () => {

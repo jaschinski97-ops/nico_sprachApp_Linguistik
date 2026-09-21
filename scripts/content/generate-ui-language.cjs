@@ -286,7 +286,11 @@ async function uebersetzeChunk(apiKey, ziel, chunk) {
 }
 
 async function main() {
-  const code = process.argv[2];
+  // ZWEITER ARGUMENT `--fehlende` (21.09.2026): Nur die Keys übersetzen,
+  // die im Wörterbuch NOCH FEHLEN — der bestehende Bestand bleibt bytegleich
+  // erhalten. Ohne das Flag gilt das bisherige Verhalten (alles neu).
+  const nurFehlende = process.argv.includes('--fehlende');
+  const code = process.argv.find((arg) => arg !== '--fehlende' && arg !== process.argv[0] && arg !== process.argv[1]);
   const ziel = ZIELSPRACHEN[code];
   if (!ziel) {
     console.error(
@@ -309,16 +313,29 @@ async function main() {
     console.error(`Referenz verdächtig klein (${keys.length} Keys) — Abbruch.`);
     process.exit(1);
   }
+  // MERGE-MODUS: vorhandene Übersetzungen sind die Basis, übersetzt wird
+  // nur die Differenz. Bestehende Werte bleiben unverändert — kein
+  // Qualitäts-Umschwung bei bereits ausgelieferten Sprachen.
+  const vorhanden = nurFehlende
+    ? load(`src/lib/i18n/dictionaries/${code}.ts`).default
+    : {};
+  const offene = keys.filter((key) => !(key in vorhanden));
+  if (nurFehlende && offene.length === 0) {
+    console.log(`${ziel.sprachName}: nichts zu tun — Parität besteht bereits.`);
+    return;
+  }
   console.log(
-    `Übersetze ${keys.length} Keys nach ${ziel.sprachName} (${MODELL}, Chunks à ${CHUNK_GROESSE}) …`
+    nurFehlende
+      ? `Ziehe ${offene.length} fehlende Keys nach ${ziel.sprachName} nach (${MODELL}, Chunks à ${CHUNK_GROESSE}); ${keys.length - offene.length} bleiben unverändert …`
+      : `Übersetze ${keys.length} Keys nach ${ziel.sprachName} (${MODELL}, Chunks à ${CHUNK_GROESSE}) …`
   );
 
-  const woerterbuch = {};
+  const woerterbuch = { ...vorhanden };
   let gefallenGesamt = 0;
   let tokensIn = 0;
   let tokensOut = 0;
-  for (let i = 0; i < keys.length; i += CHUNK_GROESSE) {
-    const chunkKeys = keys.slice(i, i + CHUNK_GROESSE);
+  for (let i = 0; i < offene.length; i += CHUNK_GROESSE) {
+    const chunkKeys = offene.slice(i, i + CHUNK_GROESSE);
     const chunk = Object.fromEntries(chunkKeys.map((key) => [key, de[key]]));
     const { ergebnis, gefallen, usage } = await uebersetzeChunk(apiKey, ziel, chunk);
     Object.assign(woerterbuch, ergebnis);
@@ -332,7 +349,7 @@ async function main() {
         `  ⚠ ${gefallen.length} Keys fallen auf Deutsch zurück: ${gefallen.join(', ')}`
       );
     }
-    console.log(`  Chunk ${i / CHUNK_GROESSE + 1}/${Math.ceil(keys.length / CHUNK_GROESSE)} fertig`);
+    console.log(`  Chunk ${i / CHUNK_GROESSE + 1}/${Math.ceil(offene.length / CHUNK_GROESSE)} fertig`);
   }
 
   const zeilen = keys.map((key) => {

@@ -93,71 +93,15 @@ export const dictionaries: Record<UiLanguage, Partial<Record<TranslationKey, str
 /**
  * Schlüssel, für die ein deutscher Fallback ausdrücklich zugelassen ist.
  *
- * Der Vollständigkeitstest verlangt: fehlende Keys ⊆ diese Liste. Momentan
- * leer — alle fünf Wörterbücher sind komplett. Neue Übersetzungen tragen
- * sich hier nur ein, wenn eine Übersetzung bewusst zurückgestellt wird.
- *
- * STAND 21.09.2026: Die Übungs-Chrome-Schlüssel des Anker-Umbaus (audio.*,
+ * Der Vollständigkeitstest verlangt: fehlende Keys ⊆ diese Liste. SEIT DEM
+ * 21.09.2026 WIEDER LEER: Die Chrome-Schlüssel des Anker-Umbaus (audio.*,
  * drill.*, stress.*, grammar.*, consonantClass.*, palette.*, termWord.*,
- * dictation.msg*) stehen in de und en vollständig; die 18 generierten
- * Wörterbücher fallen auf ENGLISCH zurück (translate-Kette: Sprache → en →
- * de) — ehrlich lesbar überall, deutsch nirgends mehr. Nachziehen je
- * Sprache: ein Übersetzungslauf über dieselbe Pipeline wie 13.09.
+ * dictation.msg*) stehen in ALLEN 20 Wörterbüchern — die 16 generierten
+ * über den Merge-Modus des Generierungsskripts
+ * (`generate-ui-language.cjs <code> --fehlende`, nur die Differenz, Bestand
+ * bytegleich erhalten), es/th/de/en von Hand. Kein deutscher Rest anywhere.
  */
-export const FALLBACK_ALLOWED_KEYS: readonly TranslationKey[] = [
-  'audio.tonePassed',
-  'audio.toneFailed',
-  'audio.toneNotApplicable',
-  'audio.toneUnchecked',
-  'audio.systemVoice',
-  'audio.systemVoiceUnchecked',
-  'drill.toneIs',
-  'drill.syllableOrdinal',
-  'drill.irregular',
-  'drill.regular',
-  'drill.verbClass',
-  'drill.stressHearWritten',
-  'drill.stressHearNoAccent',
-  'stress.stepSyllables',
-  'stress.stepAcute',
-  'stress.stepMonosyllable',
-  'stress.stepWordEnd',
-  'stress.stepBasicRule',
-  'stress.detailOneNucleus',
-  'stress.detailNuclei',
-  'stress.detailAcuteDifferential',
-  'stress.detailAcute',
-  'stress.detailOnlySyllable',
-  'stress.detailEndVowel',
-  'stress.detailEndNOrS',
-  'stress.detailRulePenultimate',
-  'stress.detailNAfterConsonant',
-  'stress.detailEndOther',
-  'stress.detailRuleFinal',
-  'stress.uncertainDifferential',
-  'grammar.speakerMale',
-  'grammar.speakerFemale',
-  'grammar.particleGender',
-  'grammar.counterBetween',
-  'grammar.classIntro',
-  'consonantClass.mid',
-  'consonantClass.high',
-  'consonantClass.low',
-  'palette.germanHeading',
-  'palette.spanishHeading',
-  'palette.umlaut',
-  'palette.capitalUmlaut',
-  'palette.sharpS',
-  'palette.acute',
-  'palette.tilde',
-  'palette.trema',
-  'termWord.stressed',
-  'dictation.msgEmpty',
-  'dictation.msgToneWarning',
-  'dictation.msgPassedImpure',
-  'dictation.msgToneMarksOff',
-  'dictation.msgBaseOff',
-];
+export const FALLBACK_ALLOWED_KEYS: readonly TranslationKey[] = [];
 
 const PLACEHOLDER_PATTERN = /\{\{(\w+)\}\}/g;
 

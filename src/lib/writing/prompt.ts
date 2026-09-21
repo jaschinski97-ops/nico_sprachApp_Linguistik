@@ -1,7 +1,7 @@
 import { VocabEntry } from '@/data/vocab-types';
-import { VOCABULARY } from '@/data/vocabulary';
+import { activeVocabulary } from '@/data/active-vocabulary';
 
-import { HUB_LANGUAGE, languageOfDirection } from '../languages/types';
+import { anchorOf, HUB_LANGUAGE, languageOfDirection } from '../languages/types';
 
 import { Direction } from '../fsrs/types';
 
@@ -97,8 +97,28 @@ function writesGerman(direction: Direction): boolean {
   return direction.endsWith(`_to_${HUB_LANGUAGE}`);
 }
 
+/**
+ * Das ANKERWORT einer Deutsch-Schreibaufgabe (21.09.2026): Was die lernende
+ * Person sieht, muss in der Sprache sein, die sie schon spricht. Im
+ * Alt-Bestand (th-Einträge mit `german`) ist das `entry.term` selbst; im
+ * generierten de-Pool steht der Anker in `translations[anchor]` — vorher
+ * stand hier stur `entry.term`, was für den generierten de-Pool das deutsche
+ * Wort selbst war (Auftrag = Lösung) und für en_to_de gar nicht erst bis
+ * hierher kam, weil die Kandidaten-Filterung bereits leer griff.
+ */
+function ankerwortFuer(entry: VocabEntry, direction: Direction): string {
+  const anchor = anchorOf(direction);
+  if (String(entry.language) === anchor) return entry.term;
+  return (entry.translations?.[anchor] ?? '').trim();
+}
+
 export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
-  if (writesGerman(direction)) return germanTargets(entry).length > 0;
+  if (writesGerman(direction)) {
+    // Der generierte de-Pool trägt `german === term` — genau die tippbare
+    // Zielform. Ein leerer Anker (keine Übersetzung in der Brückensprache)
+    // disqualifiziert: Die Aufgabe wäre unlesbar.
+    return germanTargets(entry).length > 0 && ankerwortFuer(entry, direction).length > 0;
+  }
   return Boolean(entry.term.trim());
 }
 
@@ -108,15 +128,17 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
   }
 
   if (writesGerman(direction)) {
+    const ankerwort = ankerwortFuer(entry, direction);
+    const umschrift = entry.romanization && entry.romanization !== ankerwort ? entry.romanization : null;
     return {
       id: `writing:${direction}:${entry.id}`,
       vocabId: entry.id,
       direction,
       language: 'de',
-      shown: entry.term,
-      // Die Umschrift als Lesehilfe: Wer Deutsch lernt, soll an der deutschen
-      // Form scheitern duerfen, nicht am Entziffern der eigenen Schrift.
-      shownHint: entry.romanization,
+      shown: ankerwort,
+      // Die Lesehilfe nur, wenn sie etwas Neues sagt: Beim generierten
+      // de-Pool gibt es keine eigene Umschrift — dann keine Zeile.
+      shownHint: umschrift,
       targets: germanTargets(entry),
       solution: entry.german,
       extras: extrasFor(entry),
@@ -144,12 +166,20 @@ export function buildWritingPrompt(entry: VocabEntry, direction: Direction): Wri
 
 export function writingCandidates(
   direction: Direction,
-  entries: VocabEntry[] = VOCABULARY
+  entries: VocabEntry[] = activeVocabulary()
 ): VocabEntry[] {
   // Auch hier gilt der Filter aus Phase 16: Ein spanisches Wort in einer
-  // Thai-Schreibsitzung waere ein Fehler, kein Zufallsfund.
-  const sprache = languageOfDirection(direction);
+  // Thai-Schreibsitzung waere ein Fehler, kein Zufallsfund. Bei _to_de
+  // entscheidet KEIN Sprachcode mehr, welcher Eintrag drin ist — der Pool
+  // der Richtung ist es (Alt-Bestand: X-Einträge mit `german`, generierter
+  // de-Pool: `language: 'de'`); `canBuildWritingPrompt` verlangt in beiden
+  // Welten Zielform UND lesbares Ankerwort. Vorher filterte en_to_de nach
+  // 'en' und griff im de-Pool leer (Writing leer beim Deutsch-Ziel,
+  // Nutzerbefund 21.09.).
+  const sprache = writesGerman(direction) ? null : languageOfDirection(direction);
   return entries.filter(
-    (entry) => entry.language === sprache && canBuildWritingPrompt(entry, direction)
+    (entry) =>
+      (sprache === null || entry.language === sprache) &&
+      canBuildWritingPrompt(entry, direction)
   );
 }
