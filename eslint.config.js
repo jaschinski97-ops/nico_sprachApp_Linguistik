@@ -6,7 +6,7 @@ const globals = require('globals');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ["dist/*", "assets/content/*"],
+    ignores: ["dist/**", "assets/content/**", "build-verification/**", ".content-studio/**", ".expo/**", "android/**", "ios/**", "public/**", "_Local/**"],
   },
   {
     // Node-Skripte (scripts/**/*.cjs) und Jest-Umgebung: Die Expo-Grundkonfiguration

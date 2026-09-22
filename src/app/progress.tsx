@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
 import { LanguageSwitch } from '@/components/language-switch';
@@ -9,7 +10,9 @@ import { Spacing } from '@/constants/theme';
 import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
-import { useLearnerLanguage } from '@/hooks/use-learner-language';
+import { directionForBridge, goalLanguage, zielFuerDirection } from '@/lib/languages/goals';
+import { PairDirection } from '@/lib/languages/types';
+import { loadProfile } from '@/lib/profile';
 import { TranslationKey, localeTagFor, useLocale, type UiLanguage } from '@/lib/i18n';
 import { CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
 
@@ -42,28 +45,47 @@ export function tagLabel(date: string, language: UiLanguage): string {
     .format(new Date(year, month - 1, day, 12));
 }
 
+/** ISO-Datum als volles Datum je UI-Sprache („2026-09-21" → „21. September 2026"). */
+function langesDatum(iso: string, language: UiLanguage): string {
+  return new Intl.DateTimeFormat(localeTagFor(language), { dateStyle: 'long' }).format(new Date(iso));
+}
+
 export default function ProgressScreen() {
   const { t, languageName, uiLanguage } = useLocale();
-  const [stats, setStats] = useState<LearningStats | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<PairDirection>('de_to_th');
+  const direction = directionForBridge(uiLanguage, selected);
+  const [loaded, setLoaded] = useState<{
+    direction: PairDirection; stats?: LearningStats; error?: string;
+  } | null>(null);
+  const stats = loaded?.direction === direction ? loaded.stats : undefined;
+  const error = loaded?.direction === direction ? loaded.error : undefined;
 
-  const { language, chooseLanguage } = useLearnerLanguage();
-
-  useEffect(() => {
+  // Die Statistik-Auswahl verändert weder Profil noch Lern-Lesezeichen.
+  useFocusEffect(useCallback(() => {
     let cancelled = false;
-    // Der Fortschritt gehoert zum Sprachpaar (Phase 16): Nach einem Wechsel
-    // auf Spanisch zeigte die Seite sonst weiter die Thai-Zahlen.
-    loadLearningStats(undefined, Date.now(), 14, language)
+    loadProfile().then((profile) => {
+      if (!cancelled) setSelected(directionForBridge(
+        uiLanguage, profile.review?.direction ?? `de_to_${profile.language}`
+      ));
+    }).catch((e) => {
+      if (!cancelled) setLoaded({ direction: directionForBridge(uiLanguage, 'de_to_th'), error: String(e) });
+    });
+    return () => { cancelled = true; };
+  }, [uiLanguage]));
+
+  useFocusEffect(useCallback(() => {
+    let cancelled = false;
+    loadLearningStats(undefined, Date.now(), 14, direction)
       .then((result) => {
-        if (!cancelled) setStats(result);
+        if (!cancelled) setLoaded({ direction, stats: result });
       })
       .catch((e) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+        if (!cancelled) setLoaded({ direction, error: e instanceof Error ? e.message : String(e) });
       });
     return () => {
       cancelled = true;
     };
-  }, [language]);
+  }, [direction]));
 
   if (error) {
     return (
@@ -88,8 +110,7 @@ export default function ProgressScreen() {
   return (
     <ScreenScaffold
       title={t('tabs.progress')}
-      subtitle={t('progress.subtitleLanguage', { language: languageName(language) })}>
-      <LanguageSwitch selected={language} onSelect={chooseLanguage} />
+      subtitle={t('progress.subtitle')}>
 
       <View style={styles.grid}>
         <Tile label={t('tile.reviewsToday')} value={String(stats.reviewsToday)} />
@@ -102,11 +123,19 @@ export default function ProgressScreen() {
         {/* SEIT PHASE 18 KEIN BESTAND MEHR, sondern Erarbeitetes: „168 Karten
             gesamt" ist die Groesse des Stapels und sagt ueber den Fortschritt
             nichts. Begonnen heisst: mindestens einmal bewertet. */}
-        <Tile label={t('tile.started')} value={String(stats.totalCards - stats.cardStates.new)} />
-        <Tile label={t('tile.mastered')} value={String(stats.cardStates.mastered)} />
       </View>
 
       <ReviewChart stats={stats} />
+      <ThemedText type="smallBold">
+        {t('progress.subtitleLanguage', {
+          language: languageName(goalLanguage(zielFuerDirection(direction)!)),
+        })}
+      </ThemedText>
+      <LanguageSwitch selected={direction} onSelect={setSelected} />
+      <View style={styles.grid}>
+        <Tile label={t('tile.started')} value={String(stats.totalCards - stats.cardStates.new)} />
+        <Tile label={t('tile.mastered')} value={String(stats.cardStates.mastered)} />
+      </View>
       <CardStates stats={stats} />
 
     </ScreenScaffold>
@@ -144,8 +173,7 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
   // (AE-16). Eine gemeinsame Saeule ohne Trennung wuerde die Beschriftung
   // "Wiederholungen" zur Unwahrheit machen.
   const toneColor = useToneColor();
-  const { t } = useLocale();
-  const { uiLanguage } = useLocale();
+  const { t, uiLanguage } = useLocale();
   const max = Math.max(1, ...stats.days.map((day) => day.total + drillCount(day)));
 
   return (
@@ -225,19 +253,13 @@ function ReviewChart({ stats }: { stats: LearningStats }) {
         {stats.loggedSince
           ? stats.totalDrills > 0
             ? t('chart.loggedSinceWithDrills', {
-                // Das ISO-Datum lesbar je UI-Sprache (21.09.: „2026-09-21" →
-                // „21. September 2026") statt des Rohwerts.
-                since: new Intl.DateTimeFormat(localeTagFor(uiLanguage), { dateStyle: 'long' }).format(
-                  new Date(stats.loggedSince)
-                ),
+                since: langesDatum(stats.loggedSince, uiLanguage),
                 reviews: stats.totalReviews,
                 drills: stats.totalDrills,
                 correct: stats.totalDrillsCorrect,
               })
             : t('chart.loggedSince', {
-                since: new Intl.DateTimeFormat(localeTagFor(uiLanguage), { dateStyle: 'long' }).format(
-                  new Date(stats.loggedSince)
-                ),
+                since: langesDatum(stats.loggedSince, uiLanguage),
                 reviews: stats.totalReviews,
               })
           : t('chart.empty')}

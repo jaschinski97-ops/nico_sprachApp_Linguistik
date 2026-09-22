@@ -200,7 +200,7 @@ export function WritingRunner({
         <ThemedText type="small" themeColor="textSecondary">
           {t('writing.taskOf', { index: index + 1, total: session.prompts.length })}
         </ThemedText>
-        <ExitButton onExit={onExit} label={t('drill.exit')} compact />
+        <ExitButton onExit={onExit} label={t('drill.exit')} />
       </View>
 
       <ThemedView type="backgroundElement" style={styles.card}>
@@ -318,15 +318,7 @@ function Feedback({
   );
 }
 
-function ExitButton({
-  onExit,
-  label,
-  compact = false,
-}: {
-  onExit: () => void;
-  label: string;
-  compact?: boolean;
-}) {
+function ExitButton({ onExit, label }: { onExit: () => void; label: string }) {
   return (
     <Pressable
       onPress={onExit}
@@ -334,7 +326,7 @@ function ExitButton({
       accessibilityLabel={label}
       style={({ pressed }) => [styles.tapTarget, pressed && styles.pressed]}>
       <ThemedText type="small" themeColor="textSecondary">
-        {compact ? label : label}
+        {label}
       </ThemedText>
     </Pressable>
   );

@@ -1,6 +1,10 @@
 const { getDefaultConfig } = require('expo/metro-config');
 
+require('./scripts/limit-build-io.cjs').install();
+require('./scripts/metro-content-assets.cjs').install(require('node:path').join(__dirname, 'assets/content'));
+
 const config = getDefaultConfig(__dirname);
+config.transformerPath = require.resolve('./scripts/metro-worker.cjs');
 
 // WINDOWS-EMFILE-GEGENMASSNAHME (09.09.2026, Ursache per Messung belegt):
 // Ohne Watchman watcht Metros FallbackWatcher JEDES Verzeichnis einzeln

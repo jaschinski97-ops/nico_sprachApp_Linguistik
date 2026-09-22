@@ -1,3 +1,5 @@
+import type { TranslationKey } from '../i18n/keys';
+
 import { Rating } from '../fsrs/types';
 
 import { WritingVerdict } from './compare';
@@ -60,8 +62,6 @@ export function ratingForVerdict(verdict: WritingVerdict): Rating {
  * Ein Satz für die Oberfläche, der sagt, was die Bewertung mit der Karte
  * macht. Lernende sollen nicht raten müssen, warum eine Vokabel wiederkommt.
  */
-import type { TranslationKey } from '../i18n/keys';
-
 export function ratingExplanation(rating: Rating): TranslationKey {
   switch (rating) {
     case 1:

@@ -188,6 +188,37 @@ describe('rateCard schreibt das Tagesprotokoll fort', () => {
 });
 
 describe('loadLearningStats', () => {
+  it('trennt Deutsch als Lernziel vom Thai-Ziel, ohne bestehende Karten zu ändern', async () => {
+    const store = await freshStore();
+    const { cards } = await ensureCardStates('th_to_de', store, T0);
+    await rateCard(cards[0], 3, store, T0);
+    await recordDrill(true, T0, store);
+
+    const german = await loadLearningStats(store, T0, 14, 'th_to_de');
+    const thai = await loadLearningStats(store, T0, 14, 'de_to_th');
+    expect(german.perDirection.map(s => s.direction)).toEqual(['th_to_de']);
+    expect(german.totalCards - german.cardStates.new).toBe(1);
+    expect(thai.totalCards - thai.cardStates.new).toBe(0);
+    // Die sprachübergreifende Aktivität bleibt oberhalb der Zielauswahl.
+    expect(german.reviewsToday).toBe(1);
+    expect(thai.reviewsToday).toBe(1);
+    expect(german.drillsToday).toBe(1);
+    expect(thai.days).toEqual(german.days);
+    const retained = await loadCardStatesForDirection('th_to_de', store);
+    expect(retained.find(card => card.vocabId === cards[0].vocabId)?.state).toBe('review');
+  });
+
+  it('wertet eine englische Brücke zum Spanisch-Ziel als eigene Richtung aus', async () => {
+    const store = await freshStore();
+    const { cards } = await ensureCardStates('en_to_es', store, T0);
+    expect(cards.length).toBeGreaterThan(0);
+    await rateCard(cards[0], 3, store, T0);
+    const stats = await loadLearningStats(store, T0, 14, 'en_to_es');
+    expect(stats.perDirection.map(s => s.direction)).toEqual(['en_to_es']);
+    expect(stats.totalCards).toBe(cards.length);
+    expect(stats.totalCards - stats.cardStates.new).toBe(1);
+  });
+
   it('zaehlt zu Beginn alles als neu, die Faelligkeit aber nur bis zum Sitzungsdeckel', async () => {
     const store = await freshStore();
     const stats = await loadLearningStats(store, T0);

@@ -22,7 +22,9 @@ function verify(root) {
     const content = fs.readFileSync(file, 'utf8');
     if (/API-Schlüssel|Schlüssel übernehmen|Generator:|generativelanguage\.googleapis\.com|api\.anthropic\.com|stability-api-key/.test(content)) throw Error(`Schlüssel- oder Anbietercode in ${file}`);
   }
-  const settings = fs.readFileSync(path.join(root, 'settings.html'), 'utf8');
+  const settingsIndex = path.join(root, 'settings/index.html');
+  const settings = fs.readFileSync(fs.existsSync(settingsIndex)
+    ? settingsIndex : path.join(root, 'settings.html'), 'utf8');
   if (/<input\b|<textarea\b|role="progressbar"/.test(settings)) throw Error('Eingabefeld/Fortschrittsbalken in Produktionseinstellungen.');
   return { verifiedAt: new Date().toISOString(), checked, productionSettingsInputs: 0 };
 }
@@ -31,9 +33,12 @@ if (require.main === module) {
   console.log(JSON.stringify(verify(root), null, 2));
   if (process.argv.includes('--serve')) {
     require('node:http').createServer((req, res) => {
-      let relative = new URL(req.url, 'http://localhost').pathname;
-      if (!path.extname(relative)) relative = relative === '/' ? '/index.html' : relative + '.html';
-      const file = path.resolve(root, '.' + relative);
+      const relative = new URL(req.url, 'http://localhost').pathname;
+      let file = path.resolve(root, '.' + relative);
+      if (!path.extname(relative)) {
+        const index = path.join(file, 'index.html');
+        file = fs.existsSync(index) ? index : file + '.html';
+      }
       if (!file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return; }
       try {
         const content = fs.readFileSync(file);

@@ -87,12 +87,6 @@ function extrasFor(entry: VocabEntry): string[] {
 }
 
 /**
- * Taugt der Eintrag für eine Schreibaufgabe in dieser Richtung?
- *
- * Ausgeschlossen wird nur, was keine tippbare Zielform hätte — etwa ein
- * Stichwort, das nach dem Entfernen der Klammer leer wäre.
- */
-/**
  * Schreibt die lernende Person in dieser Richtung Deutsch?
  *
  * SEIT PHASE 16 AUS DER FORM DER RICHTUNG STATT AUS EINEM LITERAL. Vorher
@@ -101,6 +95,22 @@ function extrasFor(entry: VocabEntry): string[] {
  */
 function writesGerman(direction: Direction): boolean {
   return direction.endsWith(`_to_${HUB_LANGUAGE}`);
+}
+
+/**
+ * Taugt der Eintrag für eine Schreibaufgabe in dieser Richtung?
+ *
+ * Ausgeschlossen wird nur, was keine tippbare Zielform hätte — etwa ein
+ * Stichwort, das nach dem Entfernen der Klammer leer wäre.
+ */
+export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
+  if (writesGerman(direction)) {
+    // Der generierte de-Pool trägt `german === term` — genau die tippbare
+    // Zielform. Ein leerer Anker (keine Übersetzung in der Brückensprache)
+    // disqualifiziert: Die Aufgabe wäre unlesbar.
+    return germanTargets(entry).length > 0 && ankerwortFuer(entry, direction).length > 0;
+  }
+  return Boolean(entry.term.trim());
 }
 
 /**
@@ -125,16 +135,6 @@ function mitArtikel(zielFormen: string[], entry: VocabEntry): string[] {
     form.toLowerCase().startsWith(`${noun.article} `) ? [form] : [form, `${noun.article} ${form}`]
   );
   return [...new Set(erweitert)];
-}
-
-export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
-  if (writesGerman(direction)) {
-    // Der generierte de-Pool trägt `german === term` — genau die tippbare
-    // Zielform. Ein leerer Anker (keine Übersetzung in der Brückensprache)
-    // disqualifiziert: Die Aufgabe wäre unlesbar.
-    return germanTargets(entry).length > 0 && ankerwortFuer(entry, direction).length > 0;
-  }
-  return Boolean(entry.term.trim());
 }
 
 export function buildWritingPrompt(entry: VocabEntry, direction: Direction): WritingPrompt {

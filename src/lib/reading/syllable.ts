@@ -1,4 +1,4 @@
-import { Tone, TONES } from '@/constants/tones';
+import { Tone } from '@/constants/tones';
 import { translate } from '../i18n';
 import type { UiLanguage } from '../i18n/types';
 import {
@@ -11,8 +11,6 @@ import {
   IMPLICIT_VOWEL,
   isToneMark,
   O_NAM_WORDS,
-  SYLLABLE_SHAPE_EXPLANATION,
-  SYLLABLE_SHAPE_LABEL,
   SyllableShape,
   ThaiConsonant,
   TONE_MARKS,
@@ -288,28 +286,32 @@ function buildSteps(analysis: Omit<SyllableAnalysis, 'steps'>, ui: UiLanguage): 
   const satz = (key: Parameters<typeof translate>[1], params: Record<string, string>) =>
     fuelle(translate(ui, key), params);
 
+  let anfangsDetail: string;
+  if (initial.leading === 'ho-nam') {
+    anfangsDetail = satz('derivation.leadingHo', {
+      raised: initial.soundFrom.symbol,
+      from: klasse(initial.soundFrom.consonantClass),
+      to: klasse('high'),
+    });
+  } else if (initial.leading === 'o-nam') {
+    anfangsDetail = satz('derivation.leadingO', { raised: initial.soundFrom.symbol, to: klasse('mid') });
+  } else if (initial.cluster) {
+    anfangsDetail = satz('derivation.cluster', {
+      written: initial.written,
+      symbol: initial.classFrom.symbol,
+      name: initial.classFrom.name,
+    });
+  } else {
+    anfangsDetail = satz('derivation.initialPlain', {
+      name: initial.classFrom.name,
+      ipa: initial.classFrom.initialIpa,
+    });
+  }
+
   steps.push({
     label: translate(ui, 'derivation.stepInitial'),
     value: initial.written,
-    detail:
-      initial.leading === 'ho-nam'
-        ? satz('derivation.leadingHo', {
-            raised: initial.soundFrom.symbol,
-            from: klasse(initial.soundFrom.consonantClass),
-            to: klasse('high'),
-          })
-        : initial.leading === 'o-nam'
-          ? satz('derivation.leadingO', { raised: initial.soundFrom.symbol, to: klasse('mid') })
-          : initial.cluster
-            ? satz('derivation.cluster', {
-                written: initial.written,
-                symbol: initial.classFrom.symbol,
-                name: initial.classFrom.name,
-              })
-            : satz('derivation.initialPlain', {
-                name: initial.classFrom.name,
-                ipa: initial.classFrom.initialIpa,
-              }),
+    detail: anfangsDetail,
   });
 
   steps.push({
@@ -318,12 +320,23 @@ function buildSteps(analysis: Omit<SyllableAnalysis, 'steps'>, ui: UiLanguage): 
     detail: translate(ui, 'derivation.classDetail'),
   });
 
+  let vokalDetail: string;
+  if (vowel.implicit) {
+    vokalDetail = satz(
+      vowel.length === 'long' ? 'derivation.vowelLongImplicit' : 'derivation.vowelShortImplicit',
+      { ipa: vowel.ipa }
+    );
+  } else {
+    vokalDetail = satz(
+      vowel.length === 'long' ? 'derivation.vowelLong' : 'derivation.vowelShort',
+      { ipa: vowel.ipa }
+    );
+  }
+
   steps.push({
     label: translate(ui, 'derivation.stepVowel'),
     value: vowel.display,
-    detail: vowel.implicit
-      ? satz(vowel.length === 'long' ? 'derivation.vowelLongImplicit' : 'derivation.vowelShortImplicit', { ipa: vowel.ipa })
-      : satz(vowel.length === 'long' ? 'derivation.vowelLong' : 'derivation.vowelShort', { ipa: vowel.ipa }),
+    detail: vokalDetail,
   });
 
   steps.push({

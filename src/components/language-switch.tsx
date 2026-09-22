@@ -6,8 +6,8 @@ import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { useToneColor } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
-import { LANGUAGE_ORDER, languagesWithContent } from '@/lib/languages/registry';
-import { LanguageCode } from '@/lib/languages/types';
+import { goalLanguage, zieleFuerBruecke } from '@/lib/languages/goals';
+import { PairDirection } from '@/lib/languages/types';
 
 /**
  * Der kompakte Sprachwechsel für die Bereiche, die je Sprache arbeiten
@@ -32,29 +32,30 @@ export function LanguageSwitch({
   onSelect,
   label,
 }: {
-  selected: LanguageCode;
-  onSelect: (language: LanguageCode) => void;
+  selected: PairDirection;
+  onSelect: (direction: PairDirection) => void;
   /** Sichtbare Beschriftung der Zeile. Ohne Angabe: „Sprache“ in der App-Sprache. */
   label?: string;
 }) {
   const toneColor = useToneColor();
-  const { t, languageName } = useLocale();
-  const usable = new Set(languagesWithContent().map((language) => language.code));
+  const { t, languageName, uiLanguage } = useLocale();
 
   return (
     <View style={styles.row} role="radiogroup" accessibilityLabel={t('common.switchLanguageA11y')}>
       <ThemedText type="small" themeColor="textSecondary">
         {label ?? t('common.languageLabel')}
       </ThemedText>
-      {LANGUAGE_ORDER.filter((code) => usable.has(code)).map((code) => {
-        const active = code === selected;
+      {zieleFuerBruecke(uiLanguage).map((goal) => {
+        const code = goalLanguage(goal);
+        const active = goal.direction === selected;
         return (
           <Pressable
-            key={code}
-            onPress={() => onSelect(code)}
+            key={goal.direction}
+            onPress={() => onSelect(goal.direction)}
             accessibilityRole="radio"
             accessibilityLabel={t('common.learnGoal', { language: languageName(code) })}
             aria-checked={active}
+            accessibilityState={{ checked: active }}
             style={({ pressed }) => [pressed && styles.pressed]}>
             <ThemedView
               type={active ? 'backgroundSelected' : 'backgroundElement'}

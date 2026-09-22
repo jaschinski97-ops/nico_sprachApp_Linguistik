@@ -28,7 +28,6 @@ import { recordDrill } from '@/lib/review-log';
 import {
   buildTodayRound,
   type RoundKind,
-  type RoundSegment,
   type TodayRound,
 } from '@/lib/today-round';
 import { ratingForScore, scoreDictation } from '@/lib/dictation/scoring';
@@ -122,7 +121,6 @@ export function TodayRoundRunner({
   onExit: () => void;
 }) {
   const { t } = useLocale();
-  const colors = useTheme();
   // Die produzierte Sprache des Paars — im Deutsch-Ziel (th_to_de) werden
   // deutsche Sätze gebildet, diktiert und mitgesprochen, nicht thailändische.
   const sprache = zielSprache(direction);

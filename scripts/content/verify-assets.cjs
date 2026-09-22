@@ -2,19 +2,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 
-function filesUnder(root) {
-  return fs.readdirSync(root, { withFileTypes: true }).flatMap(entry => {
-    const file = path.join(root, entry.name);
-    return entry.isDirectory() ? filesUnder(file) : [file];
-  });
-}
-
 function verifyContentAssets(root, exported) {
   const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/content/catalog.json'), 'utf8'));
   const metadata = JSON.parse(fs.readFileSync(path.join(exported, 'metadata.json'), 'utf8'));
   const media = catalog.entries.filter(entry => entry.asset);
   if (!media.length) throw Error('Kein ausgeliefertes Medium vorhanden.');
-  const webFiles = filesUnder(path.join(exported, 'assets/assets/content'));
+  // Web lädt seit September /content/<sha256> aus dem public-Spiegel.
+  // Native verwendet weiterhin Metros MD5-Assetmanifest.
+  const nativeAssets = Object.fromEntries(['ios', 'android'].map(platform => [platform,
+    new Map((metadata.fileMetadata[platform]?.assets ?? []).map(item => [
+      `${path.posix.basename(item.path.replaceAll('\\', '/'))}.${item.ext}`, item.path,
+    ])),
+  ]));
   const webBundleDir = path.join(exported, '_expo/static/js/web');
   const webBundleFile = fs.readdirSync(webBundleDir).find(name => /^entry-.*\.js$/.test(name));
   if (!webBundleFile) throw Error('Web-Produktionsbundle fehlt.');
@@ -30,11 +29,10 @@ function verifyContentAssets(root, exported) {
     for (const platform of ['ios', 'android', 'web']) {
       let file;
       if (platform === 'web') {
-        file = webFiles.find(candidate => path.basename(candidate) === `${stem}.${hash}${ext}`);
+        file = path.join(exported, 'content', entry.asset);
       } else {
-        const asset = metadata.fileMetadata[platform]?.assets.find(item =>
-          path.posix.basename(item.path.replaceAll('\\', '/')) === hash && item.ext === ext.slice(1));
-        if (asset) file = path.join(exported, asset.path);
+        const asset = nativeAssets[platform].get(`${hash}${ext}`);
+        if (asset) file = path.join(exported, asset);
       }
       if (!file || !fs.readFileSync(file).equals(original)) throw Error(`Asset fehlt oder ist verändert: ${platform}/${entry.id}`);
       rows.push({ platform, kind: entry.kind, id: entry.id, bytes: original.length, sha256, identical: true });

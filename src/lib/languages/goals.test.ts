@@ -39,6 +39,8 @@ describe('Lernziele — Deutsch als eigene Wahl (Brücke de, Bestand)', () => {
     expect(directionForBridge('en', 'de_to_es')).toBe('en_to_es');
     expect(directionForBridge('en', 'de_to_th')).toBe('en_to_th');
     expect(directionForBridge('es', 'de_to_th')).toBe('es_to_th');
+    expect(directionForBridge('es', 'en_to_de')).toBe('es_to_de');
+    expect(directionForBridge('en', 'th_to_de')).toBe('en_to_de');
     // „Englisch lernen“ gibt es auf der englischen Brücke nicht — das
     // Selbstpaar wird bewusst übersprungen, es gilt das erste Ziel.
     expect(directionForBridge('en', 'de_to_en')).toBe('en_to_th');

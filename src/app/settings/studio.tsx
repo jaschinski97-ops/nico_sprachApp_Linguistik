@@ -21,24 +21,25 @@ import { useLocale } from '@/lib/i18n';
  */
 export default function StudioScreen() {
   const { t } = useLocale();
-  const theme = useTheme();
 
-  if (!__DEV__ || !isContentDeveloper()) {
+  // Metro entfernt Abhängigkeiten innerhalb dieses expliziten DEV-Zweigs.
+  // Ein vorheriges `if (!__DEV__) return` entfernt spätere requires nicht.
+  if (__DEV__ && isContentDeveloper()) {
+    const Studio = require('@/dev/content-studio').default;
     return (
       <ScreenScaffold title={t('settings.studio')}>
         <ZurueckZeile />
-        <ThemedText type="small" themeColor="textSecondary">
-          {__DEV__ ? t('settings.studioOrigin') : t('settings.studioDevOnly')}
-        </ThemedText>
+        <Studio />
       </ScreenScaffold>
     );
   }
 
-  const Studio = require('@/dev/content-studio').default;
   return (
     <ScreenScaffold title={t('settings.studio')}>
       <ZurueckZeile />
-      <Studio />
+      <ThemedText type="small" themeColor="textSecondary">
+        {__DEV__ ? t('settings.studioOrigin') : t('settings.studioDevOnly')}
+      </ThemedText>
     </ScreenScaffold>
   );
 }

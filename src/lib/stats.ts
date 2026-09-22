@@ -1,7 +1,7 @@
 import { CardState } from './fsrs/types';
 import { dayIsActive, drillCount, lastDays, loadReviewLog, ReviewDayLog } from './review-log';
-import { DirectionSummary, ensureCardStates, summarizeAllDirections } from './review-session';
-import { LanguageCode } from './languages/types';
+import { DirectionSummary, ensureCardStates, summarizeAllDirections, summarizeDirection } from './review-session';
+import { LanguageCode, PairDirection, isPairDirection } from './languages/types';
 import { DataStore, getStore } from './storage';
 
 /**
@@ -39,7 +39,7 @@ const STREAK_WINDOW_DAYS = 365;
 
 export type LearningStats = {
   perDirection: DirectionSummary[];
-  /** Kartenzustände über beide Richtungen zusammen. */
+  /** Kartenzustände der ausgewählten Richtung(en). */
   cardStates: Record<CardState, number>;
   totalCards: number;
   totalDue: number;
@@ -98,14 +98,18 @@ export async function loadLearningStats(
   now: number = Date.now(),
   windowDays = 14,
   /**
-   * Welche Sprache ausgewertet wird (Phase 16). Der Fortschritt gehoert zum
-   * Sprachpaar; eine Summe ueber alle drei waere eine Zahl ohne Bedeutung.
+   * Eine konkrete Lernrichtung für die Oberfläche; ein Sprachcode erhält
+   * den bisherigen Paarvergleich für bestehende Aufrufer.
+   * Tagesprotokoll und Übungen bleiben sprachübergreifend: alte Übungen
+   * wurden ohne Sprachinformation gespeichert und dürfen nicht geraten werden.
    */
-  language: LanguageCode = 'th'
+  language: LanguageCode | PairDirection = 'th'
 ): Promise<LearningStats> {
   const db = store ?? (await getStore());
 
-  const perDirection = await summarizeAllDirections(language, db, now);
+  const perDirection = isPairDirection(language)
+    ? [await summarizeDirection(language, db, now)]
+    : await summarizeAllDirections(language, db, now);
 
   const cardStates = emptyStateCounts();
   let totalCards = 0;

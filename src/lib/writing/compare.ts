@@ -25,6 +25,9 @@
  * Phase 2 und funktioniert vollständig ohne Internet.
  */
 
+import type { TranslationKey } from '@/lib/i18n/keys';
+import type { TParams } from '@/lib/i18n/types';
+
 /**
  * In welcher Sprache die Antwort getippt wird.
  *
@@ -72,9 +75,6 @@ export type WritingVerdict = {
   /** Editierabstand zur besten Zielform. */
   distance: number;
 };
-
-import type { TranslationKey } from '@/lib/i18n/keys';
-import type { TParams } from '@/lib/i18n/types';
 
 const THAI_TONE_MARKS = /[่-๋]/g;
 const GERMAN_ARTICLES = ['der', 'die', 'das'] as const;

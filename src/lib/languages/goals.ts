@@ -157,7 +157,7 @@ export function directionForBridge(bridge: Lang | ForeignBridge, direction: Pair
   if (direkt) return direkt.direction;
   const ziel = direction.split('_to_')[1];
   if (ziel && ziel !== bridge) {
-    const passend = goals.find(goal => goal.language === ziel);
+    const passend = goals.find(goal => goalLanguage(goal) === ziel);
     if (passend) return passend.direction;
   }
   return goals[0].direction;
