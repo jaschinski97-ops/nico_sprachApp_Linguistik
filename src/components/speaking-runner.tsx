@@ -17,12 +17,13 @@ import {
   analyzeToneContour,
   CapturedPcm,
   feedbackForMeasurement,
-  SPEAKING_LIMITATIONS,
-  SPEAKING_PRIVACY_NOTICE,
   SpeakingPrompt,
   ToneContourFeedback,
   ToneContourMeasurement,
 } from '@/lib/speaking';
+import { bridgeText } from '@/lib/languages/bridge';
+import { anchorOf, type PairDirection } from '@/lib/languages/types';
+import { MIC_ERROR_KEYS } from '@/lib/speaking/mic-error-keys';
 import { buildSpeakingSession, SpeakingSession } from '@/lib/speaking/session';
 
 /** Einsilbige Wörter brauchen selten mehr; die Grenze hält Rechenzeit und Speicher klein. */
@@ -45,6 +46,46 @@ const VERDICT_KEYS: Record<ToneContourFeedback['verdict'], TranslationKey> = {
   unmeasurable: 'speaking.verdictUnreliable',
 };
 
+/** Die sechs Grenzen der Messung (SPEAKING_LIMITATIONS, übersetzt). */
+const LIMITATION_KEYS: readonly TranslationKey[] = [
+  'speaking.limitation1',
+  'speaking.limitation2',
+  'speaking.limitation3',
+  'speaking.limitation4',
+  'speaking.limitation5',
+  'speaking.limitation6',
+];
+
+const NEEDS_WORK_KEYS: Record<keyof typeof TONES, TranslationKey> = {
+  mid: 'speaking.fbNeedsMid',
+  low: 'speaking.fbNeedsLow',
+  falling: 'speaking.fbNeedsFalling',
+  high: 'speaking.fbNeedsHigh',
+  rising: 'speaking.fbNeedsRising',
+};
+
+/**
+ * Die Rückmeldung in der App-Sprache. `feedback.message` bleibt der deutsche
+ * Fachtext der Domäne (Tests); Urteil, Sollton und Vergleichsbasis reichen
+ * für dieselbe Aussage in jeder Sprache.
+ */
+function feedbackText(feedback: ToneContourFeedback, t: (key: TranslationKey, params?: Record<string, string | number>) => string): string {
+  const tone = t(TONE_NAME_KEYS[feedback.targetTone]);
+  const shapeOnly = feedback.comparisonBasis === 'shape-only';
+  switch (feedback.verdict) {
+    case 'unmeasurable':
+      return t('speaking.fbUnmeasurable');
+    case 'register-uncalibrated':
+      return t('speaking.fbRegister', { tone });
+    case 'compatible':
+      return shapeOnly ? t('speaking.fbCompatibleShape', { tone }) : t('speaking.fbCompatibleBaseline', { tone });
+    case 'needs-work': {
+      const base = t(NEEDS_WORK_KEYS[feedback.targetTone]);
+      return shapeOnly ? `${base} ${t('speaking.fbShapeOnly')}` : base;
+    }
+  }
+}
+
 type AttemptResult = {
   capture: Pick<CapturedPcm, 'durationMs' | 'reachedLimit'>;
   measurement: ToneContourMeasurement;
@@ -59,7 +100,7 @@ type AttemptResult = {
  * den verifizierten Silbendaten; `playPronunciation` ist nur das sichtbar so
  * bezeichnete Hörbeispiel und wird nie an die Auswertung übergeben (AE-32).
  */
-export function SpeakingRunner({ onExit }: { onExit: () => void }) {
+export function SpeakingRunner({ direction, onExit }: { direction: PairDirection; onExit: () => void }) {
   const { t } = useLocale();
   const [session, setSession] = useState<SpeakingSession | null>(null);
   const [buildFailed, setBuildFailed] = useState<string | null>(null);
@@ -278,7 +319,7 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
         </ThemedText>
         <ThemedText>{prompt.romanization}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
-          {prompt.german}
+          {bridgeText(prompt, anchorOf(direction)).text}
         </ThemedText>
 
         <TargetBlock prompt={prompt} />
@@ -301,7 +342,7 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
 
         <ThemedView type="backgroundSelected" style={styles.notice}>
           <ThemedText type="smallBold">{t('speaking.privacyTitle')}</ThemedText>
-          <ThemedText type="small">{SPEAKING_PRIVACY_NOTICE}</ThemedText>
+          <ThemedText type="small">{t('speaking.privacyBody')}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {t('speaking.scopedNote')}
           </ThemedText>
@@ -343,7 +384,7 @@ export function SpeakingRunner({ onExit }: { onExit: () => void }) {
 
         {capture.error ? (
           <ThemedText type="small" themeColor="textSecondary" accessibilityLiveRegion="polite">
-            {capture.error.message}
+            {t(MIC_ERROR_KEYS[capture.error.code])}
           </ThemedText>
         ) : null}
 
@@ -391,7 +432,7 @@ function FeedbackBlock({ result }: { result: AttemptResult }) {
   return (
     <ThemedView type="backgroundSelected" style={styles.feedback} accessibilityLiveRegion="polite">
       <ThemedText type="smallBold">{heading}</ThemedText>
-      <ThemedText type="small">{feedback.message}</ThemedText>
+      <ThemedText type="small">{feedbackText(feedback, t)}</ThemedText>
       {measurement.status === 'measured' ? (
         <View style={styles.field}>
           <ThemedText type="small" themeColor="textSecondary">
@@ -410,9 +451,9 @@ function FeedbackBlock({ result }: { result: AttemptResult }) {
 
       <View style={styles.limitations}>
         <ThemedText type="smallBold">{t('speaking.limitationsTitle')}</ThemedText>
-        {SPEAKING_LIMITATIONS.map((limitation) => (
-          <ThemedText key={limitation} type="small" themeColor="textSecondary">
-            • {limitation}
+        {LIMITATION_KEYS.map((key) => (
+          <ThemedText key={key} type="small" themeColor="textSecondary">
+            • {t(key)}
           </ThemedText>
         ))}
       </View>

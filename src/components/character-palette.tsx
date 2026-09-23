@@ -62,10 +62,10 @@ const VOWEL_SIGNS: { character: string; display: string; name: string }[] = [
 
 type Group = 'consonants' | 'vowels' | 'tones';
 
-const GROUP_LABEL: Record<Group, string> = {
-  consonants: 'Konsonanten',
-  vowels: 'Vokalzeichen',
-  tones: 'Tonzeichen',
+const GROUP_LABEL: Record<Group, TranslationKey> = {
+  consonants: 'palette.consonants',
+  vowels: 'palette.vowels',
+  tones: 'palette.toneMarks',
 };
 
 function Key({
@@ -108,24 +108,25 @@ function Key({
 }
 
 export function ThaiPalette({ onInsert, disabled }: PaletteProps) {
+  const { t } = useLocale();
   const [group, setGroup] = useState<Group>('consonants');
   const toneColor = useToneColor();
 
   return (
     <View style={styles.palette}>
-      <View role="radiogroup" accessibilityLabel="Zeichengruppe" style={styles.row}>
+      <View role="radiogroup" accessibilityLabel={t('palette.groupA11y')} style={styles.row}>
         {(Object.keys(GROUP_LABEL) as Group[]).map((candidate) => (
           <Pressable
             key={candidate}
             onPress={() => setGroup(candidate)}
             accessibilityRole="radio"
-            accessibilityLabel={GROUP_LABEL[candidate]}
+            accessibilityLabel={t(GROUP_LABEL[candidate])}
             aria-checked={group === candidate}
             style={({ pressed }) => pressed && styles.pressed}>
             <ThemedView
               type={group === candidate ? 'backgroundSelected' : 'backgroundElement'}
               style={[styles.tab, group === candidate && { borderColor: toneColor('mid'), borderWidth: 1 }]}>
-              <ThemedText type="small">{GROUP_LABEL[candidate]}</ThemedText>
+              <ThemedText type="small">{t(GROUP_LABEL[candidate])}</ThemedText>
             </ThemedView>
           </Pressable>
         ))}

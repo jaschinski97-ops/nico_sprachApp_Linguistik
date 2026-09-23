@@ -174,7 +174,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     description:
       'Im Englischen lässt sich die Aussprache nicht aus der Schreibung ableiten — „ough" ' +
       'allein hat mehrere Lesarten. Geübt wird deshalb der Vergleich, nicht die Herleitung.',
-    prompt: 'Wie klingt dieses Schriftstück hier?',
+    prompt: 'Wie klingt diese Buchstabengruppe hier?',
   },
   stressHear: {
     id: 'stressHear',
@@ -194,7 +194,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     skill: 'hoeren',
     label: 'Wort hören',
     description:
-      'Wort anhören und aus Wörtern mit demselben Schriftstück das richtige heraushören — ' +
+      'Wort anhören und aus Wörtern mit derselben Buchstabengruppe das richtige heraushören — ' +
       'though, through, thought und enough klingen verschieden, obwohl sie gleich aussehen.',
     prompt: 'Welches Wort hörst du?',
   },

@@ -358,7 +358,7 @@ function ReviewBody({
         // Nachsprechen mit Musterlösung und ehrlicher Selbst-Einschätzung —
         // eine Kontur-Messung gibt es dort nicht, und behauptet wird keine.
         pairLanguageOf(direction) === 'th' ? (
-          <SpeakingRunner key={`${direction}:speaking`} onExit={onExit} />
+          <SpeakingRunner key={`${direction}:speaking`} direction={direction} onExit={onExit} />
         ) : (
           <WordSpeakingRunner key={`${direction}:speaking`} direction={direction} onExit={onExit} />
         )

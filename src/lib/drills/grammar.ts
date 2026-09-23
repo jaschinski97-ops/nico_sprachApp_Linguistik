@@ -1,7 +1,7 @@
 import { ZAEHLER_ITEMS, ZAEHLER_OPTIONEN, type ZaehlerItem } from '@/data/grammar-th-counters';
 import { POLITE_ITEMS, type PoliteItem } from '@/data/grammar-th';
 import { SER_ESTAR_ITEMS, type SerEstarItem } from '@/data/grammar-es';
-import { THAI_CONSONANTS, type ThaiConsonant } from '@/data/thai-script';
+import { CONSONANT_MEANING_DE, THAI_CONSONANTS, type ThaiConsonant } from '@/data/thai-script';
 
 import type { UiLanguage } from '../i18n/types';
 import { translate } from '../i18n';
@@ -99,7 +99,7 @@ export function buildZaehlerQuestion(item: ZaehlerItem, anchor: UiLanguage = 'de
     // Die deutsche Bedeutung in Klammern nur auf der de-Brücke — andere
     // Anker haben keine Übersetzung des Datensatzes (21.09.2026).
     visible: deutscheErklaerung(anchor) ? `${item.nomen} (${item.german})` : item.nomen,
-    visibleHint: `Zahl + ___ : หนึ่ง ${item.nomen}`,
+    visibleHint: translate(ui, 'grammar.counterHint', { example: `หนึ่ง ${item.nomen}` }),
     speak: null,
     options,
     correctIndex: ZAEHLER_OPTIONEN.indexOf(item.answer),
@@ -112,6 +112,12 @@ export function buildZaehlerQuestion(item: ZaehlerItem, anchor: UiLanguage = 'de
 
 /* ---------- Konsonantenklassen (de_to_th, Schritt 5) ---------- */
 
+function konsonantBedeutung(konsonant: ThaiConsonant, anchor: UiLanguage): string | null {
+  if (anchor === 'de') return CONSONANT_MEANING_DE[konsonant.symbol] ?? null;
+  if (anchor === 'en') return konsonant.meaning;
+  return null;
+}
+
 export function buildKonsonantenklasseQuestion(konsonant: ThaiConsonant, anchor: UiLanguage = 'de', ui: UiLanguage = 'de'): DrillQuestion {
   const klassenLabel = (klasse: 'mid' | 'high' | 'low'): string => translate(ui, `consonantClass.${klasse}`);
   const optionen = (['mid', 'high', 'low'] as const).map((klasse) => ({ label: klassenLabel(klasse) }));
@@ -122,10 +128,10 @@ export function buildKonsonantenklasseQuestion(konsonant: ThaiConsonant, anchor:
     direction: directionForDrill('konsonantenklasse', 'th'),
     vocabId: konsonant.symbol,
     visible: konsonant.name,
-    // Die Bedeutung des Konsonanten steht nur auf Deutsch im Datensatz — auf
-    // anderen Brücken bleibt die Lesehilfe bei der RTGS-Umschrift.
-    visibleHint: deutscheErklaerung(anchor)
-      ? `${konsonant.meaning} · ${konsonant.nameRtgs}`
+    // Die Merkwort-Bedeutung gibt es englisch (Quelle) und deutsch
+    // (CONSONANT_MEANING_DE) — auf anderen Brücken bleibt die RTGS-Umschrift.
+    visibleHint: konsonantBedeutung(konsonant, anchor)
+      ? `${konsonantBedeutung(konsonant, anchor)} · ${konsonant.nameRtgs}`
       : konsonant.nameRtgs,
     speak: null,
     options: optionen,

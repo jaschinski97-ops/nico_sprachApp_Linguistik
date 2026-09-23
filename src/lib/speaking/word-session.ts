@@ -2,7 +2,8 @@ import type { VocabEntry } from '@/data/vocab-types';
 
 import { retrievability } from '../fsrs/fsrs';
 import { type FSRSCardState } from '../fsrs/types';
-import { type LanguageCode, type PairDirection, pairLanguageOf } from '../languages/types';
+import { bridgeText } from '../languages/bridge';
+import { anchorOf, type LanguageCode, type PairDirection, pairLanguageOf } from '../languages/types';
 import { ensureCardStates } from '../review-session';
 import { seededRandom, shuffled } from '../drills/random';
 import { type DataStore } from '../storage';
@@ -39,8 +40,8 @@ export type WordSpeakingTask = {
   term: string;
   /** Lesehilfe der Sprache (Umschrift, Silben, Lautschrift). */
   roman: string;
-  /** Die Bedeutung (deutscher Bestandstext). */
-  german: string;
+  /** Die Bedeutung in der Ankersprache der Richtung (App-Sprache). */
+  meaning: string;
 };
 
 export type WordSpeakingSession = {
@@ -49,12 +50,12 @@ export type WordSpeakingSession = {
   available: number;
 };
 
-function taskOf(entry: VocabEntry): WordSpeakingTask {
+function taskOf(entry: VocabEntry, direction: PairDirection): WordSpeakingTask {
   return {
     id: entry.id,
     term: entry.term,
     roman: entry.romanization || entry.ipa || entry.term,
-    german: entry.german,
+    meaning: bridgeText(entry, anchorOf(direction)).text,
   };
 }
 
@@ -83,7 +84,7 @@ export async function buildWordSpeakingSession(options: {
   const window = ranked.slice(0, Math.max(size, size * CANDIDATE_WINDOW));
   const chosen = shuffled(window, random).slice(0, size);
 
-  return { tasks: chosen.map(taskOf), available: entries.length };
+  return { tasks: chosen.map((entry) => taskOf(entry, options.direction)), available: entries.length };
 }
 
 /** Die Sprache, deren Wörter gesprochen werden — für die Auswahl im Runner. */

@@ -32,6 +32,8 @@ export type SpeakingPrompt = {
   thai: string;
   romanization: string;
   german: string;
+  /** Bedeutungen je App-Sprache — die Übung zeigt die der Lernrichtung. */
+  translations?: VocabEntry['translations'];
   source: string | null;
   sourceVerified: boolean;
   syllableIndex: 0;
@@ -104,6 +106,7 @@ export function buildSpeakingPrompt(entry: VocabEntry): SpeakingPrompt {
     thai: entry.term,
     romanization: entry.romanization,
     german: entry.german,
+    translations: entry.translations,
     source: entry.source ?? null,
     sourceVerified: entry.sourceVerified,
     syllableIndex: 0,

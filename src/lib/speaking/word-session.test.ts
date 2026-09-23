@@ -13,7 +13,7 @@ describe('Wort-Nachsprechen (en/es)', () => {
     expect(session.tasks.length).toBe(Math.min(WORD_SPEAKING_SIZE, session.available));
     for (const task of session.tasks) {
       expect(task.term.length).toBeGreaterThan(0);
-      expect(task.german.length).toBeGreaterThan(0);
+      expect(task.meaning.length).toBeGreaterThan(0);
       expect(task.roman.length).toBeGreaterThan(0);
     }
   });

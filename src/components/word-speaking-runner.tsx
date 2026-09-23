@@ -179,10 +179,13 @@ export function WordSpeakingRunner({
         <ThemedText type="subtitle" maxFontSizeMultiplier={2} style={{ lineHeight: displayLineHeight(32, 2) }}>
           {task.term}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {task.roman}
-        </ThemedText>
-        <ThemedText type="small">{task.german}</ThemedText>
+        {/* Lateinische Wörter ohne eigene Umschrift („dar“) nicht doppelt. */}
+        {task.roman && task.roman !== task.term ? (
+          <ThemedText type="small" themeColor="textSecondary">
+            {task.roman}
+          </ThemedText>
+        ) : null}
+        <ThemedText type="small">{task.meaning}</ThemedText>
 
         {notice ? (
           <ThemedText type="small" themeColor="textSecondary">

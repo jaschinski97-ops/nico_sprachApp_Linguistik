@@ -6,6 +6,7 @@ import {
 } from 'expo-audio';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { restorePlaybackAudioMode } from '@/lib/audio-mode';
 import {
   captureDurationMs,
   int16PcmToMono,
@@ -70,6 +71,9 @@ export function useMicrophoneCapture(
     async () => null
   );
   const finishPromiseRef = useRef<Promise<CapturedPcm | null> | null>(null);
+  // Hat ein Start die iOS-Audiositzung auf Aufnahme gestellt? Dann muss jeder
+  // Stopp sie zurück auf Wiedergabe bringen (lib/audio-mode.ts).
+  const sessionTouchedRef = useRef(false);
 
   const updateView = useCallback((change: Partial<CaptureView>) => {
     if (mountedRef.current) setView((current) => ({ ...current, ...change }));
@@ -123,6 +127,21 @@ export function useMicrophoneCapture(
     onBuffer,
   });
 
+  /**
+   * Stoppt den Stream und stellt danach die Wiedergabe-Sitzung wieder her —
+   * auch wenn `stop()` wirft. Fehler von `stop()` gehen an den Aufrufer.
+   */
+  const stopStream = useCallback(() => {
+    try {
+      stream.stop();
+    } finally {
+      if (sessionTouchedRef.current) {
+        sessionTouchedRef.current = false;
+        void restorePlaybackAudioMode();
+      }
+    }
+  }, [stream]);
+
   const resetBuffers = useCallback(() => {
     chunksRef.current = [];
     lengthRef.current = 0;
@@ -157,7 +176,7 @@ export function useMicrophoneCapture(
 
       const promise = Promise.resolve().then(() => {
         try {
-          stream.stop();
+          stopStream();
         } catch (error) {
           if (generation !== generationRef.current) return null;
           statusRef.current = 'idle';
@@ -214,7 +233,7 @@ export function useMicrophoneCapture(
       });
       return promise;
     },
-    [clearTimer, resetBuffers, stream, updateView]
+    [clearTimer, resetBuffers, stopStream, updateView]
   );
   finishRef.current = finish;
 
@@ -224,7 +243,7 @@ export function useMicrophoneCapture(
     acceptingRef.current = false;
     clearTimer();
     try {
-      stream.stop();
+      stopStream();
     } catch {
       // Ein nie gestarteter oder bereits freigegebener Stream braucht nichts mehr.
     }
@@ -236,7 +255,7 @@ export function useMicrophoneCapture(
       lastCapture: null,
       error: null,
     });
-  }, [clearTimer, resetBuffers, stream, updateView]);
+  }, [clearTimer, resetBuffers, stopStream, updateView]);
 
   const start = useCallback(async (): Promise<boolean> => {
     if (statusRef.current !== 'idle') return false;
@@ -277,6 +296,7 @@ export function useMicrophoneCapture(
 
     try {
       acceptingRef.current = true;
+      sessionTouchedRef.current = true;
       await stream.start();
       // SDK 57 AudioStream.start setzt unter iOS selbst .record. Erst danach
       // auf playAndRecord umstellen; sonst bleibt Shadowing stumm.
@@ -285,7 +305,7 @@ export function useMicrophoneCapture(
       }
     } catch (error) {
       acceptingRef.current = false;
-      try { stream.stop(); } catch { /* Auch einen teilweise gestarteten Stream freigeben. */ }
+      try { stopStream(); } catch { /* Auch einen teilweise gestarteten Stream freigeben. */ }
       if (generation !== generationRef.current || !mountedRef.current) return false;
       statusRef.current = 'idle';
       updateView({ status: 'idle', error: nativeStartError(error) });
@@ -295,7 +315,7 @@ export function useMicrophoneCapture(
     if (generation !== generationRef.current || !mountedRef.current) {
       acceptingRef.current = false;
       try {
-        stream.stop();
+        stopStream();
       } catch {
         // Die Komponente wurde waehrend des nativen Starts abgebaut.
       }
@@ -309,7 +329,7 @@ export function useMicrophoneCapture(
       void finishRef.current(true);
     }, maxDurationMs);
     return true;
-  }, [allowPlayback, maxDurationMs, resetBuffers, stream, updateView]);
+  }, [allowPlayback, maxDurationMs, resetBuffers, stopStream, stream, updateView]);
 
   const stop = useCallback(() => finish(false), [finish]);
 
@@ -325,13 +345,13 @@ export function useMicrophoneCapture(
       acceptingRef.current = false;
       clearTimer();
       try {
-        stream.stop();
+        stopStream();
       } catch {
         // Der SharedObject-Hook gibt den Stream ebenfalls frei.
       }
       resetBuffers();
     };
-  }, [clearTimer, resetBuffers, stream]);
+  }, [clearTimer, resetBuffers, stopStream]);
 
   return useMemo(
     () => ({

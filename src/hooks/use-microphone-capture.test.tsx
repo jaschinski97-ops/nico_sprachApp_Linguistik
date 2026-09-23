@@ -123,6 +123,21 @@ describe('nativer Mikrofon-Lebenszyklus', () => {
     await act(async () => { renderer.unmount(); });
   });
 
+  it('stellt nach dem Stopp die Wiedergabe-Sitzung wieder her (iOS bliebe sonst stumm)', async () => {
+    let renderer!: TestRenderer.ReactTestRenderer;
+    await act(async () => { renderer = TestRenderer.create(<Harness />); });
+    await act(async () => { expect(await controller().start()).toBe(true); });
+    expect(mockSetAudioMode).not.toHaveBeenCalled();
+    await act(async () => { await controller().stop(); });
+    expect(mockStream.stop).toHaveBeenCalledTimes(1);
+    expect(mockSetAudioMode).toHaveBeenCalledWith({ allowsRecording: false, playsInSilentMode: true });
+
+    // Ohne erneuten Start fasst das Abbauen die Sitzung nicht noch einmal an.
+    mockSetAudioMode.mockClear();
+    await act(async () => { renderer.unmount(); });
+    expect(mockSetAudioMode).not.toHaveBeenCalled();
+  });
+
   it('verwirft einen gestarteten Stream, wenn die gemeinsame Audiositzung fehlschlaegt', async () => {
     mockSetAudioMode.mockRejectedValue(new Error('audio session failed'));
     let renderer!: TestRenderer.ReactTestRenderer;

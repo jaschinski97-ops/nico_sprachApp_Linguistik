@@ -119,6 +119,7 @@ export type ThaiConsonant = {
   /** Akrophonischer Name, z. B. „ก ไก่". */
   name: string;
   nameRtgs: string;
+  /** Bedeutung des Merkworts — ENGLISCH (Quelle); deutsch: CONSONANT_MEANING_DE. */
   meaning: string;
   consonantClass: ConsonantClass;
   initialIpa: string;
@@ -423,3 +424,22 @@ export const IMPLICIT_VOWEL = {
   ambiguityNote:
     'Zwei Konsonanten ohne Vokalzeichen: gelesen als kurzes /o/. Die Quelle kennt fuer dieselbe Schreibung auch ein langes /ɔː/; welche Lesart gilt, steht nicht in der Schrift.',
 } as const;
+
+/**
+ * Deutsche Bedeutung der Merkwörter (zu `meaning`, das englisch aus der
+ * Quelle stammt). Die Konsonantenklassen-Übung zeigte auf der deutschen
+ * Oberfläche sonst „owl“ statt „Eule“ (Release-Prüfung 23.09.2026).
+ */
+export const CONSONANT_MEANING_DE: Record<string, string> = {
+  'ก': 'Huhn', 'ข': 'Ei', 'ฃ': 'Flasche (veraltet)', 'ค': 'Wasserbüffel',
+  'ฅ': 'Mensch (veraltet)', 'ฆ': 'Glocke', 'ง': 'Schlange', 'จ': 'Teller',
+  'ฉ': 'Ching (Zimbel)', 'ช': 'Elefant', 'ซ': 'Kette', 'ฌ': 'Baum',
+  'ญ': 'Frau', 'ฎ': 'Krone (Chada)', 'ฏ': 'Speer', 'ฐ': 'Sockel',
+  'ฑ': 'Montho (Figur aus dem Ramakien)', 'ฒ': 'alter Mensch', 'ณ': 'Novize',
+  'ด': 'Kind', 'ต': 'Schildkröte', 'ถ': 'Sack', 'ท': 'Soldat', 'ธ': 'Fahne',
+  'น': 'Maus', 'บ': 'Blatt', 'ป': 'Fisch', 'ผ': 'Biene', 'ฝ': 'Deckel',
+  'พ': 'Schale auf Fuß (Phan)', 'ฟ': 'Zahn', 'ภ': 'Dschunke', 'ม': 'Pferd',
+  'ย': 'Riese (Yak)', 'ร': 'Boot', 'ล': 'Affe', 'ว': 'Ring', 'ศ': 'Pavillon (Sala)',
+  'ษ': 'Einsiedler (Rishi)', 'ส': 'Tiger', 'ห': 'Truhe', 'ฬ': 'Drachen (Chula)',
+  'อ': 'Schüssel', 'ฮ': 'Eule',
+};

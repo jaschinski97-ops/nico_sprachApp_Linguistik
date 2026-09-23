@@ -10,6 +10,7 @@ import { useMicrophoneCapture } from '@/hooks/use-microphone-capture';
 import { hasPronunciationClip, isLanguageAvailable, playPronunciationWithStatus, stopPronunciation } from '@/lib/audio';
 import { useLocale, type UiLanguage } from '@/lib/i18n';
 import type { CapturedPcm } from '@/lib/speaking';
+import { MIC_ERROR_KEYS } from '@/lib/speaking/mic-error-keys';
 import { measureSentence, preparationRemaining, sentenceAnswers, sentenceSession,
   SENTENCE_WINDOWS_MS, type SentenceMeasurement, type SentenceMode } from '@/lib/speaking/sentence-session';
 
@@ -218,7 +219,7 @@ export function SentenceRunner({ mode, language, anchor = 'de', onExit }: {
         danebensteht — sonst stand hier zweimal fast dasselbe (Nutzerbefund
         21.09.2026, en-UI). */}
     {!notice && <ThemedText type="small">{t('sentence.exampleNote')}</ThemedText>}
-    <ThemedText accessibilityLiveRegion="polite" type="small">{capture.error?.message || notice}</ThemedText>
+    <ThemedText accessibilityLiveRegion="polite" type="small">{capture.error ? t(MIC_ERROR_KEYS[capture.error.code]) : notice}</ThemedText>
     {!listening && stage === 'prepare' && <>
       {mode === 'shadowing' && <SentenceAction label={headphones ? t('sentence.headphonesOk') : t('sentence.headphones')} onPress={() => setHeadphones(value => !value)} />}
       <ThemedText type="small">{t('sentence.micNote', { action: t('sentence.start'), seconds: windowMs / 1000 })}</ThemedText>
