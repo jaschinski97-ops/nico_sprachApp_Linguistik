@@ -3,7 +3,7 @@ import { Tone } from '@/constants/tones';
 import { SpeechLanguage } from '../audio';
 import { Direction } from '../fsrs/types';
 import { drillsForDirectionViaFeature } from '../languages/feature';
-import { HUB_LANGUAGE, PairDirection, TargetLanguage } from '../languages/types';
+import { contentDirectionOf, PairDirection, TargetLanguage } from '../languages/types';
 import { DerivationStep } from '../reading/syllable';
 
 /**
@@ -98,19 +98,13 @@ export type DrillMeta = {
 };
 
 /**
- * Die Richtung, in der diese Übung für diese Sprache läuft.
- *
- * SEIT DEM PAARMATRIX-START TYP `TargetLanguage` AUF DER SPRACHE UND
- * `TargetDirection` AUF `drillsForDirection`: Auch die französischen Übungen
- * bauen hier ihre Richtung; `DrillQuestion.direction` selbst bleibt beim
- * Bestandstyp `Direction` — der französische Grundstoff ist nicht
- * ausgeliefert, und solange niemand eine französische Aufgabe in den
- * Bestand schreibt, verlässt kein französischer Richtungswert diese Datei.
+ * Die Standard-Richtung einer Übung für eine Lernsprache — die Inhalts-
+ * Richtung dieser Sprache (`contentDirectionOf`). Sitzungen aus dem
+ * Lern-Reiter reichen ihre echte Richtung (`anker_to_ziel`) immer mit; das
+ * hier ist nur der Rückfall für Aufrufer ohne Richtung.
  */
-export function directionForDrill(drill: DrillId, language: TargetLanguage): Direction {
-  return DRILL_META[drill].side === 'toHub'
-    ? (`${language}_to_${HUB_LANGUAGE}` as Direction)
-    : (`${HUB_LANGUAGE}_to_${language}` as Direction);
+export function directionForDrill(_drill: DrillId, language: TargetLanguage): Direction {
+  return contentDirectionOf(language);
 }
 
 export const DRILL_META: Record<DrillId, DrillMeta> = {
@@ -137,7 +131,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   article: {
     id: 'article',
     side: 'toHub',
-    feature: null,
+    feature: 'de',
     skill: 'grammatik',
     label: 'Artikel',
     description:
@@ -147,7 +141,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   verbForms: {
     id: 'verbForms',
     side: 'toHub',
-    feature: null,
+    feature: 'de',
     skill: 'grammatik',
     label: 'Stammformen',
     description:
@@ -201,7 +195,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
   deutschLesen: {
     id: 'deutschLesen',
     side: 'toHub',
-    feature: null,
+    feature: 'de',
     skill: 'lesen',
     label: 'Wort lesen',
     description:

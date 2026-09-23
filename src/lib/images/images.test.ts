@@ -1,7 +1,7 @@
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/test-fixtures/legacy-vocabulary';
 
 import {
   clearVocabImages,

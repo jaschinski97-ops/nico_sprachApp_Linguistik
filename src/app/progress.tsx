@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { LanguageSwitch } from '@/components/language-switch';
 import { ScreenScaffold } from '@/components/screen-scaffold';
@@ -11,10 +11,12 @@ import { Tone } from '@/constants/tones';
 import { useToneColor } from '@/hooks/use-theme';
 import { drillCount } from '@/lib/review-log';
 import { directionForBridge, goalLanguage, zielFuerDirection } from '@/lib/languages/goals';
-import { PairDirection } from '@/lib/languages/types';
+import { contentDirectionOf, PairDirection, targetLanguageOf } from '@/lib/languages/types';
+import { DRILLS } from '@/lib/drills/types';
+import { modeLabel, modesForDirection, type Mode } from '@/lib/exercise-catalog';
 import { loadProfile } from '@/lib/profile';
 import { TranslationKey, localeTagFor, useLocale, type UiLanguage } from '@/lib/i18n';
-import { CARD_STATE_ORDER, LearningStats, loadLearningStats } from '@/lib/stats';
+import { CARD_STATE_ORDER, LearningStats, loadLearningStats, type Treffer } from '@/lib/stats';
 
 /**
  * Kartenzustaende auf Toene abgebildet - die Farbe selbst kommt zur Laufzeit
@@ -65,7 +67,7 @@ export default function ProgressScreen() {
     let cancelled = false;
     loadProfile().then((profile) => {
       if (!cancelled) setSelected(directionForBridge(
-        uiLanguage, profile.review?.direction ?? `de_to_${profile.language}`
+        uiLanguage, profile.review?.direction ?? contentDirectionOf(profile.language)
       ));
     }).catch((e) => {
       if (!cancelled) setLoaded({ direction: directionForBridge(uiLanguage, 'de_to_th'), error: String(e) });
@@ -107,39 +109,67 @@ export default function ProgressScreen() {
     );
   }
 
+  const ziel = zielFuerDirection(direction);
+  // Dieselbe Zahl wie „fällig“ auf der Übersicht: Wiederholungen plus die
+  // neuen Karten, die eine Sitzung heute aufnimmt.
+  const heuteFaellig = stats.totalDue;
+
   return (
     <ScreenScaffold
       title={t('tabs.progress')}
       subtitle={t('progress.subtitle')}>
 
+      {/* Sprachübergreifend: was heute passiert ist. */}
       <View style={styles.grid}>
         <Tile label={t('tile.reviewsToday')} value={String(stats.reviewsToday)} />
         <Tile label={t('tile.drillsToday')} value={String(stats.drillsToday)} hint={t('tile.drillsHint')} />
+        <Tile
+          label={t('tile.accuracyToday')}
+          value={prozentText(stats.accuracyToday)}
+          hint={stats.accuracyToday.total > 0
+            ? t('progress.correctOf', { correct: stats.accuracyToday.correct, total: stats.accuracyToday.total })
+            : undefined}
+        />
         <Tile
           label={t('tile.streak')}
           value={String(stats.streak)}
           hint={stats.streak === 1 ? t('tile.dayOne') : t('tile.dayMany')}
         />
-        {/* SEIT PHASE 18 KEIN BESTAND MEHR, sondern Erarbeitetes: „168 Karten
-            gesamt" ist die Groesse des Stapels und sagt ueber den Fortschritt
-            nichts. Begonnen heisst: mindestens einmal bewertet. */}
       </View>
 
       <ReviewChart stats={stats} />
+
+      {/* Ab hier: das gewählte Lernziel. */}
       <ThemedText type="smallBold">
         {t('progress.subtitleLanguage', {
-          language: languageName(goalLanguage(zielFuerDirection(direction)!)),
+          language: languageName(ziel ? goalLanguage(ziel) : targetLanguageOf(direction)),
         })}
       </ThemedText>
       <LanguageSwitch selected={direction} onSelect={setSelected} />
       <View style={styles.grid}>
-        <Tile label={t('tile.started')} value={String(stats.totalCards - stats.cardStates.new)} />
+        {/* Erarbeitetes statt Stapelgröße: „begonnen“ heißt mindestens einmal
+            bewertet; die Gesamtzahl steht klein daneben. */}
+        <Tile label={t('tile.dueToday')} value={String(heuteFaellig)} />
+        <Tile
+          label={t('tile.started')}
+          value={String(stats.totalCards - stats.cardStates.new)}
+          hint={t('tile.ofTotal', { total: stats.totalCards })}
+        />
         <Tile label={t('tile.mastered')} value={String(stats.cardStates.mastered)} />
       </View>
+
+      <Forecast stats={stats} />
+      <WeakAreas stats={stats} direction={direction} />
+      <Milestones stats={stats} />
       <CardStates stats={stats} />
 
     </ScreenScaffold>
   );
+}
+
+/** „75 %“ oder „–“, wenn es noch nichts zu zählen gibt. */
+function prozentText(treffer: Treffer): string {
+  return treffer.total > 0 ? `${Math.round((treffer.correct / treffer.total) * 100)} %` : '–';
 }
 
 function Tile({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -281,6 +311,188 @@ function LegendDot({ color, label }: { color: string; label: string }) {
         {label}
       </ThemedText>
     </View>
+  );
+}
+
+/**
+ * Anstehende Wiederholungen der nächsten sieben Tage — damit man sieht, ob
+ * morgen ein großer Berg kommt. Neue Karten zählen nicht mit.
+ */
+function Forecast({ stats }: { stats: LearningStats }) {
+  const toneColor = useToneColor();
+  const { t, uiLanguage } = useLocale();
+  const max = Math.max(1, ...stats.forecast.map((tag) => tag.due));
+  const wochentag = (iso: string, index: number) => {
+    if (index === 0) return t('progress.forecastToday');
+    const [year, month, day] = iso.split('-').map(Number);
+    return new Intl.DateTimeFormat(localeTagFor(uiLanguage), { weekday: 'short' })
+      .format(new Date(year, month - 1, day, 12));
+  };
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedText type="smallBold">{t('progress.forecastTitle')}</ThemedText>
+      <View style={styles.forecast}>
+        {stats.forecast.map((tag, index) => (
+          <View
+            key={tag.date}
+            style={styles.barColumn}
+            accessible
+            accessibilityLabel={t('progress.forecastA11y', {
+              date: index === 0 ? t('progress.forecastToday') : tagLabel(tag.date, uiLanguage),
+              count: tag.due,
+            })}>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.barValue}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
+              {tag.due > 0 ? tag.due : ''}
+            </ThemedText>
+            <View style={styles.barTrack} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <View
+                style={[
+                  styles.barFill,
+                  {
+                    height: `${(tag.due / max) * 100}%`,
+                    backgroundColor: tag.due > 0 ? toneColor(index === 0 ? 'falling' : 'mid') : 'transparent',
+                  },
+                ]}
+              />
+            </View>
+            <ThemedText
+              type="small"
+              themeColor="textSecondary"
+              style={styles.barLabel}
+              numberOfLines={1}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants">
+              {wochentag(tag.date, index)}
+            </ThemedText>
+          </View>
+        ))}
+      </View>
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('progress.forecastNote')}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+/** Übungsart → Übungsmodus im Lern-Reiter (für den „Üben“-Knopf). */
+function modusFuer(art: string): Mode | null {
+  if (art === 'produktion') return 'sagen';
+  if (art === 'dictation') return 'dictation';
+  return (DRILLS as readonly string[]).includes(art) ? (art as Mode) : null;
+}
+
+/**
+ * Trefferquote je Übung im gewählten Lernziel, die schwächste zuerst — mit
+ * direktem Weg zum Üben. Zählt erst seit dem 23.09.2026 je Lernziel (ältere
+ * Übungen tragen keine Richtung).
+ */
+function WeakAreas({ stats, direction }: { stats: LearningStats; direction: PairDirection }) {
+  const { t } = useLocale();
+  const router = useRouter();
+  const toneColor = useToneColor();
+  const angeboten = new Set(modesForDirection(direction));
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedText type="smallBold">{t('progress.weakTitle')}</ThemedText>
+      {stats.directionWindow.total > 0 ? (
+        <ThemedText type="small">
+          {t('progress.goalAccuracy', {
+            correct: stats.directionWindow.correct,
+            total: stats.directionWindow.total,
+            percent: Math.round((stats.directionWindow.correct / stats.directionWindow.total) * 100),
+          })}
+        </ThemedText>
+      ) : null}
+      {stats.weakAreas.length === 0 ? (
+        <ThemedText type="small" themeColor="textSecondary">
+          {t('progress.weakEmpty')}
+        </ThemedText>
+      ) : (
+        stats.weakAreas.map((area) => {
+          const modus = modusFuer(area.art);
+          const quote = area.correct / area.total;
+          const farbe = toneColor(quote < 0.6 ? 'falling' : quote < 0.85 ? 'high' : 'mid');
+          return (
+            <View key={area.art} style={styles.weakRow}>
+              <View style={styles.weakText}>
+                <ThemedText type="small">{modus ? modeLabel(modus, t) : area.art}</ThemedText>
+                <View style={styles.meterTrack}>
+                  <View style={[styles.meterFill, { width: `${Math.round(quote * 100)}%`, backgroundColor: farbe }]} />
+                </View>
+                <ThemedText type="small" themeColor="textSecondary">
+                  {t('progress.weakRow', { correct: area.correct, total: area.total, percent: Math.round(quote * 100) })}
+                </ThemedText>
+              </View>
+              {modus && angeboten.has(modus) ? (
+                <Pressable
+                  onPress={() => router.push(`/review?direction=${direction}&mode=${modus}`)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t('progress.weakPractice')}: ${modeLabel(modus, t)}`}
+                  style={({ pressed }) => pressed && styles.pressed}>
+                  <ThemedView type="backgroundSelected" style={styles.pill}>
+                    <ThemedText type="smallBold">{t('progress.weakPractice')}</ThemedText>
+                  </ThemedView>
+                </Pressable>
+              ) : null}
+            </View>
+          );
+        })
+      )}
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('progress.weakNote')}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+/**
+ * Wortschatz-Meilensteine: die ersten 250/500/1000/2000 Wörter (häufige
+ * Alltagswörter zuerst). Ein fassbares Ziel statt einer einzigen großen Zahl.
+ */
+function Milestones({ stats }: { stats: LearningStats }) {
+  const { t } = useLocale();
+  const toneColor = useToneColor();
+  if (stats.milestones.length === 0) return null;
+
+  return (
+    <ThemedView type="backgroundElement" style={styles.card}>
+      <ThemedText type="smallBold">{t('progress.milestonesTitle')}</ThemedText>
+      {stats.milestones.map((stufe) => {
+        const anteil = stufe.total > 0 ? stufe.started / stufe.total : 0;
+        return (
+          <View
+            key={stufe.size}
+            style={styles.milestone}
+            accessible
+            accessibilityLabel={`${t('progress.milestoneRow', { size: stufe.total })}: ${t('progress.milestoneValue', { started: stufe.started, total: stufe.total })}`}>
+            <View style={styles.row}>
+              <ThemedText type="small">{t('progress.milestoneRow', { size: stufe.total })}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {t('progress.milestoneValue', { started: stufe.started, total: stufe.total })}
+              </ThemedText>
+            </View>
+            <View style={styles.meterTrack}>
+              <View
+                style={[
+                  styles.meterFill,
+                  { width: `${Math.round(anteil * 100)}%`, backgroundColor: toneColor(anteil >= 1 ? 'mid' : 'high') },
+                ]}
+              />
+            </View>
+          </View>
+        );
+      })}
+      <ThemedText type="small" themeColor="textSecondary">
+        {t('progress.milestoneNote')}
+      </ThemedText>
+    </ThemedView>
   );
 }
 
@@ -455,5 +667,43 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
+  },
+  forecast: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: Spacing.half,
+    height: 110,
+    marginTop: Spacing.one,
+  },
+  weakRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  weakText: {
+    flexGrow: 1,
+    flexShrink: 1,
+    gap: Spacing.half,
+  },
+  meterTrack: {
+    height: 8,
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: 'rgba(127,127,127,0.25)',
+  },
+  meterFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  milestone: {
+    gap: Spacing.half,
+  },
+  pill: {
+    borderRadius: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });

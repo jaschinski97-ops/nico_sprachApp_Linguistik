@@ -1,6 +1,14 @@
 import type { TextClient, ProviderId } from '../providers/types';
 import type { Provider } from '@/lib/api-key';
 import type { VocabEntry } from '@/data/vocab-types';
+import { LEARNING_LANGUAGES } from '../languages/definitions';
+import { isLanguageCode } from '../languages/types';
+
+/** Prüfpunkt 3 (Umschrift/Ton/Betonung) je Sprache — aus `definitions.ts`. */
+function pruefPunktDrei(language: string): string {
+  return isLanguageCode(language) ? LEARNING_LANGUAGES[language].checkPoint3 : 'ist die Lautschrift plausibel?';
+}
+
 
 /** Der gewählte Anbieter prüft Übersetzung, Grammatik und Natürlichkeit.
  * Ein anderer Anbieter ergibt eine Kreuzprüfung; beim selben Anbieter
@@ -40,7 +48,7 @@ export function baueVocabPruefPrompt(eintrag: VocabEntry, stufe?: string): strin
     'Prüfe diesen Lern-Vokabeleintrag kritisch in fünf Punkten:',
     '1. Übersetzung: stimmen die deutsche Bedeutung und alle vorhandenen translations zum Begriff (und umgekehrt)? Es genügt EINE korrekte Hauptbedeutung — nicht alle Bedeutungsnuancen.',
     '2. Grammatik/Rechtschreibung in der Zielsprache und im Deutschen.',
-    `3. Umschrift/Ton/Betonung: ${eintrag.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintrag.language === 'es' ? 'stimmt die im Feld "syllables" als "stressed" markierte Silbe mit den spanischen Betonungsregeln? Eine Betonungsmarkierung in der Umschrift ist nicht erforderlich.' : 'ist die Lautschrift plausibel?'}`,
+    `3. Umschrift/Ton/Betonung: ${pruefPunktDrei(String(eintrag.language))}`,
     '4. Natürlichkeit: klingt der Beispielsatz wie ein echter Satz der Zielsprache?',
     stufe
       ? `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`
@@ -59,7 +67,7 @@ export function baueVocabBatchPruefPrompt(eintraege: VocabEntry[], stufe?: strin
     'Prüfe diese Lern-Vokabeleinträge kritisch — JEDEN in denselben fünf Punkten:',
     '1. Übersetzung: stimmt die deutsche Bedeutung zum Begriff (und umgekehrt)? Es genügt EINE korrekte Hauptbedeutung — nicht alle Bedeutungsnuancen.',
     `2. Grammatik/Rechtschreibung in der Zielsprache und im Deutschen.`,
-    `3. Umschrift/Ton/Betonung: ${eintraege[0]?.language === 'th' ? 'sind Silben und Töne plausibel und konsistent zur thailändischen Schrift?' : eintraege[0]?.language === 'es' ? 'stimmt die im Feld "syllables" als "stressed" markierte Silbe mit den spanischen Betonungsregeln? Eine Betonungsmarkierung in der Umschrift ist nicht erforderlich.' : 'ist die Lautschrift plausibel?'}`,
+    `3. Umschrift/Ton/Betonung: ${pruefPunktDrei(String(eintraege[0]?.language ?? ''))}`,
     '4. Natürlichkeit: klingt der Beispielsatz wie ein echter Satz der Zielsprache?',
     stufe
       ? `5. Stufe ${stufe}: ist das Wort für diese Stufe typisch und häufig genug?`

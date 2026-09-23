@@ -1,5 +1,5 @@
 import { GEMINI_VOICES, OPENAI_VOICES, defaultVoiceForGender, describeVoice, documentsGender, voicesFor } from '@/data/tts-voices';
-import { VOCABULARY_EN, VOCABULARY_ES } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES } from '@/test-fixtures/legacy-vocabulary';
 
 import { graphemeGroups } from '../spelling/graphemes';
 

@@ -7,6 +7,7 @@ import { Spacing } from '@/constants/theme';
 import { syllablesOf } from '@/data/vocab-helpers';
 import { VocabEntry } from '@/data/vocab-types';
 import { useLocale } from '@/lib/i18n';
+import { learningLanguage } from '@/lib/languages/definitions';
 
 /**
  * Das fremdsprachige Wort mit seiner Auszeichnung (Phase 16).
@@ -36,7 +37,8 @@ export function TermWord({
   size?: 'large' | 'medium';
 }) {
   const { t } = useLocale();
-  if (entry.language === 'th') return <ThaiWord entry={entry} size={size} />;
+  // Sprachen mit Tonfarben (Thai) bekommen die Silben-Tonfarben-Darstellung.
+  if (learningLanguage(entry.language).legend === 'tones') return <ThaiWord entry={entry} size={size} />;
 
   const syllables = syllablesOf(entry);
   // Einsilbler: Sowohl die Silbenzeile (sie würde das Wort wiederholen)

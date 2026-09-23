@@ -1,7 +1,7 @@
 import { POLITE_ITEMS, POLITE_SOURCE } from '@/data/grammar-th';
 import { SER_ESTAR_ITEMS, SER_ESTAR_SOURCE } from '@/data/grammar-es';
-import { VOCABULARY_EN } from '@/data/vocabulary-en';
-import { VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_EN } from '@/test-fixtures/legacy-vocabulary-en';
+import { VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 
 import { MemoryDataStore, type DataStore } from '../storage';
 import { DRILL_META } from './types';

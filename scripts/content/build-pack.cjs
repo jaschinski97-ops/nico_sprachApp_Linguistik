@@ -237,8 +237,10 @@ async function buildPack(repoRoot, options = {}) {
     ?? domain.load('src/lib/content/audio-policy').isDeliverableEntry;
   const vocabLanguageById = options.vocabLanguageById
     ?? (() => {
-      const { VOCABULARY } = domain.load('src/data/vocabulary');
-      return new Map(VOCABULARY.map((word) => [word.id, word.language]));
+      // Der Wortschatz steht im Katalog selbst (kein fester Grundstock mehr).
+      return new Map(catalog.entries
+        .filter((entry) => entry.kind === 'vocabulary')
+        .map((entry) => [entry.document.id, entry.document.language]));
     })();
 
   const { audio, images } = selectPackEntries(catalog, lang, vocabLanguageById, isDeliverable);

@@ -1,4 +1,5 @@
-import { LANGUAGE_CODES } from '../languages/types';
+import { learningLanguage, passtZurSchrift } from '../languages/definitions';
+import { isLanguageCode, LANGUAGE_CODES } from '../languages/types';
 import type { VocabEntry } from '@/data/vocab-types';
 
 /**
@@ -20,7 +21,8 @@ import type { VocabEntry } from '@/data/vocab-types';
  * Duplikate, egal wie sie geschrieben wurden.
  */
 
-const DATASPRACHEN = [...LANGUAGE_CODES, 'de'] as const;
+/** Alle Lernsprachen (seit dem Sprach-Umbau steht Deutsch selbst in der Liste). */
+const DATASPRACHEN = LANGUAGE_CODES;
 
 const PARTS: readonly string[] = [
   'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'numeral',
@@ -114,11 +116,10 @@ export function pruefeVocabDoc(doc: VocabEntry): VocabPruefung {
   }
 
   // Schrift passt zur Sprache.
-  if (language === 'th' && !istThaiSchrift(doc.term)) {
-    fehler.push('Thai-Begriff ohne thailändische Schrift.');
-  }
-  if (language !== 'th' && istThaiSchrift(doc.term)) {
-    fehler.push('Nicht-Thai-Begriff enthält thailändische Schrift.');
+  if (isLanguageCode(language) && !passtZurSchrift(language, doc.term)) {
+    fehler.push(learningLanguage(language).script === 'thai'
+      ? 'Thai-Begriff ohne thailändische Schrift.'
+      : 'Nicht-Thai-Begriff enthält thailändische Schrift.');
   }
 
   // Längen in vernünftigen Grenzen.

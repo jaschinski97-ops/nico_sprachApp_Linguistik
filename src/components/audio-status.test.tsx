@@ -1,5 +1,5 @@
 import { act, create, type ReactTestRenderer } from 'react-test-renderer';
-import { VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 import { buildToneQuestion } from '@/lib/drills/questions';
 import { Flashcard } from './flashcard';
 import { DrillRunner } from './drill-runner';
@@ -26,7 +26,7 @@ jest.mock('@/lib/audio', () => ({
 jest.mock('@/lib/review-log', () => ({ recordDrill: (...args: unknown[]) => mockRecord(...args as []) }));
 jest.mock('@/lib/drills/session', () => ({
   buildDrillSession: async (options: { isEligible: (entry: unknown) => Promise<boolean> }) => {
-    const word = require('@/data/vocabulary').VOCABULARY_TH.find((entry: { id: string }) => entry.id === 'kha');
+    const word = require('@/test-fixtures/legacy-vocabulary').VOCABULARY_TH.find((entry: { id: string }) => entry.id === 'kha');
     return { questions: await options.isEligible(word) ? [require('@/lib/drills/questions').buildToneQuestion(word)] : [] };
   },
   scoreAnswers: () => ({ correct: 0, total: 0 }),

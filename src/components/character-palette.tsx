@@ -8,6 +8,8 @@ import { Spacing } from '@/constants/theme';
 import { THAI_CONSONANTS, TONE_MARKS, TONE_MARK_KEYS } from '@/data/thai-script';
 import { useToneColor } from '@/hooks/use-theme';
 import { useLocale, type TranslationKey } from '@/lib/i18n';
+import { learningLanguage } from '@/lib/languages/definitions';
+import type { LanguageCode } from '@/lib/languages/types';
 
 /**
  * Zeicheneingabe ohne Systemtastatur (Phase 14, AE-39).
@@ -304,3 +306,20 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
 });
+
+/**
+ * Die Zeichenleiste einer Lernsprache — welche es ist, steht in
+ * `definitions.ts` (`palette`). Sprachen ohne Eintrag (Englisch) bekommen
+ * keine: jedes Zeichen steht auf jeder lateinischen Tastatur.
+ */
+export function LanguagePalette({
+  language,
+  onInsert,
+  disabled,
+}: PaletteProps & { language: LanguageCode }) {
+  const palette = learningLanguage(language).palette;
+  if (palette === 'thai') return <ThaiPalette onInsert={onInsert} disabled={disabled} />;
+  if (palette === 'german') return <GermanPalette onInsert={onInsert} disabled={disabled} />;
+  if (palette === 'spanish') return <SpanishPalette onInsert={onInsert} disabled={disabled} />;
+  return null;
+}

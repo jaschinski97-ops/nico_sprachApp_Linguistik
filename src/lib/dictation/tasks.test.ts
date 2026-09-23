@@ -1,5 +1,7 @@
 import { setCurrentCatalog } from '@/lib/content/catalog-state';
-import { SENTENCE_FOOTNOTE_BY_LANGUAGE, SENTENCE_TASKS, SENTENCE_TASKS_BY_LANGUAGE, sentenceFootnote } from '@/data/sentence-tasks';
+import { SENTENCE_TASKS_BY_LANGUAGE, sentenceFootnote } from '@/data/sentence-tasks';
+
+const SENTENCE_TASKS = SENTENCE_TASKS_BY_LANGUAGE.th;
 
 import {
   DICTATION_SESSION_SIZE,
@@ -16,22 +18,19 @@ import {
  * die durchgereichte Richtung (gleiche FSRS-Karte wie Karteikarte/Schreiben).
  */
 
-describe('Ableitung aus den Satz-Daten (Legacy-Katalog)', () => {
-  it('Thai: genau die geprüften Satzlesarten, keine eigenen', () => {
+describe('Ableitung aus den Satz-Daten', () => {
+  it('Thai: genau die Satzaufgaben, keine eigenen', () => {
     const tasks = dictationTasksFor('th', 'de_to_th');
     expect(tasks.length).toBe(SENTENCE_TASKS.length);
     expect(tasks.length).toBeGreaterThan(0);
     expect(new Set(tasks.map((task) => task.id)).size).toBe(tasks.length);
   });
 
-  it('Englisch, Spanisch und Deutsch bleiben ehrlich leer — der Legacy-Grundstock hat dort keinen Satzstoff', () => {
-    expect(dictationTasksFor('en', 'de_to_en')).toEqual([]);
-    expect(dictationTasksFor('es', 'de_to_es')).toEqual([]);
+  it('jede Sprache diktiert genau ihre Satzaufgaben — ohne Beispielsätze bleibt sie leer', () => {
+    expect(dictationTasksFor('en', 'de_to_en')).toHaveLength(SENTENCE_TASKS_BY_LANGUAGE.en.length);
+    expect(dictationTasksFor('es', 'de_to_es')).toHaveLength(SENTENCE_TASKS_BY_LANGUAGE.es.length);
+    // Die deutschen Test-Wörter tragen keine Beispielsätze.
     expect(dictationTasksFor('de', 'th_to_de')).toEqual([]);
-    // Und das ist keine Diskrepanz zur Quelle, sondern deren Spiegelbild:
-    expect(SENTENCE_TASKS_BY_LANGUAGE.en).toEqual([]);
-    expect(SENTENCE_TASKS_BY_LANGUAGE.es).toEqual([]);
-    expect(SENTENCE_TASKS_BY_LANGUAGE.de).toEqual([]);
   });
 
   it('jede Aufgabe zeigt auf ihre Vokabel und die MITGEGEBENE Richtung', () => {
@@ -73,15 +72,14 @@ describe('Eine Runde', () => {
   });
 
   it('gibt für stofflose Sprachen eine leere Runde, nicht einen Absturz', () => {
-    expect(buildDictationSession('en', 'de_to_en', 1)).toEqual([]);
-    expect(buildDictationSession('es', 'de_to_es', 1)).toEqual([]);
+    expect(buildDictationSession('de', 'th_to_de', 1)).toEqual([]);
   });
 });
 
 describe('Der ehrliche Fußtext', () => {
   it('wird von den Satzübungen geerbt, nicht neu erfunden', () => {
     for (const language of ['th', 'en', 'es'] as const) {
-      expect(dictationFootnote(language)).toBe(SENTENCE_FOOTNOTE_BY_LANGUAGE[language]);
+      expect(dictationFootnote(language)).toBe(sentenceFootnote(language));
       expect(dictationFootnote(language).length).toBeGreaterThan(0);
     }
   });

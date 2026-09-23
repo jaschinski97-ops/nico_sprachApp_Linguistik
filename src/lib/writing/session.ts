@@ -1,8 +1,9 @@
-import { VocabEntry } from '@/data/vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
 
 import { seededRandom, shuffled } from '../drills/random';
 import { retrievability } from '../fsrs/fsrs';
-import { Direction, FSRSCardState, Rating } from '../fsrs/types';
+import { FSRSCardState, Rating } from '../fsrs/types';
+import type { PairDirection } from '../languages/types';
 import { loadOrCreateCardState, rateCard } from '../repository';
 import { ensureCardStates } from '../review-session';
 import { DataStore, getStore } from '../storage';
@@ -43,14 +44,14 @@ export const WRITING_SESSION_SIZE = 10;
 const CANDIDATE_WINDOW = 3;
 
 export type WritingSession = {
-  direction: Direction;
+  direction: PairDirection;
   prompts: WritingPrompt[];
   /** Wie viele Vokabeln für diese Richtung überhaupt taugen. */
   available: number;
 };
 
 export type WritingSessionOptions = {
-  direction: Direction;
+  direction: PairDirection;
   store?: DataStore;
   now?: number;
   size?: number;

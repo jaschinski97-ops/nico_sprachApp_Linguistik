@@ -1,131 +1,42 @@
 import { activeVocabularyFor } from '@/data/active-vocabulary';
 import { languageDisplayName, type UiLanguage } from '@/lib/i18n';
 
+import { LEARNING_LANGUAGES } from './definitions';
+
 import {
   directionsFor,
-  HUB_LANGUAGE,
   Lang,
   LANGUAGE_CODES,
   LanguageCode,
   LanguageDefinition,
   languageOfDirection,
-  languageOfTargetDirection,
   Pair,
-  TARGET_LANGUAGES,
   TargetDirection,
   TargetLanguage,
 } from './types';
 
 /**
- * Welche Sprachen es gibt, was sie besonders macht und ob sie Inhalte haben.
- *
- * EINE STELLE, DIE ALLES WEISS. Wer eine weitere Sprache ergänzen will, trägt
- * sie hier ein und liefert ihren Grundstock — die Oberfläche, die Auswahl und
- * die Zählung ziehen von hier.
- *
- * SEIT DEM PAARMATRIX-MODELL (Roadmap v2) TRENNT DIE REGISTRY ZWEI FRAGEN:
- * „Was hat geprüften Stoff?“ (`entryCount`) und „Was ist auf jedem Gerät?“
- * (`delivered`). Französisch hat einen 150 Einträge umfassenden A1-Grundstoff, aber keinen
- * App-Bestand — die Auswahl zeigt es ehrlich als „noch nicht lernbar“, und
- * `hasContent` hält es aus dem Sprachwechsel heraus, bis sein Paket
- * ausgeliefert ist.
+ * Die Lernsprachen mit Laufzeitangaben (Bestand) — gebaut aus der EINEN
+ * Definition in `definitions.ts`. Hier nichts sprachspezifisch nachtragen.
  */
+export const LANGUAGES: Record<LanguageCode, LanguageDefinition> = Object.fromEntries(
+  LANGUAGE_CODES.map((code) => {
+    const def = LEARNING_LANGUAGES[code];
+    const definition: LanguageDefinition = {
+      code,
+      label: def.label,
+      endonym: def.endonym,
+      speechLocale: def.speechLocale,
+      challenge: def.challenge,
+      feature: def.feature,
+      get entryCount() { return activeVocabularyFor(code).length; },
+      delivered: true,
+      hasGermanModules: true,
+    };
+    return [code, definition];
+  })
+) as Record<LanguageCode, LanguageDefinition>;
 
-export const LANGUAGES: Record<(typeof TARGET_LANGUAGES)[number], LanguageDefinition> = {
-  th: {
-    code: 'th',
-    label: 'Thai',
-    endonym: 'ภาษาไทย',
-    speechLocale: 'th-TH',
-    challenge: 'language.th.description',
-    get entryCount() { return activeVocabularyFor('th').length; },
-    hasGermanModules: true,
-    delivered: true,
-    feature: {
-      label: 'language.th.feature',
-      description: 'language.th.description',
-      // Deshalb gibt es die Herleitungsuebung aus Phase 13 - und deshalb ist
-      // sie dort ueberhaupt moeglich gewesen.
-      kind: 'derivable',
-      implemented: true,
-      source: {
-        title: 'Thai script',
-        url: 'https://en.wikipedia.org/wiki/Thai_script',
-        retrieved: '2026-09-03',
-        quote:
-          'Tones are realised in the vowels, but indicated in the script by a combination of the class of the initial consonant (high, mid or low), vowel length (long or short), closing consonant (plosive or sonorant, called dead or live) and, if present, one of four tone marks.',
-      },
-    },
-  },
-
-  es: {
-    code: 'es',
-    label: 'Spanisch',
-    endonym: 'español',
-    speechLocale: 'es-ES',
-    challenge: 'language.es.description',
-    get entryCount() { return activeVocabularyFor('es').length; },
-    hasGermanModules: true,
-    delivered: true,
-    feature: {
-      label: 'language.es.feature',
-      description: 'language.es.description',
-      kind: 'derivable',
-      // Seit Phase 16 gebaut: lib/stress leitet die Betonung her, und die
-      // Uebung 'stressRule' zeigt den Weg dorthin.
-      implemented: true,
-      source: {
-        title: 'Spanish orthography',
-        url: 'https://en.wikipedia.org/wiki/Spanish_orthography',
-        retrieved: '2026-09-03',
-        quote:
-          'Stress in Spanish is marked unequivocally through a series of orthographic rules. The default stress is on the penultimate (next-to-last) syllable on words that end in a vowel, [n] or [s] (not preceded by another consonant) and on the final syllable when the word ends in any consonant other than [n] or [s] or in a consonant group. Words that do not follow the default stress have an acute accent over the stressed vowel.',
-      },
-    },
-  },
-
-  en: {
-    code: 'en',
-    label: 'Englisch',
-    endonym: 'English',
-    speechLocale: 'en-GB',
-    challenge: 'language.en.description',
-    get entryCount() { return activeVocabularyFor('en').length; },
-    hasGermanModules: true,
-    delivered: true,
-    feature: {
-      label: 'language.en.feature',
-      description: 'language.en.description',
-      kind: 'per-word',
-      // Seit Phase 16 gebaut - aber ausdruecklich NICHT als Herleitung:
-      // lib/spelling stellt Woerter mit gleichem Schriftstueck und
-      // verschiedenem Laut gegenueber (AE-47).
-      implemented: true,
-      source: {
-        title: 'English orthography',
-        url: 'https://en.wikipedia.org/wiki/English_orthography',
-        retrieved: '2026-09-03',
-        quote:
-          'in unfamiliar words and proper nouns, the pronunciation of some sequences, ⟨ough⟩ being the prime example, is unpredictable even for educated native speakers.',
-      },
-    },
-  },
-};
-
-/**
- * Die Sprache, die ohne eigene Wahl gilt.
- *
- * AUSDRUECKLICH THAI, NICHT ABGELEITET (Phase 16). In Phase 15 ergab sich die
- * Vorgabe aus „die erste mit Inhalten"; das war eindeutig, solange es nur eine
- * gab. Mit dreien wuerde jede Ableitung — alphabetisch, nach Anzahl — kippen,
- * sobald sich ein Grundstock aendert, und dann faende jemand nach einem
- * Update **Englisch** vor, obwohl er seit Wochen Thai lernt. Der Wechsel der
- * gelernten Sprache ist eine Entscheidung der lernenden Person und darf nicht
- * aus einer Sortierreihenfolge fallen.
- *
- * Thai ist zudem das Paar mit dem vollstaendigsten Inhalt: Beispielsaetze,
- * Bildmotive, Hoerclips, Sprech- und Leseuebung gibt es bisher nur dort.
- */
 export const DEFAULT_LANGUAGE: LanguageCode = 'th';
 
 /** Reihenfolge in der Auswahl: die Vorgabe zuerst, dann alphabetisch. */
@@ -182,11 +93,8 @@ export function defaultLanguage(): LanguageCode {
  * UI-Sprache kennt (`useLocale().uiLanguage`), reicht sie durch.
  */
 export function directionLabel(direction: TargetDirection, ui: UiLanguage = 'de'): string {
-  const ziel = languageDisplayName(languageOfTargetDirection(direction), ui);
-  const deutsch = languageDisplayName('de', ui);
-  return direction.startsWith(`${HUB_LANGUAGE}_to_`)
-    ? `${deutsch} → ${ziel}`
-    : `${ziel} → ${deutsch}`;
+  const [quelle, ziel] = direction.split('_to_') as [LanguageCode, LanguageCode];
+  return `${languageDisplayName(quelle, ui)} → ${languageDisplayName(ziel, ui)}`;
 }
 
 // `directionPrompt` gab es bis Phase 18: ein Satz wie „Deutsch lesen, das Wort
@@ -205,12 +113,9 @@ export { directionsFor, languageOfDirection };
  * Ein `Record<Lang, string>` hält die Beschriftung an **einer** Stelle, und
  * `pairLabel` liest sie, statt Deutsch zu hartkodieren.
  */
-export const LANGUAGE_LABELS: Record<Lang, string> = {
-  de: 'Deutsch',
-  en: LANGUAGES.en.label,
-  es: LANGUAGES.es.label,
-  th: LANGUAGES.th.label,
-};
+export const LANGUAGE_LABELS: Record<Lang, string> = Object.fromEntries(
+  LANGUAGE_CODES.map((code) => [code, LEARNING_LANGUAGES[code].label])
+) as Record<Lang, string>;
 
 /** Beschriftung eines Paars — „Englisch → Französisch“ statt `en_to_fr`. */
 export function pairLabel(pair: Pair): string {

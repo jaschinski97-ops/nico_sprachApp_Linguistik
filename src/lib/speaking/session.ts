@@ -1,4 +1,4 @@
-import { VocabEntry } from '@/data/vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
 
 import { shuffled, seededRandom } from '../drills/random';
 import { retrievability } from '../fsrs/fsrs';

@@ -48,7 +48,7 @@
  * eigenes Bildmotiv hinterlegt ist (lib/images/motifs.ts).
  */
 
-import { VocabEntry } from './vocab-types';
+import type { VocabEntry } from '@/data/vocab-types';
 
 export const VOCABULARY_ES: VocabEntry[] = [
   {

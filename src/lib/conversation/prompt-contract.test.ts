@@ -16,7 +16,7 @@ import { SituationSpec } from './types';
  * und Parser auseinandergelaufen sind.
  */
 
-const specs = planSituations({ variantsPerCombo: 1 });
+const specs = planSituations({ variantsPerCombo: 1, directions: ['de_to_th', 'th_to_de'] });
 
 function specFor(direction: SituationSpec['direction']): SituationSpec {
   const found = specs.find((s) => s.topic === 'market' && s.direction === direction);

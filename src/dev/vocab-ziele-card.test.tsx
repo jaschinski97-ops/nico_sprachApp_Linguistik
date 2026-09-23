@@ -4,7 +4,7 @@ import { Button, ProgressPanel } from '@/components/generator-card';
 import { createTextClient } from '@/lib/providers/text';
 import { clearContentSelection, studioRequest } from './content-client';
 import { readMeta, writeMeta } from '@/lib/repository';
-import { VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 import { UI_LANGUAGES } from '@/lib/i18n/types';
 
 jest.mock('./content-client', () => ({ studioRequest: jest.fn(async () => ({})), clearContentSelection: jest.fn(async () => ({})) }));

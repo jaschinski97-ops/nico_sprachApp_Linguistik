@@ -4,7 +4,6 @@ const { digestOf, assertDocument, BUDGET, keyOf } = require('./pipeline.cjs');
 const domain = require('./domain.cjs');
 const { planDeliveryAudio } = domain.load('src/lib/content/audio-plan');
 const { BUILTIN_EXAM_MODULES } = domain.load('src/data/exam-modules');
-const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { planSituations, FULL_RUN } = domain.load('src/lib/conversation/plan');
 const { checkThaiTone } = domain.load('src/lib/content/tone-gate');
 const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
@@ -12,7 +11,8 @@ const { decodeAudio, decodeImage } = require('./media.cjs');
 const { vocabSchluessel } = domain.load('src/lib/content/vocab-schema');
 const { createHash } = require('node:crypto');
 
-function checkContent(root, { integrityOnly = false } = {}) {
+/** `extraVocabulary`: nur für Tests mit festen Fixture-Wörtern (siehe ContentPipeline). */
+function checkContent(root, { integrityOnly = false, extraVocabulary = [] } = {}) {
   const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/content/catalog.json'), 'utf8'));
   const errors = [];
   const seen = new Set();
@@ -25,7 +25,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
   if (catalog.version !== 2 || !Array.isArray(catalog.entries)) throw Error('Unbekannte Katalogversion.');
   for (const entry of catalog.entries) {
     try {
-      assertDocument(entry.kind, entry.document, [...VOCABULARY, ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
+      assertDocument(entry.kind, entry.document, [...extraVocabulary, ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
       if (entry.id !== entry.document.id || seen.has(keyOf(entry))) throw Error('Doppelte oder abweichende ID.');
       seen.add(keyOf(entry));
       // Phase 2, Schritt 6: inhaltliche Duplikate im Wortschatz — derselbe
@@ -50,7 +50,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
         audioSourceBytes += entry.sourceBytes;
         audioCompressedBytes += bytes.length;
         // 18.09.: Solltöne aus dem Katalogwortschatz — das Tor findet die ki-*-Woerter nur so.
-        const toneWortschatz = [...VOCABULARY, ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)];
+        const toneWortschatz = [...extraVocabulary, ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)];
         const tone = checkThaiTone(entry.document, decodeAudio(path.join(root, 'assets/content', entry.asset)), 24000, { woerter: toneWortschatz });
         if (entry.check.tone?.status !== tone.status || tone.status === 'failed') throw Error('Thai-Tontor nicht bestanden oder Status verändert: ' + tone.reason);
         if (entry.document.language === 'th' && tone.status === 'unchecked') uncheckedThaiDelivered++;
@@ -77,7 +77,7 @@ function checkContent(root, { integrityOnly = false } = {}) {
   if (contentBytes > BUDGET) errors.push(`Inhaltsbudget von ${Math.round(BUDGET / (1024 * 1024))} MiB überschritten. Keine automatische Kürzung zulässig.`);
   const situations = catalog.entries.filter((entry) => entry.kind === 'situations').map((entry) => entry.document);
   const exams = [...BUILTIN_EXAM_MODULES, ...catalog.entries.filter((entry) => entry.kind === 'exam').map((entry) => entry.document)];
-  const words = [...(catalog.vocabularySource === 'generated' ? [] : VOCABULARY), ...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)];
+  const words = [...catalog.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)];
   const neededAudio = planDeliveryAudio(situations, exams, undefined, words);
   const missingAudio = neededAudio.filter((spec) => !seen.has(`audio:${spec.id}`));
   const missingImages = words.filter((entry) => entry.isConcrete && !seen.has(`images:${entry.id}`));

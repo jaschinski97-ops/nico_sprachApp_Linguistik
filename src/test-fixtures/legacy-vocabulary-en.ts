@@ -52,7 +52,7 @@
  * stillschweigend das falsche Bild zu bekommen.
  */
 
-import { VocabEntry } from './vocab-types';
+import type { VocabEntry } from '@/data/vocab-types';
 
 export const VOCABULARY_EN: VocabEntry[] = [
   {

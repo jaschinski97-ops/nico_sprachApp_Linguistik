@@ -14,8 +14,7 @@ import {
 } from '@/lib/audio';
 import { type Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { type PairDirection } from '@/lib/languages/types';
-import { languageOf } from '@/lib/languages/registry';
+import { targetLanguageOf, type PairDirection } from '@/lib/languages/types';
 import { loadOrCreateCardState, rateCard } from '@/lib/repository';
 import { recordDrill } from '@/lib/review-log';
 import {
@@ -25,7 +24,6 @@ import {
 } from '@/lib/production/compare';
 import {
   produktionsAufgaben,
-  zielSprache,
   type ProduktionsAufgabe,
 } from '@/lib/production/tasks';
 import { spracherkennung } from '@/lib/speaking/recognition';
@@ -72,7 +70,7 @@ export function ProductionRunner({
 }) {
   const { t, languageName } = useLocale();
   const colors = useTheme();
-  const sprache = zielSprache(direction);
+  const sprache = targetLanguageOf(direction);
   const naht = useMemo(() => spracherkennung(), []);
 
   const [aufgaben, setAufgaben] = useState<ProduktionsAufgabe[] | null>(null);
@@ -119,7 +117,7 @@ export function ProductionRunner({
       } catch {
         // Ein fehlgeschlagenes Kartenschreiben darf die Runde nicht stoppen.
       }
-      await recordDrill(rating !== 1, Date.now(), undefined, 'produktion').catch(() => {});
+      await recordDrill(rating !== 1, Date.now(), undefined, 'produktion', direction).catch(() => {});
     },
     [aufgabe, direction]
   );

@@ -4,6 +4,7 @@ import { loadLearningStats } from '@/lib/stats';
 
 jest.mock('expo-router', () => ({
   useFocusEffect: (callback: () => (() => void) | void) => jest.requireActual('react').useEffect(callback, [callback]),
+  useRouter: () => ({ push: jest.fn() }),
 }));
 jest.mock('@/lib/i18n', () => {
   const actual = jest.requireActual('@/lib/i18n') as typeof import('@/lib/i18n');
@@ -23,6 +24,9 @@ jest.mock('@/lib/stats', () => ({
     totalCards: direction === 'en_to_de' ? 10 : 20, totalDue: 0, days: [],
     totalReviews: 2, reviewsToday: 2, loggedSince: null, streak: 1,
     drillsToday: 3, totalDrills: 3, totalDrillsCorrect: 2,
+    accuracyToday: { total: 3, correct: 2 }, accuracyWindow: { total: 3, correct: 2 },
+    directionWindow: { total: 0, correct: 0 }, weakAreas: [],
+    forecast: [{ date: '2026-09-23', due: 0 }], milestones: [],
   })),
 }));
 

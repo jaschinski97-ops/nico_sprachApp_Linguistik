@@ -27,6 +27,8 @@
 
 import type { TranslationKey } from '@/lib/i18n/keys';
 import type { TParams } from '@/lib/i18n/types';
+import { learningLanguage } from '@/lib/languages/definitions';
+import type { LanguageCode } from '@/lib/languages/types';
 
 /**
  * In welcher Sprache die Antwort getippt wird.
@@ -35,7 +37,12 @@ import type { TParams } from '@/lib/i18n/types';
  * nicht die Toleranz an sich, sondern **was geschuetzt ist** — siehe
  * `stripProtected`.
  */
-export type WritingLanguage = 'de' | 'th' | 'en' | 'es';
+export type WritingLanguage = LanguageCode;
+
+/** Thai-Schrift: Tonzeichen geschützt, keine Tipp-Toleranz. */
+function thaiScript(language: WritingLanguage): boolean {
+  return learningLanguage(language).script === 'thai';
+}
 
 /**
  * Warum eine Antwort nicht zählt — benannt, damit die Rückmeldung sagen kann,
@@ -93,7 +100,7 @@ export function tidy(text: string): string {
  */
 export function stripProtected(text: string, language: WritingLanguage): string {
   const base = tidy(text);
-  if (language === 'th') return base.replace(THAI_TONE_MARKS, '');
+  if (thaiScript(language)) return base.replace(THAI_TONE_MARKS, '');
   // Spanisch: Der Akut ist geschuetzt, und zwar aus demselben Grund wie das
   // Thai-Tonzeichen — er traegt Bedeutung. „hablo" (ich spreche) gegen
   // „habló" (er sprach) ist kein Vertipper, sondern eine andere Zeitform;
@@ -144,7 +151,7 @@ export function editDistance(a: string, b: string): number {
  * Ausrutscher; bei „Höflichkeitspartikel" wäre Nulltoleranz Schikane.
  */
 export function typoTolerance(target: string, language: WritingLanguage): number {
-  if (language === 'th') return 0;
+  if (thaiScript(language)) return 0;
   return target.length >= 5 ? 1 : 0;
 }
 
@@ -174,9 +181,10 @@ function protectedMistake(
   target: string,
   language: WritingLanguage
 ): MistakeKind {
-  if (language === 'th') return 'tone-mark';
-  if (language === 'es') return 'accent';
-  if (language === 'en') return 'case';
+  // Was „fast richtig“ heißt, sagt die Sprachdefinition; nur der deutsche
+  // Fall (Umlaute/ß/Artikel) braucht die feinere Unterscheidung unten.
+  const nearMiss = learningLanguage(language).nearMiss;
+  if (nearMiss !== 'umlaut') return nearMiss;
 
   const givenArticle = articleOf(given);
   const targetArticle = articleOf(target);

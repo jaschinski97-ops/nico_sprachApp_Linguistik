@@ -3,7 +3,9 @@ import { translate } from '../i18n';
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/test-fixtures/legacy-vocabulary';
+import { FIXTURE_GERMAN } from '@/test-fixtures/fixture-catalog';
+import { contentDirectionOf, LANGUAGE_CODES } from '../languages/types';
 
 import { createCardState } from '../fsrs/fsrs';
 import { cardKey } from '../fsrs/types';
@@ -213,17 +215,16 @@ describe('Stammform-Uebung', () => {
 });
 
 describe('Uebungen je Richtung', () => {
-  it('ordnet jede Uebung genau einer Richtung zu', () => {
+  it('ordnet jede Uebung genau ihrer Lernsprache zu', () => {
+    // Seit dem Sprach-Umbau gehört jede Übung zu GENAU einer Lernsprache
+    // (definitions.ts) — auch die deutschen Grammatikübungen (Sprache 'de').
     for (const drill of DRILLS) {
-      // Seit Phase 16 kommt die Richtung aus Uebung UND Sprache: Die
-      // Artikel-Uebung gilt fuer jedes "X -> Deutsch", nicht nur fuer Thai.
-      const sprache = DRILL_META[drill].feature ?? 'th';
+      const sprache = DRILL_META[drill].feature!;
       const direction = directionForDrill(drill, sprache);
       expect(drillsForDirection(direction)).toContain(drill);
-      const andere = direction.startsWith('de_to_')
-        ? (`${sprache}_to_de` as const)
-        : (`de_to_${sprache}` as const);
-      expect(drillsForDirection(andere)).not.toContain(drill);
+      for (const andere of LANGUAGE_CODES.filter((code) => code !== sprache)) {
+        expect(drillsForDirection(contentDirectionOf(andere))).not.toContain(drill);
+      }
     }
   });
 
@@ -270,34 +271,34 @@ describe('buildDrillSession', () => {
 
   it('legt keine eigenen Karten an und veraendert keine (AE-16)', async () => {
     const store = await freshStore();
-    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0, seed: 1 });
+    await buildDrillSession({ drill: 'article', language: 'de', store, now: T0, seed: 1 });
 
     const cards = await store.getAll<{ vocabId: string; direction: string }>('cards');
-    // Genau die Vokabelkarten der Richtung, keine zusaetzliche Sorte.
+    // Genau die Vokabelkarten der Richtung (deutsche Wörter), keine zusaetzliche Sorte.
     expect(cards.every((card) => card.direction === 'th_to_de')).toBe(true);
     expect(new Set(cards.map((card) => card.vocabId)).size).toBe(cards.length);
-    expect(cards).toHaveLength(VOCABULARY.length);
+    expect(cards).toHaveLength(FIXTURE_GERMAN.length);
   });
 
   it('schreibt keinen Kartenzustand zurueck', async () => {
     const store = await freshStore();
-    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0, seed: 1 });
-    const before = await store.get('cards', cardKey('baan', 'th_to_de'));
+    await buildDrillSession({ drill: 'article', language: 'de', store, now: T0, seed: 1 });
+    const before = await store.get('cards', cardKey('de-baan', 'th_to_de'));
 
-    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0 + 60_000, seed: 2 });
-    const after = await store.get('cards', cardKey('baan', 'th_to_de'));
+    await buildDrillSession({ drill: 'article', language: 'de', store, now: T0 + 60_000, seed: 2 });
+    const after = await store.get('cards', cardKey('de-baan', 'th_to_de'));
 
     expect(after).toEqual(before);
   });
 
   it('zieht nur aus den am schlechtesten sitzenden Kandidaten', async () => {
     const store = await freshStore();
-    await buildDrillSession({ drill: 'article', language: 'th', store, now: T0, seed: 1 });
+    await buildDrillSession({ drill: 'article', language: 'de', store, now: T0, seed: 1 });
 
     // Sechs Substantive wacklig, alle uebrigen fest. Das Fenster, aus dem
     // gezogen wird, ist dreimal so gross wie die Runde - bei zwei Aufgaben
     // also genau diese sechs. Was gezogen wird, muss daraus stammen.
-    const nouns = VOCABULARY.filter((entry) => entry.germanNoun);
+    const nouns = FIXTURE_GERMAN.filter((entry) => entry.germanNoun);
     const wacklig = new Set(nouns.slice(0, 6).map((entry) => entry.id));
 
     for (const entry of nouns) {
@@ -315,7 +316,7 @@ describe('buildDrillSession', () => {
     for (const seed of [1, 2, 3, 4, 5]) {
       const session = await buildDrillSession({
         drill: 'article',
-        language: 'th',
+        language: 'de',
         store,
         now: T0,
         seed,
@@ -450,7 +451,9 @@ describe('Lernprofil', () => {
     const profil = await loadProfile(store);
     expect(profil.language).toBe('es');
     expect(profil.review).toBeNull();
-    expect(profil.conversation).toBeNull();
+    // Die Gesprächs-Wahl ist eine eigene Wahl im Gesprächs-Reiter und bleibt
+    // beim Wechsel der Karten-Lernsprache erhalten (Sprach-Umbau 23.09.2026).
+    expect(profil.conversation).toBe('th_to_de');
   });
 
   it('ignoriert einen unsinnigen gespeicherten Wert', async () => {

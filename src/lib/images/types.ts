@@ -1,4 +1,4 @@
-import { PartOfSpeech } from '@/data/vocabulary';
+import type { PartOfSpeech } from '@/data/vocab-types';
 
 import { BlobStore, BlobStoreConfig } from '../blobs/types';
 

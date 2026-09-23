@@ -15,14 +15,13 @@ import {
 import { localizedSituation, type ConversationSituation, type ConversationTurn } from '@/lib/conversation/types';
 import { type Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale } from '@/lib/i18n';
-import { type PairDirection } from '@/lib/languages/types';
+import { targetLanguageOf, type LanguageCode, type PairDirection } from '@/lib/languages/types';
 import { loadSituations } from '@/lib/repository';
 import {
   bewertungFuerErgebnis,
   vergleicheProduktion,
   type ProduktionsErgebnis,
 } from '@/lib/production/compare';
-import { zielSprache } from '@/lib/production/tasks';
 import { spracherkennung, type ErkennungsNaht } from '@/lib/speaking/recognition';
 
 /**
@@ -55,7 +54,7 @@ export function RoleplayRunner({
 }) {
   const { t, uiLanguage } = useLocale();
   const colors = useTheme();
-  const sprache = zielSprache(direction);
+  const sprache = targetLanguageOf(direction);
   const naht = useMemo(() => spracherkennung(), []);
 
   const [szenen, setSzenen] = useState<ConversationSituation[] | null>(null);
@@ -219,7 +218,7 @@ function SzeneZeile({
   onWeiter,
 }: {
   zeile: ConversationTurn;
-  sprache: ReturnType<typeof zielSprache>;
+  sprache: LanguageCode;
   erkenne?: ErkennungsNaht['erkennen'];
   hatErkennung: boolean;
   onWeiter: (sicher: Rating | null) => void;

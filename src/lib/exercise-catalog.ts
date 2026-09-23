@@ -1,7 +1,8 @@
 import { DRILL_META, DrillId, drillsForDirection } from '@/lib/drills/types';
 import type { SentenceMode } from '@/lib/speaking/sentence-session';
 import type { TranslationKey } from '@/lib/i18n';
-import { isDeAnchored, pairLanguageOf, type PairDirection } from '@/lib/languages/types';
+import { learningLanguage } from '@/lib/languages/definitions';
+import { targetLanguageOf, type PairDirection } from '@/lib/languages/types';
 
 /**
  * Der Übungskatalog des Lern-Reiters (Lern-Reiter-Ausbau 13.09.2026).
@@ -57,42 +58,28 @@ export const DRILL_KEYS: Record<DrillId, TranslationKey> = {
 /**
  * Die Übungsliste einer Richtung.
  *
- * SEIT STUFE 1 ÜBER `pairLanguageOf`: Kreuzrichtungen erben die Übungsstoffe
- * ihrer ZIELsprache — `en_to_es` bekommt die Betonungsübungen, `es_to_th` die
- * Ton-Übungen; die deutschen Grammatikübungen bleiben an `_to_de` gebunden
- * (`drillsForDirection`). Das Diktat bleibt in jeder Liste: Sein Stoff ist
- * je Sprache geregelt, und der Runner zeigt für Sprachen ohne Stoff den
- * ehrlichen Leerzustand.
- *
- * SPRECHEN IN JEDER LERNSPRACHE (13.09.): Die Wortkontur-Messung bleibt an
- * Thai gebunden (AE-48) — für Englisch und Spanisch läuft die Übung als
- * Nachsprechen mit Musterlösung und ehrlicher Selbst-Einschätzung
- * (`word-speaking-runner`), für Deutsch ist „Sprechen“ mit Shadowing und
- * Satzübungen abgedeckt, weil es dort keine eigenständige Wort-Übung gibt.
- *
- * FREIES SCHREIBEN BLEIBT DE-GEANKERT: Die Schreibaufgabe fragt den
- * deutschen Bestand ab (`lib/writing/prompt`). Für Kreuzrichtungen wäre der
- * „Anker“ das falsche Brückenwort — statt falscher Aufgaben bleibt die
- * Übung draußen.
+ * Allgemeine Übungen (Karten, Satzübungen, Diktat, Schreiben, Sag es,
+ * Rollenspiel, Lesetexte) gibt es für JEDE Lernsprache; dazu kommen die
+ * sprachspezifischen Übungen und die Wortübung aus `definitions.ts`
+ * (Thai: Tonkontur-Messung; Englisch/Spanisch: Nachsprechen; Deutsch: keine
+ * eigene Wortübung, Sprechen läuft über Shadowing und Satzübungen).
  */
 export function modesForDirection(direction: PairDirection): Mode[] {
-  const language = pairLanguageOf(direction);
+  const language = targetLanguageOf(direction);
   return [
     'cards',
     ...drillsForDirection(direction),
-    // Die Wort-Sprechübung misst bei Thai die Tonhöhenkontur gegen geprüfte
-    // Silbentöne (AE-48); Englisch/Spanisch bekommen dieselbe Übung ohne
-    // Messung (Nachsprechen + Selbst-Einschätzung).
-    ...(language === 'th' || language === 'en' || language === 'es'
-      ? (['speaking'] as const)
-      : []),
+    // Wortübung laut Definition: Tonkontur-Messung (Thai) oder Nachsprechen.
+    ...(learningLanguage(language).wordSpeaking ? (['speaking'] as const) : []),
     // Die Satzübungen gehören seit AE-66 zu jeder Richtung jedes Paars.
     ...(['shadowing', 'sentenceRepeat', 'sentenceListening'] as const),
     // Schritt 3: selbst produzieren (Sag es auf …) und Szenen sprechen.
     // Schritt 4: die Situationen als Lese-/Hörtexte.
     ...(['sagen', 'rollenspiel', 'lesestoffe'] as const),
     'dictation',
-    ...(isDeAnchored(direction) ? (['writing'] as const) : []),
+    // Schreiben seit dem Sprach-Umbau in JEDER Richtung: der Auftrag steht in
+    // der Ankersprache (`translations[anker]`), getippt wird die Zielform.
+    'writing',
   ];
 }
 

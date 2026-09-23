@@ -1,4 +1,15 @@
 /**
+ * NUR TESTDATEN — nicht Teil der App (Sprach-Umbau 23.09.2026).
+ *
+ * Das ist der frühere, fest eingebaute Grundstock (84 Thai-, dazu englische
+ * und spanische Einträge, quellengeprüft). Die App lernt seit dem
+ * 16.09.2026 ausschließlich den im Studio erzeugten Wortschatz aus
+ * `src/content/catalog.json`; dieser Bestand dient nur noch als
+ * realistische, stabile Testgrundlage (Ton-Regeln, Fixture-Messungen).
+ * Ein Test (`test-fixtures.test.ts`) stellt sicher, dass kein App-Modul ihn
+ * importiert.
+ */
+/**
  * Vokabel-Grundstock Thai (Phase 2) - und die Stelle, an der die drei
  * Grundstoecke zusammenkommen (Phase 16).
  *
@@ -37,10 +48,10 @@ import {
   PartOfSpeech,
   Register,
   VocabEntry,
-} from './vocab-types';
+} from '@/data/vocab-types';
 
-import { VOCABULARY_EN } from './vocabulary-en';
-import { VOCABULARY_ES } from './vocabulary-es';
+import { VOCABULARY_EN } from './legacy-vocabulary-en';
+import { VOCABULARY_ES } from './legacy-vocabulary-es';
 
 import { LanguageCode } from '@/lib/languages/types';
 

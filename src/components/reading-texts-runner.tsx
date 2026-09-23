@@ -13,9 +13,8 @@ import {
   stopPronunciation,
 } from '@/lib/audio';
 import { localizedSituation, type ConversationSituation, type ConversationTurn } from '@/lib/conversation/types';
-import { zielSprache } from '@/lib/production/tasks';
 import { useLocale } from '@/lib/i18n';
-import { type PairDirection } from '@/lib/languages/types';
+import { targetLanguageOf, type PairDirection } from '@/lib/languages/types';
 import { loadCardStatesForDirection, loadSituations } from '@/lib/repository';
 import {
   lesestoffeFuerRichtung,
@@ -66,7 +65,7 @@ export function ReadingTextsRunner({
             situationen: situationen.map(s => localizedSituation(s, uiLanguage)),
             pool: activeVocabulary(),
             cards,
-            latin: zielSprache(direction) !== 'th',
+            latin: targetLanguageOf(direction) !== 'th',
           })
         );
       } catch {
@@ -179,7 +178,7 @@ function TextAnsicht({
 }) {
   const { t } = useLocale();
   const colors = useTheme();
-  const sprache = zielSprache(situation.direction);
+  const sprache = targetLanguageOf(situation.direction);
   const [woerter, setWoerter] = useState<{ text: string; german: string }[]>([]);
   const [uebersetzt, setUebersetzt] = useState<Set<number>>(new Set());
   const [fragenStufe, setFragenStufe] = useState<number | null>(null);

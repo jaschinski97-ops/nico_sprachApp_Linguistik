@@ -2,7 +2,7 @@ import { Tone } from '@/constants/tones';
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { findVocab, VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { findVocab, VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/test-fixtures/legacy-vocabulary';
 
 import { F0Frame, ToneContourMeasurement, ToneContourSummary } from './analysis';
 import {

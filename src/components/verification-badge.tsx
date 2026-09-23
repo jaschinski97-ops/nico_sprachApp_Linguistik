@@ -5,7 +5,7 @@ import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Spacing } from '@/constants/theme';
-import { VocabEntry } from '@/data/vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
 
 /**
  * Kennzeichen für Einträge, deren Bedeutung die Quelle nicht sauber deckt.

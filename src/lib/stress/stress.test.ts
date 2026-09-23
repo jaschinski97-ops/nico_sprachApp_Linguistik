@@ -1,5 +1,5 @@
 import { DIFFERENTIAL_ACCENTS, SPANISH_STRESS_SOURCE } from '@/data/spanish-stress';
-import { VOCABULARY_ES } from '@/data/vocabulary';
+import { VOCABULARY_ES } from '@/test-fixtures/legacy-vocabulary';
 
 import { analyzeStress, joinSyllables, syllabify } from './syllables';
 

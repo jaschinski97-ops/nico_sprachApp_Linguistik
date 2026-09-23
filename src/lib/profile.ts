@@ -1,6 +1,6 @@
 import { Direction } from './fsrs/types';
 import { defaultLanguage, hasContent } from './languages/registry';
-import { isLanguageCode, LanguageCode, languageOfDirection } from './languages/types';
+import { isLanguageCode, isPairDirection, LanguageCode, PairDirection, targetLanguageOf } from './languages/types';
 import { readMeta, writeMeta } from './repository';
 import { DataStore, getStore, withStoreLock } from './storage';
 
@@ -34,7 +34,12 @@ const PROFILE_KEY = 'profile';
 
 /** Wo der Lernen-Reiter zuletzt stand. */
 export type ReviewSpot = {
-  direction: Direction;
+  /**
+   * Seit dem Sprach-Umbau JEDE Lernrichtung (`anker_to_ziel`) — vorher nur
+   * de-geankerte; auf anderen App-Sprachen ging der Stand beim Neustart
+   * verloren.
+   */
+  direction: PairDirection;
   /** Karteikarten oder eine Übung — als Zeichenkette, damit `lib` die Screens nicht kennt. */
   mode: string;
 };
@@ -75,7 +80,7 @@ function isDirection(value: unknown): value is Direction {
 function readSpot(value: unknown, language: LanguageCode): ReviewSpot | null {
   if (!value || typeof value !== 'object') return null;
   const raw = value as { direction?: unknown; mode?: unknown };
-  if (!isDirection(raw.direction) || languageOfDirection(raw.direction) !== language) return null;
+  if (!isPairDirection(raw.direction) || targetLanguageOf(raw.direction) !== language) return null;
   return { direction: raw.direction, mode: typeof raw.mode === 'string' ? raw.mode : 'cards' };
 }
 
@@ -93,8 +98,9 @@ export async function loadProfile(store?: DataStore): Promise<LearnerProfile> {
   return {
     language,
     review: readSpot(stored?.review, language),
-    conversation:
-      conversation && languageOfDirection(conversation) === language ? conversation : null,
+    // Die Gesprächs-Auswahl ist eine eigene Wahl im Gesprächs-Reiter und
+    // hängt nicht an der Lernsprache der Karten.
+    conversation,
   };
 }
 

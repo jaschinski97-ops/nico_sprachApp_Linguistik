@@ -1,7 +1,8 @@
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/data/vocabulary';
+import { FIXTURE_GERMAN } from '@/test-fixtures/fixture-catalog';
+import { VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/test-fixtures/legacy-vocabulary';
 
 import { cardKey, Direction } from '../fsrs/types';
 import { loadAllCardStates, loadCardState, seedVocabulary } from '../repository';
@@ -25,6 +26,13 @@ import { buildWritingSession, submitWriting, summarizeWriting } from './session'
  *    schreibt in dieselbe Karte wie die Karteikarte, vergibt nie „Leicht" und
  *    wertet einen Tippfehler als „Schwer".
  */
+
+/** Der deutsche Test-Eintrag, dessen Thai-Auftrag `thai` ist (Richtung th_to_de). */
+function deutsch(thai: string): VocabEntry {
+  const entry = FIXTURE_GERMAN.find((candidate) => candidate.translations?.th === thai);
+  if (!entry) throw new Error(`Kein deutscher Test-Eintrag zu ${thai}`);
+  return entry;
+}
 
 const de = (thai: string): VocabEntry => VOCABULARY.find((entry) => entry.term === thai)!;
 
@@ -68,7 +76,7 @@ describe('Zielformen aus dem Grundstock', () => {
 
   it('fragt in jeder Richtung die andere Seite ab', () => {
     const haus = de('บ้าน');
-    const nachDeutsch = buildWritingPrompt(haus, 'th_to_de');
+    const nachDeutsch = buildWritingPrompt(deutsch('บ้าน'), 'th_to_de');
     expect(nachDeutsch.shown).toBe('บ้าน');
     expect(nachDeutsch.language).toBe('de');
     expect(nachDeutsch.targets).toContain('das Haus');
@@ -79,9 +87,9 @@ describe('Zielformen aus dem Grundstock', () => {
     expect(nachThai.targets).toEqual(['บ้าน']);
   });
 
-  it('gibt bei Thai die Umschrift als Lesehilfe, bei Deutsch nicht die Lösung', () => {
-    const nachDeutsch = buildWritingPrompt(de('บ้าน'), 'th_to_de');
-    expect(nachDeutsch.shownHint).toBe(de('บ้าน').romanization);
+  it('verrät in keiner Richtung die Lösung als Hilfszeile', () => {
+    const nachDeutsch = buildWritingPrompt(deutsch('บ้าน'), 'th_to_de');
+    expect(nachDeutsch.shownHint).toBeNull();
     const nachThai = buildWritingPrompt(de('บ้าน'), 'de_to_th');
     // Die Umschrift wäre bei dieser Richtung die halbe Lösung - deshalb gar
     // keine Hilfszeile, solange das Stichwort eindeutig ist.
@@ -265,7 +273,7 @@ describe('Die Anbindung schreibt in dieselbe Karte wie die Karteikarte', () => {
     // AE-16: eine Erinnerungsspur je Item. Ein eigener Schlüssel für die
     // Schreibübung wäre ein zweiter Zeitplan für dieselbe Tatsache.
     const store = await freshStore();
-    const entry = de('บ้าน');
+    const entry = deutsch('บ้าน');
     const prompt = buildWritingPrompt(entry, 'th_to_de');
 
     const vorher = await loadAllCardStates(store);
@@ -290,7 +298,7 @@ describe('Die Anbindung schreibt in dieselbe Karte wie die Karteikarte', () => {
 
   it('bewegt die Karte je nach Ergebnis unterschiedlich weit', async () => {
     const store = await freshStore();
-    const entry = de('บ้าน');
+    const entry = deutsch('บ้าน');
     const prompt = buildWritingPrompt(entry, 'th_to_de');
 
     await submitWriting(prompt, 'das Haus', { store, now: T0 });
@@ -311,7 +319,7 @@ describe('Die Anbindung schreibt in dieselbe Karte wie die Karteikarte', () => {
     // einmal als Wiederholung, einmal als Uebung - wuerde die Zahlen
     // aufblaehen.
     const store = await freshStore();
-    await submitWriting(buildWritingPrompt(de('บ้าน'), 'th_to_de'), 'das Haus', {
+    await submitWriting(buildWritingPrompt(deutsch('บ้าน'), 'th_to_de'), 'das Haus', {
       store,
       now: T0,
     });
@@ -323,7 +331,7 @@ describe('Die Anbindung schreibt in dieselbe Karte wie die Karteikarte', () => {
 
   it('gibt die bewertete Karte zurück, damit die Rückmeldung sie zeigen kann', async () => {
     const store = await freshStore();
-    const result = await submitWriting(buildWritingPrompt(de('บ้าน'), 'th_to_de'), 'das Haus', {
+    const result = await submitWriting(buildWritingPrompt(deutsch('บ้าน'), 'th_to_de'), 'das Haus', {
       store,
       now: T0,
     });
@@ -359,7 +367,7 @@ describe('Eine Runde', () => {
   });
 
   it('zählt richtige und fehlerfreie Antworten getrennt', () => {
-    const prompt = buildWritingPrompt(de('บ้าน'), 'th_to_de');
+    const prompt = buildWritingPrompt(deutsch('บ้าน'), 'th_to_de');
     const machen = (given: string) => ({
       prompt,
       given,

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { Spacing } from '@/constants/theme';
-import { VocabEntry } from '@/data/vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
 import { loadVocabImageUri } from '@/lib/repository';
 
 /**

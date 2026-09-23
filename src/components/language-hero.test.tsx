@@ -52,8 +52,8 @@ test('Spanisch nennt die Betonungsregel als Merkhilfe', async () => {
   expect(json).toContain('Endet auf Vokal');
 });
 
-test('Deutsch zeigt den deutschen Gruß des Thai-Ankers', async () => {
+test('Deutsch zeigt den deutschen Gruß aus der Sprachdefinition', async () => {
   const json = await renderHero('de');
-  expect(json).toContain('hallo');
+  expect(json).toContain('Hallo');
   expect(json).toContain('guten Tag');
 });

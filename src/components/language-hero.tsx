@@ -6,26 +6,18 @@ import { STRESS_RULE_KEYS } from './feature-legend';
 
 import { Spacing } from '@/constants/theme';
 import { Tone } from '@/constants/tones';
-import { VocabEntry } from '@/data/vocab-types';
-import { VOCABULARY_EN, VOCABULARY_ES, findVocab } from '@/data/vocabulary';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
+import { learningLanguage } from '@/lib/languages/definitions';
 import { LanguageCode } from '@/lib/languages/types';
 import { analyzeStress } from '@/lib/stress/syllables';
 
 /**
- * Der Gruß als gemeinsamer Begriff: Jeder Pool kennt `sawatdii` (Thai-Anker)
- * bzw. sein `concept`-Pendant — der Hero zeigt ihn in der Sprache, die gerade
- * gelernt wird (Nutzerwunsch 13.09.: „den Spruch auf die Sprache anpassen").
- *
- * HARDEINGABE BEWUSST NUR BEI THAI: สวัสดี ist Markenwort, und sein Silben-
- * schnitt ist handverifiziert (Bindekonsonanten lassen sich aus Daten nicht
- * zuverlässig teilen). Die anderen Sprachen lesen den Gruß aus ihrem
- * geprüften Grundstoff-Pool — dieselbe Ehrlichkeit wie in der Legende.
- * Fällt ein Pool darüber hinaus, zeigt der Hero die Thai-Marke.
+ * Der Gruß der GELEHRTEN Sprache (Nutzerwunsch 13.09.: „den Spruch auf die
+ * Sprache anpassen"). Thai hat eine handgeprüfte Marke (Silbenschnitt mit
+ * Tonfarben — Bindekonsonanten lassen sich aus Daten nicht zuverlässig
+ * teilen); alle anderen Sprachen lesen ihren Gruß aus `definitions.ts`.
  */
-const GRUSS_KONZEPT = 'sawatdii';
-
 const THAI_SEGMENTS: { text: string; tone: Tone }[] = [
   { text: 'สวัส', tone: 'low' },
   { text: 'ดี', tone: 'mid' },
@@ -37,24 +29,14 @@ const THAI_SYLLABLES: { text: string; tone: Tone }[] = [
   { text: 'dii', tone: 'mid' },
 ];
 
-/** Der Gruß eines Pools — über `concept` gekoppelt, notfalls über die ID. */
-function eintragMitKonzept(entries: VocabEntry[]): VocabEntry | undefined {
-  return (
-    entries.find((entry) => entry.concept === GRUSS_KONZEPT) ??
-    entries.find((entry) => entry.id === GRUSS_KONZEPT)
-  );
-}
-
 /**
  * Identity-Hero der Übersicht: Der Gruß der GELEHRTEN Sprache, groß und mit
  * ihrem Merkmal — Töne bei Thai, Betonung bei Spanisch, Lautschrift bei
  * Englisch, der deutsche Gruß schlicht als Wort.
  */
-export function LanguageHero({ language }: { language: LanguageCode | 'de' }) {
-  if (language === 'es') return <GrussHero pool={VOCABULARY_ES} sprache="es" />;
-  if (language === 'en') return <GrussHero pool={VOCABULARY_EN} sprache="en" />;
-  if (language === 'de') return <DeutschHero />;
-  return <ThaiHero />;
+export function LanguageHero({ language }: { language: LanguageCode }) {
+  if (learningLanguage(language).script === 'thai') return <ThaiHero />;
+  return <GrussHero language={language} />;
 }
 
 /** Färbt die Tonfarben-Balken und Umschrift der Thai-Marke (unverändert). */
@@ -111,31 +93,28 @@ function ThaiHero() {
  * zeigt nur die Lautschrift: Betonungsregeln sind das Merkmal von Spanisch,
  * nicht von Englisch — dessen Merkhilfe ist die Aussprache.
  */
-function GrussHero({ pool, sprache }: { pool: VocabEntry[]; sprache: 'es' | 'en' }) {
+function GrussHero({ language }: { language: LanguageCode }) {
   const { t } = useLocale();
+  const definition = learningLanguage(language);
 
   const gruss = useMemo(() => {
-    const entry = eintragMitKonzept(pool);
-    if (!entry) return null;
-    // Nur bei Spanisch zählt die Betonung: Nur mehrsilbige Wörter haben eine
-    // betonte Silbe, die man markieren kann — Einsilbler (und Fehlleufte)
-    // zeigen das Wort schlicht.
-    if (sprache === 'es') {
-      const analyse = analyzeStress(entry.term);
+    const { word, hint } = definition.greeting;
+    // Sprachen mit Betonungsmerkmal markieren die betonte Silbe (nur
+    // mehrsilbige Wörter haben eine); der Regeltext ist dann die Merkhilfe.
+    if (definition.legend === 'stress') {
+      const analyse = analyzeStress(word);
       if (analyse.ok && analyse.rule !== 'monosyllable') {
         return {
-          wort: entry.term,
+          wort: word,
           silben: analyse.syllables,
           betont: analyse.stressedIndex,
-          // Der Regeltext ist die bessere Merkhilfe — er heißt das Muster,
-          // das die Legende unten ausführt.
           hilfe: t(STRESS_RULE_KEYS[analyse.rule].label) as string,
         };
       }
     }
-    return { wort: entry.term, silben: null, betont: -1, hilfe: entry.romanization };
+    return { wort: word, silben: null as string[] | null, betont: -1, hilfe: hint };
     // Die Regelhilfe steht in der UI-Sprache — ein Sprachwechsel baut neu.
-  }, [pool, sprache, t]);
+  }, [definition, t]);
 
   if (!gruss) return <ThaiHero />;
 
@@ -160,33 +139,6 @@ function GrussHero({ pool, sprache }: { pool: VocabEntry[]; sprache: 'es' | 'en'
       {gruss.hilfe ? (
         <ThemedText type="small" themeColor="textSecondary" style={styles.hilfe}>
           {gruss.hilfe}
-        </ThemedText>
-      ) : null}
-    </View>
-  );
-}
-
-/** Deutsch: der deutsche Text des Thai-Ankers — „hallo, guten Tag". */
-function DeutschHero() {
-  const gruss = useMemo(() => findVocab(GRUSS_KONZEPT)?.german.trim(), []);
-  // Vor dem ersten Komma steht die Formel, dahinter die Ergänzung — beide
-  // Zeilen zusammen sind EIN Gruß, darum eine Ansage.
-  const [kopf, ...rest] = (gruss ?? '').split(', ');
-  if (!gruss || !kopf) return <ThaiHero />;
-
-  return (
-    <View
-      accessible
-      accessibilityRole="text"
-      accessibilityLabel={gruss}
-      importantForAccessibility="no-hide-descendants"
-      style={styles.wrapper}>
-      <ThemedText maxFontSizeMultiplier={1.4} style={[styles.latin, { lineHeight: displayLineHeight(56, 1.4) }]}>
-        {kopf}
-      </ThemedText>
-      {rest.length > 0 ? (
-        <ThemedText type="small" themeColor="textSecondary" style={styles.hilfe}>
-          {rest.join(', ')}
         </ThemedText>
       ) : null}
     </View>

@@ -4,7 +4,6 @@ import { Platform } from 'react-native';
 import { CONTENT_ASSETS } from '../../content/assets';
 import type { ContentCatalog, ContentDocuments, ContentKind } from './types';
 import { isDeliverableEntry } from './audio-policy';
-import { VOCABULARY } from '@/data/vocabulary';
 import { currentCatalog, setCurrentCatalog } from './catalog-state';
 
 /** Developer mutations are visible immediately, before Metro reloads the bundle. */
@@ -13,7 +12,7 @@ function currentEntries() { return currentCatalog().entries.filter(isDeliverable
 export function isDeletedDraft(kind: ContentKind, doc: { id: string; generatedAt?: number; language?: string; direction?: string; vocabId?: string }, source: ContentCatalog = currentCatalog()) {
   if (kind === 'vocabulary' && !doc.id.startsWith('ki-')) return false;
   const language = doc.language ?? doc.direction?.split('_to_')[1] ?? (kind === 'images'
-    ? [...VOCABULARY, ...source.entries.filter(entry => entry.kind === 'vocabulary').map(entry => entry.document as ContentDocuments['vocabulary'])].find(word => word.id === doc.vocabId)?.language
+    ? [...source.entries.filter(entry => entry.kind === 'vocabulary').map(entry => entry.document as ContentDocuments['vocabulary'])].find(word => word.id === doc.vocabId)?.language
     : undefined);
   const cutoff = Math.max(source.deleted?.[`${kind}:${doc.id}`] ?? -1, source.clearedBefore?.[kind] ?? -1, source.clearedBefore?.[`${kind}:${language}`] ?? -1);
   return cutoff >= 0 && (doc.generatedAt ?? 0) <= cutoff;

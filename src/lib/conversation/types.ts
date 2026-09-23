@@ -1,5 +1,6 @@
 import { Direction } from '../fsrs/types';
-import { LanguageCode } from '../languages/types';
+import { zieleFuerBruecke } from '../languages/goals';
+import { contentDirectionOf, type ForeignBridge, type Lang, LANGUAGE_CODES, LanguageCode } from '../languages/types';
 import type { UiLanguage } from '../i18n/types';
 
 /**
@@ -25,30 +26,28 @@ export type Level = (typeof LEVELS)[number];
  * obwohl es im Stoff-Registry (`LanguageCode`) nur die Brücke ist — die
  * th_to_de-Situationen SIND die deutschen Gespräche.
  */
-export type Situationssprache = 'de' | LanguageCode;
+export type Situationssprache = LanguageCode;
 
 /**
- * Der Gesprächs-Reiter listet SPRACHEN statt Richtungen (14.09.): Je Eintrag
- * zeigt die Menge, in der diese Sprache die Dialog- und Übungsseite ist — es
- * gibt keine zweite Reihe von Sprach-Buttons mehr. Deutsch steht oben
- * (th_to_de — die Dialoge mit deutschen Zeilen), Thai dahinter (de_to_th);
- * Englisch/Spanisch haben noch keine Situationen und zeigen den ehrlichen
- * Leerzustand, bis ihr Grundstoff Gespräche bekommt. Die GEGENSEITE der
- * Dialoge (die Bedeutungszeilen) hängt an der App-Systemsprache, nicht an
- * einer Wahl in diesem Reiter.
+ * Die Gesprächs-Sprachen = alle Lernsprachen, je mit der Inhalts-Richtung,
+ * unter der ihre Situationen gespeichert sind (`contentDirectionOf`:
+ * `de_to_X`, für Deutsch der historische Schlüssel `th_to_de`).
  */
 export const SITUATION_SPRACHEN: readonly {
   sprache: Situationssprache;
   direction: Direction;
 }[] = [
-  { sprache: 'de', direction: 'th_to_de' },
-  { sprache: 'th', direction: 'de_to_th' },
-  { sprache: 'en', direction: 'de_to_en' },
-  { sprache: 'es', direction: 'de_to_es' },
-];
+  // Deutsch zuerst (Nutzerwunsch 14.09.), danach die übrigen Lernsprachen.
+  ...LANGUAGE_CODES.filter((code) => code === 'de'),
+  ...LANGUAGE_CODES.filter((code) => code !== 'de'),
+].map((sprache) => ({ sprache, direction: contentDirectionOf(sprache) }));
 
+/** Die Gesprächs-Sprachen einer Oberfläche — die App-Sprache selbst lernt man nicht. */
 export function situationSprachenFuerBruecke(bridge: UiLanguage) {
-  return SITUATION_SPRACHEN.filter(entry => bridge !== 'de' || entry.sprache !== 'de');
+  // Dieselben Sprachen wie die Lernziele der Oberfläche — also auch Thai auf
+  // Thai-Oberfläche („Thai von Deutsch“), aber nie Deutsch auf deutscher.
+  const lernsprachen = new Set(zieleFuerBruecke(bridge as Lang | ForeignBridge).map((ziel) => ziel.language));
+  return SITUATION_SPRACHEN.filter(entry => lernsprachen.has(entry.sprache));
 }
 
 export const TOPICS = [

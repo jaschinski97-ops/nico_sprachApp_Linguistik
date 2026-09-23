@@ -8,11 +8,14 @@ import { situationSprachenFuerBruecke, situationId, SITUATION_SPRACHEN, Situatio
  * landen die Dialoge unter der falschen Sprache. Darum festgenagelt.
  */
 describe('SITUATION_SPRACHEN — die Sprachliste des Gesprächs-Reiters', () => {
-  it('blendet Deutsch nur auf deutscher Oberfläche aus', () => {
+  it('zeigt dieselben Sprachen wie die Lernziele der Oberfläche', () => {
+    // Deutsch nie auf deutscher Oberfläche (Nutzerentscheidung 19.09.).
     expect(situationSprachenFuerBruecke('de').map(e => e.sprache)).toEqual(['th', 'en', 'es']);
-    for (const bridge of ['th', 'en', 'ar'] as const) {
-      expect(situationSprachenFuerBruecke(bridge)).toEqual(SITUATION_SPRACHEN);
-    }
+    // Thai-Oberfläche: alle vier — Thai bleibt über „Thai (von Deutsch)“.
+    expect(situationSprachenFuerBruecke('th')).toEqual(SITUATION_SPRACHEN);
+    // Englische Oberfläche: Englisch lernt man dort nicht.
+    expect(situationSprachenFuerBruecke('en').map(e => e.sprache)).toEqual(['de', 'th', 'es']);
+    expect(situationSprachenFuerBruecke('ar')).toEqual(SITUATION_SPRACHEN);
   });
   it('ordnet jeder Sprache die Menge zu, in der SIE die Dialogseite ist', () => {
     const mapping = new Map(SITUATION_SPRACHEN.map((eintrag) => [eintrag.sprache, eintrag.direction]));

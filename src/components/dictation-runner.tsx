@@ -2,11 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { AudioPlayer } from 'expo-audio';
 
-import { GermanPalette, SpanishPalette, ThaiPalette } from './character-palette';
+import { LanguagePalette } from './character-palette';
 import { ThemedText, displayLineHeight } from './themed-text';
 import { ThemedView } from './themed-view';
 
-import { dictationConfigFor, type DictationLanguage } from '@/data/dictation-config';
+import { dictationConfigFor } from '@/data/dictation-config';
 import type { SatzSprache } from '@/data/sentence-tasks';
 import { Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
@@ -34,6 +34,8 @@ import { loadOrCreateCardState, rateCard } from '@/lib/repository';
 import { recordDrill } from '@/lib/review-log';
 import { resolveClipUri } from '@/lib/clips/lookup';
 import { useLocale, type TranslationKey } from '@/lib/i18n';
+import { dictationPromptKey, learningLanguage } from '@/lib/languages/definitions';
+
 import { ratingExplanation } from '@/lib/writing';
 
 /**
@@ -67,53 +69,12 @@ import { ratingExplanation } from '@/lib/writing';
 /** Verlangsamt, aber hörbar — innerhalb der expo-audio-Grenze (Android 0.1–2.0). */
 const SLOW_RATE = 0.7;
 
-/** Was in der Aufgabenzeile steht — je nachdem, welche Sprache getippt wird. Schlüssel ist die Diktat-Sprache (breiter als `LanguageCode`: de/fr sind als Ziele eingeplant). */
-const AUFGABEN_KEYS: Record<DictationLanguage, TranslationKey> = {
-  th: 'dictation.promptTh',
-  de: 'dictation.promptDe',
-  es: 'dictation.promptEs',
-  en: 'dictation.promptEn',
-};
-
 /** FSRS-Bewertung → i18n-Key (die Labels selbst stehen in den Wörterbüchern). */
 const RATING_KEYS: Record<Rating, TranslationKey> = {
   1: 'rating.again',
   2: 'rating.hard',
   3: 'rating.good',
   4: 'rating.easy',
-};
-
-const PLATZHALTER: Record<DictationLanguage, string> = {
-  th: 'ภาษาไทย',
-  de: 'dein Satz',
-  es: 'tu frase',
-  en: 'your sentence',
-};
-
-/** Die Zeichenhilfe der Sprache, IN die getippt wird — übernommen vom freien Schreiben. */
-function Palette({
-  language,
-  onInsert,
-  disabled,
-}: {
-  language: DictationLanguage;
-  onInsert: (character: string) => void;
-  disabled?: boolean;
-}) {
-  if (language === 'th') return <ThaiPalette onInsert={onInsert} disabled={disabled} />;
-  if (language === 'de') return <GermanPalette onInsert={onInsert} disabled={disabled} />;
-  if (language === 'es') return <SpanishPalette onInsert={onInsert} disabled={disabled} />;
-  // Englisch: jedes Zeichen der Zielform steht auf jeder lateinischen
-  // Tastatur.
-  return null;
-}
-
-/** Anzeige-Name einer Diktat-Sprache — `de` hat keinen Registry-Eintrag (AE-11). */
-const DIKTAT_SPRACHE_LABEL: Record<SatzSprache, string> = {
-  th: languageOf('th').label,
-  en: languageOf('en').label,
-  es: languageOf('es').label,
-  de: 'Deutsch',
 };
 
 export function DictationRunner({
@@ -128,7 +89,7 @@ export function DictationRunner({
   const theme = useTheme();
   const toneColor = useToneColor();
   const { t, uiLanguage } = useLocale();
-  const label = DIKTAT_SPRACHE_LABEL[language];
+  const label = languageOf(language).label;
 
   // Die Aussaat würfelt die Runde neu — dieselbe Bauart wie alle anderen
   // Übungen, damit „Neue Runde" nicht dieselbe Folge zeigt. Die Zusammen-
@@ -231,7 +192,7 @@ export function DictationRunner({
       setResults((previous) => [...previous, next]);
       // Die Fehlerquote des Diktats steuert die Gewichtung der Heutigen
       // Runde — protokolliert unabhängig vom Kartenschreiben.
-      await recordDrill(next.passed, Date.now(), undefined, 'dictation').catch(() => {});
+      await recordDrill(next.passed, Date.now(), undefined, 'dictation', direction).catch(() => {});
       if (next.passed) {
         // ratingForScore liefert bei `passed` immer 2 oder 3 — nie null.
         const rating = ratingForScore(next)!;
@@ -322,7 +283,7 @@ export function DictationRunner({
       </View>
 
       <ThemedView type="backgroundElement" style={styles.card}>
-        <ThemedText type="smallBold">{t(AUFGABEN_KEYS[task.language])}</ThemedText>
+        <ThemedText type="smallBold">{t(dictationPromptKey(task.language))}</ThemedText>
 
         <View style={styles.row}>
           <Pressable
@@ -360,7 +321,7 @@ export function DictationRunner({
           onSubmitEditing={() => void submit()}
           editable={!answered}
           multiline
-          placeholder={PLATZHALTER[task.language]}
+          placeholder={learningLanguage(task.language).placeholders.sentence}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
@@ -372,7 +333,7 @@ export function DictationRunner({
         />
 
         {!answered ? (
-          <Palette
+          <LanguagePalette
             language={task.language}
             onInsert={(character) => setDraft((current) => current + character)}
           />

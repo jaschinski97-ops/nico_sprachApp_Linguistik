@@ -1,5 +1,5 @@
 import { Direction } from '../fsrs/types';
-import { directionsFor, LanguageCode } from '../languages/types';
+import { directionsFor, LANGUAGE_CODES, LanguageCode } from '../languages/types';
 
 import { Level, LEVELS, situationId, SituationSpec, TopicId, TOPICS, Situationssprache, SITUATION_SPRACHEN } from './types';
 
@@ -13,7 +13,7 @@ import { Level, LEVELS, situationId, SituationSpec, TopicId, TOPICS, Situationss
  */
 
 /** Sprachmodule mit einem eigenen sprachspezifischen Erzeugungs-Prompt. */
-export const SITUATION_LANGUAGES: readonly LanguageCode[] = ['th', 'en', 'es'];
+export const SITUATION_LANGUAGES: readonly LanguageCode[] = LANGUAGE_CODES;
 
 export type PlanOptions = {
   /** Fuer welche Sprache geplant wird. Ohne Angabe Thai. */

@@ -9,7 +9,7 @@ import { AUDIO_BLOB_CONFIG, clipIdFor, isValidAudioClip } from '../clips/types';
 import { IMAGE_BLOB_CONFIG } from '../images/types';
 import { planDeliveryAudio } from './audio-plan';
 import { BUILTIN_EXAM_MODULES } from '../../data/exam-modules';
-import { VOCABULARY } from '../../data/vocabulary';
+import { VOCABULARY } from '@/test-fixtures/legacy-vocabulary';
 
 test('obsolete rejection markers cannot suppress any of the four provider clients', async () => {
   const db = new MemoryDataStore();

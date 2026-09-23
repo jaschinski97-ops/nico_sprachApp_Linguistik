@@ -1,4 +1,4 @@
-import { VOCABULARY } from '@/data/vocabulary';
+import { activeVocabulary } from '@/data/active-vocabulary';
 import type { AudioClipSpec } from '../clips/types';
 
 import { sollToneFuerClip, type ToneWort } from './tone-gate';
@@ -22,7 +22,7 @@ export type DeliveryPreview = {
  */
 export function previewAudioDelivery(
   specs: readonly AudioClipSpec[],
-  woerter: readonly ToneWort[] = VOCABULARY
+  woerter: readonly ToneWort[] = activeVocabulary()
 ): DeliveryPreview {
   const result: DeliveryPreview = { total: 0, toneCheckable: 0, technicalOnly: 0,
     uncheckedDelivered: 0, excluded: 0, reasons: {} };

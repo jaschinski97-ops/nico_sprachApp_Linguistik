@@ -47,48 +47,36 @@ export const HUB_LANGUAGE = 'de' as const;
 export type HubLanguage = typeof HUB_LANGUAGE;
 
 /**
- * Die Zielsprachen mit **ausgeliefertem** Grundstoff im App-Bestand — das,
- * was heute neben Deutsch gelernt werden kann.
+ * DIE EINE LISTE DER LERNSPRACHEN (Sprach-Umbau 23.09.2026).
  *
- * SEIT DEM PAARMATRIX-MODELL IST DIESE LISTE NICHT MEHR DIE GANZE WAHRHEIT:
- * `SUPPORTED_TARGETS` nennen alle fünf Zielsprachen des v2-Plans, und
- * `TARGET_LANGUAGES` zusätzlich die mit Grundstoff im Repo (Französisch ist
- * dort enthalten, aber noch nicht ausgeliefert — siehe `delivered` in
- * `LanguageDefinition`). Diese Liste hier bleibt die Schranke des
- * App-Bestands: `VocabEntry.language` und die Sprachauswahl lesen sie, und
- * sie wird erst mit der Auslieferung eines Grundstoffs erweitert.
+ * Alles, was die App lernen lässt, hängt an dieser Liste — Ziele je
+ * App-Sprache, Kartenpools, Übungskatalog, Studio-Erzeugung, Pipeline-Vertrag.
+ * Deutsch ist hier eine Lernsprache WIE JEDE ANDERE (vorher lief es über
+ * Sonderregeln `_to_de`, die immer wieder deutsch-spezifische Fehler
+ * erzeugten).
+ *
+ * NEUE LERNSPRACHE: Code hier anhängen und in `definitions.ts` eine
+ * Definition eintragen — der Typ `Record<LanguageCode, …>` dort (und an den
+ * übrigen Stellen) meldet per Kompilierfehler jede Stelle, die noch etwas
+ * wissen muss. Schritt-für-Schritt: `docs/neue-lernsprache.md`.
  */
-export const LANGUAGE_CODES = ['th', 'en', 'es'] as const;
+export const LANGUAGE_CODES = ['th', 'en', 'es', 'de'] as const;
 export type LanguageCode = (typeof LANGUAGE_CODES)[number];
 
 export function isLanguageCode(value: unknown): value is LanguageCode {
   return typeof value === 'string' && (LANGUAGE_CODES as readonly string[]).includes(value);
 }
 
-/**
- * Alle Zielsprachen mit geprüftem Grundstoff im Repo — die klassischen drei
- * plus Französisch.
- *
- * FRANZÖSISCH WURDE AM 09.09.2026 KOMPLETT ENTFERNT (Nutzerentscheidung):
- * Kern 4 — {de, en, es, th}. Der ganze Französisch-Grundstoff (Vokabeln,
- * Drills, Prüfungsanker, UI-Übersetzungen) liegt im Git-Verlauf (Commits
- * 0c96493/0bae43c) und ließe sich von dort zurückholen; der Sprachkanon ist
- * listengetrieben, ein Wiedereinstieg wäre wieder nur ein Listen-Eintrag.
- */
-export const TARGET_LANGUAGES = ['th', 'en', 'es'] as const;
-export type TargetLanguage = (typeof TARGET_LANGUAGES)[number];
+/** Alias aus der Paarmatrix-Zeit — dieselbe Liste. */
+export const TARGET_LANGUAGES = LANGUAGE_CODES;
+export type TargetLanguage = LanguageCode;
 
 /**
- * Der Sprachkanon des v2-Plans: **vier** Zielsprachen (09.09.2026, vorher
- * fünf mit Französisch), und die Brückensprache (= Systemsprache des Geräts)
- * ist derselbe Kanon.
- *
- * DEUTSCH STEHT HIER DRIN — als Ziel, nicht mehr als Drehcheibe. `Lang`
- * ist damit die Antwort auf „welche Sprachen gibt es überhaupt“, während
- * `LanguageCode` die engere Frage „welche sind ausgeliefert“ beantwortet.
+ * Der Sprachkanon: dieselbe Liste wie `LANGUAGE_CODES`. Jede Lernsprache ist
+ * zugleich eine Sprache, in der erklärt werden kann (Brücke).
  */
-export const SUPPORTED_TARGETS = ['de', 'en', 'es', 'th'] as const;
-export type Lang = (typeof SUPPORTED_TARGETS)[number];
+export const SUPPORTED_TARGETS = LANGUAGE_CODES;
+export type Lang = LanguageCode;
 
 /**
  * Die Brückensprachen — die Sprache, in der eine Vokabel **erklärt** wird.
@@ -112,12 +100,7 @@ export type Pair = { source: Lang; target: Lang };
  * sich nie ändern. Der Typ schließt Selbstpaare (`de_to_de`) auf Typebene
  * aus; zur Laufzeit prüft `isPairId`.
  */
-type PairsFrom<S extends Lang> = `${S}_to_${Exclude<Lang, S>}`;
-export type PairId =
-  | PairsFrom<'de'>
-  | PairsFrom<'en'>
-  | PairsFrom<'es'>
-  | PairsFrom<'th'>;
+export type PairId = { [S in Lang]: `${S}_to_${Exclude<Lang, S>}` }[Lang];
 
 /**
  * Brücken außerhalb des Ziel-Kanons — jede App-/Oberflächensprache, die
@@ -194,7 +177,9 @@ export function pairsFor(bridge: Lang): Pair[] {
  * bleibt jede Profil- und Backup-Stelle (`profile.ts`, `backup.ts`) auf dem
  * alten Typ.
  */
-export type Direction = `${HubLanguage}_to_${LanguageCode}` | `${LanguageCode}_to_${HubLanguage}`;
+export type Direction =
+  | `${HubLanguage}_to_${Exclude<LanguageCode, HubLanguage>}`
+  | `${Exclude<LanguageCode, HubLanguage>}_to_${HubLanguage}`;
 
 /**
  * Die deutsch-geankerten Richtungen über **allen** Ziel-Grundstücken — die
@@ -205,12 +190,25 @@ export type Direction = `${HubLanguage}_to_${LanguageCode}` | `${LanguageCode}_t
  * sie ist diese Union die vollständige Menge. Das freie Kreuzprodukt S≠T
  * leistet separat `Pair`/`pairsFor` — ohne Erbanteil an der Bestandstypung.
  */
-export type TargetDirection =
-  | `${HubLanguage}_to_${TargetLanguage}`
-  | `${TargetLanguage}_to_${HubLanguage}`;
+export type TargetDirection = Direction;
 
+/**
+ * Die Richtung, unter der die INHALTE einer Lernsprache gespeichert sind
+ * (Situationen, Diktat, Clips): `de_to_<code>`, für Deutsch selbst der
+ * historische Schlüssel `th_to_de`. Gespeicherte Inhalte tragen genau diese
+ * IDs — deshalb nie ändern.
+ */
+export function contentDirectionOf(language: LanguageCode): Direction {
+  return (language === HUB_LANGUAGE ? `th_to_${HUB_LANGUAGE}` : `${HUB_LANGUAGE}_to_${language}`) as Direction;
+}
+
+/**
+ * Die Inhalts-Richtungen einer Lernsprache — seit dem Sprach-Umbau genau
+ * eine (`contentDirectionOf`). Früher `[de_to_X, X_to_de]`; `X_to_de` ist
+ * inzwischen das DEUTSCH-Ziel einer X-Oberfläche und gehört nicht mehr zu X.
+ */
 export function directionsFor(language: LanguageCode): Direction[] {
-  return [`${HUB_LANGUAGE}_to_${language}`, `${language}_to_${HUB_LANGUAGE}`];
+  return [contentDirectionOf(language)];
 }
 
 /**
@@ -220,14 +218,12 @@ export function directionsFor(language: LanguageCode): Direction[] {
  * Französisch) gibt es `languageOfTargetDirection`.
  */
 export function languageOfDirection(direction: Direction): LanguageCode {
-  const [from, , to] = direction.split('_');
-  return (from === HUB_LANGUAGE ? to : from) as LanguageCode;
+  return targetLanguageOf(direction);
 }
 
 /** Dasselbe für die erweiterten Richtungen. */
 export function languageOfTargetDirection(direction: TargetDirection): TargetLanguage {
-  const [from, , to] = direction.split('_');
-  return (from === HUB_LANGUAGE ? to : from) as TargetLanguage;
+  return targetLanguageOf(direction);
 }
 
 /**
@@ -279,28 +275,19 @@ export function isPairDirection(value: unknown): value is PairDirection {
 }
 
 /**
- * Die Sprache, deren Stoff eine Richtung abfragt — die „Paarsprache“.
+ * Die LERNSPRACHE einer Richtung — immer die rechte Seite: `de_to_th` → th,
+ * `th_to_de` → de, `ar_to_es` → es.
  *
- * BEI DEN DE-GEANKERTEN RICHTUNGEN EXAKT `languageOfDirection` (Bestand):
- * `de_to_th` und `th_to_de` gehören beide zum Thai-Pool. Bei Kreuzrichtungen
- * die **Ziel**-Seite: `en_to_es` fragt den spanischen Pool ab, denn gelernt
- * wird Spanisch — der Englisch-Wortlaut auf der Vorderseite ist nur die
- * Brücke (Stufe 1: Queue über `concept` gekoppelt, siehe `review-session`).
- *
- * Fremd-BRÜCKE: `zh_to_X` fragt X ab — dieselbe Ziel-Regel wie bei den
- * Kreuzrichtungen, denn die Brücke trägt selbst keinen Stoff. Bei
- * `zh_to_de` ist das `'de'`: Einen deutschen Vokabel-Pool gibt es nicht
- * (Deutsch lebt als `german`-Feld auf den bestehenden Pools), der Stoff
- * kommt aus dem abgeleiteten de-Pool (siehe `review-session`).
+ * SPRACH-UMBAU 23.09.2026: Früher lieferte `th_to_de` hier 'th' (die alte
+ * Thai-Erkennungsrichtung) — daher kamen Thai-Tonlegenden und Thai-Karten im
+ * Deutsch-Ziel. Die rechte Seite ist die einzige Regel.
  */
-export function pairLanguageOf(direction: PairDirection): LanguageCode {
-  const [from, , to] = direction.split('_');
-  if (isForeignBridge(from)) return to as LanguageCode;
-  if (from === HUB_LANGUAGE) return to as LanguageCode;
-  if (to === HUB_LANGUAGE) return from as LanguageCode;
-  // Kreuzrichtung: die Zielseite trägt den Stoff.
-  return to as LanguageCode;
+export function targetLanguageOf(direction: PairDirection): LanguageCode {
+  return direction.split('_to_')[1] as LanguageCode;
 }
+
+/** @deprecated Alter Name — identisch mit `targetLanguageOf`. */
+export const pairLanguageOf = targetLanguageOf;
 
 /**
  * Die ANKER-/Bedeutungsseite einer Richtung — die Sprache, die die lernende

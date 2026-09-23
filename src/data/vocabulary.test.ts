@@ -3,11 +3,12 @@ import { createCardState } from '@/lib/fsrs/fsrs';
 import { Direction } from '@/lib/fsrs/types';
 import { loadVocabEntry, loadVocabulary, seedVocabulary } from '@/lib/repository';
 import { MemoryDataStore } from '@/lib/storage';
+import { FIXTURE_VOCABULARY } from '@/test-fixtures/fixture-catalog';
 
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { VOCABULARY as ALLE_SPRACHEN, findVocab, VERIFIED_VOCABULARY, VOCABULARY_TH as VOCABULARY, VocabEntry } from './vocabulary';
+import { findVocab, VERIFIED_VOCABULARY, VOCABULARY_TH as VOCABULARY, VocabEntry } from '@/test-fixtures/legacy-vocabulary';
 
 const DIRECTIONS: Direction[] = ['de_to_th', 'th_to_de'];
 
@@ -211,10 +212,11 @@ describe('Vokabel-Grundstock: laedt korrekt durch die Persistenzschicht', () => 
     // Grundstock der App ist die Vereinigung. Geprueft wird hier trotzdem
     // weiter der Thai-Teil, Eintrag fuer Eintrag.
     const count = await seedVocabulary(store);
-    expect(count).toBe(ALLE_SPRACHEN.length);
+    expect(count).toBe(FIXTURE_VOCABULARY.length);
 
     const loaded = await loadVocabulary(store);
-    expect(loaded).toHaveLength(ALLE_SPRACHEN.length);
+    // Geladen wird der ganze (Test-)Katalog: alle Lernsprachen inklusive Deutsch.
+    expect(loaded).toHaveLength(FIXTURE_VOCABULARY.length);
 
     const byId = new Map(loaded.map((e) => [e.id, e]));
     VOCABULARY.forEach((entry) => {
@@ -229,7 +231,7 @@ describe('Vokabel-Grundstock: laedt korrekt durch die Persistenzschicht', () => 
     await seedVocabulary(store);
     await seedVocabulary(store);
 
-    expect(await loadVocabulary(store)).toHaveLength(ALLE_SPRACHEN.length);
+    expect(await loadVocabulary(store)).toHaveLength(FIXTURE_VOCABULARY.length);
   });
 
   it('liefert einen einzelnen Eintrag ueber die ID', async () => {

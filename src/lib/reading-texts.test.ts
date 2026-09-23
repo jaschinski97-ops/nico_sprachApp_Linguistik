@@ -1,5 +1,5 @@
 import { type ConversationSituation } from './conversation/types';
-import { VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 
 import {
   lesestoffeFuerRichtung,

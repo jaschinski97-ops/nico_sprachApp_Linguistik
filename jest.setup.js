@@ -5,7 +5,8 @@ jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 
-// Storage/batch unit tests own their input records. A content update must not
-// silently add shipped records to those fixtures. Bundle tests supply an
-// explicit catalog; delivered.test.ts opts into the actual release catalog.
-jest.mock('./src/content/catalog.json', () => ({ version: 1, entries: [] }));
+// Die Tests laufen gegen einen FESTEN Testkatalog (src/test-fixtures/
+// fixture-catalog.ts): derselbe Datenweg wie die App, aber mit stabilen,
+// bekannten Wörtern statt des echten, sich ändernden Bestands. Bundle-Tests
+// setzen bei Bedarf einen eigenen Katalog; delivered.test.ts liest den echten.
+jest.mock('./src/content/catalog.json', () => require('./src/test-fixtures/fixture-catalog').FIXTURE_CATALOG);

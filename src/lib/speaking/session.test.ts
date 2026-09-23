@@ -1,7 +1,7 @@
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
+import { VOCABULARY_TH as VOCABULARY } from '@/test-fixtures/legacy-vocabulary';
 import { MemoryDataStore } from '@/lib/storage/memory-store';
 
 import { canBuildSpeakingPrompt } from './domain';
@@ -11,7 +11,8 @@ describe('Sprechsitzung und FSRS', () => {
   it('liest Kartenzustände höchstens zur Auswahl und legt oder bewertet keine FSRS-Karte', async () => {
     const store = new MemoryDataStore();
     await store.init();
-    const entries = VOCABULARY.filter(canBuildSpeakingPrompt).slice(0, 8);
+    // Der Wortschatz kommt aus dem (Test-)Katalog; der Speicher bekommt dieselben Einträge.
+    const entries = VOCABULARY.filter(canBuildSpeakingPrompt);
     await store.putMany(
       'vocab',
       entries.map((entry) => ({ id: entry.id, value: entry }))

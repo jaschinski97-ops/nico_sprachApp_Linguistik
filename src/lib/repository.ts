@@ -6,8 +6,8 @@
  * Plattform SQLite oder AsyncStorage (AE-3).
  */
 
-import { VocabEntry, findVocab } from '@/data/vocabulary';
-import { activeVocabulary, isRetiredVocabulary } from '@/data/active-vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
+import { activeVocabulary, activeVocabularyIds } from '@/data/active-vocabulary';
 
 import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
 import { EXAM_LEVELS, ExamLevel, ExamModule, isValidExamModule } from './exam/types';
@@ -15,8 +15,7 @@ import { bundledAssetUri, bundledDocuments, isDeletedDraft, preferBundled } from
 import { isContentDeveloper } from './content/developer';
 
 import { ConversationSituation, isValidSituation } from './conversation/types';
-import { isLanguageCode, Lang } from './languages/types';
-import { DE_CONCEPTS } from '@/data/vocabulary-de';
+import { isLanguageCode, Lang, LANGUAGE_CODES } from './languages/types';
 import { getAudioBlobStore } from './clips/blob-store';
 import { invalidateClipIndex } from './clips/lookup';
 import { AudioBlobStore, AudioClip, isValidAudioClip } from './clips/types';
@@ -71,13 +70,17 @@ export async function seedVocabulary(
 export async function loadVocabulary(store?: DataStore): Promise<VocabEntry[]> {
   const db = store ?? (await getStore());
   const lokale = await db.getAll<VocabEntry>('vocab');
-  const retired = lokale.filter(isRetiredVocabulary);
+  // Was nicht (mehr) zum Katalog gehört — etwa Wörter des alten, festen
+  // Grundstocks aus früheren Versionen — fliegt aus dem Vokabelspeicher.
+  // Kartenstände (`cards`) bleiben unberührt.
+  const aktiv = activeVocabularyIds();
+  const retired = lokale.filter(word => !aktiv.has(word.id));
   for (const word of retired) await db.remove('vocab', word.id);
   // Phase 2, Schritt 4: KI-erzeugter Wortschatz läuft über catalog.json und
   // kommt gebündelt ÜBER den Store — dieselbe Regel wie bei den Prüfungen.
   // (Gebündelt ist hier der Katalog-Bestand der Art 'vocabulary'; der
   // mitgelieferte Grundstock oben ist Teil des Seeds.)
-  return preferBundled('vocabulary', lokale.filter(word => !isRetiredVocabulary(word)));
+  return preferBundled('vocabulary', lokale.filter(word => aktiv.has(word.id)));
 }
 
 export async function loadVocabEntry(
@@ -283,14 +286,11 @@ export type ImageLanguageCounts = Record<Lang, number>;
 export async function countImagesByLanguage(
   store?: DataStore
 ): Promise<ImageLanguageCounts> {
-  const zaehler: ImageLanguageCounts = { th: 0, en: 0, es: 0, de: 0 };
-  const generated = bundledDocuments('vocabulary');
+  const zaehler = Object.fromEntries(LANGUAGE_CODES.map((code) => [code, 0])) as ImageLanguageCounts;
+  const nachId = new Map(bundledDocuments('vocabulary').map((word) => [word.id, word]));
   for (const image of await loadVocabImages(store)) {
-    const id = image.vocabId || image.id;
-    const eintrag = generated.find(word => word.id === id) ?? findVocab(id);
+    const eintrag = nachId.get(image.vocabId || image.id);
     if (eintrag && isLanguageCode(eintrag.language)) zaehler[eintrag.language] += 1;
-    if (eintrag && String(eintrag.language) === 'de') zaehler.de += 1;
-    if (DE_CONCEPTS.has(id)) zaehler.de += 1;
   }
   return zaehler;
 }

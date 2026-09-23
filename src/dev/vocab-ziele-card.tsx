@@ -32,20 +32,18 @@ import {
 } from '@/lib/content/vocab-schema';
 import { listeAusAntwort } from '@/lib/content/ki-json';
 import type { VocabEntry } from '@/data/vocab-types';
-import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
+import { LEARNING_LANGUAGES } from '@/lib/languages/definitions';
+import { isLanguageCode, LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
 import { UI_LANGUAGES } from '@/lib/i18n/types';
 
-/** Die Vokabel-Sprachen: die drei Registry-Sprachen + Deutsch (KI-Pool). */
-type VocabSprache = LanguageCode | 'de';
+/** Die Vokabel-Sprachen = alle Lernsprachen (`LANGUAGE_CODES`). */
+type VocabSprache = LanguageCode;
 
-/** Vier Wortschatz-Ziele; Erzeugung und Prüfung starten mit einem Klick. */
-const SPRACHEN: { code: VocabSprache; label: string }[] = [
-  ...(LANGUAGE_CODES as readonly LanguageCode[]).map((code) => ({
-    code,
-    label: { th: 'Thai', en: 'Englisch', es: 'Spanisch', de: 'Deutsch' }[code as LanguageCode] ?? code,
-  })),
-  { code: 'de', label: 'Deutsch' },
-];
+/** Ein Wortschatz-Ziel je Lernsprache; Erzeugung und Prüfung starten mit einem Klick. */
+const SPRACHEN: { code: VocabSprache; label: string }[] = LANGUAGE_CODES.map((code) => ({
+  code,
+  label: LEARNING_LANGUAGES[code].label,
+}));
 
 const ZIEL_PRESETS = [250, 500, 1000, 2000];
 
@@ -122,12 +120,6 @@ function baueWortschatzPrompt(options: {
   abgelehnt: string[];
 }): string {
   const { sprache, anzahl, thema, bekannte, abgelehnt } = options;
-  const sprachRegeln: Record<string, string> = {
-    th: '- "term" in thailändischer Schrift; "syllables" mit JEDER Silbe als { "roman": Umschrift, "tone": "mid"|"low"|"falling"|"high"|"rising" }; "romanization" als Paiboon-artige Umschrift des ganzen Wortes.',
-    en: '- "ipa" mit IPA-Lautschrift (RP); "syllables" als [{ "roman": "/" + IPA + "/" }]; bei passenden Wörtern "englishSpelling" { "grapheme": "ea", "sound": "iː" } mit der tatsächlichen IPA-Lesart dieser Buchstabenfolge im Wort (z. B. ea in eat iː, bread e, great eɪ); Verben mit "englishVerb" { "past": "…", "participle": "…", "irregular": true|false } — bei regelmäßigen Verben irregular false, unregelmäßige mit ihren echten Formen (die Übungen „Unregelmäßige Verben"/„Dritte Form" lesen genau dieses Feld).',
-    es: '- "syllables" mit JEDER Silbe als { "roman": "Silbe", "stressed": true|false }, genau eine betonte Silbe; Feldname "roman", NICHT "syllable"; spanische Nomen mit "spanishNoun" { "gender": "m"|"f", "article": "el"|"la", "plural": "…" }, Verben mit "spanishVerb" { "conjugation": "ar"|"er"|"ir", "irregular": true|false }.',
-    de: '- "term" ist das deutsche Wort; ALLE Verben mit "germanVerb" { "thirdPerson": "er/sie/es-Form Präsens", "praeteritum": "3. Person Präteritum", "perfekt": "hat/ist + Partizip II", "irregular": true|false }; Nomen mit "germanNoun" { "article": "der"|"die"|"das", "plural": "…" } (Pflichtfeld des Schemas); "german" ist die kurze deutsche Bedeutung (Synonym oder Klarstellung), niemals Thai-Schrift.',
-  };
   return [
     `Erzeuge genau ${anzahl} Einträge eines grundlegenden Alltags-Wortschatzes für Lernende, die ${sprache.toUpperCase()} lernen.`,
     thema ? `Thema: „${thema}".` : 'Thema: grundlegende, hochfrequente Wörter und feste Wendungen des Alltags — häufige Wörter zuerst.',
@@ -152,7 +144,7 @@ function baueWortschatzPrompt(options: {
     '] }',
     '',
     `Sprachregeln für ${sprache}:`,
-    sprachRegeln[sprache] ?? '',
+    isLanguageCode(sprache) ? LEARNING_LANGUAGES[sprache].generatorRules : '',
     `translations enthält für JEDEN dieser Sprachcodes eine kurze passende Bedeutung: ${UI_LANGUAGES.join(', ')}. Für ${sprache} ist die Übersetzung identisch mit term.`,
     '',
     `Ausschlussliste — diese Begriffe existieren bereits und dürfen NICHT vorkommen:`,

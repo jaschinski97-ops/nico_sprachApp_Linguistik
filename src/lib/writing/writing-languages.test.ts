@@ -1,4 +1,5 @@
-import { VOCABULARY_EN, VOCABULARY_ES } from '@/data/vocabulary';
+import { FIXTURE_GERMAN } from '@/test-fixtures/fixture-catalog';
+import { VOCABULARY_EN, VOCABULARY_ES } from '@/test-fixtures/legacy-vocabulary';
 
 import { NEW_CARDS_PER_SESSION } from '../fsrs/fsrs';
 import { buildReviewQueue, ensureCardStates } from '../review-session';
@@ -29,13 +30,15 @@ async function frischerSpeicher() {
 describe('Der Karteikasten kennt beide neuen Paare', () => {
   it('legt je Sprache genau die Karten dieser Sprache an', async () => {
     const store = await frischerSpeicher();
-    for (const [direction, liste] of [
-      ['de_to_es', VOCABULARY_ES],
-      ['en_to_de', VOCABULARY_EN],
+    // Seit dem Sprach-Umbau: Kartenstoff ist IMMER die Zielsprache —
+    // en_to_de lernt deutsche Wörter, nicht die englischen.
+    for (const [direction, liste, sprache] of [
+      ['de_to_es', VOCABULARY_ES, 'es'],
+      ['en_to_de', FIXTURE_GERMAN, 'de'],
     ] as const) {
       const { entries } = await ensureCardStates(direction, store, T0);
       expect(entries).toHaveLength(liste.length);
-      expect(entries.every((entry) => entry.id.startsWith(direction.slice(0, 2) === 'de' ? direction.slice(6) : direction.slice(0, 2)))).toBe(true);
+      expect(entries.every((entry) => entry.language === sprache)).toBe(true);
     }
   });
 
@@ -76,8 +79,9 @@ describe('Freies Schreiben in beide Richtungen der neuen Paare', () => {
   });
 
   it('fragt in „X → Deutsch" nach dem Deutschen, mit Artikel', () => {
-    const house = VOCABULARY_EN.find((entry) => entry.id === 'en_house')!;
-    const prompt = buildWritingPrompt(house, 'en_to_de');
+    // Deutscher Eintrag mit englischer Übersetzung als Auftrag.
+    const haus = { ...FIXTURE_GERMAN.find((entry) => entry.id === 'de-baan')!, translations: { en: 'house', th: 'บ้าน' } };
+    const prompt = buildWritingPrompt(haus, 'en_to_de');
     expect(prompt.language).toBe('de');
     expect(prompt.shown).toBe('house');
     expect(prompt.targets).toContain('das Haus');
@@ -89,15 +93,12 @@ describe('Freies Schreiben in beide Richtungen der neuen Paare', () => {
     const hin = writingCandidates('de_to_es');
     expect(hin.length).toBe(VOCABULARY_ES.length);
     expect(hin.every((entry) => entry.language === 'es')).toBe(true);
-    // es_to_de SEIT DEM 21.09.2026 OHNE SPRACHFILTER: Der Pool der Richtung
-    // entscheidet die Seite (Alt-Bestand: es-Einträge mit `german`,
-    // generierter de-Pool: `language: 'de'`) — die Kandidaten prüfen nur
-    // die Baubarkeit (Zielform + lesbares Ankerwort). Vorher filterte der
-    // Anker ('es') den generierten de-Pool leer und das Schreiben blieb
-    // beim Deutsch-Ziel für immer leer.
-    const zurueck = writingCandidates('es_to_de');
-    expect(VOCABULARY_ES.every((entry) => zurueck.includes(entry))).toBe(true);
-    expect(zurueck.every((entry) => canBuildWritingPrompt(entry, 'es_to_de'))).toBe(true);
+    // th_to_de: deutsche Wörter mit Thai-Auftrag — nur Einträge der Zielsprache.
+    const deutsch = writingCandidates('th_to_de');
+    expect(deutsch.length).toBe(FIXTURE_GERMAN.length);
+    expect(deutsch.every((entry) => entry.language === 'de')).toBe(true);
+    // Ohne Übersetzung in der Ankersprache gibt es keinen ehrlichen Auftrag.
+    expect(writingCandidates('es_to_de')).toEqual([]);
   });
 
   it('kann für jeden Eintrag beider neuer Sprachen eine Aufgabe bauen', () => {

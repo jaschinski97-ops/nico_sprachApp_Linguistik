@@ -31,7 +31,7 @@ import {
   VOICE_SOURCES,
 } from '@/data/tts-voices';
 import { LANGUAGE_LABELS } from '@/lib/languages/registry';
-import { Lang } from '@/lib/languages/types';
+import { Lang, LANGUAGE_CODES } from '@/lib/languages/types';
 import type { RunEstimate } from '@/dev/run-cost';
 
 /**
@@ -68,7 +68,7 @@ import type { RunEstimate } from '@/dev/run-cost';
  * Die Beschriftung kommt aus `LANGUAGE_LABELS`, damit kein zweites
  * Namensverzeichnis entsteht.
  */
-export const GENERATOR_LANGUAGES: { code: Lang; label: string }[] = (['th', 'en', 'es', 'de'] as const).map(
+export const GENERATOR_LANGUAGES: { code: Lang; label: string }[] = LANGUAGE_CODES.map(
   (code) => ({ code, label: LANGUAGE_LABELS[code] })
 );
 

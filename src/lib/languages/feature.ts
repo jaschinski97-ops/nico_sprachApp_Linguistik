@@ -2,9 +2,10 @@ import { VocabEntry } from '@/data/vocab-types';
 
 import { DrillId } from '../drills/types';
 
+import { LEARNING_LANGUAGES } from './definitions';
 import { LANGUAGES } from './registry';
 import {
-  pairLanguageOf,
+  targetLanguageOf,
   PairDirection,
   SyllableAnnotation,
   Lang,
@@ -64,111 +65,49 @@ export type LanguageFeatureRuntime = {
  * `syllables` ist maßgeblich; das einzelne Feld `tone` bleibt der Notnagel für
  * Datensätze aus der Zeit vor AE-7.
  */
-const THAI_RUNTIME: LanguageFeatureRuntime = {
-  annotate(entry) {
+/**
+ * Die Silbenauszeichnung je Schrift/Merkmal. Neue Lernsprachen brauchen hier
+ * NICHTS: Ohne eigenen Eintrag gilt `GENERISCH` (Silben, sonst Lautschrift,
+ * sonst Umschrift). Die Übungen je Sprache stehen in `definitions.ts`.
+ */
+type Annotator = (entry: VocabEntry) => SyllableAnnotation[];
+
+const GENERISCH: Annotator = (entry) => {
+  if (entry.syllables && entry.syllables.length > 0) return normalizedSyllables(entry);
+  return [{ roman: entry.ipa ?? entry.romanization ?? entry.term }];
+};
+
+const ANNOTATOREN: Partial<Record<Lang, Annotator>> = {
+  th: (entry) => {
     if (entry.syllables && entry.syllables.length > 0) return normalizedSyllables(entry);
     return [{ roman: entry.romanization, tone: entry.tone }];
   },
-  // Seit dem Lern-Reiter-Ausbau (13.09.) auch eine GRAMMATIK-Übung: Vorher
-  // war die Kategorie den deutschen Zielen vorbehalten, und der Paritäts-
-  // Test durfte Thai dort leer lassen. ครับ/ค่ะ ist die erste, ehrlich aus
-  // geprüftem Satzstoff baubare thai-Grammatikübung.
-  drills: ['tone', 'toneRule', 'polite', 'zaehlerwort', 'konsonantenklasse'],
-};
-
-/**
- * Spanisch: Betonung je Silbe (Phase 16) und die Herleitungsübung.
- *
- * Die Silben stehen im Eintrag, sind aber **abgeleitet** und nicht
- * abgeschrieben: `lib/stress` erzeugt sie aus der Schreibung, und ein Test
- * fährt den ganzen Grundstock durch, um zu belegen, dass Daten und Regel
- * übereinstimmen. Hier gelesen zu werden statt gerechnet, ist reine
- * Anzeigeökonomie.
- */
-const SPANISH_RUNTIME: LanguageFeatureRuntime = {
-  annotate(entry) {
+  es: (entry) => {
     if (entry.syllables && entry.syllables.length > 0) return normalizedSyllables(entry);
     return [{ roman: entry.romanization || entry.term }];
   },
-  drills: ['stressHear', 'stressRule', 'serEstar', 'praesensEndung'],
-};
-
-/**
- * Englisch: die Lautschrift am ganzen Wort, nicht je Silbe.
- *
- * Das ist keine Lücke, sondern der Befund aus AE-44: Die Aussprache lässt
- * sich nicht aus der Schreibung ableiten, also gibt es auch nichts, was man
- * Silbe für Silbe zeigen könnte. Die eine Auszeichnung ist die Lautschrift.
- */
-const ENGLISH_RUNTIME: LanguageFeatureRuntime = {
-  annotate: (entry) => [{ roman: entry.ipa ?? entry.romanization ?? entry.term }],
-  drills: ['soundSpelling', 'spelling', 'irregularPast', 'partizip'],
-};
-
-/**
- * Deutsch als ZIEL-Sprache (Nutzerentscheidung 10.09.): keine
- * silbenspezifische Auszeichnung — das deutsche Wort steht, wie es
- * geschrieben wird. Keine Merkmalsübungen: Die deutschen Übungen sind die
- * Grammatik-Drills (Genus, Stammformen), und die hängen an der RICHTUNG
- * (`_to_de`), nicht am Sprachmerkmal — siehe `drillsForDirectionViaFeature`.
- *
- * Der Schlüssel `de` steht hier, obwohl Deutsch kein `TargetLanguage` ist:
- * Einträge des abgeleiteten de-Pools (vocabulary-de.ts) tragen zur Laufzeit
- * `language: 'de'`, und `featureFor` liest genau dieses Feld.
- */
-const GERMAN_RUNTIME: LanguageFeatureRuntime = {
-  annotate: (entry) => [{ roman: entry.romanization || entry.term }],
-  drills: [],
-};
-
-const RUNTIMES: Record<Lang, LanguageFeatureRuntime> = {
-  th: THAI_RUNTIME,
-  en: ENGLISH_RUNTIME,
-  es: SPANISH_RUNTIME,
-  de: GERMAN_RUNTIME,
+  en: (entry) => [{ roman: entry.ipa ?? entry.romanization ?? entry.term }],
+  de: (entry) => [{ roman: entry.romanization || entry.term }],
 };
 
 export function featureRuntime(language: TargetLanguage): LanguageFeatureRuntime {
-  return RUNTIMES[language];
+  return {
+    annotate: ANNOTATOREN[language] ?? GENERISCH,
+    drills: [...LEARNING_LANGUAGES[language].drills],
+  };
 }
 
-/** Das Merkmal des Eintrags — über seine Sprache, nicht über eine Annahme. */
 export function featureFor(entry: VocabEntry): LanguageFeatureRuntime {
   return featureRuntime(entry.language);
 }
 
-/**
- * Welche Übungen gehören zu dieser Richtung?
- *
- * `X → Deutsch` bekommt die deutschen Grammatikübungen — sie prüfen Genus und
- * Stammformen und gelten damit für **jedes** Paar (Pflicht 6). `Deutsch → X`
- * bekommt die Merkmalsübungen der Zielsprache; hat die Sprache noch keine,
- * ist die Liste leer statt falsch gefüllt.
- *
- * SEIT DEN KREUZRICHTUNGEN AUF `PairDirection`: Eine Kreuzrichtung erbt die
- * Merkmalsübungen ihrer **Ziel**-Sprache — `en_to_es` übt die spanische
- * Betonung, `es_to_th` die Thai-Töne. Die Übungen fragen den Stoff der
- * Zielsprache ab und hängen nicht an der Brücke; nur die de-geankerten
- * Regeln (`_to_de`) bleiben beim Bestand.
- */
+/** Die sprachspezifischen Übungen einer Richtung — die der ZIELsprache. */
 export function drillsForDirectionViaFeature(direction: PairDirection): DrillId[] {
-  // „X → Deutsch“ liest seit dem Lern-Reiter-Ausbau (13.09.) auch: Das
-  // deutsche Wort steht sichtbar, die Bedeutung wird gewählt. Vorher hatte
-  // das Deutsch-Ziel in der Kategorie Lesen nichts — der Paritäts-Test
-  // verlangt jetzt in jeder Kategorie mindestens eine Übung.
-  if (direction.endsWith('_to_de')) return ['article', 'verbForms', 'deutschLesen'];
-  // pairLanguageOf liefert die ZIELsprache (en_to_es → 'es', ar_to_th → 'th')
-  // und für de-geankerte Richtungen exakt das Bestandsverhalten. Die Brücke
-  // 'ar' darf hier nie ankommen — die Registry kennt sie nicht.
-  const language = pairLanguageOf(direction);
-  // Ein entschiedenes Merkmal ist noch kein gebautes. Solange
-  // `implemented: false` steht, gibt es hier keine Uebung - lieber eine
-  // leere Liste als eine Uebung ohne Stoff (Pflicht 5 aus Phase 15).
+  const language = targetLanguageOf(direction);
   if (!LANGUAGES[language].feature.implemented) return [];
   return featureRuntime(language).drills;
 }
 
-/** Ob das Merkmal dieser Sprache gebaut ist — für die Anzeige in der Auswahl. */
 export function featureIsImplemented(language: TargetLanguage): boolean {
   return LANGUAGES[language].feature.implemented;
 }

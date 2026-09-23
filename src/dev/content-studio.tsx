@@ -40,7 +40,7 @@ import { countImageCandidates, IMAGE_TEST_RUN, planImages } from '@/lib/images/p
 import { activeVocabularyFor } from '@/data/active-vocabulary';
 import { VocabEntry } from '@/data/vocab-types';
 import { LANGUAGE_ORDER, LANGUAGE_LABELS } from '@/lib/languages/registry';
-import { Lang } from '@/lib/languages/types';
+import { Lang, type LanguageCode } from '@/lib/languages/types';
 import { loadProfile } from '@/lib/profile';
 import { HELPER_AUDIO_PROVIDER, ProviderId } from '@/lib/providers/types';
 import {
@@ -425,7 +425,7 @@ export default function ContentStudio() {
       chain ?? [{ key: language, label: LANGUAGE_LABELS[language] }],
       (key) => planSituations({
         ...(optionId === 'full' ? FULL_RUN : { variantsPerCombo: 1 }),
-        targetLanguage: key as 'th' | 'en' | 'es' | 'de',
+        targetLanguage: key as LanguageCode,
       }),
       (specs) => missingSpecs(specs),
       maxNew

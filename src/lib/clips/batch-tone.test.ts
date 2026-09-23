@@ -1,4 +1,4 @@
-import { VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 
 import { MemoryBlobStore } from '../blobs/memory';
 import { DataStore, MemoryDataStore } from '../storage';

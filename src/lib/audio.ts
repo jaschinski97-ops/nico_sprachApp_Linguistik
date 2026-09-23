@@ -1,6 +1,8 @@
 import * as Speech from 'expo-speech';
 import type { AudioPlayer } from 'expo-audio';
 import { allowsThaiPlayback, clipToneLabel, type AudioPurpose, type ToneStatus } from './content/audio-policy';
+import { LEARNING_LANGUAGES } from './languages/definitions';
+import type { LanguageCode } from './languages/types';
 
 /**
  * Aussprache-Wiedergabe.
@@ -36,23 +38,11 @@ import { allowsThaiPlayback, clipToneLabel, type AudioPurpose, type ToneStatus }
  * dieselben wie in `lib/languages` — eine zweite Sprachliste wäre eine
  * Stelle, an der man das Nachtragen vergisst.
  */
-export type SpeechLanguage = 'th' | 'de' | 'en' | 'es';
+export type SpeechLanguage = LanguageCode;
 
-const LOCALE: Record<SpeechLanguage, string> = {
-  th: 'th-TH',
-  de: 'de-DE',
-  // Britisches Englisch, passend zur RP-Lautschrift im Grundstock (Phase 16).
-  en: 'en-GB',
-  es: 'es-ES',
-};
-
-/** Thai etwas langsamer, die Töne sind sonst kaum herauszuhören. */
-const RATE: Record<SpeechLanguage, number> = {
-  th: 0.8,
-  de: 0.95,
-  en: 0.95,
-  es: 0.95,
-};
+/** Locale und Tempo der Gerätestimme stehen in `definitions.ts`. */
+const LOCALE = (language: SpeechLanguage): string => LEARNING_LANGUAGES[language].speechLocale;
+const RATE = (language: SpeechLanguage): number => LEARNING_LANGUAGES[language].speechRate;
 
 export type PronunciationRequest = {
   text: string;
@@ -232,8 +222,8 @@ async function playPronunciationNow(
   // The scored tone-recognition exercise must never fall back to untested TTS.
   if (request.purpose === 'tone') return unavailable;
 
-  if (request.concurrentRecording) await backend.speak(text, LOCALE[request.language], RATE[request.language], true);
-  else await backend.speak(text, LOCALE[request.language], RATE[request.language]);
+  if (request.concurrentRecording) await backend.speak(text, LOCALE(request.language), RATE(request.language), true);
+  else await backend.speak(text, LOCALE(request.language), RATE(request.language));
   // Wörterbuchschlüssel statt deutscher Sätze — die Runner übersetzen (21.09.2026).
   return { kind: 'tts', label: request.language === 'th' ? 'audio.systemVoiceUnchecked' : 'audio.systemVoice' };
 }

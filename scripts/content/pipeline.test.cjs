@@ -9,7 +9,8 @@ const { checkContent } = require('./check.cjs');
 const { pruneOrphans } = require('./prune-orphans.cjs');
 const domain = require('./domain.cjs');
 const { clipIdFor } = domain.load('src/lib/clips/types');
-const { VOCABULARY } = domain.load('src/data/vocabulary');
+// Feste Fixture-Wörter (früherer Grundstock, nur noch Testdaten).
+const { VOCABULARY } = domain.load('src/test-fixtures/legacy-vocabulary');
 test('scoped vocabulary publish preserves unrelated staged drafts and budget', async t => {
   const { root, pipeline } = await setup(t);
   const words = ['first', 'second'].map((term, index) => ({
@@ -40,7 +41,7 @@ async function setup(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'thaispeaker-content-test-'));
   assert.equal(path.dirname(root), os.tmpdir());
   t.after(() => fs.rm(root, { recursive: true, force: true }));
-  return { root, pipeline: new ContentPipeline(root) };
+  return { root, pipeline: new ContentPipeline(root, { extraVocabulary: VOCABULARY }) };
 }
 function wav(start = 200, end = start) {
   const data = Buffer.alloc(44 + 24000 * 2);
@@ -72,8 +73,8 @@ test('automatic publication, schema, re-export and metadata tampering with no re
   const state = await pipeline.state(); state.stage.entries[0].document.setting = 'tampered';
   await fs.writeFile(pipeline.stageFile, JSON.stringify(state.stage));
   await assert.rejects(pipeline.publish(), /Prüfsumme/);
-  assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
-  assert.ok(checkContent(root).errors.some(error => error.includes('Hörclips')));
+  assert.deepEqual(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors, []);
+  assert.ok(checkContent(root, { extraVocabulary: VOCABULARY }).errors.some(error => error.includes('Hörclips')));
   await assert.rejects(pipeline.stage({ kind: 'situations', document: { ...situation, apiKey: 'never-export' } }), /Metadaten/);
 });
 test('failed tones stay out; unchecked clips ship with their original status and are counted', async (t) => {
@@ -87,9 +88,9 @@ test('failed tones stay out; unchecked clips ship with their original status and
   assert.equal((await pipeline.stage(audio(wav(), multi))).check.status, 'unchecked');
   const report = await pipeline.publish(); assert.equal(report.entries, 2); assert.equal(report.unchecked, 1);
   assert.equal(report.uncheckedThaiDelivered, 1);
-  assert.equal(checkContent(root, { integrityOnly: true }).uncheckedThaiDelivered, 1);
+  assert.equal(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).uncheckedThaiDelivered, 1);
   assert.equal((await pipeline.catalog()).entries.find(entry => entry.id !== right.id).check.tone.status, 'unchecked');
-  assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
+  assert.deepEqual(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors, []);
   await pipeline.stage(audio(wav(120, 240), word)); await pipeline.publish();
   assert.equal((await pipeline.catalog()).entries.length, 1);
   const measurements = JSON.parse(await fs.readFile(pipeline.reportFile));
@@ -122,10 +123,10 @@ test('real MP3 encode/decode, content hash, static assets and corrupt-media repa
     if (damage === 'missing') await fs.rm(staged); else await fs.writeFile(staged, 'corrupt');
     await pipeline.stage(input); assert.deepEqual(await fs.readFile(staged), encoded);
   }
-  await pipeline.publish(); assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
+  await pipeline.publish(); assert.deepEqual(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors, []);
   assert.match(await fs.readFile(path.join(root, 'src/content/assets.ts'), 'utf8'), /require\('\.\.\/\.\.\/assets\/content\/[a-f0-9]{64}\.mp3'\)/);
   await fs.writeFile(path.join(root, 'assets/content', entry.asset), 'corrupt');
-  assert.ok(checkContent(root, { integrityOnly: true }).errors.some(error => error.includes('geändert')));
+  assert.ok(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors.some(error => error.includes('geändert')));
 });
 test('images require real decoding and concrete-word schema', async (t) => {
   const { root, pipeline } = await setup(t); const id = VOCABULARY.find(word => word.isConcrete).id;
@@ -134,7 +135,7 @@ test('images require real decoding and concrete-word schema', async (t) => {
   await assert.rejects(pipeline.stage({ kind: 'images', document: { ...document, id: '../escape' }, base64: bytes.toString('base64') }), /Ungültige/);
   const entry = await pipeline.stage({ kind: 'images', document, base64: bytes.toString('base64') });
   assert.equal(entry.byteSize, bytes.length); await pipeline.publish();
-  assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
+  assert.deepEqual(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors, []);
   const broken = Buffer.from('89504e470d0a1a0a', 'hex');
   await assert.rejects(pipeline.stage({ kind: 'images', document: { ...document, byteSize: broken.length }, base64: broken.toString('base64') }));
 });
@@ -144,7 +145,7 @@ test('reverse consistency: orphan assets and stray require-map keys fail every c
   const bytes = await fs.readFile(path.join(__dirname, '../../assets/images/icon.png'));
   await pipeline.stage({ kind: 'images', document: { id, vocabId: id, format: 'png', byteSize: bytes.length, blobKey: id + '.png', prompt: 'TEST', model: 'TEST', generatedAt: 1 }, base64: bytes.toString('base64') });
   await pipeline.publish();
-  assert.deepEqual(checkContent(root, { integrityOnly: true }).errors, []);
+  assert.deepEqual(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors, []);
   const orphan = 'b'.repeat(64) + '.mp3';
   const stray = 'a'.repeat(64) + '.png';
   const assetMapFile = path.join(root, 'src/content/assets.ts');
@@ -153,7 +154,7 @@ test('reverse consistency: orphan assets and stray require-map keys fail every c
   await fs.writeFile(assetMapFile, (await fs.readFile(assetMapFile, 'utf8'))
     .replace(/\};\s*$/, `  ${JSON.stringify(stray)}: require('../../assets/content/${stray}'),\n};\n`));
   for (const integrityOnly of [true, false]) {
-    const errors = checkContent(root, { integrityOnly }).errors;
+    const errors = checkContent(root, { integrityOnly, extraVocabulary: VOCABULARY }).errors;
     assert.ok(errors.some(error => error.includes(orphan)), 'verwaiste Datei muss in jedem Modus fehlschlagen');
     assert.ok(errors.some(error => error.includes(stray) && error.includes('assets.ts')), 'Schlüssel ohne Katalogreferenz muss fehlschlagen');
   }
@@ -165,7 +166,7 @@ test('reverse consistency: orphan assets and stray require-map keys fail every c
   assert.equal(applied.deleted, 1); assert.equal(applied.freedBytes, 6);
   await assert.rejects(fs.readFile(path.join(root, 'assets/content', orphan)));
   assert.equal((await fs.readFile(path.join(root, 'assets/content', '.DS_Store'), 'utf8')), 'junk');
-  const errors = checkContent(root, { integrityOnly: true }).errors;
+  const errors = checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors;
   assert.ok(!errors.some(error => error.includes(orphan)), 'Datei-Orphan ist entfernt');
   assert.ok(errors.some(error => error.includes(stray)), 'Schlüssel-Orphan bleibt ein Checkfehler, bis assets.ts neu generiert wird');
 });
@@ -210,7 +211,7 @@ test('AE-31 reproduction: every previously measurable Microsoft contour remains 
     assert.equal(before.status, 'measured');
     assert.deepEqual(after, before, item.file);
     const word = VOCABULARY.find(word => word.language === 'th' && word.term === item.word);
-    const result = checkThaiTone(audio(wav(), word).document, pcm, 24000);
+    const result = checkThaiTone(audio(wav(), word).document, pcm, 24000, { woerter: VOCABULARY });
     assert.equal(result.status, ['falling', 'rising'].includes(item.tone) ? 'passed' : 'unchecked', item.file);
   }
 });

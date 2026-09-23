@@ -21,8 +21,8 @@ import { seededRandom, shuffled } from '@/lib/drills/random';
 import { type DrillId, type DrillQuestion } from '@/lib/drills/types';
 import { type Rating } from '@/lib/fsrs/types';
 import { TranslationKey, useLocale, type UiLanguage } from '@/lib/i18n';
-import { anchorOf, type PairDirection } from '@/lib/languages/types';
-import { zielSprache } from '@/lib/production/tasks';
+import { anchorOf, targetLanguageOf, type PairDirection } from '@/lib/languages/types';
+import { hoerDrillFuer } from '@/lib/languages/definitions';
 import { loadOrCreateCardState, rateCard } from '@/lib/repository';
 import { recordDrill } from '@/lib/review-log';
 import {
@@ -65,11 +65,6 @@ const RATING_COLORS: Record<Rating, { bg: ThemeColor; text: ThemeColor }> = {
 const RATINGS: Rating[] = [1, 2, 3, 4];
 
 /** Der Hör-Drill je Sprache — derselbe Stoff wie in der Einzelübung. */
-const HOEREN_DRILL: Record<'th' | 'en' | 'es', DrillId> = {
-  th: 'tone',
-  en: 'soundSpelling',
-  es: 'stressHear',
-};
 
 const PROMPT_KEYS: Record<DrillId, TranslationKey> = {
   tone: 'drill.prompt.tone',
@@ -123,7 +118,7 @@ export function TodayRoundRunner({
   const { t } = useLocale();
   // Die produzierte Sprache des Paars — im Deutsch-Ziel (th_to_de) werden
   // deutsche Sätze gebildet, diktiert und mitgesprochen, nicht thailändische.
-  const sprache = zielSprache(direction);
+  const sprache = targetLanguageOf(direction);
 
   const [runde, setRunde] = useState<TodayRound | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -259,6 +254,7 @@ export function TodayRoundRunner({
       ) : segment.kind === 'hoeren' ? (
         <HoerenSegment
           sprache={sprache}
+          direction={direction}
           anzahl={segment.items}
           position={position}
           onAnswered={() => setErledigt((value) => value + 1)}
@@ -376,11 +372,14 @@ function KartenSegment({
 
 function HoerenSegment({
   sprache,
+  direction,
   anzahl,
   position,
   onAnswered,
 }: {
   sprache: SatzSprache;
+  /** Die Lernrichtung der Runde — die Hörübung schreibt dieselben Karten fort. */
+  direction: PairDirection;
   anzahl: number;
   position: number;
   onAnswered: () => void;
@@ -390,18 +389,17 @@ function HoerenSegment({
   const [leer, setLeer] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
 
-  // Deutsch hat keinen Wort-Hör-Drill (kein tone/soundSpelling/stressHear);
-  // der Planer plant das Segment dafür gar nicht mehr — ohne Drill wird unten
-  // ehrlich übersprungen, der Effect bleibt für den leeren Fall gar nicht hängen.
-  const hoerenSprache = sprache === 'de' ? undefined : sprache;
-  const drill = hoerenSprache === undefined ? undefined : HOEREN_DRILL[hoerenSprache];
+  // Sprachen ohne Wort-Hörübung (Definition) plant der Planer gar nicht erst;
+  // ohne Drill wird unten ehrlich übersprungen.
+  const drill = hoerDrillFuer(sprache);
 
   useEffect(() => {
     let cancelled = false;
-    if (!drill || !hoerenSprache) return;
+    if (!drill) return;
     buildDrillSession({
       drill,
-      language: hoerenSprache,
+      language: sprache,
+      direction,
       size: anzahl,
       isEligible:
         drill === 'tone'
@@ -419,7 +417,7 @@ function HoerenSegment({
     return () => {
       cancelled = true;
     };
-  }, [drill, hoerenSprache, anzahl]);
+  }, [drill, sprache, direction, anzahl]);
 
   const frage = fragen && fragen.length > 0 ? fragen[position % fragen.length] : null;
   useEffect(() => setChosen(null), [position]);
@@ -464,7 +462,7 @@ function HoerenSegment({
             onPress={() => {
               if (chosen !== null) return;
               setChosen(i);
-              void recordDrill(i === frage.correctIndex, Date.now(), undefined, frage.drill).catch(() => {});
+              void recordDrill(i === frage.correctIndex, Date.now(), undefined, frage.drill, direction).catch(() => {});
               setTimeout(onAnswered, 900);
             }}
             disabled={chosen !== null}
@@ -654,7 +652,7 @@ function DiktatSegment({
                 const config = dictationConfigFor(task.language);
                 const score = scoreDictation(draft, task.text, config);
                 setErgebnis(score.passed ? 'passed' : 'failed');
-                await recordDrill(score.passed, Date.now(), undefined, 'dictation').catch(() => {});
+                await recordDrill(score.passed, Date.now(), undefined, 'dictation', direction).catch(() => {});
                 if (score.passed) {
                   try {
                     const card = await loadOrCreateCardState(task.vocabId, task.direction);

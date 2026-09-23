@@ -6,7 +6,7 @@ import {
   countImagesByLanguage,
   countSituationsByDirection,
 } from './repository';
-import { vocabularyFor } from '../data/vocabulary';
+import { vocabularyFor } from '@/test-fixtures/legacy-vocabulary';
 import { BUILTIN_EXAM_MODULES } from '../data/exam-modules';
 import type { ExamModule } from './exam/types';
 
@@ -83,10 +83,9 @@ describe('countImagesByLanguage', () => {
     // erraten — es wäre ohnehin nicht auffindbar.
     await store.put('images', 'unbekannt', bild('unbekannt'));
 
-    // Die Thai-IDs sind Begriffs-Anker: dasselbe Bild zählt in der Thai-Zeile
-    // UND als Konzeptbild der Deutsch-Zeile (AE-46 — das Motiv gehört zum
-    // Begriff, und deutsche Karten zeigen es ebenfalls).
-    expect(await countImagesByLanguage(store)).toEqual({ th: 1, en: 1, es: 0, de: 1 });
+    // Seit dem Sprach-Umbau zählt jedes Bild genau in der Sprache seiner
+    // Vokabel — Deutsch hat eigene Wörter und damit eigene Bilder.
+    expect(await countImagesByLanguage(store)).toEqual({ th: 1, en: 1, es: 0, de: 0 });
   });
 });
 

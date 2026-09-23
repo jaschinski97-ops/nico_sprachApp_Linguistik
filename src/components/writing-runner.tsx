@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { GermanPalette, SpanishPalette, ThaiPalette } from './character-palette';
+import { LanguagePalette } from './character-palette';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 
 import { Colors, Spacing } from '@/constants/theme';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { useLocale, type TranslationKey } from '@/lib/i18n';
-import { Direction, type Rating } from '@/lib/fsrs/types';
+import { learningLanguage, writingPromptKey } from '@/lib/languages/definitions';
+
+import { type Rating } from '@/lib/fsrs/types';
+import type { PairDirection } from '@/lib/languages/types';
 import {
   buildWritingSession,
   ratingExplanation,
@@ -17,7 +20,6 @@ import {
   WritingResult,
   WritingSession,
 } from '@/lib/writing';
-import { WritingLanguage } from '@/lib/writing/compare';
 
 /**
  * Freies Schreiben — die einzige Übung, die den Kartenzustand fortschreibt.
@@ -34,14 +36,6 @@ import { WritingLanguage } from '@/lib/writing/compare';
  * jeder lateinischen Tastatur.
  */
 
-/** Was in der Aufgabenzeile steht — je nachdem, welche Sprache getippt wird. */
-const AUFGABEN_KEYS: Record<WritingLanguage, TranslationKey> = {
-  de: 'writing.promptDe',
-  th: 'writing.promptTh',
-  es: 'writing.promptEs',
-  en: 'writing.promptEn',
-};
-
 /** FSRS-Bewertung → i18n-Key (die Labels selbst stehen in den Wörterbüchern). */
 const RATING_KEYS: Record<Rating, TranslationKey> = {
   1: 'rating.again',
@@ -50,41 +44,16 @@ const RATING_KEYS: Record<Rating, TranslationKey> = {
   4: 'rating.easy',
 };
 
-/**
- * Platzhalter im Eingabefeld — bewusst in der ZIELsprache, nicht in der
- * Oberflächensprache: Hier steht, was der Lerner zu tippen im Begriff ist.
- */
-const PLATZHALTER: Record<WritingLanguage, string> = {
-  de: 'deine Antwort',
-  th: 'ภาษาไทย',
-  es: 'tu respuesta',
-  en: 'your answer',
-};
-
-/** Die Zeichenhilfe der jeweiligen Sprache — oder keine. */
-function Palette({
-  language,
-  onInsert,
-}: {
-  language: WritingLanguage;
-  onInsert: (character: string) => void;
-}) {
-  if (language === 'th') return <ThaiPalette onInsert={onInsert} />;
-  if (language === 'de') return <GermanPalette onInsert={onInsert} />;
-  if (language === 'es') return <SpanishPalette onInsert={onInsert} />;
-  return null;
-}
-
 export function WritingRunner({
   direction,
   onExit,
 }: {
-  direction: Direction;
+  direction: PairDirection;
   onExit: () => void;
 }) {
   const theme = useTheme();
   const toneColor = useToneColor();
-  const { t } = useLocale();
+  const { t, languageName } = useLocale();
 
   const [session, setSession] = useState<WritingSession | null>(null);
   const [round, setRound] = useState(0);
@@ -205,7 +174,7 @@ export function WritingRunner({
 
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">
-          {t(AUFGABEN_KEYS[prompt.language])}
+          {t(writingPromptKey(prompt.language), { language: languageName(prompt.language) })}
         </ThemedText>
 
         <View style={styles.promptBlock}>
@@ -222,7 +191,7 @@ export function WritingRunner({
           onChangeText={setDraft}
           onSubmitEditing={submit}
           editable={!answered}
-          placeholder={PLATZHALTER[prompt.language]}
+          placeholder={learningLanguage(prompt.language).placeholders.word}
           placeholderTextColor={theme.textSecondary}
           autoCapitalize="none"
           autoCorrect={false}
@@ -237,7 +206,7 @@ export function WritingRunner({
             Thai braucht eine ganze Belegung, Deutsch die Umlaute, Spanisch die
             Akzentzeichen. Englisch braucht keine — dort steht jedes Zeichen
             der Zielform auf jeder lateinischen Tastatur. */}
-        {!answered ? <Palette
+        {!answered ? <LanguagePalette
             language={prompt.language}
             onInsert={(character) => setDraft((current) => current + character)}
           /> : null}

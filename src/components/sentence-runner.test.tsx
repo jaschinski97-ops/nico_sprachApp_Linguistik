@@ -163,11 +163,12 @@ test('leaving during permission request cancels capture and prevents late model 
 });
 
 test('a language without audited sentences shows an honest notice and never touches the microphone (AE-66)', async () => {
-  await act(async () => { tree = create(<SentenceRunner language="es" mode="shadowing" onExit={() => {}} />); });
+  // Die deutschen Test-Wörter tragen keine Beispielsätze.
+  await act(async () => { tree = create(<SentenceRunner language="de" mode="shadowing" onExit={() => {}} />); });
   const json = JSON.stringify(tree.toJSON());
   // Der Sprachname kommt aus `languageOf` (lib-Inhalt, bleibt Deutsch) und ist
   // inzwischen Teil desselben interpolierten Text-Segments.
-  expect(json).toContain(d('sentence.noneFor').replace('{{language}}', 'Spanisch'));
+  expect(json).toContain(d('sentence.noneFor').replace('{{language}}', 'Deutsch'));
   expect(json).toContain(d('sentence.stockEmpty'));
   // Kein Aufnahme-/Wiedergabeknopf, keine Vorbereitungsuhr — nur der Hinweis.
   expect(json).not.toContain(d('sentence.start'));

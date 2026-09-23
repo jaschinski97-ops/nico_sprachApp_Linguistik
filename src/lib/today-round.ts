@@ -1,8 +1,9 @@
 import { SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 
 import { dictationTasksFor } from './dictation/tasks';
+import { hoerDrillFuer } from './languages/definitions';
 import { anchorOf, type PairDirection } from './languages/types';
-import { zielSprache } from './production/tasks';
+import { targetLanguageOf } from './languages/types';
 import { loadReviewLog, type ReviewDayLog } from './review-log';
 import { buildReviewQueue, type ReviewItem } from './review-session';
 import { type DataStore } from './storage';
@@ -181,12 +182,12 @@ export function schwaecheAusLog(
 export function bereichVerfuegbar(direction: PairDirection, kind: Exclude<RoundKind, 'cards'>): boolean {
   // Die satztragenden Bereiche folgen der produzierten Sprache — im Deutsch-
   // Ziel (th_to_de) sind das deutsche Sätze, nicht die Thai-Ankerseite.
-  const sprache = zielSprache(direction);
+  const sprache = targetLanguageOf(direction);
   switch (kind) {
     case 'hoeren':
-      // Wort-Hör-Drills gibt es nur für th/en/es; das Deutsch-Ziel hört über
-      // „Satz verstehen“ (Bereich satz) mit.
-      return sprache !== 'de';
+      // Nur Sprachen mit eigener Wort-Hörübung (Definition); die anderen
+      // hören über „Satz verstehen“ (Bereich satz) mit.
+      return hoerDrillFuer(sprache) !== undefined;
     case 'satz':
     case 'shadowing':
       // Der Satzbestand trägt Bedeutungen nur auf Deutsch (exampleGerman) —

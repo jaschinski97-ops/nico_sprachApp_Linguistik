@@ -1,5 +1,5 @@
 import { activeVocabulary, activeVocabularyFor } from './active-vocabulary';
-import { VOCABULARY } from './vocabulary';
+import { VOCABULARY } from '@/test-fixtures/legacy-vocabulary';
 import type { VocabEntry } from './vocab-types';
 import { currentCatalog, setCurrentCatalog } from '@/lib/content/catalog-state';
 import type { ContentCatalog, ContentEntry } from '@/lib/content/types';

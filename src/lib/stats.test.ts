@@ -1,7 +1,7 @@
 // PHASE 16: `VOCABULARY` umfasst jetzt alle drei Sprachen. Was diese Datei
 // zusichert, gilt dem Thai-Grundstock aus Phase 2 - deshalb hier
 // ausdruecklich der. Unterhalb dieser Zeile hat sich nichts geaendert.
-import { VOCABULARY_TH as VOCABULARY } from '@/data/vocabulary';
+import { VOCABULARY_TH as VOCABULARY } from '@/test-fixtures/legacy-vocabulary';
 
 import { DAY_MS, NEW_CARDS_PER_SESSION } from './fsrs/fsrs';
 import { loadCardStatesForDirection, rateCard } from './repository';
@@ -223,14 +223,16 @@ describe('loadLearningStats', () => {
     const store = await freshStore();
     const stats = await loadLearningStats(store, T0);
 
-    expect(stats.totalCards).toBe(VOCABULARY.length * 2);
-    expect(stats.cardStates.new).toBe(VOCABULARY.length * 2);
+    // Thai hat seit dem Sprach-Umbau genau EINE Inhalts-Richtung (de_to_th);
+    // th_to_de ist das Deutsch-Ziel und zählt nicht mehr zu Thai.
+    expect(stats.totalCards).toBe(VOCABULARY.length);
+    expect(stats.cardStates.new).toBe(VOCABULARY.length);
     expect(stats.cardStates.mastered).toBe(0);
     // Neue Karten zaehlen zur Faelligkeit nur bis NEW_CARDS_PER_SESSION je
     // Richtung — sonst wuerde die Zahl eine Sitzung versprechen, die die
     // Zusammenstellung (siehe dueCards) gar nicht mehr liefert.
-    expect(stats.totalDue).toBe(NEW_CARDS_PER_SESSION * 2);
-    expect(stats.perDirection).toHaveLength(2);
+    expect(stats.totalDue).toBe(NEW_CARDS_PER_SESSION);
+    expect(stats.perDirection).toHaveLength(1);
   });
 
   it('meldet ehrlich, dass noch keine Historie existiert', async () => {
@@ -258,14 +260,14 @@ describe('loadLearningStats', () => {
 
   it('verschiebt bewertete Karten aus dem Zustand neu heraus', async () => {
     const store = await freshStore();
-    await ensureCardStates('th_to_de', store, T0);
-    const cards = await loadCardStatesForDirection('th_to_de', store);
+    await ensureCardStates('de_to_th', store, T0);
+    const cards = await loadCardStatesForDirection('de_to_th', store);
 
     await rateCard(cards[0], 3, store, T0);
     await rateCard(cards[1], 1, store, T0);
 
     const stats = await loadLearningStats(store, T0);
-    expect(stats.cardStates.new).toBe(VOCABULARY.length * 2 - 2);
+    expect(stats.cardStates.new).toBe(VOCABULARY.length - 2);
     expect(stats.cardStates.review).toBe(1);
     expect(stats.cardStates.learning).toBe(1);
   });
@@ -289,5 +291,51 @@ describe('loadLearningStats', () => {
     expect(stats.streak).toBe(30);
     // Das Diagrammfenster bleibt davon unberuehrt.
     expect(stats.days).toHaveLength(14);
+  });
+});
+
+describe('Fortschritt je Lernziel (Sprach-Umbau 23.09.2026)', () => {
+  it('ordnet Übungen ihrem Lernziel zu und nennt die schwächste Übung zuerst', async () => {
+    const store = await freshStore();
+    // Thai auf deutscher Oberfläche: Töne 1 von 3, Diktat 3 von 3.
+    for (const richtig of [true, false, false]) await recordDrill(richtig, T0, store, 'tone', 'de_to_th');
+    for (let i = 0; i < 3; i++) await recordDrill(true, T0, store, 'dictation', 'de_to_th');
+    // Anderes Lernziel und zu kleine Stichprobe zählen nicht mit.
+    for (let i = 0; i < 5; i++) await recordDrill(false, T0, store, 'tone', 'en_to_th');
+    await recordDrill(false, T0, store, 'toneRule', 'de_to_th');
+
+    const stats = await loadLearningStats(store, T0, 14, 'de_to_th');
+    expect(stats.weakAreas.map((area) => [area.art, area.correct, area.total])).toEqual([
+      ['tone', 1, 3],
+      ['dictation', 3, 3],
+    ]);
+    expect(stats.directionWindow).toEqual({ total: 7, correct: 4 });
+    // Die Tageszahl bleibt sprachübergreifend.
+    expect(stats.accuracyToday).toEqual({ total: 12, correct: 4 });
+  });
+
+  it('zeigt die Fälligkeiten der nächsten sieben Tage — Überfälliges zählt zu heute, Neues nicht', async () => {
+    const store = await freshStore();
+    await ensureCardStates('de_to_th', store, T0);
+    const cards = await loadCardStatesForDirection('de_to_th', store);
+    await store.put('cards', `${cards[0].vocabId}:de_to_th`, { ...cards[0], state: 'review', due: T0 - 3 * DAY_MS });
+    await store.put('cards', `${cards[1].vocabId}:de_to_th`, { ...cards[1], state: 'review', due: T0 + 2 * DAY_MS });
+
+    const stats = await loadLearningStats(store, T0, 14, 'de_to_th');
+    expect(stats.forecast).toHaveLength(7);
+    expect(stats.forecast[0]).toEqual({ date: dayKey(T0), due: 1 });
+    expect(stats.forecast[2].due).toBe(1);
+    expect(stats.forecast.reduce((sum, tag) => sum + tag.due, 0)).toBe(2);
+  });
+
+  it('rechnet Meilensteine über die ersten Wörter des Bestands', async () => {
+    const store = await freshStore();
+    await ensureCardStates('de_to_th', store, T0);
+    const cards = await loadCardStatesForDirection('de_to_th', store);
+    await rateCard(cards[0], 3, store, T0);
+
+    const stats = await loadLearningStats(store, T0, 14, 'de_to_th');
+    // 84 Test-Wörter: nur der erste Meilenstein (250) — er fasst den ganzen Bestand.
+    expect(stats.milestones).toEqual([{ size: 250, total: VOCABULARY.length, started: 1 }]);
   });
 });

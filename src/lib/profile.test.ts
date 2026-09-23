@@ -16,13 +16,13 @@ describe('Profil-Schreibzugriffe', () => {
     // (noch leeren) Stand und der letzte Write wirfe die Änderung des
     // ersten ersatzlos weg.
     await Promise.all([
-      setReviewSpot({ direction: 'th_to_de', mode: 'cards' }, store),
-      setConversationDirection('de_to_th', store),
+      setReviewSpot({ direction: 'de_to_th', mode: 'cards' }, store),
+      setConversationDirection('th_to_de', store),
     ]);
 
     const profile = await loadProfile(store);
-    expect(profile.review).toEqual({ direction: 'th_to_de', mode: 'cards' });
-    expect(profile.conversation).toBe('de_to_th');
+    expect(profile.review).toEqual({ direction: 'de_to_th', mode: 'cards' });
+    expect(profile.conversation).toBe('th_to_de');
   });
 
   it('nimmt auch drei Schreibzugriffe verschiedener Felder vollständig mit', async () => {
@@ -31,14 +31,16 @@ describe('Profil-Schreibzugriffe', () => {
 
     await Promise.all([
       setReviewSpot({ direction: 'de_to_en', mode: 'tone' }, store),
-      setReviewSpot({ direction: 'en_to_de', mode: 'cards' }, store),
+      // Seit dem Sprach-Umbau merkt sich das Profil JEDE Lernrichtung der
+      // Profilsprache — auch die einer anderen Oberfläche.
+      setReviewSpot({ direction: 'th_to_en', mode: 'cards' }, store),
       setConversationDirection('en_to_de', store),
     ]);
 
     const profile = await loadProfile(store);
     // Beim gemerkten Stand gewinnt der letzte Schreibzugriff — aber die
     // Richtung des Gespräch-Reiters überlebt ihn.
-    expect(profile.review).toEqual({ direction: 'en_to_de', mode: 'cards' });
+    expect(profile.review).toEqual({ direction: 'th_to_en', mode: 'cards' });
     expect(profile.conversation).toBe('en_to_de');
   });
 });

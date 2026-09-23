@@ -1,7 +1,8 @@
 import { MemoryDataStore } from '../storage';
 
 import { bewertungFuerErgebnis, vergleicheProduktion } from './compare';
-import { produktionsAufgaben, zielSprache } from './tasks';
+import { produktionsAufgaben } from './tasks';
+import { targetLanguageOf as zielSprache } from '../languages/types';
 
 const T0 = Date.UTC(2026, 8, 13, 10);
 
@@ -76,7 +77,8 @@ describe('produktionsAufgaben — Stoff je Richtung', () => {
   it('baut für Englisch Wortaufgaben aus dem schwächsten Bestand', async () => {
     const store = new MemoryDataStore();
     await store.init();
-    const aufgaben = await produktionsAufgaben({ direction: 'de_to_en', store, seed: 7 });
+    // Auf nicht-deutscher Oberfläche gibt es keine Satzaufträge (Satzbedeutungen nur auf Deutsch).
+    const aufgaben = await produktionsAufgaben({ direction: 'th_to_en', store, seed: 7 });
     expect(aufgaben.length).toBeGreaterThan(0);
     for (const aufgabe of aufgaben) {
       expect(aufgabe.art).toBe('wort');

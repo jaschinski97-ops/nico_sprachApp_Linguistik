@@ -2,7 +2,7 @@ import { VocabEntry } from '@/data/vocab-types';
 
 import { retrievability } from '../fsrs/fsrs';
 import { FSRSCardState } from '../fsrs/types';
-import { PairDirection, TargetLanguage } from '../languages/types';
+import { anchorOf, PairDirection, TargetLanguage } from '../languages/types';
 import type { UiLanguage } from '../i18n/types';
 import { ensureCardStates } from '../review-session';
 import { DataStore, getStore } from './../storage';
@@ -188,7 +188,8 @@ function weakness(card: FSRSCardState | undefined, now: number): number {
 export async function buildDrillSession(options: DrillSessionOptions): Promise<DrillSession> {
   const drill = options.drill;
   const direction = options.direction ?? directionForDrill(drill, options.language);
-  const anchor = options.anchor ?? 'de';
+  // Ohne ausdrücklichen Anker gilt die Ankerseite der Richtung.
+  const anchor = options.anchor ?? anchorOf(direction);
   const ui = options.uiLanguage ?? 'de';
   const now = options.now ?? Date.now();
   const size = options.size ?? DRILL_SESSION_SIZE;

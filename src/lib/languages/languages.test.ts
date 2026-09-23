@@ -1,4 +1,5 @@
-import { VOCABULARY, VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/data/vocabulary';
+import { FIXTURE_VOCABULARY } from '@/test-fixtures/fixture-catalog';
+import { VOCABULARY, VOCABULARY_EN, VOCABULARY_ES, VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 import { syllablesOf, uniformTone } from '@/data/vocab-helpers';
 
 import { drillsForDirection } from '../drills/types';
@@ -41,14 +42,13 @@ import {
  *    Merkmal, das nicht gebaut ist.
  */
 
-describe('Deutsch als Drehscheibe (AE-42)', () => {
-  it('hat in jeder Richtung Deutsch auf einer Seite', () => {
+describe('Inhalts-Richtungen (seit dem Sprach-Umbau 23.09.2026)', () => {
+  it('speichert jede Lernsprache unter genau einer Richtung — Deutsch unter th_to_de', () => {
     for (const language of LANGUAGE_CODES) {
-      const [toTarget, toHub] = directionsFor(language);
-      expect(toTarget).toBe(`de_to_${language}`);
-      expect(toHub).toBe(`${language}_to_de`);
-      expect(languageOfDirection(toTarget)).toBe(language);
-      expect(languageOfDirection(toHub)).toBe(language);
+      const [direction, ...rest] = directionsFor(language);
+      expect(rest).toEqual([]);
+      expect(direction).toBe(language === 'de' ? 'th_to_de' : `de_to_${language}`);
+      expect(languageOfDirection(direction)).toBe(language);
     }
     expect(HUB_LANGUAGE).toBe('de');
   });
@@ -56,7 +56,7 @@ describe('Deutsch als Drehscheibe (AE-42)', () => {
   it('lässt die bisherigen Richtungswerte wörtlich gültig', () => {
     // Der Grund, warum kein einziger Kartenschluessel angefasst werden musste.
     const alt: Direction[] = ['de_to_th', 'th_to_de'];
-    expect(directionsFor('th')).toEqual(alt);
+    expect(alt.map(languageOfDirection)).toEqual(['th', 'de']);
     expect(cardKey('sawatdii', 'de_to_th')).toBe('sawatdii:de_to_th');
   });
 
@@ -86,9 +86,10 @@ describe('Deutsch als Drehscheibe (AE-42)', () => {
 });
 
 describe('Das Verzeichnis', () => {
-  it('führt drei Sprachen, seit Phase 16 alle mit Inhalten', () => {
-    expect(LANGUAGE_CODES).toHaveLength(3);
+  it('führt vier Lernsprachen — Deutsch gleichberechtigt —, alle mit Inhalten', () => {
+    expect(LANGUAGE_CODES).toEqual(['th', 'en', 'es', 'de']);
     expect(languagesWithContent().map((language) => language.code).sort()).toEqual([
+      'de',
       'en',
       'es',
       'th',
@@ -117,7 +118,7 @@ describe('Das Verzeichnis', () => {
     for (const code of LANGUAGE_CODES) {
       const feature = LANGUAGES[code].feature;
       expect(feature.source).toBeTruthy();
-      expect(feature.source!.retrieved).toBe('2026-09-03');
+      expect(feature.source!.retrieved).toMatch(/^2026-09-\d\d$/);
       expect(feature.source!.url).toContain('wikipedia.org');
       // Das Zitat traegt die Entscheidung - eine Behauptung ohne Beleg waere
       // genau das, was seit Phase 2 nicht vorkommen soll.
@@ -187,8 +188,8 @@ describe('Das Merkmal als einhängbarer Baustein (Pflicht 3)', () => {
   });
 
   it('hängt die deutschen Übungen (Grammatik + Lesen) an jedes „X → Deutsch"', () => {
-    for (const code of LANGUAGE_CODES) {
-      expect(drillsForDirection(`${code}_to_de`)).toEqual(['article', 'verbForms', 'deutschLesen']);
+    for (const code of LANGUAGE_CODES.filter((sprache) => sprache !== 'de')) {
+      expect(drillsForDirection(`${code}_to_de` as const)).toEqual(['article', 'verbForms', 'deutschLesen']);
     }
   });
 
@@ -238,10 +239,10 @@ describe('Migration eines vorhandenen Speichers (AE-43)', () => {
     const ergebnis = await migrateStore(store);
 
     expect(ergebnis).toMatchObject({ from: 1, to: CURRENT_SCHEMA_VERSION, migrated: true });
-    expect(ergebnis.reseeded).toBe(VOCABULARY.length);
+    expect(ergebnis.reseeded).toBe(FIXTURE_VOCABULARY.length);
 
     const entries = await loadVocabulary(store);
-    expect(entries).toHaveLength(VOCABULARY.length);
+    expect(entries).toHaveLength(FIXTURE_VOCABULARY.length);
     for (const entry of entries) {
       expect(entry.term).toBeTruthy();
       expect(LANGUAGE_CODES).toContain(entry.language);

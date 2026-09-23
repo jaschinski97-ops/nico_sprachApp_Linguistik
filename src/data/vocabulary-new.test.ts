@@ -1,4 +1,5 @@
 import { planClips } from '@/lib/clips/plan';
+import { activeVocabularyFor } from './active-vocabulary';
 import { drillsForDirection } from '@/lib/drills/types';
 import { canHaveImage, planImages } from '@/lib/images/plan';
 import { LANGUAGE_CODES } from '@/lib/languages/types';
@@ -6,12 +7,11 @@ import { LANGUAGE_CODES } from '@/lib/languages/types';
 import { PartOfSpeech } from './vocab-types';
 import {
   findVocab,
-  vocabularyFor,
   VOCABULARY,
   VOCABULARY_EN,
   VOCABULARY_ES,
   VOCABULARY_TH,
-} from './vocabulary';
+} from '@/test-fixtures/legacy-vocabulary';
 
 /**
  * Die beiden neuen Grundstöcke (Phase 16).
@@ -231,8 +231,8 @@ describe('Schema-Stichproben über die Sprachgrenzen (Runde 2)', () => {
 
 describe('Die bestehenden Übungstypen greifen (Pflicht 4)', () => {
   it('gibt jedem „X → Deutsch" die deutschen Grammatikübungen', () => {
-    for (const code of LANGUAGE_CODES) {
-      expect(drillsForDirection(`${code}_to_de`)).toEqual(['article', 'verbForms', 'deutschLesen']);
+    for (const code of LANGUAGE_CODES.filter((sprache) => sprache !== 'de')) {
+      expect(drillsForDirection(`${code}_to_de` as const)).toEqual(['article', 'verbForms', 'deutschLesen']);
     }
   });
 
@@ -301,14 +301,14 @@ describe('Bilder und Clips für die neuen Sprachen (Phase 18)', () => {
     for (const language of LANGUAGE_CODES) {
       const specs = planImages({ language });
       expect(specs.length).toBeGreaterThan(0);
-      const ids = new Set(vocabularyFor(language).map((entry) => entry.id));
+      const ids = new Set(activeVocabularyFor(language).map((entry) => entry.id));
       for (const spec of specs) expect(ids.has(spec.vocabId)).toBe(true);
     }
   });
 
   it('plant für jede Sprache Hörclips in ihrer eigenen Sprache', () => {
     for (const language of LANGUAGE_CODES) {
-      const specs = planClips({ vocabulary: vocabularyFor(language) });
+      const specs = planClips({ vocabulary: activeVocabularyFor(language) });
       expect(specs.length).toBeGreaterThan(0);
       for (const spec of specs) expect(spec.language).toBe(language);
     }

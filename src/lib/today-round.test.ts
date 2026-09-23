@@ -122,14 +122,20 @@ describe('schwaecheAusLog — das Tagesprotokoll wird zu Bereichsquoten', () => 
 });
 
 describe('bereichVerfuegbar — Stoff je Sprache', () => {
-  it('hat Satzstoff nur, wo geprüfte Sätze liegen', () => {
+  it('hat Satzstoff, wo Beispielsätze mit deutscher Bedeutung liegen', () => {
     expect(bereichVerfuegbar('de_to_th', 'satz')).toBe(true);
-    expect(bereichVerfuegbar('de_to_en', 'satz')).toBe(false);
+    expect(bereichVerfuegbar('de_to_en', 'satz')).toBe(true);
+    // Satzbedeutungen gibt es nur auf Deutsch — andere Oberflächen überspringen ehrlich.
+    expect(bereichVerfuegbar('en_to_th', 'satz')).toBe(false);
   });
 
-  it('hat Diktatstoff über die Diktat-Konfiguration', () => {
-    expect(bereichVerfuegbar('de_to_es', 'diktat')).toBe(false);
+  it('hat Diktatstoff, wo es Sätze gibt, und eine Hörübung laut Sprachdefinition', () => {
     expect(bereichVerfuegbar('de_to_th', 'diktat')).toBe(true);
+    // Die deutschen Test-Wörter tragen keine Beispielsätze.
+    expect(bereichVerfuegbar('th_to_de', 'diktat')).toBe(false);
+    expect(bereichVerfuegbar('de_to_th', 'hoeren')).toBe(true);
+    // Deutsch hat keine eigene Wort-Hörübung.
+    expect(bereichVerfuegbar('th_to_de', 'hoeren')).toBe(false);
   });
 });
 

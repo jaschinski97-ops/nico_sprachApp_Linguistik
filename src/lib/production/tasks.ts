@@ -4,7 +4,7 @@ import { SENTENCE_TASKS_BY_LANGUAGE } from '@/data/sentence-tasks';
 
 import { retrievability } from '../fsrs/fsrs';
 import { type FSRSCardState } from '../fsrs/types';
-import { type PairDirection, pairLanguageOf, anchorOf } from '../languages/types';
+import { type PairDirection, targetLanguageOf, anchorOf } from '../languages/types';
 import { bridgeText } from '../languages/bridge';
 import { ensureCardStates } from '../review-session';
 import { seededRandom, shuffled } from '../drills/random';
@@ -46,47 +46,35 @@ export type ProduktionsAufgabe = {
   roman?: string;
 };
 
-export function zielSprache(direction: PairDirection): 'th' | 'en' | 'es' | 'de' {
-  return direction.endsWith('_to_de') ? 'de' : pairLanguageOf(direction);
-}
-
 function wortAufgaben(
   entries: VocabEntry[],
   cards: FSRSCardState[],
   anzahl: number,
   random: ReturnType<typeof seededRandom>,
-  produziertDeutsch: boolean,
   source: UiLanguage
 ): ProduktionsAufgabe[] {
   const byVocabId = new Map(cards.map((card) => [card.vocabId, card]));
   const schwaeche = (card: FSRSCardState | undefined): number =>
     card ? retrievability(card, Date.now()) : 0;
-  const ranked = entries.filter(entry => !produziertDeutsch || String(entry.language) !== 'de' || entry.translations?.[source]).sort(
+  // Die Bedeutung in der ANKERSPRACHE — seit dem Sprach-Umbau für jede
+  // Zielsprache derselbe Weg (vorher ein eigener Deutsch-Zweig). Ohne echte
+  // Übersetzung (Rückfall auf dieselbe Form) gäbe es keinen ehrlichen Auftrag.
+  const mitAuftrag = entries.filter((entry) => {
+    const bedeutung = bridgeText(entry, source).text.trim();
+    return bedeutung.length > 0 && bedeutung !== entry.term;
+  });
+  const ranked = mitAuftrag.sort(
     (a, b) => schwaeche(byVocabId.get(a.id)) - schwaeche(byVocabId.get(b.id))
   );
   const fenster = ranked.slice(0, Math.max(anzahl, anzahl * FENSTER));
-  return shuffled(fenster, random).slice(0, anzahl).map((entry) =>
-    produziertDeutsch
-      ? {
-          id: `produktion-wort-${entry.id}`,
-          vocabId: entry.id,
-          art: 'wort' as const,
-          bedeutung: String(entry.language) === 'de' ? entry.translations![source]! : `${entry.term} · ${entry.romanization}`,
-          ziel: entry.german,
-        }
-      : {
-          id: `produktion-wort-${entry.id}`,
-          vocabId: entry.id,
-          art: 'wort' as const,
-          // Die Bedeutung in der ANKERSPRACHE (21.09.2026): Vorher stand hier
-          // stur `entry.german` — auf der englischen Oberfläche hieß es „Sag
-          // es auf Spanisch: wut" statt „anger". `bridgeText` fällt ehrlich
-          // auf Deutsch zurück, wo der Eintrag keine Übersetzung trägt.
-          bedeutung: bridgeText(entry, source).text,
-          ziel: entry.term,
-          roman: entry.romanization || undefined,
-        }
-  );
+  return shuffled(fenster, random).slice(0, anzahl).map((entry) => ({
+    id: `produktion-wort-${entry.id}`,
+    vocabId: entry.id,
+    art: 'wort' as const,
+    bedeutung: bridgeText(entry, source).text,
+    ziel: entry.term,
+    roman: entry.romanization && entry.romanization !== entry.term ? entry.romanization : undefined,
+  }));
 }
 
 export async function produktionsAufgaben(options: {
@@ -97,14 +85,13 @@ export async function produktionsAufgaben(options: {
 }): Promise<ProduktionsAufgabe[]> {
   const anzahl = options.anzahl ?? PRODUKTION_ANZAHL;
   const random = seededRandom(options.seed ?? Date.now());
-  const sprache = pairLanguageOf(options.direction);
-  const produziertDeutsch = options.direction.endsWith('_to_de');
+  const sprache = targetLanguageOf(options.direction);
 
   // Sätze zuerst — wo geprüfte Sätze liegen, werden sie gebildet. Der
   // Satzbestand trägt seine Bedeutungen NUR auf Deutsch (`exampleGerman`) —
   // auf anderen Brücken gäbe es keinen ehrlichen Auftragsatz, dort springt
   // die Wort-Ebene ein (21.09.2026, Nutzerbefund en-UI: deutsche Aufträge).
-  if (!produziertDeutsch && anchorOf(options.direction) === 'de') {
+  if (anchorOf(options.direction) === 'de') {
     const saetze = SENTENCE_TASKS_BY_LANGUAGE[sprache] ?? [];
     if (saetze.length >= Math.min(anzahl, 4)) {
       return shuffled([...saetze], random)
@@ -122,5 +109,5 @@ export async function produktionsAufgaben(options: {
 
   // Wörter: schwächste zuerst, aus einem Fenster gezogen.
   const { entries, cards } = await ensureCardStates(options.direction, options.store, Date.now());
-  return wortAufgaben(entries, cards, anzahl, random, produziertDeutsch, options.direction.split('_to_')[0] as UiLanguage);
+  return wortAufgaben(entries, cards, anzahl, random, anchorOf(options.direction));
 }

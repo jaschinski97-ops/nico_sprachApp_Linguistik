@@ -8,7 +8,7 @@
  */
 
 import { Tone, TONE_KEYS, TONES } from '@/constants/tones';
-import { VocabEntry } from '@/data/vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
 
 import { matchesTone, matchesToneShape, ToneContourMeasurement } from './analysis';
 

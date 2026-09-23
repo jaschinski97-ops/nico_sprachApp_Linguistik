@@ -1,4 +1,6 @@
 import { SpeechLanguage } from '../audio';
+import { LEARNING_LANGUAGES } from '../languages/definitions';
+import { isLanguageCode } from '../languages/types';
 
 import { BlobStore, BlobStoreConfig, extensionOf } from '../blobs/types';
 import { AudioFormat, ProviderId } from '../providers/types';
@@ -136,7 +138,7 @@ export function normalizeClipText(text: string): string {
  */
 export function clipKeyText(language: ClipLanguage, text: string): string {
   const collapsed = normalizeClipText(text);
-  return language === 'th' ? collapsed.replace(/\s/g, '') : collapsed;
+  return LEARNING_LANGUAGES[language].script === 'thai' ? collapsed.replace(/\s/g, '') : collapsed;
 }
 
 /**
@@ -172,7 +174,7 @@ export function isValidAudioClip(value: unknown): value is AudioClip {
   return (
     typeof c.id === 'string' &&
     c.id !== '' &&
-    (c.language === 'th' || c.language === 'de' || c.language === 'en' || c.language === 'es') &&
+    isLanguageCode(c.language) &&
     typeof c.text === 'string' &&
     isAudioFormat(c.format) &&
     typeof c.blobKey === 'string' &&

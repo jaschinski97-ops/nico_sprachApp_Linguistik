@@ -28,7 +28,8 @@ import {
 
 describe('Die Paarmatrix', () => {
   it('führt genau 12 Paare — 4 Zielsprachen, keine Selbstpaare', () => {
-    expect(SUPPORTED_TARGETS).toEqual(['de', 'en', 'es', 'th']);
+    // Seit dem Sprach-Umbau dieselbe Liste wie LANGUAGE_CODES (Reihenfolge der App).
+    expect(SUPPORTED_TARGETS).toEqual(['th', 'en', 'es', 'de']);
     expect(PAIRS).toHaveLength(4 * 3);
     for (const pair of PAIRS) {
       expect(pair.source).not.toBe(pair.target);
@@ -68,9 +69,9 @@ describe('Die Paarmatrix', () => {
     }
     // Deutsch als Brücke: die drei klassischen Richtungen.
     expect(pairsFor('de').map(pairId)).toEqual([
+      'de_to_th',
       'de_to_en',
       'de_to_es',
-      'de_to_th',
     ]);
   });
 });

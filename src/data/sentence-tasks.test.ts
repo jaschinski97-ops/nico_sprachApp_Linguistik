@@ -1,10 +1,10 @@
 import { setCurrentCatalog } from '@/lib/content/catalog-state';
+import { FIXTURE_CATALOG } from '@/test-fixtures/fixture-catalog';
 import type { VocabEntry } from './vocab-types';
 
 import {
   buildSentenceTasks,
   sentenceFootnote,
-  SENTENCE_AUDIO_NOTICE,
   SENTENCE_TASKS_BY_LANGUAGE,
 } from './sentence-tasks';
 
@@ -109,7 +109,7 @@ describe('SENTENCE_TASKS_BY_LANGUAGE im generierten Modus', () => {
     setCurrentCatalog(generierterKatalog() as never);
   });
   afterEach(() => {
-    setCurrentCatalog({ version: 1, entries: [] } as never);
+    setCurrentCatalog(FIXTURE_CATALOG);
   });
 
   it('alle vier Sprachen liefern ihren Beispielsatz — auch Deutsch', () => {
@@ -122,7 +122,7 @@ describe('SENTENCE_TASKS_BY_LANGUAGE im generierten Modus', () => {
   it('der Fußtext zählt den echten Bestand und nennt die KI-Herkunft', () => {
     const text = sentenceFootnote('en');
     expect(text).toContain('Bestand: 1');
-    expect(text).not.toContain(SENTENCE_AUDIO_NOTICE);
+    expect(text).toContain('KI-erzeugte');
   });
 
   it('eine Sprache ohne Beispielsätze bleibt ehrlich leer', () => {
@@ -132,10 +132,10 @@ describe('SENTENCE_TASKS_BY_LANGUAGE im generierten Modus', () => {
   });
 });
 
-describe('sentenceFootnote im Legacy-Modus', () => {
-  it('erbt die statischen Grundstock-Texte (leerer Katalog, wie im Jest-Setup)', () => {
-    // Das Setup stellt den leeren Katalog: vocabularySource fehlt → Legacy.
-    expect(sentenceFootnote('th')).toContain('Satzlesarten');
+describe('sentenceFootnote ohne Satzstoff', () => {
+  it('sagt ehrlich, dass es keine Beispielsätze gibt', () => {
+    setCurrentCatalog({ version: 2, vocabularySource: 'generated', entries: [] } as never);
+    expect(sentenceFootnote('th')).toContain('keine Beispielsätze');
     expect(sentenceFootnote('de')).not.toContain('KI-Stimme');
   });
 });

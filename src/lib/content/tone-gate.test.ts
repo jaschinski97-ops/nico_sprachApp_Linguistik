@@ -1,4 +1,4 @@
-import { VOCABULARY } from '@/data/vocabulary';
+import { VOCABULARY } from '@/test-fixtures/legacy-vocabulary';
 import type { Tone } from '@/constants/tones';
 import {
   beurteileRegisterProbe,

@@ -4,7 +4,7 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer';
 import { ReadingTextsRunner } from './reading-texts-runner';
 import { type ConversationSituation } from '@/lib/conversation/types';
 import { dictionaries, type TranslationKey } from '@/lib/i18n';
-import { VOCABULARY_TH } from '@/data/vocabulary';
+import { VOCABULARY_TH } from '@/test-fixtures/legacy-vocabulary';
 // Diese UI-Tests wählen Deutsch ausdrücklich; der Produkt-Default bleibt Englisch.
 jest.mock('@/lib/i18n', () => {
   const actual = jest.requireActual('@/lib/i18n') as typeof import('@/lib/i18n');

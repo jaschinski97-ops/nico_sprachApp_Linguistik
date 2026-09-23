@@ -1,34 +1,25 @@
 import { VocabEntry } from '@/data/vocab-types';
 import { activeVocabulary } from '@/data/active-vocabulary';
 
-import { anchorOf, HUB_LANGUAGE, languageOfDirection } from '../languages/types';
-
-import { Direction } from '../fsrs/types';
+import { anchorOf, type PairDirection, targetLanguageOf } from '../languages/types';
 
 import { WritingLanguage } from './compare';
 
 /**
  * Was bei der freien Eingabe gefragt wird — und was als Antwort zählt.
  *
- * BEIDE RICHTUNGEN, mit je eigener Hürde:
+ * JEDE RICHTUNG `anker_to_ziel`: Das Wort der Ankersprache steht da, die
+ * Zielform ist zu schreiben — Thai in Thai-Schrift mit Tonzeichen (AE-39),
+ * Deutsch mit Artikel (Genus ist der eigentliche Stolperstein).
  *
- *   `th_to_de` — Thai steht da, die deutsche Form ist zu schreiben. Der
- *     Artikel gehört dazu: Genus ist laut Phase 2 der eigentliche
- *     Stolperstein für Thai-Muttersprachler, und ihn wegzulassen hieße, die
- *     Aufgabe an der interessanten Stelle abzuschneiden.
- *
- *   `de_to_th` — die deutsche Form steht da, das thailändische Wort ist zu
- *     schreiben, in Thai-Schrift und mit Tonzeichen. Zur Eingabe siehe AE-39.
- *
- * KEINE ERFUNDENEN ZIELFORMEN: Beide Seiten stehen wortwörtlich im
- * quellengeprüften Grundstock aus Phase 2. Dieses Modul schneidet nur weg,
- * was niemand tippen soll.
+ * KEINE ERFUNDENEN ZIELFORMEN: Beide Seiten stehen wortwörtlich im Bestand.
+ * Dieses Modul schneidet nur weg, was niemand tippen soll.
  */
 
 export type WritingPrompt = {
   id: string;
   vocabId: string;
-  direction: Direction;
+  direction: PairDirection;
   /** Sprache der **Antwort** — bestimmt Toleranz und Eingabehilfe. */
   language: WritingLanguage;
   /** Was sichtbar ist. */
@@ -87,118 +78,73 @@ function extrasFor(entry: VocabEntry): string[] {
 }
 
 /**
- * Schreibt die lernende Person in dieser Richtung Deutsch?
- *
- * SEIT PHASE 16 AUS DER FORM DER RICHTUNG STATT AUS EINEM LITERAL. Vorher
- * stand hier `direction === 'th_to_de'`, und eine spanische Schreibaufgabe
- * waere in beiden Richtungen als „Zielsprache tippen" gelaufen.
+ * Seit dem Sprach-Umbau EIN Weg für jede Richtung: gezeigt wird das Wort der
+ * ANKERsprache (`translations[anker]`), getippt wird die Zielform (`term`).
+ * Deutsch als Ziel nimmt zusätzlich die Form mit Artikel an. Vorher gab es
+ * dafür einen eigenen `_to_de`-Zweig, und nicht-deutsche Oberflächen hatten
+ * gar keine Schreibübung.
  */
-function writesGerman(direction: Direction): boolean {
-  return direction.endsWith(`_to_${HUB_LANGUAGE}`);
+export function canBuildWritingPrompt(entry: VocabEntry, direction: PairDirection): boolean {
+  return zielFormen(entry).length > 0 && ankerwortFuer(entry, direction).length > 0;
 }
 
-/**
- * Taugt der Eintrag für eine Schreibaufgabe in dieser Richtung?
- *
- * Ausgeschlossen wird nur, was keine tippbare Zielform hätte — etwa ein
- * Stichwort, das nach dem Entfernen der Klammer leer wäre.
- */
-export function canBuildWritingPrompt(entry: VocabEntry, direction: Direction): boolean {
-  if (writesGerman(direction)) {
-    // Der generierte de-Pool trägt `german === term` — genau die tippbare
-    // Zielform. Ein leerer Anker (keine Übersetzung in der Brückensprache)
-    // disqualifiziert: Die Aufgabe wäre unlesbar.
-    return germanTargets(entry).length > 0 && ankerwortFuer(entry, direction).length > 0;
-  }
-  return Boolean(entry.term.trim());
+/** Die tippbaren Zielformen: der Eintrag, bei Aufzählungen jede Form einzeln. */
+function zielFormen(entry: VocabEntry): string[] {
+  return entry.term.split(',').map((part) => typeableGerman(part)).filter(Boolean);
 }
 
-/**
- * Das ANKERWORT einer Deutsch-Schreibaufgabe (21.09.2026): Was die lernende
- * Person sieht, muss in der Sprache sein, die sie schon spricht. Im
- * Alt-Bestand (th-Einträge mit `german`) ist das `entry.term` selbst; im
- * generierten de-Pool steht der Anker in `translations[anchor]` — vorher
- * stand hier stur `entry.term`, was für den generierten de-Pool das deutsche
- * Wort selbst war (Auftrag = Lösung) und für en_to_de gar nicht erst bis
- * hierher kam, weil die Kandidaten-Filterung bereits leer griff.
- */
-function ankerwortFuer(entry: VocabEntry, direction: Direction): string {
+function ankerwortFuer(entry: VocabEntry, direction: PairDirection): string {
   const anchor = anchorOf(direction);
   if (String(entry.language) === anchor) return entry.term;
-  return (entry.translations?.[anchor] ?? '').trim();
+  const uebersetzt = (entry.translations?.[anchor] ?? '').trim();
+  if (uebersetzt) return uebersetzt;
+  // Älterer Bestand ohne Übersetzungen trägt nur die deutsche Bedeutung.
+  return anchor === 'de' ? typeableGerman(entry.german.split(',')[0] ?? '') : '';
 }
 
-function mitArtikel(zielFormen: string[], entry: VocabEntry): string[] {
+/**
+ * Der generierte de-Pool trägt den Artikel NICHT im `term`, der Auftrag
+ * verlangt ihn aber (sichtbar in der Lösung) — deshalb zählt die Form mit
+ * UND ohne Artikel.
+ */
+function mitArtikel(formen: string[], entry: VocabEntry): string[] {
   const noun = entry.germanNoun;
-  if (!noun) return zielFormen;
-  const erweitert = zielFormen.flatMap((form) =>
+  if (!noun) return formen;
+  const erweitert = formen.flatMap((form) =>
     form.toLowerCase().startsWith(`${noun.article} `) ? [form] : [form, `${noun.article} ${form}`]
   );
   return [...new Set(erweitert)];
 }
 
-export function buildWritingPrompt(entry: VocabEntry, direction: Direction): WritingPrompt {
+export function buildWritingPrompt(entry: VocabEntry, direction: PairDirection): WritingPrompt {
   if (!canBuildWritingPrompt(entry, direction)) {
     throw new Error(`"${entry.id}" hat in Richtung ${direction} keine tippbare Zielform.`);
   }
-
-  if (writesGerman(direction)) {
-    const ankerwort = ankerwortFuer(entry, direction);
-    const umschrift = entry.romanization && entry.romanization !== ankerwort ? entry.romanization : null;
-    return {
-      id: `writing:${direction}:${entry.id}`,
-      vocabId: entry.id,
-      direction,
-      language: 'de',
-      shown: ankerwort,
-      // Die Lesehilfe nur, wenn sie etwas Neues sagt: Beim generierten
-      // de-Pool gibt es keine eigene Umschrift — dann keine Zeile.
-      shownHint: umschrift,
-      // Mit UND ohne Artikel als gültige Form: Der Prompt nennt den Artikel
-      // („con artículo, si lo hay"), der generierte de-Pool trägt ihn aber
-      // nicht im Stichwort — „der Eimer" gegen Lösung „Eimer" war sonst
-      // stets falsch (en-UI-Befund 21.09.).
-      targets: mitArtikel(germanTargets(entry), entry),
-      solution: entry.german,
-      extras: extrasFor(entry),
-    };
-  }
+  const language = targetLanguageOf(direction);
+  const artikel = language === 'de' && entry.germanNoun ? `${entry.germanNoun.article} ` : '';
+  const loesung = `${artikel}${entry.term}`;
+  const umschrift = entry.romanization && entry.romanization !== entry.term ? entry.romanization : null;
 
   return {
     id: `writing:${direction}:${entry.id}`,
     vocabId: entry.id,
     direction,
-    // `languageOfDirection` bleibt auf dem Bestandstyp `Direction` und
-    // liefert deshalb nur die drei ausgelieferten Sprachen — der Wert passt
-    // ohne Cast in die Schreib-Schicht. Ein französisches Schreibziel ist
-    // heute unerreichbar: es gibt keinen ausgelieferten französischen
-    // Grundstoff (delivered: false), damit keine Kandidaten und keine
-    // Prompts.
-    language: languageOfDirection(direction),
-    shown: typeableGerman(entry.german.split(',')[0]),
-    shownHint: entry.german.includes(',') ? entry.german : null,
-    targets: [entry.term],
-    solution: `${entry.term} · ${entry.romanization}`,
+    language,
+    shown: ankerwortFuer(entry, direction),
+    shownHint: null,
+    targets: language === 'de' ? mitArtikel(zielFormen(entry), entry) : zielFormen(entry),
+    solution: umschrift ? `${loesung} · ${umschrift}` : loesung,
     extras: extrasFor(entry),
   };
 }
 
+/** Alle Einträge der Zielsprache, zu denen es einen Auftrag in der Ankersprache gibt. */
 export function writingCandidates(
-  direction: Direction,
+  direction: PairDirection,
   entries: VocabEntry[] = activeVocabulary()
 ): VocabEntry[] {
-  // Auch hier gilt der Filter aus Phase 16: Ein spanisches Wort in einer
-  // Thai-Schreibsitzung waere ein Fehler, kein Zufallsfund. Bei _to_de
-  // entscheidet KEIN Sprachcode mehr, welcher Eintrag drin ist — der Pool
-  // der Richtung ist es (Alt-Bestand: X-Einträge mit `german`, generierter
-  // de-Pool: `language: 'de'`); `canBuildWritingPrompt` verlangt in beiden
-  // Welten Zielform UND lesbares Ankerwort. Vorher filterte en_to_de nach
-  // 'en' und griff im de-Pool leer (Writing leer beim Deutsch-Ziel,
-  // Nutzerbefund 21.09.).
-  const sprache = writesGerman(direction) ? null : languageOfDirection(direction);
+  const sprache = targetLanguageOf(direction);
   return entries.filter(
-    (entry) =>
-      (sprache === null || entry.language === sprache) &&
-      canBuildWritingPrompt(entry, direction)
+    (entry) => String(entry.language) === sprache && canBuildWritingPrompt(entry, direction)
   );
 }

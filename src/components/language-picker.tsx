@@ -6,7 +6,7 @@ import { ThemedView } from './themed-view';
 import { Spacing } from '@/constants/theme';
 import { TONE_KEYS } from '@/constants/tones';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
-import { TranslationKey, useLocale } from '@/lib/i18n';
+import { useLocale } from '@/lib/i18n';
 import {
   goalEndonym,
   goalLanguage,
@@ -14,6 +14,7 @@ import {
   zieleFuerBruecke,
   type Lernziel,
 } from '@/lib/languages/goals';
+import { learningLanguage } from '@/lib/languages/definitions';
 import { languageOf } from '@/lib/languages/registry';
 import {
   LanguageCode,
@@ -21,20 +22,6 @@ import {
 } from '@/lib/languages/types';
 import { DirectionSummary } from '@/lib/review-session';
 
-/**
- * Das Sprachmerkmal als Übersetzungsschlüssel (Registry bleibt unangetastet).
- * Bewusst als lockere Tabelle mit Vorgabe: Der Sprachkanon wächst gerade
- * (Roadmap v2), und ein Code ohne Eintrag fällt zur Aussprache-Merkhilfe zurück.
- */
-const FEATURE_KEYS: Record<string, TranslationKey> = {
-  th: 'feature.tones',
-  es: 'feature.stress',
-  en: 'feature.pronunciation',
-};
-
-function featureKey(code: LanguageCode): TranslationKey {
-  return FEATURE_KEYS[code] ?? 'feature.pronunciation';
-}
 
 /**
  * Die Auswahl als LERNZIELE statt als Richtungen (Nutzerentscheidung
@@ -133,8 +120,8 @@ export function LanguagePicker({
                   ziel.vonSprache !== undefined
                     ? t('goal.fromSource', { language: languageName(ziel.vonSprache) })
                     : null,
-                  gelehrteSprache !== 'de' ? t(languageOf(gelehrteSprache).challenge) : null,
-                  gelehrteSprache !== 'de' ? t(featureKey(gelehrteSprache)) : null,
+                  t(languageOf(gelehrteSprache).challenge),
+                  t(languageOf(gelehrteSprache).feature.label),
                 ]
                   .filter((part): part is string => part !== null)
                   .join(' — ')
@@ -160,7 +147,7 @@ export function LanguagePicker({
                   hängt an der hervorgebrachten Sprache, nicht an der Paar-
                   Sprache: th_to_de produziert Deutsch, also keine Punkte;
                   en_to_th produziert Thai, also Punkte. */}
-              {gelehrteSprache === 'th' ? (
+              {learningLanguage(gelehrteSprache).legend === 'tones' ? (
                 <View
                   style={styles.dots}
                   accessibilityElementsHidden

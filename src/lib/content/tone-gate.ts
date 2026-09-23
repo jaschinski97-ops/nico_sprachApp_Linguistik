@@ -1,4 +1,4 @@
-import { VOCABULARY } from '@/data/vocabulary';
+import { activeVocabulary } from '@/data/active-vocabulary';
 import type { AudioClip } from '../clips/types';
 import { normalizeClipText } from '../clips/types';
 import {
@@ -439,7 +439,7 @@ export function checkThaiTone(
   const track = optionen?.track
     ? measurement.frames.map((frame) => ({ seconds: frame.t, hz: frame.f0, correlation: frame.correlation ?? 0 }))
     : undefined;
-  const soll = sollToneFuerClip(clip, kontext?.woerter ?? VOCABULARY);
+  const soll = sollToneFuerClip(clip, kontext?.woerter ?? activeVocabulary());
   if (!soll) {
     const grund =
       clip.kind === 'vocab'

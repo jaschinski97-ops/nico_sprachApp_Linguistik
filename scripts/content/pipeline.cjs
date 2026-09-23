@@ -10,9 +10,10 @@ const { isValidSituation } = domain.load('src/lib/conversation/types');
 const { isValidVocabEntry, pruefeVocabDoc } = domain.load('src/lib/content/vocab-schema');
 const { isValidExamModule } = domain.load('src/lib/exam/types');
 const { isValidAudioClip, clipIdFor } = domain.load('src/lib/clips/types');
-const { VOCABULARY } = domain.load('src/data/vocabulary');
 const { checkThaiTone, TONE_GATE_LIMITS, TONE_GATE_VERSION } = domain.load('src/lib/content/tone-gate');
 const { isDeliverableEntry } = domain.load('src/lib/content/audio-policy');
+// Die EINE Lernsprachen-Liste der App (src/lib/languages/types.ts).
+const { LANGUAGE_CODES } = domain.load('src/lib/languages/types');
 const { decodeAudio, decodeImage } = require('./media.cjs');
 const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
 
@@ -55,7 +56,7 @@ async function atomicFile(file, bytes) {
 async function atomicJson(file, value) {
   await atomicFile(file, JSON.stringify(value, null, 2) + '\n');
 }
-function assertDocument(kind, doc, vocabulary = VOCABULARY) {
+function assertDocument(kind, doc, vocabulary = []) {
   if (!KINDS.includes(kind) || !doc || !/^[a-zA-Z0-9_-]{1,180}$/.test(doc.id)) throw Error('Ungültige Inhaltsart oder ID.');
   const valid = kind === 'situations' ? isValidSituation(doc) && ['A1','A2'].includes(doc.level) && ['greeting','market','restaurant','travel'].includes(doc.topic) && Number.isFinite(doc.generatedAt) && typeof doc.modelUsed === 'string' :
     kind === 'exam' ? isValidExamModule(doc) && doc.source === 'generated' :
@@ -85,8 +86,14 @@ async function compressAudio(input, output) {
     '-c:a','libmp3lame','-b:a','64k', output], { windowsHide: true, timeout: 120000, maxBuffer: 1024 * 1024 });
 }
 class ContentPipeline {
-  constructor(root) {
+  /**
+   * `extraVocabulary`: zusätzliche, NICHT im Katalog stehende Wörter, auf die
+   * sich Clips/Bilder beziehen dürfen — nur für Tests mit festen
+   * Fixture-Wörtern. Der Betrieb kennt ausschließlich den Katalog-Wortschatz.
+   */
+  constructor(root, { extraVocabulary = [] } = {}) {
     this.root = root;
+    this.extraVocabulary = extraVocabulary;
     this.work = path.join(root, '.content-studio');
     this.stageFile = path.join(this.work, 'stage.json');
     this.catalogFile = path.join(root, 'src/content/catalog.json');
@@ -208,10 +215,10 @@ class ContentPipeline {
    */
   async clearGenerated({ preview = false, kind, languages, includeBase = false } = {}) {
     if (kind !== undefined && !['vocabulary', 'situations', 'images', 'audio'].includes(kind)) throw Error('Ungültige Löschart.');
-    if (languages !== undefined && (!Array.isArray(languages) || !languages.length || languages.some(lang => !['th','en','es','de'].includes(lang)))) throw Error('Ungültige Sprachauswahl.');
+    if (languages !== undefined && (!Array.isArray(languages) || !languages.length || languages.some(lang => !LANGUAGE_CODES.includes(lang)))) throw Error('Ungültige Sprachauswahl.');
     const shipped = await this.catalog();
     const stageState = await readJson(this.stageFile, { version: 2, entries: [] });
-    const vocab = [...VOCABULARY, ...[...shipped.entries, ...stageState.entries].filter(e => e.kind === 'vocabulary').map(e => e.document)];
+    const vocab = [...this.extraVocabulary, ...[...shipped.entries, ...stageState.entries].filter(e => e.kind === 'vocabulary').map(e => e.document)];
     const stichtag = Date.parse('2026-09-14T00:00:00.000Z');
     const istGeneriert = (entry) => {
       if (kind && entry.kind !== kind) return false;
@@ -264,8 +271,8 @@ class ContentPipeline {
   }
   async stage({ kind, document, base64 }) {
     const state = await this.state();
-    assertDocument(kind, document, [...VOCABULARY, ...state.shipped.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
-    const language = document.language ?? document.direction?.split('_to_')[1] ?? (kind === 'images' ? [...VOCABULARY, ...state.shipped.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)].find(word => word.id === document.vocabId)?.language : undefined);
+    assertDocument(kind, document, [...this.extraVocabulary, ...state.shipped.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
+    const language = document.language ?? document.direction?.split('_to_')[1] ?? (kind === 'images' ? [...this.extraVocabulary, ...state.shipped.entries.filter(e => e.kind === 'vocabulary').map(e => e.document)].find(word => word.id === document.vocabId)?.language : undefined);
     const cutoff = Math.max(state.shipped.deleted?.[`${kind}:${document.id}`] ?? -1, state.shipped.clearedBefore?.[kind] ?? -1, state.shipped.clearedBefore?.[`${kind}:${language}`] ?? -1);
     if (cutoff >= 0 && (kind !== 'vocabulary' || document.id.startsWith('ki-')) && (document.generatedAt ?? 0) <= cutoff) throw Error('Dieser alte Entwurf wurde gelöscht. Bitte neu erzeugen.');
     let bytes = Buffer.alloc(0);
@@ -303,10 +310,11 @@ class ContentPipeline {
     const entry = { kind, id: doc.id, document: doc, digest,
       ...(media ? { asset: doc.blobKey, byteSize: bytes.length, sourceBytes } : {}) };
     if (media) await fs.writeFile(path.join(this.work, entry.asset), bytes);
-    // 18.09.: Das Tontor liest die Solltöne aus dem Wortschatz — Grundstock
-    // plus alles, was im Bestand (shipped ∪ stage) an Vokabeln liegt. Ohne
+    // 18.09.: Das Tontor liest die Solltöne aus dem Wortschatz — alles, was
+    // im Bestand (shipped ∪ stage) an Vokabeln liegt. Ohne
     // diesen Kontext fände das Tor die erzeugten ki-*-Wörter nicht.
-    const toneWortschatz = [...VOCABULARY,
+    const toneWortschatz = [
+      ...this.extraVocabulary,
       ...state.shipped.entries.filter((item) => item.kind === 'vocabulary').map((item) => item.document),
       ...state.stage.entries.filter((item) => item.kind === 'vocabulary').map((item) => item.document)];
     entry.check = this.checkEntry(entry, media ? path.join(this.work, entry.asset) : undefined, toneWortschatz);
@@ -326,7 +334,7 @@ class ContentPipeline {
       // ffmpeg, und der Katalog-Check (check.cjs) dekodiert weiterhin alles.
       check.tone = entry.document.language === 'th'
         ? checkThaiTone(entry.document, decodeAudio(file), 24000,
-            { woerter: toneWortschatz ?? [...VOCABULARY] })
+            { woerter: toneWortschatz ?? [] })
         : { status: 'not-applicable', reason: 'Kein Thai-Ton; nur technische Integritätsprüfung.', version: TONE_GATE_VERSION };
       if (['failed', 'unchecked'].includes(check.tone.status)) check.status = check.tone.status;
     } else if (entry.kind === 'images') {
@@ -387,7 +395,7 @@ class ContentPipeline {
     // Validate the entire set before changing any versioned files.
     const prepared = [];
     for (const entry of entries) {
-      assertDocument(entry.kind, entry.document, [...VOCABULARY, ...entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
+      assertDocument(entry.kind, entry.document, [...this.extraVocabulary, ...entries.filter(e => e.kind === 'vocabulary').map(e => e.document)]);
       if (entry.id !== entry.document.id) throw Error('Abweichende ID.');
       if (entry.asset && !/^[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(entry.asset)) throw Error('Unsicherer Assetpfad.');
       if (['audio', 'images'].includes(entry.kind) && !entry.asset) throw Error('Mediendatei fehlt.');
@@ -407,7 +415,7 @@ class ContentPipeline {
       delete entry.review;
       // 18.09.: Solltöne fürs Tor aus dem GEPLANTEN Gesamtbestand — dieselbe
       // Quelle wie assertDocument zwei Zeilen darüber.
-      const toneWortschatz = [...VOCABULARY, ...entries.filter((item) => item.kind === 'vocabulary').map((item) => item.document)];
+      const toneWortschatz = [...this.extraVocabulary, ...entries.filter((item) => item.kind === 'vocabulary').map((item) => item.document)];
       entry.check = this.checkEntry(entry, file, toneWortschatz);
       prepared.push({ entry, bytes });
     }

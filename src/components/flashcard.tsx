@@ -12,7 +12,7 @@ import { VerificationBadge } from './verification-badge';
 import { VocabImageView } from './vocab-image';
 
 import { Spacing } from '@/constants/theme';
-import { VocabEntry } from '@/data/vocabulary';
+import type { VocabEntry } from '@/data/vocab-types';
 import { BridgeEntry } from '@/data/vocab-types';
 import { type PlaybackResult, playPronunciationWithStatus } from '@/lib/audio';
 import { PairDirection } from '@/lib/fsrs/types';

@@ -6,7 +6,8 @@ import { ThemedView } from './themed-view';
 import { ToneLegend } from './tone-legend';
 
 import { Spacing } from '@/constants/theme';
-import { VOCABULARY_ES } from '@/data/vocabulary';
+import { activeVocabularyFor } from '@/data/active-vocabulary';
+import { learningLanguage } from '@/lib/languages/definitions';
 import { useLocale } from '@/lib/i18n';
 import { useTheme, useToneColor } from '@/hooks/use-theme';
 import { LanguageCode } from '@/lib/languages/types';
@@ -41,9 +42,12 @@ export function FeatureLegend({
   language: LanguageCode;
   compact?: boolean;
 }) {
-  if (language === 'th') return <ToneLegend compact={compact} />;
-  if (language === 'es') return <StressLegend compact={compact} />;
-  return <SpellingLegend compact={compact} />;
+  // Welche Merkhilfe eine Sprache hat, steht in `definitions.ts`.
+  const legend = learningLanguage(language).legend;
+  if (legend === 'tones') return <ToneLegend compact={compact} />;
+  if (legend === 'stress') return <StressLegend compact={compact} />;
+  if (legend === 'spelling') return <SpellingLegend compact={compact} />;
+  return null;
 }
 
 /* ---------- Spanisch: die Betonungsregel als Silbenmuster ---------- */
@@ -73,7 +77,7 @@ function StressLegend({ compact }: { compact: boolean }) {
   const rows = useMemo<StressRow[]>(() => {
     const out: StressRow[] = [];
     for (const rule of ['penultimate', 'final', 'acute'] as const) {
-      for (const entry of VOCABULARY_ES) {
+      for (const entry of activeVocabularyFor('es')) {
         const analysis = analyzeStress(entry.term);
         if (!analysis.ok || analysis.rule !== rule) continue;
         if (analysis.syllables.length < 2) continue;

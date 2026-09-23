@@ -1,4 +1,4 @@
-import { VOCABULARY_EN, VOCABULARY_ES } from '@/data/vocabulary';
+import { VOCABULARY_EN, VOCABULARY_ES } from '@/test-fixtures/legacy-vocabulary';
 
 import { seedVocabulary } from '../repository';
 import { MemoryDataStore } from '../storage';
@@ -147,10 +147,10 @@ describe('Die Sitzung kennt ihre Sprache', () => {
   it('rechnet Richtung aus Übung und Sprache statt aus einer Tabelle', () => {
     expect(directionForDrill('stressRule', 'es')).toBe('de_to_es');
     expect(directionForDrill('spelling', 'en')).toBe('de_to_en');
-    // Die deutschen Grammatikuebungen laufen fuer JEDES Paar auf "X -> de".
-    expect(directionForDrill('article', 'es')).toBe('es_to_de');
-    expect(directionForDrill('verbForms', 'en')).toBe('en_to_de');
-    expect(directionForDrill('article', 'th')).toBe('th_to_de');
+    // Seit dem Sprach-Umbau: die deutschen Grammatikübungen gehören zur
+    // Lernsprache Deutsch — Standardrichtung ist deren Inhalts-Richtung.
+    expect(directionForDrill('article', 'de')).toBe('th_to_de');
+    expect(directionForDrill('verbForms', 'de')).toBe('th_to_de');
   });
 
   it('baut eine spanische Betonungssitzung aus spanischen Vokabeln', async () => {

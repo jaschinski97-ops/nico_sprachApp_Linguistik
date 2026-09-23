@@ -26,15 +26,15 @@ import {
   zieleFuerBruecke,
   type Lernziel,
 } from '@/lib/languages/goals';
+import { learningLanguage } from '@/lib/languages/definitions';
 import {
   anchorOf,
   isDeAnchored,
   isPairDirection,
-  pairLanguageOf,
+  targetLanguageOf,
   type PairDirection,
 } from '@/lib/languages/types';
 import { LearnerProfile, loadProfile, setLanguage, setReviewSpot } from '@/lib/profile';
-import { zielSprache } from '@/lib/production/tasks';
 import { rateCard } from '@/lib/repository';
 import { buildReviewQueue, directionLabel, ReviewItem } from '@/lib/review-session';
 import {
@@ -149,14 +149,10 @@ export default function ReviewScreen() {
    * Lesezeichen: Beim nächsten Öffnen steht man wieder dort. Zurückgesetzt
    * wird es nur durch eine Zielwahl — die Geste „von vorn".
    *
-   * SEIT STUFE 1 NUR DE-GEANKERTE STÄNDE: Das Profil bleibt auf dem
-   * Bestandstyp `Direction` (Profile/Backups laufen unverändert weiter);
-   * Kreuzrichtungen merken sich deshalb noch nicht dauerhaft und starten
-   * nach einem Neustart ehrlich in der Zielauswahl. `null` räumt weiterhin
-   * auf — auch bei gemischten Ständen.
+   * Seit dem Sprach-Umbau JEDE Richtung — auch auf nicht-deutschen
+   * Oberflächen bleibt der Stand über einen Neustart erhalten.
    */
   const remember = useCallback(async (direction: PairDirection | null, mode?: Mode) => {
-    if (direction !== null && !isDeAnchored(direction)) return;
     setProfile(await setReviewSpot(direction ? { direction, mode: mode ?? 'cards' } : null));
   }, []);
 
@@ -209,7 +205,7 @@ export default function ReviewScreen() {
           // schreibt die neue Richtung sofort als Lesezeichen zurück (bei
           // Kreuzzielen verzichtet `remember` bewusst auf das Schreiben).
           // Ein Speicherfehler ändert nichts an der Adresse, die schon stimmt.
-          void setLanguage(pairLanguageOf(picked))
+          void setLanguage(targetLanguageOf(picked))
             .then(setProfile)
             .catch(() => {});
           router.setParams({ direction: picked, waehlen: undefined, mode: undefined });
@@ -323,19 +319,11 @@ function ReviewBody({
           {mode === 'cards' ? (
         <CardSession direction={direction} onExit={onExit} key={direction} />
       ) : mode === 'writing' ? (
-        // Freies Schreiben ist de-geankert (siehe `modesForDirection`); der
-        // Typvertrag des Runners bleibt beim Bestand.
-        isDeAnchored(direction) ? (
-          <WritingRunner
-            key={`${direction}:writing`}
-            direction={direction}
-            onExit={onExit}
-          />
-        ) : null
+        <WritingRunner key={`${direction}:writing`} direction={direction} onExit={onExit} />
       ) : mode === 'dictation' ? (
         <DictationRunner
           key={`${direction}:dictation`}
-          language={zielSprache(direction)}
+          language={targetLanguageOf(direction)}
           direction={direction}
           onExit={onExit}
         />
@@ -343,7 +331,7 @@ function ReviewBody({
         <SentenceRunner
           key={`${direction}:${mode}`}
           mode={mode}
-          language={zielSprache(direction)}
+          language={targetLanguageOf(direction)}
           anchor={anchorOf(direction)}
           onExit={onExit}
         />
@@ -357,7 +345,7 @@ function ReviewBody({
         // Thai: die gemessene Tonkontur-Übung (AE-48). Englisch/Spanisch:
         // Nachsprechen mit Musterlösung und ehrlicher Selbst-Einschätzung —
         // eine Kontur-Messung gibt es dort nicht, und behauptet wird keine.
-        pairLanguageOf(direction) === 'th' ? (
+        learningLanguage(targetLanguageOf(direction)).wordSpeaking === 'tone-contour' ? (
           <SpeakingRunner key={`${direction}:speaking`} direction={direction} onExit={onExit} />
         ) : (
           <WordSpeakingRunner key={`${direction}:speaking`} direction={direction} onExit={onExit} />
@@ -366,7 +354,7 @@ function ReviewBody({
         <DrillRunner
           drill={mode}
           direction={direction}
-          language={pairLanguageOf(direction)}
+          language={targetLanguageOf(direction)}
           key={`${direction}:${mode}`}
           onExit={onExit}
         />

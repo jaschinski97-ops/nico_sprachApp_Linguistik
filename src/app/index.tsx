@@ -2,7 +2,7 @@ import { Link, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { useDirectionSummariesForLanguages } from '@/components/direction-dashboard';
+import { useDirectionSummariesFor } from '@/components/direction-dashboard';
 import { FeatureLegend } from '@/components/feature-legend';
 import { LanguageHero } from '@/components/language-hero';
 import { LanguagePicker } from '@/components/language-picker';
@@ -15,13 +15,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { useLocale } from '@/lib/i18n';
 import { featureIsImplemented } from '@/lib/languages/feature';
 import { zieleFuerBruecke, goalLanguage, directionForBridge } from '@/lib/languages/goals';
-import { languageOf } from '@/lib/languages/registry';
-import {
-  isDeAnchored,
-  pairLanguageOf,
-  type LanguageCode,
-  type PairDirection,
-} from '@/lib/languages/types';
+import { learningLanguage } from '@/lib/languages/definitions';
+import { targetLanguageOf, type PairDirection } from '@/lib/languages/types';
 import { setReviewSpot } from '@/lib/profile';
 import { migrateStore } from '@/lib/storage/migration';
 
@@ -51,18 +46,8 @@ export default function DashboardScreen() {
   // Brücke Deutsch sieht die vier Bestandsziele, Brücken th/en/es ihre
   // jeweiligen Paare — inklusive Kreuzzielen mit concept-gekoppeltem Stoff.
   const ziele = zieleFuerBruecke(uiLanguage);
-  // Höchstens drei Paarsprachen — also höchstens drei Store-Lesevorgänge für
-  // ALLE Fällig-Badges der Brücke (Entscheidung: einmal je Paarsprache laden
-  // statt nur der aktuellen, damit Kreuz-Zeilen nicht ewig ohne Badge stehen).
-  const paarsprachen = [...new Set(ziele.map((ziel) => ziel.language))] as LanguageCode[];
-  const due = useDirectionSummariesForLanguages(paarsprachen);
-  // Der CTA zählt wie bisher NUR die de-geankerten Richtungen der aktuellen
-  // Lernsprache — „Weiter lernen“ öffnet genau deren Sitzung, nicht die
-  // Kreuzziele der Brücke.
-  const totalDue =
-    due.summaries
-      ?.filter((item) => isDeAnchored(item.direction) && pairLanguageOf(item.direction) === language)
-      .reduce((sum, item) => sum + item.due, 0) ?? null;
+  // Fällig-Zahlen genau für die Ziele dieser Oberfläche.
+  const due = useDirectionSummariesFor(ziele.map((ziel) => ziel.direction));
   // Lokale Wahl schlägt das Profil: Sie steht sofort fest, während das
   // Lesezeichen noch geschrieben wird — sonst spränge die Markierung des
   // Deutsch-Ziels (gleiche Profil-Sprache wie Thai) kurz zurück.
@@ -78,9 +63,10 @@ export default function DashboardScreen() {
   // bekommt einen eigenen Satz; ohne Wahl gilt das erste Ziel der Brücke.
   const aktivesZiel =
     ziele.find(ziel => ziel.direction === selectedDirection) || ziele[0];
-  const zielBeschreibung = aktivesZiel.direction.endsWith('_to_de')
-    ? t('goal.deutschDescription')
-    : t(languageOf(pairLanguageOf(aktivesZiel.direction)).feature.description);
+  const zielBeschreibung = t(learningLanguage(aktivesZiel.language).feature.description);
+  // „Weiter lernen“ öffnet die Sitzung des aktiven Ziels — die Zahl gehört dazu.
+  const totalDue =
+    due.summaries?.find((item) => item.direction === aktivesZiel.direction)?.due ?? null;
 
   /**
    * Lernziel gewählt: Paarsprache UND Richtung in einem. Reihenfolge ist
@@ -94,10 +80,8 @@ export default function DashboardScreen() {
   const chooseGoal = useCallback(
     (direction: PairDirection) => {
       setWahlRichtung(direction);
-      void chooseLanguage(pairLanguageOf(direction))
-        .then(() => {
-          if (isDeAnchored(direction)) return setReviewSpot({ direction, mode: 'cards' });
-        })
+      void chooseLanguage(targetLanguageOf(direction))
+        .then(() => setReviewSpot({ direction, mode: 'cards' }))
         .catch(() => {});
     },
     [chooseLanguage]
@@ -183,7 +167,7 @@ export default function DashboardScreen() {
           Thai, die Betonungsregel bei Spanisch, die Schriftstueck-Gruppen bei
           Englisch. Vorher stand hier fuer zwei von drei Sprachen nichts - die
           Bedingung war auf die Toene gemuenzt und schloss die anderen aus. */}
-      {goalLanguage(aktivesZiel) !== 'de' && featureIsImplemented(aktivesZiel.language) ? <FeatureLegend language={aktivesZiel.language} /> : null}
+      {featureIsImplemented(aktivesZiel.language) ? <FeatureLegend language={aktivesZiel.language} /> : null}
 
       {/* Die Beschreibung folgt dem GEWÄHLTEN Ziel, nicht der Paarsprache:
           Beim Deutsch-Ziel stand hier sonst der Thai-Tontext (Nutzerhinweis

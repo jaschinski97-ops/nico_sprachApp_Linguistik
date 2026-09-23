@@ -56,7 +56,19 @@ export type ReviewDayLog = {
    * Zähler. Optional: alte Tagesdokumente haben das Feld nicht.
    */
   byDrill?: Partial<Record<string, { total: number; correct: number }>>;
+  /**
+   * Übungen je Lernrichtung UND Übungsart — Schlüssel `richtung|art`
+   * (Sprach-Umbau 23.09.2026). Erst damit lassen sich Übungszahlen einem
+   * Lernziel zuordnen; ältere Tage tragen das Feld nicht und zählen im
+   * Fortschritt-Reiter nur sprachübergreifend.
+   */
+  byDirectionDrill?: Partial<Record<string, { total: number; correct: number }>>;
 };
+
+/** Schlüssel für `byDirectionDrill`. */
+export function directionDrillKey(direction: PairDirection, art: string): string {
+  return `${direction}|${art}`;
+}
 
 /**
  * Tagesschlüssel in **lokaler** Zeit.
@@ -160,7 +172,8 @@ export async function recordDrill(
   correct: boolean,
   at: number,
   store?: DataStore,
-  art?: string
+  art?: string,
+  direction?: PairDirection
 ): Promise<ReviewDayLog> {
   const db = store ?? (await getStore());
   const date = dayKey(at);
@@ -175,6 +188,13 @@ export async function recordDrill(
       const byDrill = entry.byDrill ?? {};
       byDrill[art] = { total: bis.total + 1, correct: bis.correct + (correct ? 1 : 0) };
       entry.byDrill = byDrill;
+      if (direction) {
+        const key = directionDrillKey(direction, art);
+        const vorher = entry.byDirectionDrill?.[key] ?? { total: 0, correct: 0 };
+        const byDirectionDrill = entry.byDirectionDrill ?? {};
+        byDirectionDrill[key] = { total: vorher.total + 1, correct: vorher.correct + (correct ? 1 : 0) };
+        entry.byDirectionDrill = byDirectionDrill;
+      }
     }
 
     await db.put('reviewLog', date, entry);

@@ -20,7 +20,9 @@ const domain = require('./domain.cjs');
 const { decodeAudio } = require('./media.cjs');
 const { analyzeToneContour } = domain.load('src/lib/speaking/analysis');
 const { checkThaiTone, TONE_GATE_LIMITS } = domain.load('src/lib/content/tone-gate');
-const { VOCABULARY } = domain.load('src/data/vocabulary');
+// Die AE-31-Fixture-Manifeste (มา & Co.) beziehen sich auf den früheren,
+// quellengeprüften Grundstock — der lebt nur noch als Testdatensatz.
+const { VOCABULARY } = domain.load('src/test-fixtures/legacy-vocabulary');
 const { clipIdFor } = domain.load('src/lib/clips/types');
 const { tryWriteProtocol } = require('../pipeline/protocol.cjs');
 const root = path.resolve(__dirname, '../..');

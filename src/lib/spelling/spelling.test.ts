@@ -1,4 +1,4 @@
-import { VOCABULARY_EN } from '@/data/vocabulary';
+import { VOCABULARY_EN } from '@/test-fixtures/legacy-vocabulary';
 
 import { LANGUAGES } from '../languages/registry';
 

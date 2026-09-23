@@ -1,4 +1,4 @@
-import { VOCABULARY_TH, VOCABULARY_ES } from '@/data/vocabulary';
+import { VOCABULARY_TH, VOCABULARY_ES } from '@/test-fixtures/legacy-vocabulary';
 import type { VocabEntry } from '@/data/vocab-types';
 import verbs from '@/data/german-verb-forms.json';
 import groups from '@/data/english-grapheme-groups.json';

@@ -26,7 +26,11 @@
  */
 
 /** Sprachen, für die es Diktat-Regeln geben kann. `de` ist Zielsprache der Roadmap v2 und noch ohne Stoff. */
-export type DictationLanguage = 'th' | 'de' | 'en' | 'es';
+/** Jede Lernsprache hat ein Diktat — die Regeln stehen in `definitions.ts`. */
+import { LEARNING_LANGUAGES } from '@/lib/languages/definitions';
+import { LANGUAGE_CODES, type LanguageCode } from '@/lib/languages/types';
+
+export type DictationLanguage = LanguageCode;
 
 export type DictationLanguageConfig = {
   /** Thai vergleicht zeichenweise zweistufig, Latein wortweise. */
@@ -70,17 +74,13 @@ const BASE: Omit<DictationLanguageConfig, 'script' | 'foldCase' | 'eszettEquival
   wordTypoWindow: 1,
 };
 
-export const DICTATION_CONFIG: Record<DictationLanguage, DictationLanguageConfig> = {
-  th: { ...BASE, script: 'thai', foldCase: false, eszettEquivalence: false, strictDiacritics: true },
-  de: { ...BASE, script: 'latin', foldCase: false, eszettEquivalence: true, strictDiacritics: true },
-  en: { ...BASE, script: 'latin', foldCase: true, eszettEquivalence: false, strictDiacritics: true },
-  es: { ...BASE, script: 'latin', foldCase: true, eszettEquivalence: false, strictDiacritics: true },
-  // Französisch: Akzentfehler werden weich gewertet (strictDiacritics: false),
-  // bis mit echtem französischem Stoff entschieden ist, wie hart ein
-  // Volltext-Diktat sie zählen soll. Stumme Auslaute bleiben Fehler.
-};
+export const DICTATION_CONFIG: Record<DictationLanguage, DictationLanguageConfig> = Object.fromEntries(
+  LANGUAGE_CODES.map((code) => [
+    code,
+    { ...BASE, script: LEARNING_LANGUAGES[code].script, ...LEARNING_LANGUAGES[code].dictation },
+  ])
+) as Record<DictationLanguage, DictationLanguageConfig>;
 
-/** Wirft für eine Sprache ohne Eintrag, statt still falsche Regeln anzuwenden. */
 export function dictationConfigFor(language: DictationLanguage): DictationLanguageConfig {
   const config = DICTATION_CONFIG[language];
   if (!config) throw new Error(`Keine Diktat-Regeln für „${language}" hinterlegt.`);

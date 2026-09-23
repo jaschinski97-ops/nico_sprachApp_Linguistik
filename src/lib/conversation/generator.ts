@@ -1,4 +1,5 @@
 import { UI_LANGUAGES } from '../i18n/types';
+import { LEARNING_LANGUAGES, passtZurSchrift } from '../languages/definitions';
 import { createTextClient } from '../providers/text';
 import { PROVIDER_INFO, ProviderId, TextClient } from '../providers/types';
 
@@ -60,13 +61,13 @@ function systemPrompt(): string {
 export function userPrompt(spec: SituationSpec): string {
   const language = SITUATION_SPRACHEN.find(item => item.direction === spec.direction)?.sprache;
   if (!language) throw Error('Unbekannte Gesprächssprache.');
-  const name = { th: 'Thai', de: 'Deutsch', en: 'Englisch', es: 'Spanisch' }[language];
+  const name = LEARNING_LANGUAGES[language].label;
   return `Erstelle eine natürliche Dialogsituation zum Üben von ${name}.
 Thema: ${TOPIC_LABELS[spec.topic]}. Niveau: ${spec.level}. Variante: ${spec.variant}.
 6 bis 10 abwechselnde Gesprächszüge (speaker: learner oder partner), mindestens eine learner-Zeile.
 Benutze häufigen Alltagswortschatz, kurze vollständige Sätze, idiomatische Formulierungen.
 Alle targetText-Zeilen sind ausschließlich auf ${name}, unabhängig vom Sprecher.
-${language === 'th' ? 'Thai-Schrift, korrekte Höflichkeitspartikel passend zur Sprecherrolle; roman ist Paiboon-Umschrift mit Tönen.' : language === 'en' ? 'Natürliches britisches Englisch. roman enthält die IPA-Lesehilfe.' : language === 'es' ? 'Natürliches Spanisch mit korrekten Akzenten und einheitlicher Anrede. roman ist eine Lesehilfe.' : 'Natürliches Deutsch, korrekte Artikel, Kasus und Wortstellung. roman ist eine Lesehilfe.'}
+${LEARNING_LANGUAGES[language].dialogRules}
 german ist die deutsche Bedeutung. thai ist die Thai-Übersetzung (bei Thai gleich targetText).
 2 bis 4 hilfreiche Korrektur-Hinweise für Lernende dieser Zielsprache.
 Übersetze Titel, Szenenbeschreibung, ALLE Gesprächszeilen und Korrektur-Hinweise in JEDE dieser App-Sprachen: ${UI_LANGUAGES.join(', ')}.
@@ -184,7 +185,7 @@ function pruefeSituation(situation: ConversationSituation, spec: SituationSpec):
     throw Error('Dialog unvollständig: Zieltext oder App-Sprachen fehlen. Bitte erneut erzeugen.');
   }
   const language = SITUATION_SPRACHEN.find(item => item.direction === spec.direction)!.sprache;
-  if (situation.scriptTurns.some(turn => language === 'th' ? !/[ก-๛]/.test(turn.targetText!) : /[ก-๛]/.test(turn.targetText!))) {
+  if (situation.scriptTurns.some(turn => !passtZurSchrift(language, turn.targetText!))) {
     throw Error('Die Dialogschrift passt nicht zur gewählten Lernsprache.');
   }
   return situation;
