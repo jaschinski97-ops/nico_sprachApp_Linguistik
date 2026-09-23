@@ -123,7 +123,11 @@ describe('silbenweise Prüfung gegen den übergebenen Bestand', () => {
       { woerter: [wort] }
     );
     expect(widerspricht.status).toBe('failed');
-    expect(widerspricht.reason).toMatch(/Silben? 1/);
+    // Verworfen wird über die LETZTE Silbe (fallend, gemessen steigend); die
+    // erste steigt nicht — als nicht-letzte Silbe ist das seit 23.09.2026
+    // kein Beweis mehr (im Fluss abgeschnittener Anstieg).
+    expect(widerspricht.reason).toMatch(/Silbe 2 von 2/);
+    expect(widerspricht.silben?.[0].form).toBe('knapp');
   });
 
   it('bleibt ehrlich ungeprüft, wenn Silben ohne stimmhafte Grenze verbunden sind', () => {
@@ -216,26 +220,38 @@ describe('silbenweise Prüfung gegen den übergebenen Bestand', () => {
     );
     expect(passt.status).toBe('passed');
     expect(passt.ordnung?.erfuellt).toBeGreaterThanOrEqual(1);
-    // [low, mid]: tief muss UNTER mittel liegen — derselbe Fall, der im
-    // Nutzer-Lauf (แต่งตัว) fälschlich als Widerspruch verworfen wurde.
-    const lowMid = kiWort(['low', 'mid']);
+    // [mid, low]: tief muss UNTER mittel liegen — die Richtung hängt am
+    // Rang, nicht an der Reihenfolge (Richtungs-Bug vom 18.09., แต่งตัว).
+    const midLow = kiWort(['mid', 'low']);
     const korrektTief = checkThaiTone(
-      { language: 'th' as const, kind: 'vocab' as const, sourceId: lowMid.id, text: lowMid.term },
-      silbenfolge([{ von: 160, bis: 160 }, { pause: 150 }, { von: 200, bis: 200 }]),
+      { language: 'th' as const, kind: 'vocab' as const, sourceId: midLow.id, text: midLow.term },
+      silbenfolge([{ von: 200, bis: 200 }, { pause: 150 }, { von: 160, bis: 160 }]),
       8000,
-      { woerter: [lowMid] }
+      { woerter: [midLow] }
     );
     expect(korrektTief.status).toBe('passed');
     expect(korrektTief.ordnung?.erfuellt).toBeGreaterThanOrEqual(1);
     // Und falsch herum gesprochen (tief oben, mittel unten) wird verworfen.
     const falschTief = checkThaiTone(
+      { language: 'th' as const, kind: 'vocab' as const, sourceId: midLow.id, text: midLow.term },
+      silbenfolge([{ von: 160, bis: 160 }, { pause: 150 }, { von: 200, bis: 200 }]),
+      8000,
+      { woerter: [midLow] }
+    );
+    expect(falschTief.status).toBe('failed');
+    expect(falschTief.reason).toContain('Register-Ordnung');
+    // [low, mid] — die tiefere Silbe VORN — wird seit 23.09.2026 gar nicht
+    // gewertet: am Bestand lag tief dort im Median ÜBER mittel (Satzmelodie).
+    const lowMid = kiWort(['low', 'mid']);
+    const tiefVorn = checkThaiTone(
       { language: 'th' as const, kind: 'vocab' as const, sourceId: lowMid.id, text: lowMid.term },
       silbenfolge([{ von: 200, bis: 200 }, { pause: 150 }, { von: 160, bis: 160 }]),
       8000,
       { woerter: [lowMid] }
     );
-    expect(falschTief.status).toBe('failed');
-    expect(falschTief.reason).toContain('Register-Ordnung');
+    expect(tiefVorn.status).toBe('unchecked');
+    expect(tiefVorn.ordnung).toMatchObject({ erfuellt: 0 });
+    expect(tiefVorn.ordnung?.widerspruch).toBeUndefined();
     // [high, low] mit der hohen Silbe unten: klarer Widerspruch.
     const falsch = checkThaiTone(
       { language: 'th' as const, kind: 'vocab' as const, sourceId: midHigh.id, text: midHigh.term },
@@ -290,10 +306,21 @@ describe('silbenweise Prüfung gegen den übergebenen Bestand', () => {
     expect(verbunden.status).toBe('passed');
     expect(verbunden.silben?.map((silbe) => silbe.form)).toEqual(['geprueft', 'geprueft']);
     expect(verbunden.reason).toContain('Silbengrenze(n) aus dem Lautstärkeverlauf');
-    // Ohne Einbruch bleibt es beim ehrlichen „nicht trennbar".
+    // Ohne Einbruch trägt seit 23.09.2026 der Vorlagenabgleich über die ganze Kurve.
     const ohneTal = checkThaiTone(basis, verbundeneSilben([{ von: 240, bis: 120 }, { von: 120, bis: 260 }], 1), 8000, { woerter: [wort] });
-    expect(ohneTal.status).toBe('unchecked');
-    expect(ohneTal.reason).toContain('verbundene Silben');
+    expect(ohneTal.status).toBe('passed');
+    expect(ohneTal.reason).toContain('Vorlagenabgleich');
+    // Gegenprobe: dieselbe Kurve mit VERTAUSCHTEM Soll (steigend, fallend) —
+    // der Abgleich stuft nicht hoch, und verworfen wird ohne Grenze auch nicht.
+    const vertauscht = kiWort(['rising', 'falling']);
+    const falsch = checkThaiTone(
+      { ...basis, sourceId: vertauscht.id, text: vertauscht.term },
+      verbundeneSilben([{ von: 240, bis: 120 }, { von: 120, bis: 260 }], 1),
+      8000,
+      { woerter: [vertauscht] }
+    );
+    expect(falsch.status).toBe('unchecked');
+    expect(falsch.reason).toContain('verbundene Silben');
   });
 
   it('verwirft bei GERATENER Silbengrenze erst den zweiten Widerspruch', () => {
@@ -301,9 +328,9 @@ describe('silbenweise Prüfung gegen den übergebenen Bestand', () => {
     // dritte Silbe überhaupt erst sichtbar gemacht hatte: eine geratene
     // Grenze verschiebt den Zuschnitt beider Nachbarsilben. Abdeckung ja,
     // Geld kosten nein.
-    const wort = kiWort(['rising', 'falling']);
+    const wort = kiWort(['falling', 'rising']);
     const basis = { language: 'th' as const, kind: 'vocab' as const, sourceId: wort.id, text: wort.term };
-    // Silbe 1 fällt (Soll steigend) — ein Widerspruch, aber an geratener Grenze.
+    // Silbe 2 fällt (Soll steigend) — ein Widerspruch, aber an geratener Grenze.
     const einer = checkThaiTone(basis, verbundeneSilben([{ von: 240, bis: 120 }, { von: 130, bis: 90 }]), 8000, { woerter: [wort] });
     expect(einer.status).toBe('unchecked');
     expect(einer.reason).toContain('nicht beweiskräftig');
@@ -325,7 +352,7 @@ describe('silbenweise Prüfung gegen den übergebenen Bestand', () => {
     // nichts falsch gesprochen ist. Nachbarpaare bleiben stimmig.
     // Frequenzen mit ganzzahliger 8-kHz-Periode, sonst misst die
     // Autokorrelation Suboktav-Artefakte (Testfalle vom 18.09.).
-    const wort = kiWort(['low', 'mid', 'mid', 'mid', 'high']);
+    const wort = kiWort(['low', 'high', 'mid', 'mid', 'high']);
     const abfallend = checkThaiTone(
       { language: 'th' as const, kind: 'vocab' as const, sourceId: wort.id, text: wort.term },
       silbenfolge([

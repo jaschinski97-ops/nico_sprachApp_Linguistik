@@ -192,12 +192,12 @@ const GESPROCHENE_SEITE: Record<(typeof RICHTUNGEN)[number], string> = {
 };
 
 /**
- * Die Generier-Sprachen in Kettenreihenfolge — die drei Bestandspools
- * (`LANGUAGE_ORDER`), Deutsch zuletzt (Nutzerentscheidung 10.09., Deutsch
- * als Generier-/Zielsprache). Dieselben Schlüssel wie die Sprach-Zähler des
- * Repositorys (`LanguageCode | 'de'`).
+ * Die Generier-Sprachen in Kettenreihenfolge, Deutsch zuletzt
+ * (Nutzerentscheidung 10.09.). Seit dem Sprach-Umbau (23.09.) steht Deutsch
+ * schon in `LANGUAGE_ORDER` — ein zweites Anhängen hätte Deutsch doppelt
+ * geführt (doppelter React-Schlüssel, Kettenlauf zweimal über Deutsch).
  */
-const GENERIER_SPRACHEN: Lang[] = [...LANGUAGE_ORDER, 'de'];
+const GENERIER_SPRACHEN: Lang[] = [...LANGUAGE_ORDER.filter((code) => code !== 'de'), 'de'];
 
 /** „Alle Sprachen“ der Bilder-/Audio-Kette: Thai → Englisch → Spanisch → Deutsch. */
 const ALLE_SPRACHEN: ChainStep[] = GENERIER_SPRACHEN.map((code) => ({

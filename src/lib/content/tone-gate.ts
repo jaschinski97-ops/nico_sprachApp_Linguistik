@@ -15,10 +15,11 @@ import {
 } from '../speaking/analysis';
 import { TONE_KEYS, type Tone } from '@/constants/tones';
 import { tonfolgeAusRoman } from './roman-tone';
+import { hoherTonSteigtAn, vorlagenUrteil, VORLAGE_P_MAX } from './tone-template';
 
-export const TONE_GATE_VERSION = 'f0-syllables-2';
+export const TONE_GATE_VERSION = 'f0-syllables-4';
 export const TONE_GATE_LIMITS =
-  'Filter gegen grobe Tonhöhenfehler je Silbe, kein Qualitätsnachweis. Konsonanten, Vokallänge und Aspiration werden nicht geprüft. Wörter werden silbenweise gegen syllables[].tone geprüft, Beispielsätze gegen die Tonfolge ihrer Roman-Umschrift; Dialogzüge bleiben ungeprüft. Silbengrenzen kommen aus den stimmhaften Zügen: zu viele werden verschmolzen, zu wenige an deutlichen Energietälern getrennt — bleibt die Zahl unklar, wird nicht geraten. Fallend und steigend werden an der Bewegung nach Gipfel bzw. Tal gemessen (nicht an Anfang-minus-Ende); ein Widerspruch ist nur die GEGENLÄUFIGE Bewegung. Die Registerlage von mittel, tief und hoch bleibt ohne Sprecherreferenz ungeprüft, innerhalb eines Clips wird nur die Ordnung der Silben zueinander geprüft (AE-7/AE-8). System-TTS wird durch diesen Filter nicht geprüft.';
+  'Filter gegen grobe Tonhöhenfehler je Silbe, kein Qualitätsnachweis. Konsonanten, Vokallänge und Aspiration werden nicht geprüft. Wörter werden silbenweise gegen syllables[].tone geprüft, Beispielsätze gegen die Tonfolge ihrer Roman-Umschrift; Dialogzüge bleiben ungeprüft. Silbengrenzen kommen aus den stimmhaften Zügen: zu viele werden verschmolzen, zu wenige an deutlichen Energietälern getrennt — bleibt die Zahl unklar, wird nicht geraten. Fallend und steigend werden an der Bewegung nach Gipfel bzw. Tal gemessen (nicht an Anfang-minus-Ende); ein Widerspruch ist nur die GEGENLÄUFIGE Bewegung. Die Registerlage von mittel, tief und hoch bleibt ohne Sprecherreferenz ungeprüft, innerhalb eines Clips wird nur die Ordnung der Silben zueinander geprüft (AE-7/AE-8); ein einzelner hoher Ton gilt nur bei deutlichem Anstieg zum Ende als geprüft. Lassen sich Silben nicht trennen, vergleicht ein Vorlagenabgleich die ganze Tonkurve mit gelernten Tonformen und mit zufälligen Tonfolgen — er stuft nur hoch (ungeprüft → bestanden), verwirft nie. System-TTS wird durch diesen Filter nicht geprüft.';
 
 export type ToneCheck = {
   status: 'passed' | 'failed' | 'unchecked' | 'not-applicable';
@@ -292,7 +293,8 @@ const WENDEPUNKT_FRUEH = 0.6;
 function formurteil(
   ton: Tone,
   summary: ToneContourSummary,
-  einzeln: boolean
+  einzeln: boolean,
+  amEnde = true
 ): 'geprueft' | 'widerspruch' | 'knapp' | 'register' {
   const bewegung = konturBewegung(summary);
   if (ton === 'falling') {
@@ -304,7 +306,11 @@ function formurteil(
   }
   if (ton === 'rising') {
     if (bewegung.stieg >= FORM_KLAR_HALBTOENE && bewegung.talBei <= WENDEPUNKT_FRUEH) return 'geprueft';
-    if (bewegung.stieg < FORM_SPUR_HALBTOENE) return 'widerspruch';
+    // NICHT-LETZTE Silbe (23.09.2026): Im Fluss wird der steigende Ton vor
+    // der nächsten Silbe abgeschnitten und steigt kaum — am Bestand gemessen
+    // „widersprach" er davor bei 24 % der angenommenen Clips, als letzte
+    // Silbe bei 0 %. Ein fehlender Anstieg ist dort kein Beweis.
+    if (bewegung.stieg < FORM_SPUR_HALBTOENE) return amEnde ? 'widerspruch' : 'knapp';
     return 'knapp';
   }
   // mittel, tief, hoch: die LAGE unterscheidet sie, und die ist ohne
@@ -356,6 +362,13 @@ function ordnungsUrteile(
       if (j - i > MAX_ORDNUNG_ABSTAND) break;
       const richtung = Math.sign(lagen[i].rang - lagen[j].rang);
       if (richtung === 0) continue;
+      // Steht die TIEFERE Silbe vorn und ist die spätere mittel oder
+      // steigend, arbeitet die Satzmelodie (vorn hoch, hinten abgesenkt)
+      // gegen den Ton: am Bestand lag tief vor mittel im Median sogar
+      // DARÜBER (−0,8 Halbtöne am Wortanfang), mittel/tief vor steigend
+      // trennten kaum (Median 0 bis 1,8). Solche Paare werden nicht gewertet
+      // — weder als Beleg noch als Widerspruch (23.09.2026).
+      if (richtung < 0 && (silbenToene[j] === 'mid' || silbenToene[j] === 'rising')) continue;
       // Die erwartete Richtung haengt am RANG-Unterschied, nicht an der
       // Reihenfolge: bei [tief, mittel] soll Silbe i UNTER Silbe j liegen —
       // genau das war am 18.09. Abend als Widerspruch verworfen worden und
@@ -472,6 +485,14 @@ export function checkThaiTone(
           ? 'Deutlicher Fall widerspricht dem hohen Ton.'
           : 'Relative Konturform widerspricht dem verifizierten Sollton.' };
     }
+    // HOHER TON (23.09.2026): Die ausgelieferte Stimme spricht ihn mit
+    // deutlichem Anstieg zum Ende — mittel/tief/fallend tun das fast nie
+    // (Messung in tone-template.ts). Nur hochstufen, nie verwerfen: ein hoher
+    // Ton darf am Ende auch absacken (AE-31-Referenz).
+    if (urteil === 'register' && targetTone === 'high' && hoherTonSteigtAn(measurement.frames)) {
+      return { ...target, ...metrics, silben, status: 'passed',
+        reason: 'Hoher Ton mit deutlichem Anstieg zum Ende; mittel/tief/fallend zeigen diese Form fast nie. Nur Tonhöhe geprüft.' };
+    }
     return { ...target, ...metrics, silben, status: 'unchecked',
       reason: urteil === 'knapp'
         ? 'Konturbewegung zu knapp für ein Urteil — nicht verworfen.'
@@ -487,15 +508,21 @@ export function checkThaiTone(
   const verschmolzen = fuegeZuegeZusammen(zuege, soll.toene.length);
   const { segmente, geteilt } = teileZuege(verschmolzen, soll.toene.length);
   if (segmente.length < soll.toene.length) {
+    // Ohne Grenzen: Vorlagenabgleich über die ganze Kurve (stuft nur hoch).
+    const vorlage = vorlagenUrteil(measurement.frames, soll.toene, clip.text);
+    if (vorlage?.bestanden) {
+      return { ...base, ...bezug, ...metrics, targetTones: soll.toene, status: 'passed',
+        reason: vorlagenGrund(vorlage.p, soll.toene.length) };
+    }
     return { ...base, ...bezug, ...metrics, targetTones: soll.toene, status: 'unchecked',
-      reason: `${soll.toene.length} Soll-Silben, aber nur ${segmente.length} trennbare Silben — verbundene Silben ohne sichere Grenze nicht prüfbar.` };
+      reason: `${soll.toene.length} Soll-Silben, aber nur ${segmente.length} trennbare Silben — verbundene Silben ohne sichere Grenze nicht prüfbar; auch der Vorlagenabgleich ist nicht eindeutig.` };
   }
   if (segmente.length > soll.toene.length) {
     return { ...base, ...bezug, ...metrics, targetTones: soll.toene, status: 'unchecked',
       reason: `${segmente.length} stimmhafte Züge für ${soll.toene.length} Soll-Silben — Zuordnung nicht eindeutig.` };
   }
   const spans = segmente.map((segment) => trimEdges(octaveCorrect(segment)));
-  const silben = spans.map((span, i) => ({ tone: soll.toene[i], form: formurteil(soll.toene[i], summarizeContour(span, medianReferenceHz(span)), false) }));
+  const silben = spans.map((span, i) => ({ tone: soll.toene[i], form: formurteil(soll.toene[i], summarizeContour(span, medianReferenceHz(span)), false, i === spans.length - 1) }));
   // Die Clip-Referenz aus den OKTAVKORRIGIERTEN Silben: ein einzelner
   // Oktavsprung der Autokorrelation verschöbe sonst den Median, an dem alle
   // Silbenlagen gemessen werden (die Silben selbst laufen längst korrigiert).
@@ -549,6 +576,17 @@ export function checkThaiTone(
     return { ...base, ...bezug, ...metrics, targetTones: soll.toene, silben, ...ordnungFeld, status: 'passed',
       reason: `Silbenform ${formGeprueft} von ${silben.length} plus ${ordnung.erfuellt} Register-Ordnung(en) mit dem Soll vereinbar; absolute Registerlage bleibt ungeprüft${geteilt > 0 ? `, ${geteilt} Silbengrenze(n) aus dem Lautstärkeverlauf` : ''}.` };
   }
+  // Nur Registertöne ohne erfüllte Ordnung: die Lagen der Silben ZUEINANDER
+  // trägt der Vorlagenabgleich über die ganze Kurve (stuft nur hoch).
+  const vorlage = vorlagenUrteil(measurement.frames, soll.toene, clip.text);
+  if (vorlage?.bestanden) {
+    return { ...base, ...bezug, ...metrics, targetTones: soll.toene, silben, ...ordnungFeld, status: 'passed',
+      reason: vorlagenGrund(vorlage.p, soll.toene.length) };
+  }
   return { ...base, ...bezug, ...metrics, targetTones: soll.toene, silben, ...ordnungFeld, status: 'unchecked',
     reason: `Registerlage mittel/tief/hoch ohne Sprecherreferenz nicht prüfbar (${silben.length} Silben).` };
+}
+
+function vorlagenGrund(p: number, silben: number): string {
+  return `Vorlagenabgleich: Die Tonkurve passt zur Soll-Tonfolge (${silben} Silben) besser als ${Math.round((1 - p) * 100)} % zufälliger Tonfolgen (Schwelle p ≤ ${VORLAGE_P_MAX}), jede fallende/steigende Silbe besser als jeder andere Ton. Filter gegen grobe Tonfehler, kein Nachweis jeder einzelnen Silbe.`;
 }
