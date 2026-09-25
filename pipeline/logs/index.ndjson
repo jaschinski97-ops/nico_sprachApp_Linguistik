@@ -1,5 +1,0 @@
-{"loggedAt":"2026-09-09T11:56:45.883Z","script":"measure-tones","action":"measure","items":3301,"result":"ok","file":"2026-09-09-measure-tones-measure.json"}
-{"loggedAt":"2026-09-09T12:00:05.370Z","script":"studio-helper","action":"openai-tts","items":1,"result":"error","file":"2026-09-09-studio-helper-openai-tts.json"}
-{"loggedAt":"2026-09-09T12:00:05.466Z","script":"studio-helper","action":"openai-tts","items":1,"result":"rejected","file":"2026-09-09-studio-helper-openai-tts-2.json"}
-{"loggedAt":"2026-09-09T12:00:32.876Z","script":"publish-pack","action":"release-upload","items":1,"result":"blocked","file":"2026-09-09-publish-pack-release-upload.json"}
-{"loggedAt":"2026-09-09T15:28:22.459Z","script":"studio-helper","action":"openai-tts","model":"gpt-4o-mini-tts-2025-12-15","voice":"coral","items":1,"result":"ok","file":"2026-09-09-studio-helper-openai-tts-3.json"}

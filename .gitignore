@@ -54,13 +54,15 @@ yarn-error.*
 # Playwright-Automationsartefakte (Snapshots, Konsolenlogs) — nur lokal
 /.playwright-mcp/
 
-# Generierte Mess-/Pruefberichte (bis 183 MB, jederzeit regenerierbar) —
-# Protokolle in pipeline/logs/ bleiben bewusst im Repo (*.json + index.ndjson).
+# Generierte Mess-/Pruefberichte und Laufprotokolle (zehntausende Dateien,
+# jederzeit regenerierbar) — nur lokal
 /pipeline/reports/
-
-# Ad-hoc Metro-/Studio-Konsolenumleitungen gehören NICHT ins Repo
-# (11.09. aufgeräumt: 8 versehentlich committed Logs, u.a. metro-8081.log in 418236e)
-/pipeline/logs/*.log
+/pipeline/logs/
 
 # Web-Content-Spiegel (204 MB Binärdateien, per `npm run web:content` regeneriert)
 /public/
+
+# Lokale Screenshots und Werkzeug-Konfigurationen
+design-review-shots/
+gui-test-screenshots/
+.zcodeignore

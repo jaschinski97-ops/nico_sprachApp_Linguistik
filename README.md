@@ -1,6 +1,6 @@
 # ThaiLernbegleiter
 
-Eine Offline-Lern-App für Thai (zusätzlich Englisch und Spanisch): Vokabeln mit
+Eine Offline-Lern-App für Thai, Englisch, Spanisch und Deutsch: Vokabeln mit
 Bild und Hörclip, Sätze, Übungsgespräche, Prüfungssimulation — alles wird mit
 der App **komplett offline** ausgeliefert. KI-Anbieter (Text, Sprachausgabe,
 Bilder) braucht nur, wer als Admin neuen Inhalt **erzeugen** will; die Nutzer
@@ -29,7 +29,7 @@ ThaiSpeaker/
 ├── scripts/              Werkzeuge: Inhalts-Pipeline, Tonmessung,
 │                         Freigabe-Gate, Release-Pipeline
 ├── docs/                 Projektgeschichte (PROGRESS.md), Audits,
-│                         Screenshots, PIPELINE.md (Ablauf für Admins)
+│                         PIPELINE.md (Ablauf für Admins)
 ├── android/              Natives Projekt — lokal generiert, nicht im Repo
 └── _Local/, .agent/, …   Nur lokal, nie auf GitHub (siehe unten)
 ```
