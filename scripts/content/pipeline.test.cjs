@@ -139,6 +139,42 @@ test('images require real decoding and concrete-word schema', async (t) => {
   const broken = Buffer.from('89504e470d0a1a0a', 'hex');
   await assert.rejects(pipeline.stage({ kind: 'images', document: { ...document, byteSize: broken.length }, base64: broken.toString('base64') }));
 });
+test('Löschen merkt sich den Eintrag und nimmt die Bilder der Vokabel mit (26.09.)', async (t) => {
+  const { root, pipeline } = await setup(t);
+  const wort = {
+    id: 'ki-en-loeschtest', language: 'en', term: 'lamp', german: 'Lampe', romanization: 'lamp',
+    partOfSpeech: 'noun', register: 'neutral', isConcrete: true,
+    syllables: [], sourceVerified: false, verificationNote: 'KI-Kreuzprüfung bestanden (Test)',
+  };
+  await pipeline.stage({ kind: 'vocabulary', document: wort });
+  await pipeline.publish();
+  const bytes = await fs.readFile(path.join(__dirname, '../../assets/images/icon.png'));
+  const bild = await pipeline.stage({ kind: 'images', document: { id: wort.id, vocabId: wort.id, format: 'png', byteSize: bytes.length, blobKey: wort.id + '.png', prompt: 'TEST lamp, no text', model: 'TEST', generatedAt: 1 }, base64: bytes.toString('base64') });
+  await pipeline.publish();
+  assert.equal((await pipeline.catalog()).entries.length, 2);
+
+  await pipeline.deleteFromCatalog('vocabulary', wort.id);
+  const katalog = await pipeline.catalog();
+  assert.equal(katalog.entries.length, 0, 'das Bild geht mit seiner Vokabel');
+  assert.ok(katalog.deleted[`vocabulary:${wort.id}`] && katalog.deleted[`images:${wort.id}`], 'beide stehen in deleted');
+  await assert.rejects(fs.readFile(path.join(root, 'assets/content', bild.asset)));
+  // Vorher warf der nächste Publish „Inhalt verletzt den images-Vertrag“.
+  await pipeline.publish();
+  assert.deepEqual(checkContent(root, { integrityOnly: true, extraVocabulary: VOCABULARY }).errors, []);
+
+  await pipeline.stage({ kind: 'situations', document: situation });
+  await pipeline.deleteFromStage('situations', situation.id);
+  assert.ok((await pipeline.catalog()).deleted[`situations:${situation.id}`], 'auch Stage-Löschungen stehen in deleted');
+});
+test('Die Route „alles Generierte löschen“ gibt es nicht mehr', async (t) => {
+  const { root } = await setup(t); const server = createStudio(root);
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const url = `http://127.0.0.1:${server.address().port}`;
+  const headers = { 'Content-Type': 'application/json', Origin: 'http://localhost:8081' };
+  assert.equal((await fetch(url + '/catalog/clear-generated', { method: 'POST', headers, body: '{}' })).status, 404);
+  assert.equal((await fetch(url + '/catalog/clear-generated')).status, 404);
+});
 test('reverse consistency: orphan assets and stray require-map keys fail every check mode; prune removes only orphans', async (t) => {
   const { root, pipeline } = await setup(t);
   const id = VOCABULARY.find(word => word.isConcrete).id;

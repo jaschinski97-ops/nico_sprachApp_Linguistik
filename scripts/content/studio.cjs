@@ -170,10 +170,6 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
     const json = (code, value) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
     try {
       if (req.method === 'GET' && req.url === '/state') { json(200, await pipeline.state()); return; }
-      if (req.method === 'GET' && req.url === '/catalog/clear-generated') {
-        // Nur zählen — der Löschlauf selbst geht durch die POST-Warteschlange.
-        json(200, await pipeline.clearGenerated({ preview: true })); return;
-      }
       if (req.method === 'GET' && /^\/asset\/[a-f0-9]{64}\.(mp3|png|jpeg|webp)$/.test(req.url)) {
         const name = req.url.slice('/asset/'.length);
         let bytes;
@@ -209,11 +205,16 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
           term: typeof eintrag.term === 'string' ? eintrag.term.slice(0, 120) : undefined,
           gruende: Array.isArray(eintrag.gruende) ? eintrag.gruende.map(String).join(' | ').slice(0, 500) : undefined,
         }));
+        // pipeline/logs ist gitignored — in einem frischen Klon fehlt der Ordner.
+        await fs.mkdir(path.join(root, 'pipeline', 'logs'), { recursive: true });
         await fs.appendFile(path.join(root, 'pipeline', 'logs', 'studio-failures.ndjson'), zeilen.join('\n') + '\n', 'utf8');
         json(200, { written: zeilen.length });
         return;
       }
-      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete','/catalog/clear-generated','/catalog/clear-selection'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
+      // Die frühere Route /catalog/clear-generated („alles Generierte löschen“)
+      // ist entfernt (26.09.): Seit der erzeugte Wortschatz der Grundstock ist,
+      // traf ihr Stichtag-Urteil den GESAMTEN Katalog.
+      if (req.method !== 'POST' || !['/stage','/publish','/stage/delete','/catalog/delete','/catalog/clear-selection'].includes(req.url)) { json(404, { error: 'Unbekannter Pfad.' }); return; }
       if (!originAllowed(req.headers.origin) || req.headers['content-type'] !== 'application/json') { json(403, { error: 'Nur die lokale Entwickler-App darf schreiben.' }); return; }
       let size = 0; const parts = [];
       for await (const chunk of req) {
@@ -231,7 +232,6 @@ function createStudio(root, { getApiKey, openaiFetch, logRun, allowRequest = cre
         req.url === '/stage' ? pipeline.stage(data) :
         req.url === '/publish' ? pipeline.publish({ vocabularyIds: data.vocabularyIds }) :
         req.url === '/stage/delete' ? pipeline.deleteFromStage(data.kind, data.id) :
-        req.url === '/catalog/clear-generated' ? pipeline.clearGenerated() :
         req.url === '/catalog/clear-selection' ? pipeline.clearGenerated({ kind: data.kind, languages: data.languages, includeBase: true }) :
         pipeline.deleteFromCatalog(data.kind, data.id);
       const operation = queue.then(action);

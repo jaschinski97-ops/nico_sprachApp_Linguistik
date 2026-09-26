@@ -160,7 +160,23 @@ class ContentPipeline {
     if (!entry) return null;
     stageState.entries = stageState.entries.filter((item) => keyOf(item) !== `${kind}:${id}`);
     await atomicJson(this.stageFile, stageState);
+    // Ohne Vermerk in `deleted` käme der Entwurf mit dem nächsten Export aus
+    // dem Browser-Speicher zurück (isDeletedDraft prüft genau diese Liste).
+    const shipped = await this.catalog();
+    await this.writeCatalog({ ...shipped, deleted: { ...shipped.deleted, [`${kind}:${id}`]: Date.now() } });
     return entry;
+  }
+  /**
+   * Die Schlüssel, die mit einem Eintrag zusammen gehen müssen: Bilder hängen
+   * an ihrer Vokabel (`vocabId`). Bliebe ein Bild ohne Vokabel zurück, würfe
+   * der nächste Publish „Inhalt verletzt den images-Vertrag“ — für alles.
+   */
+  static abhaengigeSchluessel(kind, ids, entries) {
+    if (kind !== 'vocabulary') return [];
+    const weg = new Set(ids);
+    return entries
+      .filter((item) => item.kind === 'images' && weg.has(item.document?.vocabId || item.id))
+      .map(keyOf);
   }
   /**
    * Löscht einen AUSLIEFERTEN Eintrag aus dem Katalog — und bewusst AUCH den
@@ -176,32 +192,49 @@ class ContentPipeline {
     const shipped = await this.catalog();
     const entry = shipped.entries.find((item) => keyOf(item) === key);
     if (!entry) return null;
-    shipped.entries = shipped.entries.filter((item) => keyOf(item) !== key);
     const stageState = await readJson(this.stageFile, { version: 2, entries: [] });
-    const zwilling = stageState.entries.find((item) => keyOf(item) === key);
-    if (zwilling) {
-      stageState.entries = stageState.entries.filter((item) => keyOf(item) !== key);
+    const schluessel = new Set([
+      key,
+      ...ContentPipeline.abhaengigeSchluessel(kind, [id], [...shipped.entries, ...stageState.entries]),
+    ]);
+    const weg = shipped.entries.filter((item) => schluessel.has(keyOf(item)));
+    shipped.entries = shipped.entries.filter((item) => !schluessel.has(keyOf(item)));
+    if (stageState.entries.some((item) => schluessel.has(keyOf(item)))) {
+      stageState.entries = stageState.entries.filter((item) => !schluessel.has(keyOf(item)));
       await atomicJson(this.stageFile, stageState);
     }
+    // Vermerk in `deleted`: sonst holt der nächste Export den Eintrag aus dem
+    // Browser-Speicher zurück.
+    const jetzt = Date.now();
+    shipped.deleted = { ...shipped.deleted, ...Object.fromEntries([...schluessel].map((k) => [k, jetzt])) };
     const verbleibendeAssets = new Set(
       shipped.entries.flatMap((item) => (item.asset ? [item.asset] : []))
     );
     await this.writeCatalog(shipped);
-    if (entry.asset && !verbleibendeAssets.has(entry.asset)) {
-      await fs.rm(path.join(this.root, 'assets/content', entry.asset), { force: true });
-      await fs.rm(path.join(this.work, entry.asset), { force: true });
+    const entfernt = [];
+    for (const item of weg) {
+      if (!item.asset || verbleibendeAssets.has(item.asset)) continue;
+      await fs.rm(path.join(this.root, 'assets/content', item.asset), { force: true });
+      await fs.rm(path.join(this.work, item.asset), { force: true });
+      await fs.rm(path.join(this.root, 'public/content', item.asset), { force: true });
+      entfernt.push(item.asset);
     }
     tryWriteProtocol({
       script: 'content-pipeline',
       action: 'delete',
-      items: 1,
+      items: schluessel.size,
       result: 'ok',
-      notes: `${key}${entry.asset ? ` · Asset ${entry.asset} entfernt` : ''}`,
+      notes: `${[...schluessel].join(', ')}${entfernt.length ? ` · Assets ${entfernt.join(', ')} entfernt` : ''}`,
     }, { root: this.root });
     return entry;
   }
   /**
-   * Nutzerwunsch 15.09.: „wo ist der Button, die gesamten generierten
+   * Löscht eine Auswahl (Art × Sprachen) über die Studio-Route
+   * /catalog/clear-selection. Der frühere Aufruf ohne Auswahl („alles
+   * Generierte“, Wartungskarte) ist seit 26.09. entfernt: Seit der erzeugte
+   * Wortschatz der Grundstock ist, traf sein Stichtag den ganzen Katalog.
+   *
+   * Ursprung, Nutzerwunsch 15.09.: „wo ist der Button, die gesamten generierten
    * Inhalte zu löschen" — alles, was NACH dem Grundstock-Abschluss erzeugt
    * wurde, aus Katalog UND Stage entfernen (dasselbe Provenienz-Urteil für
    * beide, damit publish() nichts zurückholen kann), verwaiste Asset-Dateien
@@ -232,8 +265,13 @@ class ContentPipeline {
       if (typeof zeit === 'string') return Date.parse(zeit) >= stichtag;
       return false;
     };
-    const katalogWeg = shipped.entries.filter(istGeneriert);
-    const stageWeg = stageState.entries.filter(istGeneriert);
+    // Bilder gehen mit ihrer Vokabel — sonst scheitert jeder spätere Publish
+    // am images-Vertrag (Bild ohne Vokabel).
+    const vokabelWeg = [...shipped.entries, ...stageState.entries].filter(e => e.kind === 'vocabulary' && istGeneriert(e)).map(e => String(e.id));
+    const mitBildern = new Set(ContentPipeline.abhaengigeSchluessel('vocabulary', vokabelWeg, [...shipped.entries, ...stageState.entries]));
+    const istWeg = (entry) => istGeneriert(entry) || mitBildern.has(keyOf(entry));
+    const katalogWeg = shipped.entries.filter(istWeg);
+    const stageWeg = stageState.entries.filter(istWeg);
     const zahlen = {
       katalog: katalogWeg.length,
       stage: stageWeg.length,
@@ -242,7 +280,7 @@ class ContentPipeline {
     if (preview) return zahlen;
     const behalten = new Set(
       [...shipped.entries, ...stageState.entries]
-        .filter((entry) => !istGeneriert(entry))
+        .filter((entry) => !istWeg(entry))
         .flatMap((entry) => (entry.asset ? [entry.asset] : []))
     );
     for (const entry of [...katalogWeg, ...stageWeg]) {
@@ -258,8 +296,8 @@ class ContentPipeline {
     if (includeBase && kind) {
       for (const scope of languages ? languages.map(lang => `${kind}:${lang}`) : [kind]) clearedBefore[scope] = Date.now();
     }
-    await this.writeCatalog({ ...shipped, deleted, clearedBefore, entries: shipped.entries.filter((entry) => !istGeneriert(entry)) });
-    await atomicJson(this.stageFile, { version: 2, entries: stageState.entries.filter((entry) => !istGeneriert(entry)) });
+    await this.writeCatalog({ ...shipped, deleted, clearedBefore, entries: shipped.entries.filter((entry) => !istWeg(entry)) });
+    await atomicJson(this.stageFile, { version: 2, entries: stageState.entries.filter((entry) => !istWeg(entry)) });
     tryWriteProtocol({
       script: 'content-pipeline',
       action: 'clear-generated',

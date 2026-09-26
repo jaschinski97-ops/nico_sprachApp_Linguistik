@@ -5,7 +5,6 @@ import { SettingsRow } from '@/components/settings-row';
 import { ThemedButton } from '@/components/themed-button';
 import { ContentReport } from './content-report';
 import { VocabZieleCard } from './vocab-ziele-card';
-import { WartungKarte } from './wartung-karte';
 import { durchschnittsAnteil } from '@/lib/content/wortschatz-anteil';
 import { findeDuplikat } from '@/lib/content/aehnlichkeit';
 import { getStore } from '@/lib/storage';
@@ -608,7 +607,6 @@ export default function ContentStudio() {
           <SettingsRow title="Anbieter & Schlüssel" detail="Zugänge zentral verwalten" icon="key-outline" onPress={() => setSection('keys')} />
           <SettingsRow title="Prüfberichte & Diagnose" detail="Qualität und gespeicherte Inhalte" icon="pulse-outline" onPress={() => setSection('reports')} />
         </View>
-        <WartungKarte />
       </> : null}
       {section === 'keys' ? <ApiKeysCard /> : null}
       {section === 'reports' ? <><ContentReport revision={reportRevision} /><DiagnosticsCard /></> : null}
