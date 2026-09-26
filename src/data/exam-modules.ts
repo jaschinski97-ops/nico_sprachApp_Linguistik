@@ -990,40 +990,43 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
     direction: 'en_to_de',
     taskType: 'multipleChoice',
     title: 'Notice at the library / Anzeige in der Bücherei',
-    instruction: 'Read the notice. / Lesen Sie die Anzeige. Klicken Sie an.',
+    instruction: 'Lesen Sie die Anzeige. Klicken Sie an. / Read the notice.',
     minutes: 6,
     source: 'builtin',
     stimulus: {
       kind: 'text',
       title: 'STADTBÜCHEREI — INFORMATION',
+      // Der Prüfungstext ist deutsch wie in der echten Prüfung (Testrunde
+      // 26.09.: vorher zweisprachig mit Englisch zuerst und englischen
+      // Antworten — man konnte alles auf Englisch lösen).
       body:
-        'Monday to Friday: 9 am – 8 pm / Montag bis Freitag: 9–20 Uhr\n' +
-        'Saturday: 9 am – 1 pm / Samstag: 9–13 Uhr\n' +
-        'Sunday: closed / Sonntag: geschlossen\n\n' +
-        'Books are free. Copies cost 10 cents. / Bücher sind kostenlos. Kopien kosten 10 Cent.\n' +
-        'Please bring your passport to register. / Zum Anmelden bringen Sie bitte Ihren Pass mit.',
+        'Montag bis Freitag: 9–20 Uhr\n' +
+        'Samstag: 9–13 Uhr\n' +
+        'Sonntag: geschlossen\n\n' +
+        'Bücher sind kostenlos. Kopien kosten 10 Cent.\n' +
+        'Zum Anmelden bringen Sie bitte Ihren Pass mit.',
     },
     items: [
       {
         id: 'a1-en-lesen-bibliothek-1',
-        prompt: 'When is the library closed? / Wann ist die Bücherei geschlossen?',
-        options: ['On Saturday.', 'On Sunday.', 'On Monday.'],
+        prompt: 'Wann ist die Bücherei geschlossen? / When is the library closed?',
+        options: ['Am Samstag.', 'Am Sonntag.', 'Am Montag.'],
         correctIndex: 1,
-        explanation: '„Sunday: closed" — Sonntag ist die Bücherei geschlossen.',
+        explanation: '„Sonntag: geschlossen" — on Sunday the library is closed.',
       },
       {
         id: 'a1-en-lesen-bibliothek-2',
-        prompt: 'What costs money? / Was kostet Geld?',
-        options: ['The books.', 'The copies.', 'The passport.'],
+        prompt: 'Was kostet Geld? / What costs money?',
+        options: ['Die Bücher.', 'Die Kopien.', 'Der Pass.'],
         correctIndex: 1,
-        explanation: 'Bücher sind kostenlos; „Copies cost 10 cents" — Kopien kosten Geld.',
+        explanation: '„Kopien kosten 10 Cent" — books are free, copies cost money.',
       },
       {
         id: 'a1-en-lesen-bibliothek-3',
-        prompt: 'You want to register. What do you need? / Sie möchten sich anmelden. Was brauchen Sie?',
-        options: ['A passport.', 'A book.', '10 cents.'],
+        prompt: 'Sie möchten sich anmelden. Was brauchen Sie? / You want to register. What do you need?',
+        options: ['Einen Pass.', 'Ein Buch.', '10 Cent.'],
         correctIndex: 0,
-        explanation: '„Please bring your passport to register" — zum Anmelden den Pass mitbringen.',
+        explanation: '„Zum Anmelden bringen Sie bitte Ihren Pass mit" — bring your passport to register.',
       },
     ],
   },
@@ -1038,7 +1041,7 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
     taskType: 'trueFalse',
     title: 'Voicemail from the language school / Nachricht von der Sprachschule',
     instruction:
-      'Listen to the message. True or false? / Sie hören eine Nachricht. Richtig oder falsch?',
+      'Sie hören eine Nachricht. Richtig oder falsch? / Listen to the message. True or false?',
     minutes: 5,
     source: 'builtin',
     stimulus: {
@@ -1051,21 +1054,21 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
     items: [
       {
         id: 'a1-en-hoeren-anruf-1',
-        prompt: 'The course starts in the morning. / Der Kurs beginnt am Morgen.',
+        prompt: 'Der Kurs beginnt am Morgen. / The course starts in the morning.',
         options: ['Richtig', 'Falsch'],
         correctIndex: 0,
         explanation: '„… um neun Uhr" — neun Uhr ist am Morgen.',
       },
       {
         id: 'a1-en-hoeren-anruf-2',
-        prompt: 'You must bring a book. / Sie müssen ein Buch mitbringen.',
+        prompt: 'Sie müssen ein Buch mitbringen. / You must bring a book.',
         options: ['Richtig', 'Falsch'],
         correctIndex: 1,
         explanation: '„Das Buch bekommen Sie bei uns im Büro" — das Buch gibt es dort, mitbringen Sie Pass und Stift.',
       },
       {
         id: 'a1-en-hoeren-anruf-3',
-        prompt: 'The course starts on the third of October. / Der Kurs beginnt am dritten Oktober.',
+        prompt: 'Der Kurs beginnt am dritten Oktober. / The course starts on the third of October.',
         options: ['Richtig', 'Falsch'],
         correctIndex: 0,
         explanation: '„Ihr Deutschkurs beginnt am Montag, den dritten Oktober".',
@@ -1083,38 +1086,38 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
     taskType: 'matching',
     title: 'On the street / Unterwegs in der Stadt',
     instruction:
-      'Read the situations. Where do you go? / Lesen Sie die Situationen. Wohin gehen Sie?',
+      'Lesen Sie die Situationen. Wohin gehen Sie? / Read the situations. Where do you go?',
     minutes: 6,
     source: 'builtin',
     stimulus: {
       kind: 'listing',
-      title: 'IN DER STADT / IN TOWN',
-      body: 'Diese vier Orte gibt es hier. / These four places are here.',
+      title: 'IN DER STADT',
+      body: 'Diese vier Orte gibt es hier.',
       entries: [
-        'A — Apotheke: Medikamente, Beratung. Mo–Fr 8–18 Uhr. / Pharmacy: medicine, advice.',
-        'B — Post: Briefe, Pakete, Briefmarken. Mo–Sa 9–12 und 14–17 Uhr. / Post office: letters, parcels, stamps.',
-        'C — Bäckerei: Brot, Brötchen, Kuchen. Täglich 7–17 Uhr. / Bakery: bread, rolls, cake.',
-        'D — Sparkasse: Geld, Konto, Rechnungen. Mo–Fr 9–16 Uhr. / Bank: money, account, bills.',
+        'A — Apotheke: Medikamente, Beratung. Mo–Fr 8–18 Uhr.',
+        'B — Post: Briefe, Pakete, Briefmarken. Mo–Sa 9–12 und 14–17 Uhr.',
+        'C — Bäckerei: Brot, Brötchen, Kuchen. Täglich 7–17 Uhr.',
+        'D — Sparkasse: Geld, Konto, Rechnungen. Mo–Fr 9–16 Uhr.',
       ],
     },
     items: [
       {
         id: 'a1-en-lesen-strasse-1',
-        prompt: 'You have a headache. / Sie haben Kopfschmerzen.',
+        prompt: 'Sie haben Kopfschmerzen. / You have a headache.',
         options: ['A — Apotheke', 'B — Post', 'C — Bäckerei', 'D — Sparkasse'],
         correctIndex: 0,
         explanation: 'Medikamente gibt es in der Apotheke. / Medicine comes from the pharmacy.',
       },
       {
         id: 'a1-en-lesen-strasse-2',
-        prompt: 'You want to send a parcel to Bangkok. / Sie möchten ein Paket nach Bangkok schicken.',
+        prompt: 'Sie möchten ein Paket nach Bangkok schicken. / You want to send a parcel to Bangkok.',
         options: ['A — Apotheke', 'B — Post', 'C — Bäckerei', 'D — Sparkasse'],
         correctIndex: 1,
         explanation: 'Pakete gehen über die Post. / Parcels go via the post office.',
       },
       {
         id: 'a1-en-lesen-strasse-3',
-        prompt: 'It is Sunday and you want fresh bread. / Es ist Sonntag, und Sie möchten frisches Brot.',
+        prompt: 'Es ist Sonntag, und Sie möchten frisches Brot. / It is Sunday and you want fresh bread.',
         options: ['A — Apotheke', 'B — Post', 'C — Bäckerei', 'D — Sparkasse'],
         correctIndex: 2,
         explanation:
@@ -1133,16 +1136,13 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
     taskType: 'gapFill',
     title: 'Fill in the form / Das Formular ausfüllen',
     instruction:
-      'Read the text. Fill in the form. / Lesen Sie den Text. Füllen Sie das Formular aus.',
+      'Lesen Sie den Text. Füllen Sie das Formular aus. / Read the text. Fill in the form.',
     minutes: 8,
     source: 'builtin',
     stimulus: {
       kind: 'text',
-      title: 'THIS IS EMILY / DAS SCHREIBT EMILY',
+      title: 'DAS SCHREIBT EMILY',
       body:
-        'My name is Emily Carter. I am 29 years old and I come from Manchester. ' +
-        'Now I live in Leipzig, in der Lindenstraße 5. I am a nurse and I work at the ' +
-        'hospital. In the evening, I want to learn German in a course. / ' +
         'Ich heiße Emily Carter. Ich bin 29 Jahre alt und komme aus Manchester. Jetzt wohne ' +
         'ich in Leipzig, in der Lindenstraße 5. Ich bin Krankenpflegerin und arbeite im ' +
         'Krankenhaus. Abends möchte ich einen Deutschkurs machen.',
@@ -1150,7 +1150,7 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
     items: [
       {
         id: 'a1-en-schreiben-formular-1',
-        prompt: 'Family name / Familienname: ______',
+        prompt: 'Familienname / Family name: ______',
         options: ['Emily', 'Carter', 'Leipzig'],
         correctIndex: 1,
         explanation:
@@ -1158,21 +1158,21 @@ export const BUILTIN_EXAM_MODULES: ExamModule[] = [
       },
       {
         id: 'a1-en-schreiben-formular-2',
-        prompt: 'Street and number / Straße und Hausnummer: ______',
+        prompt: 'Straße und Hausnummer / Street and number: ______',
         options: ['Lindenstraße 5', 'Leipzig 29', 'Manchester 5'],
         correctIndex: 0,
         explanation: '„… wohne ich in Leipzig, in der Lindenstraße 5."',
       },
       {
         id: 'a1-en-schreiben-formular-3',
-        prompt: 'Profession / Beruf: ______',
+        prompt: 'Beruf / Profession: ______',
         options: ['Lehrerin', 'Ärztin', 'Krankenpflegerin'],
         correctIndex: 2,
         explanation: '„Ich bin Krankenpflegerin" — a nurse works at the hospital (im Krankenhaus).',
       },
       {
         id: 'a1-en-schreiben-formular-4',
-        prompt: 'When does she want to learn? / Wann möchte sie lernen?',
+        prompt: 'Wann möchte sie lernen? / When does she want to learn?',
         options: ['am Morgen', 'am Mittag', 'am Abend'],
         correctIndex: 2,
         explanation: '„Abends möchte ich einen Deutschkurs machen" — in the evening.',

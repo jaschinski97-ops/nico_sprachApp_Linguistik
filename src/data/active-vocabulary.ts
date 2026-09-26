@@ -4,6 +4,17 @@ import { currentCatalog } from '@/lib/content/catalog-state';
 import { isDeliverableEntry } from '@/lib/content/audio-policy';
 
 /**
+ * Der Erzeuger liefert IPA mal mit, mal ohne Schrägstriche (`/kɑːd/` neben
+ * `kɑːd`). Einheitlich mit Strichen, damit jede Anzeige gleich aussieht.
+ */
+export function mitIpaStrichen(word: VocabEntry): VocabEntry {
+  if (!word.ipa) return word;
+  const kern = word.ipa.trim().replace(/^\/+|\/+$/g, '');
+  const ipa = `/${kern}/`;
+  return ipa === word.ipa ? word : { ...word, ipa };
+}
+
+/**
  * DER Wortschatz der App: die auslieferbaren Vokabel-Einträge des Katalogs
  * (`src/content/catalog.json`), erzeugt und geprüft im Entwicklerstudio.
  *
@@ -15,7 +26,7 @@ import { isDeliverableEntry } from '@/lib/content/audio-policy';
 export function activeVocabulary(): VocabEntry[] {
   const generated = currentCatalog().entries
     .filter(entry => entry.kind === 'vocabulary' && isDeliverableEntry(entry))
-    .map(entry => entry.document as VocabEntry);
+    .map(entry => mitIpaStrichen(entry.document as VocabEntry));
   return [...new Map(generated.map(word => [word.id, word])).values()];
 }
 

@@ -26,6 +26,8 @@ export type SerEstarItem = {
   answer: 'ser' | 'estar';
   /** Welche Regel entscheidet — steht nach der Antwort da. */
   reason: string;
+  /** Konjugierte Form für die Lösung, wenn das Subjekt nicht 3. Person Singular ist. */
+  form?: string;
 };
 
 const ITEM = (
@@ -49,8 +51,8 @@ export const SER_ESTAR_ITEMS: readonly SerEstarItem[] = [
     'Herkunft — ser.'),
   ITEM('se-cafe', 'El café ___ rico.', 'Der Kaffee (hier in diesem Laden) ist lecker.', 'estar',
     'Aktuelle Bewertung eines konkreten Beispiels — estar; die allgemeine Eigenschaft stünde mit ser.'),
-  ITEM('se-ninos', 'Los niños ___ cansados.', 'Die Kinder sind müde.', 'estar',
-    'Zustand/Befindlichkeit — estar, auch wenn er lange anhält.'),
+  { ...ITEM('se-ninos', 'Los niños ___ cansados.', 'Die Kinder sind müde.', 'estar',
+    'Zustand/Befindlichkeit — estar, auch wenn er lange anhält.'), form: 'están' },
   ITEM('se-libro', 'El libro ___ en la mesa.', 'Das Buch liegt auf dem Tisch.', 'estar',
     'Ort von Dingen und Personen — estar.'),
   ITEM('se-sopa', 'La sopa ___ fría.', 'Die Suppe ist kalt.', 'estar',
@@ -59,8 +61,8 @@ export const SER_ESTAR_ITEMS: readonly SerEstarItem[] = [
     'Ort von EREIGNISSEN — ser, die Ausnahme unter den Ortsangaben.'),
   ITEM('se-arbol', 'El árbol ___ muerto.', 'Der Baum ist tot.', 'estar',
     'Endzustand nach einem Wandel (estar muerto) — estar.'),
-  ITEM('se-aburrido', 'Yo ___ aburrido.', 'Mir ist gerade langweilig.', 'estar',
-    'Befinden — estar. (Ser aburrido hieße: ein langweiliger Mensch zu sein.)'),
+  { ...ITEM('se-aburrido', 'Yo ___ aburrido.', 'Mir ist gerade langweilig.', 'estar',
+    'Befinden — estar. (Ser aburrido hieße: ein langweiliger Mensch zu sein.)'), form: 'estoy' },
 ];
 
 /** Nachweis der Fachlichkeit — gleiche Struktur wie die Satzquellen. */

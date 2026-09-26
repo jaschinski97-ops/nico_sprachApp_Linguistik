@@ -94,11 +94,14 @@ describe('Wort hören (Englisch)', () => {
     expect(question.speak).toEqual({ text: 'through', language: 'en' });
   });
 
-  it('nennt zu jeder Antwort den Laut, den sie hat', () => {
+  it('verrät den Laut erst in der Erklärung, nicht an den Antworten', () => {
+    // Ein IPA-Hinweis an jeder Option machte aus der Hörübung ein Zuordnen
+    // von Schrift und IPA (Testrunde 26.09.).
     const question = buildSoundSpellingQuestion(
       VOCABULARY_EN.find((entry) => entry.id === 'en_bread')!
     );
-    for (const option of question.options) expect(option.hint).toMatch(/^\/.+\/$/);
+    for (const option of question.options) expect(option.hint).toBeUndefined();
+    expect(question.explanation).toMatch(/\/.+\//);
   });
 
   it('braucht mindestens drei Wörter in der Gruppe', () => {

@@ -455,7 +455,9 @@ export function canBuildIrregularPastQuestion(entry: VocabEntry): boolean {
 export function buildIrregularPastQuestion(
   entry: VocabEntry,
   pool: VocabEntry[],
-  random: Random
+  random: Random,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): DrillQuestion {
   const verb = entry.englishVerb;
   if (!verb?.past) {
@@ -464,10 +466,14 @@ export function buildIrregularPastQuestion(
 
   const correct = verb.past;
   const distractors = shuffled(
-    pool
-      .filter((other) => other.id !== entry.id && other.englishVerb?.irregular)
-      .map((other) => other.englishVerb!.past)
-      .filter((form) => form !== correct),
+    [
+      ...new Set(
+        pool
+          .filter((other) => other.id !== entry.id && other.englishVerb?.irregular)
+          .map((other) => other.englishVerb!.past)
+          .filter((form) => form !== correct)
+      ),
+    ],
     random
   ).slice(0, 3);
   if (distractors.length < 3) {
@@ -477,10 +483,10 @@ export function buildIrregularPastQuestion(
   const options = shuffled([correct, ...distractors], random).map((label) => ({ label }));
   const parts = [
     `${entry.term} — ${correct} — ${verb.participle}`,
-    verb.irregular ? 'unregelmäßig' : 'regelmäßig',
+    translate(ui, verb.irregular ? 'drill.irregular' : 'drill.regular'),
   ];
-  if (entry.ipa) parts.push(`/${entry.ipa}/`);
-  if (entry.note) parts.push(entry.note);
+  if (entry.ipa) parts.push(entry.ipa);
+  if (entry.note && anchor === 'de') parts.push(entry.note);
 
   return {
     id: `irregularPast:${entry.id}`,
@@ -488,7 +494,8 @@ export function buildIrregularPastQuestion(
     direction: toTarget(entry),
     vocabId: entry.id,
     visible: entry.term,
-    visibleHint: entry.german,
+    // Bedeutung in der Ankersprache statt fest Deutsch (Testrunde 26.09.).
+    visibleHint: bridgeText(entry, anchor).text,
     speak: null,
     options,
     correctIndex: options.findIndex((option) => option.label === correct),
@@ -516,10 +523,21 @@ const ENDUNGEN: Record<'ar' | 'er' | 'ir', string[]> = {
   ir: ['o', 'es', 'e', 'imos', 'en'],
 };
 
+/**
+ * Endungen, bei denen „Stamm + Endung“ im Präsens nicht die richtige Form
+ * ergibt, obwohl die Daten das Verb regelmäßig nennen: Akzentverschiebung
+ * (evaluar → evalúo, vaciar → vacío, maullar → maúllo) und Schreibänderung
+ * in der 1. Person (proteger → protejo, convencer → convenzo, construir →
+ * construyo). -iar/-uar sind nicht sicher trennbar (estudiar ist regelmäßig,
+ * vaciar nicht) — lieber ein paar Verben weniger als eine falsche Lösung.
+ */
+const PRAESENS_UNSICHER = /(?:[^g]uar|iar|ullar|ger|gir|cer|cir|uir)$/;
+
 export function canBuildPraesensEndungQuestion(entry: VocabEntry): boolean {
   if (entry.language !== 'es') return false;
   const verb = entry.spanishVerb;
   if (!verb || verb.irregular) return false;
+  if (PRAESENS_UNSICHER.test(entry.term)) return false;
   return Boolean(verb.conjugation && entry.term.endsWith(verb.conjugation));
 }
 
@@ -538,11 +556,16 @@ export function buildPraesensEndungQuestion(
   const richtig = ENDUNGEN[klasse][personIndex];
   const stamm = entry.term.slice(0, entry.term.length - klasse.length);
 
+  // -er und -ir teilen vier Endungen — ohne Set stünden sie doppelt zur Wahl.
   const fremd = shuffled(
-    (['ar', 'er', 'ir'] as const)
-      .filter((k) => k !== klasse)
-      .flatMap((k) => ENDUNGEN[k])
-      .filter((endung) => endung !== richtig),
+    [
+      ...new Set(
+        (['ar', 'er', 'ir'] as const)
+          .filter((k) => k !== klasse)
+          .flatMap((k) => ENDUNGEN[k])
+          .filter((endung) => endung !== richtig)
+      ),
+    ],
     random
   ).slice(0, 3);
   const optionenListe = shuffled([richtig, ...fremd], random);
@@ -587,7 +610,9 @@ export function canBuildPartizipQuestion(entry: VocabEntry): boolean {
 export function buildPartizipQuestion(
   entry: VocabEntry,
   pool: VocabEntry[],
-  random: Random
+  random: Random,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): DrillQuestion {
   const verb = entry.englishVerb;
   if (!verb?.participle) {
@@ -595,11 +620,16 @@ export function buildPartizipQuestion(
   }
 
   const correct = verb.participle;
+  // Set: mehrere Verben teilen eine Form (got, set …) — nie doppelt anbieten.
   const distractors = shuffled(
-    pool
-      .filter((other) => other.id !== entry.id && other.englishVerb?.irregular)
-      .map((other) => other.englishVerb!.participle)
-      .filter((form): form is string => Boolean(form) && form !== correct),
+    [
+      ...new Set(
+        pool
+          .filter((other) => other.id !== entry.id && other.englishVerb?.irregular)
+          .map((other) => other.englishVerb!.participle)
+          .filter((form): form is string => Boolean(form) && form !== correct)
+      ),
+    ],
     random
   ).slice(0, 3);
   if (distractors.length < 3) {
@@ -609,9 +639,9 @@ export function buildPartizipQuestion(
   const options = shuffled([correct, ...distractors], random).map((label) => ({ label }));
   const parts = [
     `${entry.term} — ${verb.past} — ${correct}`,
-    verb.irregular ? 'unregelmäßig' : 'regelmäßig',
+    translate(ui, verb.irregular ? 'drill.irregular' : 'drill.regular'),
   ];
-  if (entry.note) parts.push(entry.note);
+  if (entry.note && anchor === 'de') parts.push(entry.note);
 
   return {
     id: `partizip:${entry.id}`,
@@ -619,7 +649,7 @@ export function buildPartizipQuestion(
     direction: toTarget(entry),
     vocabId: entry.id,
     visible: entry.term,
-    visibleHint: entry.german,
+    visibleHint: bridgeText(entry, anchor).text,
     speak: null,
     options,
     correctIndex: options.findIndex((option) => option.label === correct),
@@ -718,7 +748,9 @@ export function canBuildSpellingQuestion(
 
 export function buildSpellingQuestion(
   entry: VocabEntry,
-  groups: GraphemeGroup[] = graphemeGroups()
+  groups: GraphemeGroup[] = graphemeGroups(),
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): DrillQuestion {
   const spelling = entry.englishSpelling;
   const group = groupFor(entry, groups);
@@ -759,19 +791,19 @@ export function buildSpellingQuestion(
     direction: toTarget(entry),
     vocabId: entry.id,
     visible: entry.term,
-    visibleHint: `„${spelling.grapheme}" — ${entry.german}`,
+    visibleHint: `„${spelling.grapheme}" — ${bridgeText(entry, anchor).text}`,
     // Kein Vorsprechen: Das Wort zu hoeren WAERE die Antwort. Die Aufloesung
     // spricht es danach aus.
     speak: null,
     options,
     correctIndex: group.sounds.indexOf(spelling.sound),
-    solution: `${entry.term} ${entry.ipa ?? ''} - ${entry.german}`.trim(),
+    solution: `${entry.term} ${entry.ipa ?? ''} — ${bridgeText(entry, anchor).text}`.trim(),
     explanation: [
-      andere ? `Dasselbe „${spelling.grapheme}", anders gesprochen: ${andere}.` : null,
-      gleiche ? `Gleich klingt es in: ${gleiche}.` : null,
+      andere ? translate(ui, 'drill.spellingOther', { grapheme: spelling.grapheme, list: andere }) : null,
+      gleiche ? translate(ui, 'drill.spellingSame', { list: gleiche }) : null,
     ]
       .filter(Boolean)
-      .join(' ') || `„${spelling.grapheme}" klingt hier ${spelling.sound}.`,
+      .join(' ') || translate(ui, 'drill.spellingHere', { grapheme: spelling.grapheme, sound: spelling.sound }),
   };
 }
 
@@ -863,7 +895,9 @@ export function canBuildSoundSpellingQuestion(
 export function buildSoundSpellingQuestion(
   entry: VocabEntry,
   groups: GraphemeGroup[] = graphemeGroups(),
-  random: Random = Math.random
+  random: Random = Math.random,
+  anchor: UiLanguage = 'de',
+  ui: UiLanguage = 'de'
 ): DrillQuestion {
   const group = groupFor(entry, groups);
   if (!group) {
@@ -879,10 +913,9 @@ export function buildSoundSpellingQuestion(
       .filter((member, index, rest) => rest.findIndex(other => other.entry.term === member.entry.term) === index), random)
       .slice(0, 3),
   ], random);
-  const options: DrillOption[] = members.map((member) => ({
-    label: member.entry.term,
-    hint: member.sound,
-  }));
+  // Ohne Laut-Hinweis an den Optionen: Das IPA verriete die Antwort, bevor
+  // man hingehört hat. Die Erklärung nennt die Laute danach.
+  const options: DrillOption[] = members.map((member) => ({ label: member.entry.term }));
 
   return {
     id: `soundSpelling:${entry.id}`,
@@ -894,11 +927,11 @@ export function buildSoundSpellingQuestion(
     speak: { text: entry.term, language: 'en' },
     options,
     correctIndex: members.findIndex(member => member.entry.id === entry.id),
-    solution: `${entry.term} ${entry.ipa ?? ''} — ${entry.german}`.trim(),
-    explanation:
-      `Diese Wörter enthalten „${group.grapheme}“: ` +
-      members.map((member) => `${member.entry.term} ${member.sound}`).join(' · ') +
-      '.',
+    solution: `${entry.term} ${entry.ipa ?? ''} — ${bridgeText(entry, anchor).text}`.trim(),
+    explanation: translate(ui, 'drill.soundSpellingContains', {
+      grapheme: group.grapheme,
+      list: members.map((member) => `${member.entry.term} ${member.sound}`).join(' · '),
+    }),
   };
 }
 

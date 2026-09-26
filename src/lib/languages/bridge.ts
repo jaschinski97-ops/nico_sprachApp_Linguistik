@@ -68,6 +68,11 @@ export function bridgeText(entry: BridgeTextSource, bridge: Lang | ForeignBridge
   const direct = entry.translations?.[bridge];
   if (direct) return { text: direct, usedFallback: false };
 
-  const text = entry.german || entry.translations?.en || entry.term || '';
+  // Fehlt die Übersetzung: Deutsch nur für die de-Brücke. Jede andere
+  // Oberfläche fällt auf Englisch zurück — sonst sähe eine thailändische
+  // Oberfläche beim Deutsch-Ziel die deutsche Worterklärung in `german`.
+  const text = bridge === 'de'
+    ? entry.german || entry.translations?.en || entry.term || ''
+    : entry.translations?.en || entry.german || entry.term || '';
   return { text, usedFallback: true };
 }

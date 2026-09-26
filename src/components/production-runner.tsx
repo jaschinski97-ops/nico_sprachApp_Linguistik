@@ -333,6 +333,14 @@ export function ProductionRunner({
 
         {selbstOffen && ergebnis === null ? (
           <>
+            {/* Die Musterlösung steht VOR der Bewertung da — sonst bewertet
+                man sich gegen etwas, das man nur gehört hat. */}
+            <ThemedText type="subtitle">{aufgabe.ziel}</ThemedText>
+            {aufgabe.roman && aufgabe.roman !== aufgabe.ziel ? (
+              <ThemedText type="small" themeColor="textSecondary">
+                {aufgabe.roman}
+              </ThemedText>
+            ) : null}
             <View style={styles.actions}>
               <Pressable
                 onPress={musterAbspielen}
@@ -352,12 +360,10 @@ export function ProductionRunner({
                 <Pressable
                   key={rating}
                   onPress={() => {
+                    // Die Lösung stand schon da; ein „✓ Genau richtig“ wäre
+                    // hier erfunden — die Bewertung ist die eigene.
                     void schreiben(rating);
-                    // Die Lösung gehört zur Rückmeldung der Selbstbewertung.
-                    setErgebnis({
-                      bewertung: rating === 1 ? 'wrong' : rating === 2 ? 'accent' : 'exact',
-                      ziel: aufgabe.ziel,
-                    });
+                    weiter();
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t('rating.a11y', { label: t(key) })}

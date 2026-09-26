@@ -383,7 +383,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // ausstehend) — nativ bleibt die Laufrichtung LTR.
   useEffect(() => {
     if (Platform.OS !== 'web') return;
-    document.documentElement.dir = value.uiLanguage === 'ar' ? 'rtl' : 'ltr';
+    // Urdu steht in arabischer Schrift und läuft ebenfalls von rechts nach links.
+    document.documentElement.dir = value.uiLanguage === 'ar' || value.uiLanguage === 'ur' ? 'rtl' : 'ltr';
+    document.documentElement.lang = value.uiLanguage;
   }, [value.uiLanguage]);
 
   // Ohne geladenen Stand noch nichts rendern — der Host-Splash bleibt

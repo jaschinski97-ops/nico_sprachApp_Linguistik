@@ -395,6 +395,12 @@ export function SpeakingRunner({ direction, onExit }: { direction: PairDirection
             <ActionButton label={t('speaking.retry')} onPress={start} />
             <ActionButton label={t('speaking.nextWord')} onPress={next} secondary />
           </View>
+        ) : !capture.isRecording ? (
+          // Ohne Mikrofon (keine Freigabe, kein Gerät) hing man sonst beim
+          // ersten Wort fest — weiter geht es immer, auch ohne Aufnahme.
+          <View style={styles.buttonRow}>
+            <ActionButton label={t('speaking.nextWord')} onPress={next} secondary />
+          </View>
         ) : null}
 
         <ThemedText type="small" themeColor="textSecondary">

@@ -89,7 +89,7 @@ export async function buildWritingSession(
 
   return {
     direction,
-    prompts: chosen.map((entry) => buildWritingPrompt(entry, direction)),
+    prompts: chosen.map((entry) => buildWritingPrompt(entry, direction, candidates)),
     available: candidates.length,
   };
 }

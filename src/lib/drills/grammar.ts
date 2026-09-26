@@ -65,7 +65,7 @@ export function buildPoliteQuestion(item: PoliteItem, anchor: UiLanguage = 'de',
   };
 }
 
-/** Die dritte Form für die Lösung: ser → es, estar → está. */
+/** Die Form der 3. Person für die Lösung: ser → es, estar → está (sonst `item.form`). */
 const SER_ESTAR_FORMS: Record<SerEstarItem['answer'], string> = { ser: 'es', estar: 'está' };
 
 export function buildSerEstarQuestion(item: SerEstarItem, anchor: UiLanguage = 'de'): DrillQuestion {
@@ -82,7 +82,7 @@ export function buildSerEstarQuestion(item: SerEstarItem, anchor: UiLanguage = '
     speak: null,
     options,
     correctIndex: item.answer === 'ser' ? 0 : 1,
-    solution: item.text.replace('___', SER_ESTAR_FORMS[item.answer]),
+    solution: item.text.replace('___', item.form ?? SER_ESTAR_FORMS[item.answer]),
     explanation: deutscheErklaerung(anchor) ? item.reason : '',
   };
 }
@@ -99,12 +99,13 @@ export function buildZaehlerQuestion(item: ZaehlerItem, anchor: UiLanguage = 'de
     // Die deutsche Bedeutung in Klammern nur auf der de-Brücke — andere
     // Anker haben keine Übersetzung des Datensatzes (21.09.2026).
     visible: deutscheErklaerung(anchor) ? `${item.nomen} (${item.german})` : item.nomen,
-    visibleHint: translate(ui, 'grammar.counterHint', { example: `หนึ่ง ${item.nomen}` }),
+    // Thai: Nomen + Zahl + Zählwort — die Lücke steht HINTER der Zahl.
+    visibleHint: translate(ui, 'grammar.counterHint', { example: `${item.nomen} หนึ่ง ___` }),
     speak: null,
     options,
     correctIndex: ZAEHLER_OPTIONEN.indexOf(item.answer),
     solution: deutscheErklaerung(anchor)
-      ? `${item.nomen} หนึ่ง ${item.answer} — ein ${item.german}`
+      ? `${item.nomen} หนึ่ง ${item.answer} — 1 × ${item.german}`
       : `${item.nomen} หนึ่ง ${item.answer}`,
     explanation: translate(ui, 'grammar.counterBetween'),
   };

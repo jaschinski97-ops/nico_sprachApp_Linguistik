@@ -1,7 +1,9 @@
 import { spokenText, type ConversationSituation } from './conversation/types';
 import { seededRandom, shuffled } from './drills/random';
 import { type FSRSCardState } from './fsrs/types';
+import { bridgeText } from './languages/bridge';
 import { type PairDirection } from './languages/types';
+import { type UiLanguage } from './i18n';
 import { loadCardStatesForDirection } from './repository';
 import { type DataStore } from './storage';
 import { type VocabEntry } from '@/data/vocab-types';
@@ -14,8 +16,9 @@ import { type VocabEntry } from '@/data/vocab-types';
  * sie zum Text. Kein neuer Stoff wird geschrieben, keine Geschichte
  * erfunden — „möglichst nur mit bereits gelernten Wörtern" regelt hier die
  * FREISCHALTUNG: Eine Szene öffnet sich erst, wenn der Wortschatzstand der
- * Richtung groß genug ist (A1 ab 20 begonnenen Karten, A2 ab 50), und zeigt
- * ehrlich, wie viele ihrer Wörter schon begonnen sind.
+ * Richtung groß genug ist (A1 ab 20 begonnenen Karten, A2 ab 50 — gezählt
+ * über ALLE Karten der Richtung), und zeigt ehrlich, wie viele ihrer Wörter
+ * schon begonnen sind.
  *
  * WÖRTER ANTIPPEN = ÜBERSATZ: Der Text wird mit einem Greedy-Longest-Match
  * über den geprüften Vokabel-Bestand zerlegt — Wörter, die im Bestand
@@ -52,8 +55,10 @@ export type LeseStoff = {
   bekannt: number;
   /** Wie viele Pool-Wörter die Szene überhaupt nutzt. */
   poolWoerter: number;
-  /** Kartenstand, ab dem die Szene offen ist. */
+  /** Begonnene Karten, ab denen die Szene offen ist (je Level). */
   schwellwert: number;
+  /** Begonnene Karten der ganzen Lernrichtung — daran hängt die Freischaltung. */
+  gesamtBegonnen: number;
 };
 
 /** Begonnene Karten = Zustand außer 'new'. */
@@ -75,9 +80,12 @@ function begonnen(cards: FSRSCardState[], vocabIds: Set<string>): number {
 export function tokenisiereFuerAntippen(
   text: string,
   pool: VocabEntry[],
-  latin: boolean
+  latin: boolean,
+  /** Sprache der Bedeutung beim Antippen — sonst stand fest `german` da. */
+  bedeutungsSprache: UiLanguage = 'de'
 ): TextToken[] {
   const tokens: TextToken[] = [];
+  const bedeutung = (e: VocabEntry) => bridgeText(e, bedeutungsSprache).text;
   if (latin) {
     for (const wort of text.split(/(\s+)/)) {
       if (/^\s+$/.test(wort) || wort.length === 0) {
@@ -86,7 +94,7 @@ export function tokenisiereFuerAntippen(
       }
       const bloß = wort.replace(/[\p{P}\p{S}]/gu, '').toLowerCase();
       const entry = pool.find((e) => e.term.toLowerCase() === bloß);
-      tokens.push(entry ? { text: wort, entry: { id: entry.id, term: entry.term, german: entry.german } } : { text: wort });
+      tokens.push(entry ? { text: wort, entry: { id: entry.id, term: entry.term, german: bedeutung(entry) } } : { text: wort });
     }
     return tokens;
   }
@@ -113,7 +121,7 @@ export function tokenisiereFuerAntippen(
       flushRest();
       tokens.push({
         text: gefunden.term,
-        entry: { id: gefunden.id, term: gefunden.term, german: gefunden.german },
+        entry: { id: gefunden.id, term: gefunden.term, german: bedeutung(gefunden) },
       });
       i += gefunden.term.length;
     } else {
@@ -199,21 +207,22 @@ export function lesestoffeFuerRichtung(options: {
 }): LeseStoff[] {
   const { direction, situationen, pool, cards, latin } = options;
   const passend = situationen.filter((s) => s.direction.split('_to_')[1] === direction.split('_to_')[1]);
+  // Freischaltung am GESAMTEN Wortschatzstand der Richtung. Vorher zählten nur
+  // die Wörter der Szene selbst — die kommen in der Kartenreihenfolge aber
+  // kaum vor, die Texte blieben praktisch für immer gesperrt (Testrunde 26.09.).
+  const gesamtBegonnen = cards.filter((card) => card.state !== 'new').length;
   const stoffe = passend.map((situation) => {
     const woerter = poolWoerterDerSzene(situation, pool, latin);
     const vocabIds = new Set(woerter.map((w) => w.id));
     const bekannt = begonnen(cards, vocabIds);
     const schwellwert = SCHWELLE[situation.level] ?? SCHWELLE.A1;
-    // Freigeschaltet, wenn die Szene kein Pool-Wort hat (nichts, worauf die
-    // Schranke warten könnte) oder ihr eigener Wortschatz im Kartenstand
-    // begonnen ist — Level-Schwelle und Szenen-Wortschatz, das kleinere
-    // Kriterium gewinnt, damit kurze Szenen nie un erreichbar bleiben.
     return {
       situation,
-      offen: woerter.length === 0 || bekannt >= Math.min(schwellwert, woerter.length),
+      offen: gesamtBegonnen >= schwellwert,
       bekannt,
       poolWoerter: woerter.length,
       schwellwert,
+      gesamtBegonnen,
     };
   });
   return stoffe.sort((a, b) =>

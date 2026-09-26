@@ -116,7 +116,27 @@ function mitArtikel(formen: string[], entry: VocabEntry): string[] {
   return [...new Set(erweitert)];
 }
 
-export function buildWritingPrompt(entry: VocabEntry, direction: PairDirection): WritingPrompt {
+/**
+ * Andere Einträge der Zielsprache mit DEMSELBEN Ankerwort — „einfach“ ist
+ * simple UND easy, „ประมาณ“ etwa, circa und ungefähr. Wer das Synonym tippt,
+ * hat die Aufgabe gelöst; vorher zählte es als Fehler („Nochmal“).
+ */
+function synonymFormen(entry: VocabEntry, direction: PairDirection, pool: VocabEntry[]): string[] {
+  const anker = ankerwortFuer(entry, direction).trim().toLowerCase();
+  if (!anker) return [];
+  return pool
+    .filter((other) => other.id !== entry.id && String(other.language) === String(entry.language))
+    .filter((other) => ankerwortFuer(other, direction).trim().toLowerCase() === anker)
+    .flatMap((other) => zielFormen(other).map((form) => ({ form, other })))
+    .flatMap(({ form, other }) => (targetLanguageOf(direction) === 'de' ? mitArtikel([form], other) : [form]));
+}
+
+export function buildWritingPrompt(
+  entry: VocabEntry,
+  direction: PairDirection,
+  /** Der Bestand, aus dem Synonyme mit gleichem Ankerwort gelesen werden. */
+  pool: VocabEntry[] = []
+): WritingPrompt {
   if (!canBuildWritingPrompt(entry, direction)) {
     throw new Error(`"${entry.id}" hat in Richtung ${direction} keine tippbare Zielform.`);
   }
@@ -124,6 +144,7 @@ export function buildWritingPrompt(entry: VocabEntry, direction: PairDirection):
   const artikel = language === 'de' && entry.germanNoun ? `${entry.germanNoun.article} ` : '';
   const loesung = `${artikel}${entry.term}`;
   const umschrift = entry.romanization && entry.romanization !== entry.term ? entry.romanization : null;
+  const eigene = language === 'de' ? mitArtikel(zielFormen(entry), entry) : zielFormen(entry);
 
   return {
     id: `writing:${direction}:${entry.id}`,
@@ -132,7 +153,7 @@ export function buildWritingPrompt(entry: VocabEntry, direction: PairDirection):
     language,
     shown: ankerwortFuer(entry, direction),
     shownHint: null,
-    targets: language === 'de' ? mitArtikel(zielFormen(entry), entry) : zielFormen(entry),
+    targets: [...new Set([...eigene, ...synonymFormen(entry, direction, pool)])],
     solution: umschrift ? `${loesung} · ${umschrift}` : loesung,
     extras: extrasFor(entry),
   };

@@ -224,6 +224,9 @@ export function SentenceRunner({ mode, language, anchor = 'de', onExit }: {
       {mode === 'shadowing' && <SentenceAction label={headphones ? t('sentence.headphonesOk') : t('sentence.headphones')} onPress={() => setHeadphones(value => !value)} />}
       <ThemedText type="small">{t('sentence.micNote', { action: t('sentence.start'), seconds: windowMs / 1000 })}</ThemedText>
       <SentenceAction label={t('sentence.start')} onPress={() => void start()} disabled={busy || remaining > 0 || !heard || (mode === 'shadowing' && !headphones)} />
+      {/* Ohne Mikrofon ging es hier nicht weiter — der Satz lässt sich
+          immer überspringen (Testrunde 26.09.). */}
+      <SentenceAction label={t('sentence.nextSentence')} onPress={() => reset(index + 1)} />
     </>}
     {!listening && stage === 'record' && <>
       <ThemedText accessibilityLiveRegion="polite">{t('sentence.remaining', { seconds: Math.max(0, Math.ceil((windowMs - capture.elapsedMs) / 1000)) })}</ThemedText>

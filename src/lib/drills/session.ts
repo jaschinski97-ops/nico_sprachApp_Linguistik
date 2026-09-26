@@ -157,19 +157,19 @@ function buildQuestion(
     case 'deutschLesen':
       return buildDeutschLesenQuestion(entry, pool, random, direction);
     case 'irregularPast':
-      return buildIrregularPastQuestion(entry, pool, random);
+      return buildIrregularPastQuestion(entry, pool, random, anchor, ui);
     case 'stressRule':
       return buildStressQuestion(entry, anchor, ui);
     case 'spelling':
-      return buildSpellingQuestion(entry);
+      return buildSpellingQuestion(entry, undefined, anchor, ui);
     case 'stressHear':
       return buildStressHearQuestion(entry, anchor, ui);
     case 'soundSpelling':
-      return buildSoundSpellingQuestion(entry, undefined, random);
+      return buildSoundSpellingQuestion(entry, undefined, random, anchor, ui);
     case 'praesensEndung':
       return buildPraesensEndungQuestion(entry, pool, random, anchor, ui);
     case 'partizip':
-      return buildPartizipQuestion(entry, pool, random);
+      return buildPartizipQuestion(entry, pool, random, anchor, ui);
     case 'polite':
     case 'serEstar':
     case 'zaehlerwort':

@@ -27,6 +27,11 @@ describe('vergleicheProduktion — Toleranzen', () => {
     expect(vergleicheProduktion('ขีว', 'ข้าว', 'th').bewertung).toBe('wrong');
   });
 
+  it('ignoriert Leerzeichen in Thai — Thai schreibt ohne Wortabstände', () => {
+    expect(vergleicheProduktion('ขอน้ำเปล่าหนึ่งแก้วครับ', 'ขอน้ำเปล่า หนึ่งแก้ว ครับ', 'th').bewertung).toBe('exact');
+    expect(vergleicheProduktion('ขอนำเปลาหนึงแกวครบ', 'ขอน้ำเปล่า หนึ่งแก้ว ครับ', 'th').bewertung).not.toBe('exact');
+  });
+
   it('bleibt hart bei falschen Wörtern und fehlenden Wörtern', () => {
     expect(vergleicheProduktion('Ich esse Fleisch', 'Ich mag Katzen', 'de').bewertung).toBe('wrong');
     expect(vergleicheProduktion('Ich mag', 'Ich mag Katzen', 'de').bewertung).toBe('wrong');

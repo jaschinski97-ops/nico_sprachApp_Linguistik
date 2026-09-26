@@ -125,9 +125,12 @@ describe('Der Brückentext fällt ehrlich zurück', () => {
     expect(bridgeText(eintrag, 'es')).toEqual({ text: 'casa', usedFallback: false });
   });
 
-  it('fällt auf den deutschen Quelltext zurück — und sagt es', () => {
+  it('fällt auf Englisch zurück — nicht auf Deutsch — und sagt es', () => {
     // Thai ist nicht übersetzt — der Fallback greift und wird gekennzeichnet.
-    expect(bridgeText(eintrag, 'th')).toEqual({ text: 'das Haus', usedFallback: true });
+    // Seit 26.09. Englisch vor Deutsch: Eine thailändische Oberfläche sah
+    // sonst deutsche Worterklärungen.
+    expect(bridgeText(eintrag, 'th')).toEqual({ text: 'house', usedFallback: true });
+    expect(bridgeText({ german: 'das Haus', term: 'la maison' }, 'th')).toEqual({ text: 'das Haus', usedFallback: true });
   });
 
   it('fällt bei Deutsch sinnvollerweise auf Deutsch — als gekennzeichneter Fallback', () => {

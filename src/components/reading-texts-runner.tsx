@@ -24,7 +24,7 @@ import {
   type TextToken,
   type VerstaendnisFrage,
 } from '@/lib/reading-texts';
-import { activeVocabulary } from '@/data/active-vocabulary';
+import { activeVocabularyFor } from '@/data/active-vocabulary';
 
 /**
  * Längere Hör- und Lesetexte (Schritt 4, Lern-Reiter-Ausbau): Die
@@ -63,7 +63,7 @@ export function ReadingTextsRunner({
           lesestoffeFuerRichtung({
             direction,
             situationen: situationen.map(s => localizedSituation(s, uiLanguage)),
-            pool: activeVocabulary(),
+            pool: activeVocabularyFor(targetLanguageOf(direction)),
             cards,
             latin: targetLanguageOf(direction) !== 'th',
           })
@@ -153,9 +153,8 @@ export function ReadingTextsRunner({
                       total: eintrag.poolWoerter,
                     })}`
                   : t('texts.lockedBody', {
-                      known: eintrag.bekannt,
-                      total: eintrag.poolWoerter,
-                      needed: Math.min(eintrag.schwellwert, eintrag.poolWoerter),
+                      known: eintrag.gesamtBegonnen,
+                      needed: eintrag.schwellwert,
                     })}
               </ThemedText>
             </ThemedView>
@@ -176,9 +175,17 @@ function TextAnsicht({
   onExit: () => void;
   onBeenden: () => void;
 }) {
-  const { t } = useLocale();
+  const { t, uiLanguage } = useLocale();
   const colors = useTheme();
   const sprache = targetLanguageOf(situation.direction);
+  // Nur der Wortschatz der Lernsprache (sonst trifft ein deutscher Text auf
+  // englische Einträge), Bedeutung in der App-Sprache wie die Zeilen selbst.
+  const zeilenTokens = useMemo(() => {
+    const pool = activeVocabularyFor(sprache);
+    return situation.scriptTurns.map((zeile) =>
+      tokenisiereFuerAntippen(zeile.thai, pool, sprache !== 'th', uiLanguage)
+    );
+  }, [situation, sprache, uiLanguage]);
   const [woerter, setWoerter] = useState<{ text: string; german: string }[]>([]);
   const [uebersetzt, setUebersetzt] = useState<Set<number>>(new Set());
   const [fragenStufe, setFragenStufe] = useState<number | null>(null);
@@ -254,7 +261,7 @@ function TextAnsicht({
       </ThemedText>
 
       {situation.scriptTurns.map((zeile, i) => {
-        const tokens = tokenisiereFuerAntippen(zeile.thai, activeVocabulary(), sprache !== 'th');
+        const tokens = zeilenTokens[i];
         return (
           <ThemedView
             key={`${i}`}

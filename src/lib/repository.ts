@@ -7,7 +7,7 @@
  */
 
 import type { VocabEntry } from '@/data/vocab-types';
-import { activeVocabulary, activeVocabularyIds } from '@/data/active-vocabulary';
+import { activeVocabulary, activeVocabularyIds, mitIpaStrichen } from '@/data/active-vocabulary';
 
 import { BUILTIN_EXAM_MODULES } from '@/data/exam-modules';
 import { EXAM_LEVELS, ExamLevel, ExamModule, isValidExamModule } from './exam/types';
@@ -80,7 +80,7 @@ export async function loadVocabulary(store?: DataStore): Promise<VocabEntry[]> {
   // kommt gebündelt ÜBER den Store — dieselbe Regel wie bei den Prüfungen.
   // (Gebündelt ist hier der Katalog-Bestand der Art 'vocabulary'; der
   // mitgelieferte Grundstock oben ist Teil des Seeds.)
-  return preferBundled('vocabulary', lokale.filter(word => aktiv.has(word.id)));
+  return preferBundled('vocabulary', lokale.filter(word => aktiv.has(word.id))).map(mitIpaStrichen);
 }
 
 export async function loadVocabEntry(

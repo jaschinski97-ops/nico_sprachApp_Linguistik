@@ -190,9 +190,13 @@ export function TodayRoundRunner({
       <ThemedView type="backgroundElement" style={styles.card}>
         <ThemedText type="smallBold">{t('round.done')}</ThemedText>
         <ThemedText type="small" themeColor="textSecondary">
+          {/* Nur die Bereiche, die wirklich geübt wurden — übersprungene
+              zählen nicht als erledigte Aufgaben. */}
           {t('round.summary', {
-            items: runde.plan.reduce((s, p) => s + p.items, 0),
-            segments: runde.plan.length,
+            items: runde.plan
+              .filter((p) => !uebersprungen.includes(p.kind))
+              .reduce((s, p) => s + p.items, 0),
+            segments: runde.plan.filter((p) => !uebersprungen.includes(p.kind)).length,
           })}
         </ThemedText>
         {uebersprungen.length > 0 ? (

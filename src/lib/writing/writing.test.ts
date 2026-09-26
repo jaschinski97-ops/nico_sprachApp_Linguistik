@@ -87,6 +87,17 @@ describe('Zielformen aus dem Grundstock', () => {
     expect(nachThai.targets).toEqual(['บ้าน']);
   });
 
+  it('lässt ein Synonym mit demselben Ankerwort gelten (simple/easy)', () => {
+    const basis = { ...de('บ้าน'), language: 'en', romanization: undefined } as unknown as VocabEntry;
+    const simple = { ...basis, id: 't-simple', term: 'simple', translations: { de: 'einfach' } } as VocabEntry;
+    const easy = { ...basis, id: 't-easy', term: 'easy', translations: { de: 'einfach' } } as VocabEntry;
+    const anders = { ...basis, id: 't-hard', term: 'hard', translations: { de: 'schwer' } } as VocabEntry;
+    const prompt = buildWritingPrompt(simple, 'de_to_en', [simple, easy, anders]);
+    expect(prompt.targets).toEqual(['simple', 'easy']);
+    expect(compareWriting('easy', { language: 'en', targets: prompt.targets }).correct).toBe(true);
+    expect(buildWritingPrompt(simple, 'de_to_en').targets).toEqual(['simple']);
+  });
+
   it('verrät in keiner Richtung die Lösung als Hilfszeile', () => {
     const nachDeutsch = buildWritingPrompt(deutsch('บ้าน'), 'th_to_de');
     expect(nachDeutsch.shownHint).toBeNull();

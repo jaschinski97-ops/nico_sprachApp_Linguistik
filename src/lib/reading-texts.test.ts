@@ -115,6 +115,29 @@ describe('lesestoffeFuerRichtung — Freischaltung am Wortschatzstand', () => {
     expect(stoffe[0].bekannt).toBe(stoffe[0].poolWoerter);
   });
 
+  it('öffnet am GESAMTEN Kartenstand, auch wenn kein Szenenwort dabei ist', () => {
+    // Vorher zählten nur Szenenwörter — die kamen in der Kartenreihenfolge
+    // kaum vor, die Texte blieben gesperrt (Testrunde 26.09.).
+    const szene1 = szene();
+    const szenenIds = new Set(
+      lesestoffeFuerRichtung({ direction: 'de_to_th', situationen: [szene1], pool: VOCABULARY_TH, cards: [], latin: false })
+        && VOCABULARY_TH.filter((e) => szene1.scriptTurns.some((t) => t.thai.includes(e.term))).map((e) => e.id)
+    );
+    const fremde = VOCABULARY_TH.filter((e) => !szenenIds.has(e.id)).slice(0, 20);
+    expect(fremde).toHaveLength(20);
+    const karten = fremde.map((e) => ({ vocabId: e.id, state: 'review' })) as never[];
+    const stoffe = lesestoffeFuerRichtung({ direction: 'de_to_th', situationen: [szene1], pool: VOCABULARY_TH, cards: karten, latin: false });
+    expect(stoffe[0].bekannt).toBe(0);
+    expect(stoffe[0].gesamtBegonnen).toBe(20);
+    expect(stoffe[0].offen).toBe(true);
+  });
+
+  it('zeigt angetippte Wörter in der Bedeutungssprache statt fest Deutsch', () => {
+    const wort = { ...VOCABULARY_TH[0], translations: { en: 'english meaning' } } as (typeof VOCABULARY_TH)[number];
+    const tokens = tokenisiereFuerAntippen(wort.term, [wort], false, 'en');
+    expect(tokens[0].entry?.german).toBe('english meaning');
+  });
+
   it('filtert nach Richtung und sortiert offene zuerst', () => {
     const fremd = szene({ id: 'fremd', direction: 'th_to_de', title: 'Fremd' });
     const offen = szene({ id: 'offen', title: 'Offen' });

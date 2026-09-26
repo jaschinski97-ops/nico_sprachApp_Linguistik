@@ -98,7 +98,12 @@ export async function ensureCardStates(
     .filter((entry) => String(entry.language) === ziel)
     // Deutsch als Ziel: `german` ist bei deutschen Einträgen nur ein
     // Synonym — Karten und Übungen lesen dort die Zielform selbst.
-    .map((entry) => (ziel === 'de' ? { ...entry, german: entry.term } : entry));
+    .map((entry) => (ziel === 'de' ? { ...entry, german: entry.term } : entry))
+    // Neue Karten kommen in Erzeugungsreihenfolge (der Erzeuger schreibt
+    // häufige Wörter zuerst) — dieselbe Ordnung wie die Wortschatz-Meilensteine
+    // in stats.ts. Vorher bestimmte die Speicherreihenfolge, und Anfänger
+    // bekamen „Zehennagel“ vor „Hallo“.
+    .sort((a, b) => (a.generatedAt ?? 0) - (b.generatedAt ?? 0) || a.id.localeCompare(b.id));
 
   const existing = await loadCardStatesForDirection(direction, db);
   const byVocabId = new Map(existing.map((card) => [card.vocabId, card]));

@@ -59,8 +59,11 @@ export function vergleicheProduktion(
     ziel: ziel.normalize('NFC'),
   });
 
-  const eingabe = normalisiere(input);
-  const soll = normalisiere(ziel);
+  // Thai schreibt ohne Wortabstände; Leerzeichen in Sätzen sind optional,
+  // und die Spracherkennung liefert keine. Wie beim Diktat zählen sie nicht.
+  const ohneAbstand = (text: string) => (language === 'th' ? text.replace(/\s+/g, '') : text);
+  const eingabe = ohneAbstand(normalisiere(input));
+  const soll = ohneAbstand(normalisiere(ziel));
   if (eingabe.length === 0) return ergebnis('wrong');
   if (eingabe === soll) return ergebnis('exact');
 
@@ -68,10 +71,10 @@ export function vergleicheProduktion(
   const ohneDiakritik = language !== 'th';
   const eingabeWeich = ohneDiakritik
     ? normalisiere(input, { ohneAkzente: true })
-    : normalisiere(input, { ohneTonzeichen: true });
+    : ohneAbstand(normalisiere(input, { ohneTonzeichen: true }));
   const sollWeich = ohneDiakritik
     ? normalisiere(ziel, { ohneAkzente: true })
-    : normalisiere(ziel, { ohneTonzeichen: true });
+    : ohneAbstand(normalisiere(ziel, { ohneTonzeichen: true }));
   if (eingabeWeich === sollWeich) return ergebnis('accent');
 
   return ergebnis('wrong');

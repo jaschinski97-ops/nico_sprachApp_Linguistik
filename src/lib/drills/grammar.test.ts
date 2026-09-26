@@ -10,11 +10,16 @@ import {
   buildPoliteQuestion,
   buildSerEstarQuestion,
 } from './grammar';
+import type { VocabEntry } from '@/data/vocab-types';
+import { translate } from '../i18n';
+
 import {
   buildDeutschLesenQuestion,
   buildIrregularPastQuestion,
+  buildPraesensEndungQuestion,
   canBuildDeutschLesenQuestion,
   canBuildIrregularPastQuestion,
+  canBuildPraesensEndungQuestion,
 } from './questions';
 import { seededRandom } from './random';
 import { buildDrillSession } from './session';
@@ -71,6 +76,33 @@ describe('ser oder estar', () => {
     expect(ser.solution).toContain('es');
     const estar = buildSerEstarQuestion(SER_ESTAR_ITEMS.find((item) => item.answer === 'estar')!);
     expect(estar.solution).toContain('está');
+  });
+
+  it('beugt nach dem Subjekt statt immer in der 3. Person Singular', () => {
+    const loesung = (id: string) =>
+      buildSerEstarQuestion(SER_ESTAR_ITEMS.find((item) => item.id === id)!).solution;
+    expect(loesung('se-aburrido')).toBe('Yo estoy aburrido.');
+    expect(loesung('se-ninos')).toBe('Los niños están cansados.');
+  });
+});
+
+describe('Präsens-Endungen', () => {
+  const verb = (term: string, conjugation: 'ar' | 'er' | 'ir') =>
+    ({ id: `t-${term}`, language: 'es', term, german: term, spanishVerb: { conjugation, irregular: false } }) as unknown as VocabEntry;
+
+  it('bietet jede Endung nur einmal an (-er und -ir teilen Endungen)', () => {
+    for (let saat = 1; saat <= 40; saat += 1) {
+      const frage = buildPraesensEndungQuestion(verb('comer', 'er'), [], seededRandom(saat));
+      const labels = frage.options.map((o) => o.label);
+      expect(new Set(labels).size).toBe(labels.length);
+    }
+  });
+
+  it('lässt Verben mit Akzent- oder Schreibwechsel aus', () => {
+    expect(canBuildPraesensEndungQuestion(verb('hablar', 'ar'))).toBe(true);
+    for (const [term, klasse] of [['evaluar', 'ar'], ['vaciar', 'ar'], ['proteger', 'er'], ['convencer', 'er']] as const) {
+      expect(canBuildPraesensEndungQuestion(verb(term, klasse))).toBe(false);
+    }
   });
 });
 
@@ -149,6 +181,14 @@ describe('Unregelmäßige Verben (Englisch)', () => {
       const quelle = pool.find((other) => other.englishVerb?.past === option.label);
       expect(quelle).toBeTruthy();
     }
+  });
+
+  it('spricht auf einer thailändischen Oberfläche kein Deutsch', () => {
+    const entry = { ...unregelmaessig[0], translations: { th: 'ความหมาย' } } as VocabEntry;
+    const frage = buildIrregularPastQuestion(entry, pool, seededRandom(T0), 'th', 'th');
+    expect(frage.visibleHint).toBe('ความหมาย');
+    expect(frage.explanation).not.toMatch(/unregelmäßig|regelmäßig/);
+    expect(frage.explanation).toContain(translate('th', 'drill.irregular'));
   });
 });
 

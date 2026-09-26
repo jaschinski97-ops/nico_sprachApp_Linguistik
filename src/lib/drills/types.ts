@@ -243,7 +243,7 @@ export const DRILL_META: Record<DrillId, DrillMeta> = {
     skill: 'grammatik',
     label: 'Zählwörter',
     description:
-      'Thai zählt mit einem Zählwort zwischen Zahl und Nomen — und das Zählwort hängt an der ' +
+      'Thai zählt mit einem Zählwort hinter der Zahl (Nomen + Zahl + Zählwort) — und das Zählwort hängt an der ' +
       'Wortklasse: คน Menschen, ตัว Tiere, เล่ม Bücher, แก้ว Gläser, หลัง Häuser.',
     prompt: 'Welches Zählwort passt zu diesem Nomen?',
   },
