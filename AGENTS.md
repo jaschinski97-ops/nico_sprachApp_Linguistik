@@ -62,3 +62,4 @@ Der erste Web-Bundle-Aufbau dauert ~2 Minuten (großer Katalog).
 - Nicht store-fertig: Android-Release lokal möglich, iOS über EAS. Checkliste: `docs/release-candidate-2026-09-21.md`.
 - iOS am Gerät prüfen: Shadowing stellt die Audiokategorie während laufender Aufnahme um (`src/lib/audio-mode.ts`).
 - Nutzerentscheidungen offen: Goethe-Teilbeschreibungen übersetzen? en-Beispielsatz-Roman (Pseudo-IPA) regenerieren? 498 es-Vokabeln bis 2.000 fehlen.
+- Testrunde 26.09.: Behobenes steht in `CHANGELOG.md` (dort auch die Liste „Bekannt, noch offen“). Noch OFFEN: Stammformen mit beiden Hilfsverben (ist/hat geritten) gelten als falsch; ar „مقال“ für Artikel + Untertitel umgangssprachlich; „Plural:“ und Backup-Fehler fest deutsch; `audio.ts` unavailable-Label ohne Schlüssel; keine Pluralregeln; Studio-Export vergleicht Clips nie gleich (blobKey/byteSize), „Neu erzeugen“ überspringt vorhandene Clips. Änderungen immer auch in `CHANGELOG.md` eintragen.

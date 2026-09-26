@@ -1,0 +1,102 @@
+# Changelog
+
+Alle nennenswerten Änderungen an ThaiSpeaker (Lernbegleiter). Neueste oben.
+Format angelehnt an [Keep a Changelog](https://keepachangelog.com/de/1.1.0/).
+Die ausführliche Entwicklungsgeschichte bis zum 25.09.2026 steht in
+[`docs/arbeitsverlauf-bis-2026-09-25.md`](docs/arbeitsverlauf-bis-2026-09-25.md).
+
+## [Unveröffentlicht] – 26.09.2026
+
+Ergebnis einer Testrunde über mehrere App-Sprachen (Deutsch, Englisch, Thai,
+Arabisch, Urdu) plus drei Code-Prüfungen durch KI-Agenten.
+
+### Lernen – behoben
+
+- **Neue Karteikarten kommen in Häufigkeitsreihenfolge.** Vorher entschied die
+  Speicherreihenfolge, Anfänger bekamen „Zehennagel“ vor „Hallo“.
+- **Lesetexte schalten sich wieder frei.** Maßgeblich ist jetzt der gesamte
+  Wortschatzstand der Sprache (A1 ab 20, A2 ab 50 begonnenen Karten). Vorher
+  zählten nur die Wörter der jeweiligen Szene, und die Texte blieben praktisch
+  für immer gesperrt.
+- **Lesetexte: angetippte Wörter** zeigen ihre Bedeutung in der App-Sprache
+  (vorher immer Deutsch) und werden nur noch gegen den Wortschatz der
+  Lernsprache gesucht.
+- **Schreiben: Synonyme zählen als richtig.** Wer „easy“ statt „simple“ tippt
+  (beides „einfach“), bekommt kein „Nochmal“ mehr.
+- **Englisch-Übungen ohne feste deutsche Texte.** „Gleiche Schreibung, anderer
+  Laut“, „Wort hören“, „Unregelmäßige Verben“ und „Dritte Form“ zeigen
+  Bedeutung und Erklärung in der App-Sprache. Neue Übersetzungen in allen
+  20 Sprachen.
+- **„Wort hören“ verrät die Antwort nicht mehr.** Die Lautschrift an jeder
+  Antwortoption ist weg; sie steht erst in der Auflösung.
+- **Ohne Mikrofon geht es weiter.** „Sprechen“, „Shadowing“ und „Satz
+  wiederholen“ haben immer einen Weiter-Knopf. Vorher hing man ohne
+  Mikrofonfreigabe beim ersten Wort fest.
+- **Goethe-Module für Englischsprachige:** Prüfungstexte und Antworten sind
+  jetzt deutsch wie in der echten Prüfung. Englisch bleibt nur als Hilfe an
+  Frage und Erklärung.
+- **Zählwörter (Thai):** Die Erklärung „zwischen Zahl und Nomen“ war falsch.
+  Richtig ist Nomen + Zahl + Zählwort. Korrigiert in allen 20 Sprachen,
+  dazu der Hinweis und die Lösung („ein Katze“ → „1 × Katze“).
+- **ser/estar:** Die Lösung war immer in der 3. Person („Yo está“). Jetzt
+  „Yo estoy“ und „Los niños están“.
+- **Präsens-Endungen (Spanisch):** Antworten standen doppelt zur Wahl, und
+  Verben mit Akzent- oder Schreibwechsel (evaluar, proteger …) bekamen falsche
+  Lösungen. Diese Verben sind ausgenommen; 240 von 254 bleiben.
+- **Unregelmäßige Verben / Dritte Form:** doppelte Antwortoptionen entfernt.
+- **„Sag es“:** Die Musterlösung steht als Text vor der Selbstbewertung; das
+  erfundene „✓ Genau richtig“ danach ist weg. Thai-Eingaben ohne Leerzeichen
+  gelten als richtig.
+- **Heutige Runde:** Die Zusammenfassung zählt übersprungene Bereiche nicht
+  mehr als erledigt.
+- **Englische Lautschrift** einheitlich mit einem Schrägstrich („/fiːd/“
+  statt „//fiːd//“).
+
+### Mehrsprachigkeit – behoben
+
+- **Urdu** läuft wie Arabisch von rechts nach links; die Seite trägt die
+  richtige Sprachangabe (`lang`).
+- **Fehlende Übersetzung** fällt auf Englisch statt auf Deutsch zurück, außer
+  auf der deutschen Oberfläche.
+
+### Entwicklerstudio – behoben
+
+- **Wartungskarte entfernt.** Ihr Knopf „alles Generierte löschen“ hätte den
+  gesamten Katalog gelöscht, obwohl der Text das Gegenteil versprach. Die
+  zugehörige Helper-Route gibt es nicht mehr.
+- **Gelöschtes bleibt gelöscht.** Löschen im Prüfbericht (Katalog und Stage)
+  trägt den Eintrag in `catalog.deleted` ein. Vorher kam er beim nächsten
+  Export aus dem Browser-Speicher zurück.
+- **Vokabeln löschen nimmt ihre Bilder mit.** Vorher blieb das Bild verwaist,
+  und jeder folgende Publish scheiterte am Bild-Vertrag.
+- **Fehlerprotokoll** legt `pipeline/logs` bei Bedarf selbst an (frischer Klon).
+
+### Release
+
+- **Cloud-Build (EAS) blockiert nur noch bei echten Fehlern.** Fehlende Bilder,
+  Hörclips oder Dialoge sind eine Warnung. Integritätsfehler (kaputte oder
+  verwaiste Dateien, Budget) blockieren weiterhin.
+
+### Aufgeräumt
+
+- Einmal-Skripte, veraltete Dokumente und 16.700 Laufprotokolle aus dem
+  Repository entfernt; AGENTS.md von 110 KB auf einen Kurzstand gekürzt.
+- Großen Altbericht (188 MB) aus dem Git-Verlauf getilgt, damit das Repository
+  auf GitHub passt.
+
+### Tests
+
+- 1242 Jest-Tests, 57 Skript-Tests. Neu: Regressionstests für alle Punkte oben
+  (Kartenreihenfolge, Lesetext-Freischaltung, Synonyme, Englisch ohne Deutsch,
+  ser/estar, Präsens-Endungen, Thai-Leerzeichen, Löschen mit Bildern,
+  `deleted`-Vermerk, entfernte Route, EAS-Warnung).
+
+### Bekannt, noch offen
+
+- Stammformen (Deutsch): Verben mit beiden Hilfsverben („ist/hat geritten“)
+  werten eine richtige Antwort als falsch.
+- Arabisch: „مقال“ für die Artikel-Übung, Untertitel in Umgangssprache.
+- Fest deutsch: „Plural:“ beim Schreiben, Fehlermeldungen der Datensicherung.
+- Keine Pluralregeln („1 Wörter“).
+- Studio: Der „schlaue Export“ lädt Clips immer neu hoch; „Neu erzeugen“ im
+  Prüfbericht überspringt vorhandene Clips.
